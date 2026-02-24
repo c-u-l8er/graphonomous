@@ -10,7 +10,8 @@ defmodule Graphonomous.MixProject do
       deps: deps(),
       name: "Graphonomous",
       description: "Continual learning engine — self-evolving knowledge graphs for AI agents",
-      source_url: "https://github.com/ampersandbox/graphonomous"
+      source_url: "https://github.com/ampersandbox/graphonomous",
+      escript: [main_module: Graphonomous.CLI]
     ]
   end
 

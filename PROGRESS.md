@@ -4,10 +4,10 @@ _Last Updated: 2026-02-24_
 
 ## Overall Status
 
-**Current Phase:** Foundation + Core CL Engine + GoalGraph/Coverage + MCP resources + grounding fidelity pass + migration/versioning + SQL parameterization hardening + CI/bootstrap docs pass (spec Sections 4, 5, 6, 7, 8, 9)  
+**Current Phase:** Foundation + Core CL Engine + GoalGraph/Coverage + MCP resources + grounding fidelity pass + migration/versioning + SQL parameterization hardening + CI/bootstrap docs pass + MCP executable command entrypoint (spec Sections 4, 5, 6, 7, 8, 9)  
 **Health:** ✅ Compiling and testable  
 **Test Status:** ✅ `31 tests, 0 failures`  
-**Runtime Shape:** ✅ OTP app with core supervised services + durable goal orchestration + coverage scoring + read-only MCP resources + startup cache warm + migration tracking + CI quality gate + runtime env overlay config
+**Runtime Shape:** ✅ OTP app with core supervised services + durable goal orchestration + coverage scoring + read-only MCP resources + startup cache warm + migration tracking + CI quality gate + runtime env overlay config + executable MCP command entrypoint
 
 ---
 
@@ -152,7 +152,7 @@ Implemented and passing:
 - ✅ Added migration/versioning strategy for schema evolution (`schema_migrations` + tracked migration IDs).
 
 ## E) Runtime/Operations
-- ⏳ Add executable MCP entrypoint command path for standard client launch flow.
+- ✅ Added executable MCP entrypoint command path for standard client launch flow (`Graphonomous.CLI` + escript build/runtime command).
 - ✅ Added runtime docs + environment configuration matrix (`docs/BOOTSTRAP.md` + `config/runtime.exs` env surface).
 - ✅ Added CI workflow and reproducible local bootstrap instructions (`.github/workflows/ci.yml` + verification commands).
 
@@ -209,5 +209,7 @@ Planned sequence:
 - Added CI workflow (`.github/workflows/ci.yml`) for format/compile/test quality gates.
 - Added runtime environment overlay configuration (`config/runtime.exs`) with validated env parsing and per-environment defaults.
 - Added reproducible bootstrap and release-hardening guide (`docs/BOOTSTRAP.md`) and replaced placeholder project README with implementation/runtime verification docs.
+- Added executable MCP CLI entrypoint (`Graphonomous.CLI`) and wired escript project config for standard `graphonomous` command launch over STDIO.
+- Added MCP command-path docs and client configuration examples for executable launch flow (`mix escript.build` → `graphonomous --db ...`).
 - Expanded passing test suite to `31/31` with coverage for cache rebuild, grounding traces, MCP resources, and migration bookkeeping.
 - Created and updated this ongoing progress tracker.

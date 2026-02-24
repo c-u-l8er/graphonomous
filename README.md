@@ -2,59 +2,94 @@
 
 Continual learning engine for AI agents, implemented as an Elixir OTP application with a durable SQLite-backed knowledge graph, confidence-updating learning loop, GoalGraph orchestration, and MCP tools/resources.
 
-## Status
-
-- **Phase:** Foundation + Core CL Engine + GoalGraph/Coverage + MCP resources + grounding fidelity + migration/versioning hardening
-- **Build/Test:** ✅ Compiling and testable
-- **Current test suite:** ✅ `31 tests, 0 failures`
-
----
-
-## What Graphonomous Does
-
-Graphonomous provides a closed-loop memory and learning system:
-
-1. **Store knowledge** as graph nodes/edges.
-2. **Retrieve context** by semantic similarity + graph neighborhood expansion.
-3. **Execute actions externally** (via your agent/client).
-4. **Learn from outcomes** by updating confidence of causal nodes.
-5. **Persist intent** with durable goals (GoalGraph).
-6. **Review epistemic coverage** (`act | learn | escalate`) before action.
-7. **Consolidate memories** on schedule or on demand.
+> **TL;DR**
+> - Use Graphonomous as an MCP server over stdio.
+> - Easiest onboarding is npm/npx.
+> - OpenSentience is optional; you can start immediately with built-in MCP tools.
 
 ---
 
-## Architecture
+## For Users (npm-first)
 
-### Supervised Runtime Services
+### 1) Install and run
 
-- `Graphonomous.Store` — SQLite schema/bootstrap, persistence, ETS hot cache, cache rebuild
-- `Graphonomous.Embedder` — embedding backend orchestration
-- `Graphonomous.Graph` — node/edge operations, graph query surface
-- `Graphonomous.Retriever` — ranked retrieval + neighborhood expansion
-- `Graphonomous.Learner` — outcome ingestion, confidence updates, grounding trace handling
-- `Graphonomous.GoalGraph` — durable goal lifecycle + linked nodes + review metadata
-- `Graphonomous.Consolidator` — decay/prune/merge cycle runner
+Use whichever fits your workflow.
 
-### Data Model (Implemented)
+#### Option A — One-off run with `npx` (no global install)
 
-- **Nodes**: `episodic | semantic | procedural` (current typed set)
-- **Edges**: typed relationships with weights
-- **Outcomes**: status, confidence, causal node ids, evidence, and grounding trace fields
-- **Goals**: durable lifecycle state, priority, timescale, progress, linkage, metadata
+```/dev/null/shell.sh#L1-2
+npx -y graphonomous --help
+npx -y graphonomous --db ~/.graphonomous/knowledge.db --embedder-backend fallback
+```
 
-### Storage
+#### Option B — Global install
 
-- SQLite tables: `nodes`, `edges`, `outcomes`, `goals`
-- Migration tracking table: `schema_migrations`
-- Startup cache warm/rebuild from SQLite into ETS for fast reads + restart consistency
-- Core writes and delete paths use prepared/parameterized SQL execution
+```/dev/null/shell.sh#L1-3
+npm i -g graphonomous
+graphonomous --help
+graphonomous --db ~/.graphonomous/knowledge.db --embedder-backend fallback
+```
 
 ---
 
-## MCP Surface
+### 2) First-time setup (2–5 minutes)
 
-### Tools
+1. Create a data directory:
+```/dev/null/shell.sh#L1-1
+mkdir -p ~/.graphonomous
+```
+
+2. Run Graphonomous:
+```/dev/null/shell.sh#L1-1
+npx -y graphonomous --db ~/.graphonomous/knowledge.db --embedder-backend fallback
+```
+
+3. Configure your MCP client to launch `graphonomous` (or `npx`) and pass the same args.
+
+---
+
+### 3) Zed setup (custom context server)
+
+In Zed settings JSON, use either installed command or `npx`.
+
+#### Installed command
+
+```/dev/null/settings.json#L1-14
+{
+  "context_servers": {
+    "graphonomous": {
+      "command": "graphonomous",
+      "args": ["--db", "~/.graphonomous/knowledge.db", "--embedder-backend", "fallback"],
+      "env": {
+        "GRAPHONOMOUS_EMBEDDING_MODEL": "sentence-transformers/all-MiniLM-L6-v2"
+      }
+    }
+  }
+}
+```
+
+#### `npx` command
+
+```/dev/null/settings.json#L1-12
+{
+  "context_servers": {
+    "graphonomous": {
+      "command": "npx",
+      "args": ["-y", "graphonomous", "--db", "~/.graphonomous/knowledge.db", "--embedder-backend", "fallback"],
+      "env": {}
+    }
+  }
+}
+```
+
+After saving:
+1. Open Zed Agent panel.
+2. Confirm server is active.
+3. Ask explicitly for Graphonomous tool usage (for example: “use `graphonomous` to retrieve context for …”).
+
+---
+
+### 4) Core MCP tools you’ll use first
 
 - `store_node`
 - `retrieve_context`
@@ -64,88 +99,46 @@ Graphonomous provides a closed-loop memory and learning system:
 - `review_goal`
 - `run_consolidation`
 
-### Resources (read-only)
+### MCP resources (read-only)
 
 - `graphonomous://runtime/health`
 - `graphonomous://goals/snapshot`
 
 ---
 
-## Public API
+### 5) Recommended laptop setting
 
-The `Graphonomous` module is the primary API entrypoint for direct calls and MCP tool delegation.
+Use:
 
-Key functions include:
+- `--embedder-backend fallback`
 
-- Node graph:
-  - `store_node/1`
-  - `get_node/1`
-  - `list_nodes/1`
-  - `update_node/2`
-  - `delete_node/1`
-  - `link_nodes/3`
-  - `query_graph/1`
-- Retrieval + learning:
-  - `retrieve_context/2`
-  - `learn_from_outcome/1`
-- GoalGraph:
-  - `create_goal/1`
-  - `get_goal/1`
-  - `list_goals/1`
-  - `update_goal/2`
-  - `delete_goal/1`
-  - `transition_goal/3`
-  - `link_goal_nodes/2`
-  - `unlink_goal_nodes/2`
-  - `set_goal_progress/2`
-  - `review_goal/3`
-- Coverage + operations:
-  - `evaluate_coverage/2`
-  - `decide_coverage/2`
-  - `run_consolidation_now/0`
-  - `rebuild_cache/0`
-  - `consolidator_info/0`
-  - `health/0`
+This avoids heavyweight backend friction and is the quickest reliable starting point on constrained machines.
 
 ---
 
-## Project Structure
+### 6) Common CLI flags
 
-- `lib/graphonomous/`
-  - `application.ex` (supervision tree)
-  - `store.ex` (SQLite + cache + migrations)
-  - `graph.ex`, `retriever.ex`, `learner.ex`, `goal_graph.ex`, `consolidator.ex`, `coverage.ex`
-  - `mcp/` (server, tools, resources)
-  - `types/` (`node`, `edge`, `outcome`, `goal`)
-- `config/`
-  - `config.exs`, `dev.exs`, `test.exs`, `prod.exs`, `runtime.exs`
-- `test/`
-  - store/graph/retriever/learner/goal/coverage/MCP integration tests
-- `docs/`
-  - `BOOTSTRAP.md` (reproducible local bootstrap + verification)
-- `.github/workflows/`
-  - `ci.yml` (format + compile + test)
+- `--db PATH`
+- `--embedding-model MODEL`
+- `--embedder-backend auto|fallback`
+- `--sqlite-vec-extension-path PATH`
+- `--consolidator-interval-ms MS`
+- `--consolidator-decay-rate FLOAT`
+- `--consolidator-prune-threshold FLOAT`
+- `--consolidator-merge-similarity FLOAT`
+- `--learning-rate FLOAT`
+- `--log-level debug|info|warning|error`
+- `--request-timeout MS`
 
----
+Help:
 
-## Quick Start
-
-From `ProjectAmp2/graphonomous`:
-
-    mix deps.get
-    mix format --check-formatted
-    mix compile --warnings-as-errors
-    mix test
-
-Expected: all checks pass.
+```/dev/null/shell.sh#L1-1
+graphonomous --help
+```
 
 ---
 
-## Runtime Configuration
-
-Environment-driven runtime settings are handled in `config/runtime.exs`.
-
-### Core env vars
+### 7) Runtime environment variables
 
 - `GRAPHONOMOUS_DB_PATH` (default: `priv/graphonomous.db`)
 - `GRAPHONOMOUS_EMBEDDING_MODEL` (default: `sentence-transformers/all-MiniLM-L6-v2`)
@@ -160,49 +153,108 @@ Environment-driven runtime settings are handled in `config/runtime.exs`.
 
 Example:
 
-    export GRAPHONOMOUS_DB_PATH="tmp/graphonomous_local.db"
-    export GRAPHONOMOUS_EMBEDDER_BACKEND="fallback"
-    export LOG_LEVEL="debug"
+```/dev/null/shell.sh#L1-3
+export GRAPHONOMOUS_DB_PATH="$HOME/.graphonomous/knowledge.db"
+export GRAPHONOMOUS_EMBEDDER_BACKEND="fallback"
+export LOG_LEVEL="info"
+```
 
 ---
 
-## Verification
+## For Maintainers
 
-### Fast local verification
+### Local development verification
 
-    MIX_ENV=test mix deps.get
-    MIX_ENV=test mix format --check-formatted
-    MIX_ENV=test mix compile --warnings-as-errors
-    MIX_ENV=test mix test --color
-
-### Store/migration verification
-
-    mix test test/store_test.exs
-
-Includes assertions for:
-- persistence flows
-- cache rebuild
-- grounding trace persistence
-- migration bookkeeping in `schema_migrations`
+```/dev/null/shell.sh#L1-4
+MIX_ENV=test mix deps.get
+MIX_ENV=test mix format --check-formatted
+MIX_ENV=test mix compile --warnings-as-errors
+MIX_ENV=test mix test --color
+```
 
 ---
 
-## CI
+### Source fallback run (no npm)
 
-GitHub Actions workflow (`.github/workflows/ci.yml`) runs:
+```/dev/null/shell.sh#L1-6
+cd ProjectAmp2/graphonomous
+mix deps.get
+mix compile --warnings-as-errors
+mix test
+MIX_ENV=prod mix release --overwrite
+_build/prod/rel/graphonomous/bin/graphonomous eval "Graphonomous.CLI.main(System.argv())" --help
+```
 
-1. `mix deps.get`
-2. `mix format --check-formatted`
-3. `mix compile --warnings-as-errors`
-4. `mix test --color`
+---
+
+### npm package pre-publish smoke test
+
+```/dev/null/shell.sh#L1-6
+cd ProjectAmp2/graphonomous/npm
+npm pack
+mkdir -p /tmp/graphonomous-npm-smoke && cd /tmp/graphonomous-npm-smoke
+npm init -y
+npm i /home/travis/ProjectAmp2/graphonomous/npm/graphonomous-0.1.0.tgz
+npx graphonomous --help
+```
+
+---
+
+### Release + publish flow (high level)
+
+1. Ensure versions align (`mix.exs`, `npm/package.json`, git tag `vX.Y.Z`).
+2. Push tag `vX.Y.Z`.
+3. Release workflow builds platform assets and publishes GitHub release.
+4. npm publish step runs from CI (requires `NPM_TOKEN` secret).
+
+See full operational runbook:
+- `docs/NPM_PUBLISH.md`
+
+---
+
+### Architecture snapshot
+
+Supervised services:
+- `Graphonomous.Store`
+- `Graphonomous.Embedder`
+- `Graphonomous.Graph`
+- `Graphonomous.Retriever`
+- `Graphonomous.Learner`
+- `Graphonomous.GoalGraph`
+- `Graphonomous.Consolidator`
+
+Storage:
+- SQLite tables: `nodes`, `edges`, `outcomes`, `goals`
+- migration tracking: `schema_migrations`
+- ETS hot cache with startup rebuild
+
+---
+
+### Public API (direct module usage)
+
+Primary module: `Graphonomous`
+
+- Node graph: `store_node/1`, `get_node/1`, `list_nodes/1`, `update_node/2`, `delete_node/1`, `link_nodes/3`, `query_graph/1`
+- Retrieval + learning: `retrieve_context/2`, `learn_from_outcome/1`
+- GoalGraph: `create_goal/1`, `get_goal/1`, `list_goals/1`, `update_goal/2`, `delete_goal/1`, `transition_goal/3`, `link_goal_nodes/2`, `unlink_goal_nodes/2`, `set_goal_progress/2`, `review_goal/3`
+- Coverage + ops: `evaluate_coverage/2`, `decide_coverage/2`, `run_consolidation_now/0`, `rebuild_cache/0`, `consolidator_info/0`, `health/0`
+
+---
+
+### Documentation map
+
+- `docs/BOOTSTRAP.md` — bootstrap + verification
+- `docs/ZED.md` — Zed integration details
+- `docs/NPM_PUBLISH.md` — npm publishing and maintenance runbook
+- `npm/README.md` — npm wrapper package usage and overrides
 
 ---
 
 ## Notes
 
-- EXLA is intentionally optional right now to avoid environment-level NIF/CUDA mismatch issues.
-- sqlite-vec extension loading is optional and can be configured via environment variable.
-- For deeper setup and reproducible bootstrap steps, use `docs/BOOTSTRAP.md`.
+- EXLA is currently optional to avoid environment-level NIF/CUDA mismatch issues.
+- sqlite-vec extension loading is optional.
+- OpenSentience integration is **not required** to start using Graphonomous.
 
 ---
 

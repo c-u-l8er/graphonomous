@@ -29,11 +29,13 @@ From the `ProjectAmp2` root:
     mix format
     mix compile --warnings-as-errors
     mix test
+    MIX_ENV=prod mix escript.build
 
 Expected result:
 
 - Compile succeeds
 - Test suite passes (currently `31 tests, 0 failures`)
+- Executable `./graphonomous` is generated for standard MCP client launch
 
 ---
 
@@ -92,6 +94,34 @@ Runtime config is controlled via environment variables in `config/runtime.exs`.
     export GRAPHONOMOUS_DB_PATH="tmp/graphonomous_local.db"
     export GRAPHONOMOUS_EMBEDDER_BACKEND="fallback"
     export LOG_LEVEL="debug"
+
+### MCP Executable Build + Standard Client Command Configuration
+
+Build the executable command once:
+
+    MIX_ENV=prod mix escript.build
+
+Run directly (STDIO transport):
+
+    ./graphonomous --db ~/.graphonomous/knowledge.db
+
+If you install/copy it onto PATH, use:
+
+    graphonomous --db ~/.graphonomous/knowledge.db
+
+Standard MCP client configuration shape:
+
+    {
+      "mcpServers": {
+        "graphonomous": {
+          "command": "graphonomous",
+          "args": ["--db", "~/.graphonomous/knowledge.db"],
+          "env": {
+            "GRAPHONOMOUS_EMBEDDING_MODEL": "sentence-transformers/all-MiniLM-L6-v2"
+          }
+        }
+      }
+    }
 
 ---
 
@@ -186,13 +216,14 @@ Before merging/releasing, verify:
 
 ## 10) One-Command Local Verification Script (optional)
 
-You can use this command sequence for a quick confidence run:
+You can use this command sequence for a quick confidence run (including MCP executable build):
 
     rm -rf _build deps &&
     rm -f tmp/graphonomous_test.db &&
     mix deps.get &&
     MIX_ENV=test mix format --check-formatted &&
     MIX_ENV=test mix compile --warnings-as-errors &&
-    MIX_ENV=test mix test
+    MIX_ENV=test mix test &&
+    MIX_ENV=prod mix escript.build
 
-If this completes successfully, your local environment is reproducible and verified.
+If this completes successfully, your local environment is reproducible, verified, and ready for standard MCP command launch via `./graphonomous`.

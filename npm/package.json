@@ -1,0 +1,50 @@
+{
+  "name": "graphonomous",
+  "version": "0.1.0",
+  "description": "npm wrapper for the Graphonomous MCP server CLI",
+  "private": false,
+  "license": "UNLICENSED",
+  "author": "Ampersandbox",
+  "homepage": "https://github.com/ampersandbox/graphonomous#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ampersandbox/graphonomous.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ampersandbox/graphonomous/issues"
+  },
+  "type": "commonjs",
+  "bin": {
+    "graphonomous": "bin/graphonomous.js"
+  },
+  "files": [
+    "bin",
+    "scripts",
+    "vendor",
+    "README.md"
+  ],
+  "scripts": {
+    "postinstall": "node ./scripts/postinstall.js",
+    "start": "node ./bin/graphonomous.js --help"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "graphonomous",
+    "ai",
+    "agent",
+    "elixir",
+    "cli"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "os": [
+    "darwin",
+    "linux"
+  ],
+  "cpu": [
+    "x64",
+    "arm64"
+  ]
+}
