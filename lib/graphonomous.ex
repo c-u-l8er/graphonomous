@@ -6,7 +6,7 @@ defmodule Graphonomous do
   It normalizes incoming payloads and delegates to the core runtime modules.
   """
 
-  alias Graphonomous.{Graph, Learner, Retriever}
+  alias Graphonomous.{Consolidator, Coverage, GoalGraph, Graph, Learner, Retriever}
 
   @allowed_node_types [:episodic, :semantic, :procedural]
   @allowed_statuses [:success, :partial_success, :failure, :timeout]
@@ -125,13 +125,129 @@ defmodule Graphonomous do
   end
 
   @doc """
+  Create a durable goal in the GoalGraph.
+  """
+  def create_goal(attrs) when is_map(attrs) do
+    GoalGraph.create_goal(attrs)
+    |> unwrap_ok()
+  end
+
+  @doc """
+  Get a goal by ID.
+  """
+  def get_goal(goal_id) when is_binary(goal_id) do
+    GoalGraph.get_goal(goal_id)
+    |> unwrap_ok()
+  end
+
+  @doc """
+  List goals with optional filters.
+  """
+  def list_goals(filters \\ %{})
+
+  def list_goals(filters) when is_map(filters) do
+    GoalGraph.list_goals(filters)
+    |> unwrap_ok()
+  end
+
+  @doc """
+  Update a goal by ID.
+  """
+  def update_goal(goal_id, attrs) when is_binary(goal_id) and is_map(attrs) do
+    GoalGraph.update_goal(goal_id, attrs)
+    |> unwrap_ok()
+  end
+
+  @doc """
+  Delete a goal by ID.
+  """
+  def delete_goal(goal_id) when is_binary(goal_id) do
+    GoalGraph.delete_goal(goal_id)
+    |> unwrap_ok()
+  end
+
+  @doc """
+  Transition a goal to a new status.
+  """
+  def transition_goal(goal_id, to_status, metadata \\ %{})
+      when is_binary(goal_id) and is_map(metadata) do
+    GoalGraph.transition_goal(goal_id, to_status, metadata)
+    |> unwrap_ok()
+  end
+
+  @doc """
+  Link node IDs to a goal.
+  """
+  def link_goal_nodes(goal_id, node_ids) when is_binary(goal_id) and is_list(node_ids) do
+    GoalGraph.link_nodes(goal_id, node_ids)
+    |> unwrap_ok()
+  end
+
+  @doc """
+  Unlink node IDs from a goal.
+  """
+  def unlink_goal_nodes(goal_id, node_ids) when is_binary(goal_id) and is_list(node_ids) do
+    GoalGraph.unlink_nodes(goal_id, node_ids)
+    |> unwrap_ok()
+  end
+
+  @doc """
+  Set goal progress (`0.0..1.0`).
+  """
+  def set_goal_progress(goal_id, progress) when is_binary(goal_id) do
+    GoalGraph.set_progress(goal_id, progress)
+    |> unwrap_ok()
+  end
+
+  @doc """
+  Run epistemic review for a goal from a coverage signal.
+  """
+  def review_goal(goal_id, signal, opts \\ [])
+      when is_binary(goal_id) and is_map(signal) and is_list(opts) do
+    GoalGraph.review_goal(goal_id, signal, opts)
+    |> unwrap_ok()
+  end
+
+  @doc """
+  Evaluate epistemic coverage and return full scoring output.
+  """
+  def evaluate_coverage(signal, opts \\ [])
+      when is_map(signal) and is_list(opts) do
+    Coverage.evaluate(signal, opts)
+  end
+
+  @doc """
+  Return only the recommended coverage decision.
+  """
+  def decide_coverage(signal, opts \\ [])
+      when is_map(signal) and is_list(opts) do
+    Coverage.decide(signal, opts)
+  end
+
+  @doc """
+  Trigger an immediate consolidation cycle.
+  """
+  def run_consolidation_now do
+    Consolidator.run_now()
+  end
+
+  @doc """
+  Return consolidator runtime information.
+  """
+  def consolidator_info do
+    Consolidator.info()
+  end
+
+  @doc """
   Basic health information for runtime visibility.
   """
   def health do
     %{
       graph: process_state(Graph),
       retriever: process_state(Retriever),
-      learner: process_state(Learner)
+      learner: process_state(Learner),
+      goal_graph: process_state(GoalGraph),
+      consolidator: process_state(Consolidator)
     }
   end
 

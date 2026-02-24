@@ -35,7 +35,8 @@ defmodule Graphonomous.MixProject do
       # Local embeddings
       {:bumblebee, "~> 0.6"},
       {:nx, "~> 0.9"},
-      {:exla, "~> 0.9"},
+      # EXLA is intentionally optional for now to avoid CUDA-linked NIF startup failures.
+      # Add it back when your runtime has a compatible CPU/CUDA setup.
 
       # Utilities
       {:jason, "~> 1.4"},
