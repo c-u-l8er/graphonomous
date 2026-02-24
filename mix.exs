@@ -9,8 +9,7 @@ defmodule Graphonomous.MixProject do
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       name: "Graphonomous",
-      description:
-        "Continual learning engine — self-evolving knowledge graphs for AI agents",
+      description: "Continual learning engine — self-evolving knowledge graphs for AI agents",
       source_url: "https://github.com/ampersandbox/graphonomous"
     ]
   end

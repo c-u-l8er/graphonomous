@@ -9,14 +9,18 @@ defmodule Graphonomous.MCP.Server do
   use Anubis.Server,
     name: "graphonomous",
     version: "0.1.0",
-    capabilities: [:tools]
+    capabilities: [:tools, :resources]
 
   # MCP tool components
-  component Graphonomous.MCP.StoreNode
-  component Graphonomous.MCP.RetrieveContext
-  component Graphonomous.MCP.LearnFromOutcome
-  component Graphonomous.MCP.QueryGraph
-  component Graphonomous.MCP.ManageGoal
-  component Graphonomous.MCP.ReviewGoal
-  component Graphonomous.MCP.RunConsolidation
+  component(Graphonomous.MCP.StoreNode)
+  component(Graphonomous.MCP.RetrieveContext)
+  component(Graphonomous.MCP.LearnFromOutcome)
+  component(Graphonomous.MCP.QueryGraph)
+  component(Graphonomous.MCP.ManageGoal)
+  component(Graphonomous.MCP.ReviewGoal)
+  component(Graphonomous.MCP.RunConsolidation)
+
+  # MCP resource components
+  component(Graphonomous.MCP.Resources.HealthSnapshot)
+  component(Graphonomous.MCP.Resources.GoalsSnapshot)
 end

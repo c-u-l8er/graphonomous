@@ -232,6 +232,13 @@ defmodule Graphonomous do
   end
 
   @doc """
+  Rebuild the in-memory ETS cache from durable SQLite state.
+  """
+  def rebuild_cache do
+    Graphonomous.Store.rebuild_cache()
+  end
+
+  @doc """
   Return consolidator runtime information.
   """
   def consolidator_info do
@@ -263,20 +270,57 @@ defmodule Graphonomous do
 
   defp normalize_node_attrs(attrs) do
     attrs
-    |> Map.put(:node_type, normalize_node_type(Map.get(attrs, :node_type) || Map.get(attrs, "node_type")))
-    |> Map.put(:confidence, normalize_confidence(Map.get(attrs, :confidence) || Map.get(attrs, "confidence")))
-    |> Map.put(:metadata, normalize_metadata(Map.get(attrs, :metadata) || Map.get(attrs, "metadata")))
+    |> Map.put(
+      :node_type,
+      normalize_node_type(Map.get(attrs, :node_type) || Map.get(attrs, "node_type"))
+    )
+    |> Map.put(
+      :confidence,
+      normalize_confidence(Map.get(attrs, :confidence) || Map.get(attrs, "confidence"))
+    )
+    |> Map.put(
+      :metadata,
+      normalize_metadata(Map.get(attrs, :metadata) || Map.get(attrs, "metadata"))
+    )
   end
 
   defp normalize_outcome_attrs(attrs) do
     attrs
     |> Map.put(:status, normalize_status(Map.get(attrs, :status) || Map.get(attrs, "status")))
-    |> Map.put(:confidence, normalize_confidence(Map.get(attrs, :confidence) || Map.get(attrs, "confidence")))
+    |> Map.put(
+      :confidence,
+      normalize_confidence(Map.get(attrs, :confidence) || Map.get(attrs, "confidence"))
+    )
     |> Map.put(
       :causal_node_ids,
-      normalize_causal_node_ids(Map.get(attrs, :causal_node_ids) || Map.get(attrs, "causal_node_ids"))
+      normalize_causal_node_ids(
+        Map.get(attrs, :causal_node_ids) || Map.get(attrs, "causal_node_ids")
+      )
     )
-    |> Map.put(:evidence, normalize_metadata(Map.get(attrs, :evidence) || Map.get(attrs, "evidence")))
+    |> Map.put(
+      :evidence,
+      normalize_metadata(Map.get(attrs, :evidence) || Map.get(attrs, "evidence"))
+    )
+    |> Map.put(
+      :retrieval_trace_id,
+      normalize_optional_string(
+        Map.get(attrs, :retrieval_trace_id) || Map.get(attrs, "retrieval_trace_id")
+      )
+    )
+    |> Map.put(
+      :decision_trace_id,
+      normalize_optional_string(
+        Map.get(attrs, :decision_trace_id) || Map.get(attrs, "decision_trace_id")
+      )
+    )
+    |> Map.put(
+      :action_linkage,
+      normalize_metadata(Map.get(attrs, :action_linkage) || Map.get(attrs, "action_linkage"))
+    )
+    |> Map.put(
+      :grounding,
+      normalize_metadata(Map.get(attrs, :grounding) || Map.get(attrs, "grounding"))
+    )
   end
 
   defp normalize_query_params(params) do
@@ -351,6 +395,17 @@ defmodule Graphonomous do
   end
 
   defp normalize_metadata(_), do: %{}
+
+  defp normalize_optional_string(nil), do: nil
+
+  defp normalize_optional_string(value) when is_binary(value) do
+    case String.trim(value) do
+      "" -> nil
+      trimmed -> trimmed
+    end
+  end
+
+  defp normalize_optional_string(value), do: value |> to_string() |> normalize_optional_string()
 
   defp normalize_causal_node_ids(nil), do: []
   defp normalize_causal_node_ids(ids) when is_list(ids), do: Enum.filter(ids, &is_binary/1)

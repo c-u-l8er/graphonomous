@@ -11,23 +11,24 @@ defmodule Graphonomous.MCP.RetrieveContext do
   use Anubis.Server.Component, type: :tool
 
   schema do
-    field :query, :string, required: true,
+    field(:query, :string,
+      required: true,
       description: "Natural-language query to retrieve relevant knowledge"
+    )
 
-    field :limit, :number,
-      description: "Max number of results to return (default: 10)"
+    field(:limit, :number, description: "Max number of results to return (default: 10)")
 
-    field :expansion_hops, :number,
+    field(:expansion_hops, :number,
       description: "Graph neighborhood expansion depth (default: 1)"
+    )
 
-    field :neighbors_per_node, :number,
+    field(:neighbors_per_node, :number,
       description: "Max neighbors to expand per seed node (default: 5)"
+    )
 
-    field :min_score, :number,
-      description: "Optional minimum score threshold (0.0-1.0)"
+    field(:min_score, :number, description: "Optional minimum score threshold (0.0-1.0)")
 
-    field :node_type, :string,
-      description: "Optional filter: episodic, semantic, or procedural"
+    field(:node_type, :string, description: "Optional filter: episodic, semantic, or procedural")
   end
 
   @impl true

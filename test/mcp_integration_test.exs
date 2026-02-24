@@ -45,7 +45,7 @@ defmodule Graphonomous.MCPIntegrationTest do
         Map.get(row, :node_id)
       end)
 
-    assert (node.id in result_ids) or (node.id in causal_context)
+    assert node.id in result_ids or node.id in causal_context
   end
 
   test "query_graph supports list/get/edges/similarity operations from API boundary" do
@@ -227,9 +227,27 @@ defmodule Graphonomous.MCPIntegrationTest do
 
     signal = %{
       retrieved_nodes: [
-        %{score: 0.95, confidence: 0.96, similarity: 0.95, edge_count: 8, updated_at: DateTime.utc_now()},
-        %{score: 0.92, confidence: 0.93, similarity: 0.92, edge_count: 7, updated_at: DateTime.utc_now()},
-        %{score: 0.90, confidence: 0.91, similarity: 0.90, edge_count: 6, updated_at: DateTime.utc_now()}
+        %{
+          score: 0.95,
+          confidence: 0.96,
+          similarity: 0.95,
+          edge_count: 8,
+          updated_at: DateTime.utc_now()
+        },
+        %{
+          score: 0.92,
+          confidence: 0.93,
+          similarity: 0.92,
+          edge_count: 7,
+          updated_at: DateTime.utc_now()
+        },
+        %{
+          score: 0.90,
+          confidence: 0.91,
+          similarity: 0.90,
+          edge_count: 6,
+          updated_at: DateTime.utc_now()
+        }
       ],
       outcomes: [
         %{status: :success, confidence: 0.95},
@@ -266,6 +284,57 @@ defmodule Graphonomous.MCPIntegrationTest do
       })
 
     assert transitioned.status == decided_status
+  end
+
+  test "resource snapshots return runtime health and durable goals payloads" do
+    _node =
+      Graphonomous.store_node(%{
+        content: "Resource snapshot integration coverage node",
+        node_type: "semantic",
+        confidence: 0.66,
+        source: "integration_test:mcp_resources"
+      })
+
+    goal =
+      Graphonomous.create_goal(%{
+        title: "Validate MCP resource snapshot integration",
+        status: :proposed,
+        timescale: :short_term,
+        source_type: :user,
+        priority: :normal,
+        owner: "integration_test"
+      })
+
+    frame = Anubis.Server.Frame.new()
+
+    assert {:reply, health_response, _frame_after_health} =
+             Graphonomous.MCP.Resources.HealthSnapshot.read(%{}, frame)
+
+    assert health_response.type == :resource
+    assert is_map(health_response.contents)
+    assert is_binary(health_response.contents["text"])
+
+    health_payload = Jason.decode!(health_response.contents["text"])
+    assert is_map(health_payload["health"])
+    assert is_map(health_payload["counts"])
+    assert health_payload["counts"]["nodes"] >= 1
+    assert health_payload["counts"]["goals"] >= 1
+
+    assert {:reply, goals_response, _frame_after_goals} =
+             Graphonomous.MCP.Resources.GoalsSnapshot.read(%{}, frame)
+
+    assert goals_response.type == :resource
+    assert is_map(goals_response.contents)
+    assert is_binary(goals_response.contents["text"])
+
+    goals_payload = Jason.decode!(goals_response.contents["text"])
+    assert goals_payload["total"] >= 1
+    assert is_map(goals_payload["by_status"])
+    assert is_list(goals_payload["goals"])
+
+    assert Enum.any?(goals_payload["goals"], fn g ->
+             g["id"] == goal.id and g["title"] == goal.title
+           end)
   end
 
   defp purge_nodes do

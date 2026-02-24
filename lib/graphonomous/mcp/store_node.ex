@@ -6,21 +6,18 @@ defmodule Graphonomous.MCP.StoreNode do
   use Anubis.Server.Component, type: :tool
 
   schema do
-    field :content, :string,
+    field(:content, :string,
       required: true,
       description: "Natural-language knowledge to store"
+    )
 
-    field :node_type, :string,
-      description: "Node type: episodic, semantic, or procedural"
+    field(:node_type, :string, description: "Node type: episodic, semantic, or procedural")
 
-    field :confidence, :number,
-      description: "Confidence score from 0.0 to 1.0"
+    field(:confidence, :number, description: "Confidence score from 0.0 to 1.0")
 
-    field :source, :string,
-      description: "Where this knowledge came from"
+    field(:source, :string, description: "Where this knowledge came from")
 
-    field :metadata, :string,
-      description: "Optional JSON object with extra node metadata"
+    field(:metadata, :string, description: "Optional JSON object with extra node metadata")
   end
 
   @impl true

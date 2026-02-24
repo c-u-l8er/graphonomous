@@ -14,7 +14,11 @@ defmodule Graphonomous.Types.Outcome do
           confidence: float(),
           causal_node_ids: [binary()],
           evidence: map(),
-          observed_at: DateTime.t()
+          observed_at: DateTime.t(),
+          retrieval_trace_id: binary() | nil,
+          decision_trace_id: binary() | nil,
+          action_linkage: map(),
+          grounding: map()
         }
 
   defstruct [
@@ -22,7 +26,11 @@ defmodule Graphonomous.Types.Outcome do
     :status,
     :causal_node_ids,
     :observed_at,
+    retrieval_trace_id: nil,
+    decision_trace_id: nil,
     confidence: 0.5,
-    evidence: %{}
+    evidence: %{},
+    action_linkage: %{},
+    grounding: %{}
   ]
 end

@@ -13,20 +13,43 @@ defmodule Graphonomous.MCP.LearnFromOutcome do
   @allowed_statuses ~w(success partial_success failure timeout)
 
   schema do
-    field :action_id, :string, required: true,
+    field(:action_id, :string,
+      required: true,
       description: "ID of the action that produced this outcome"
+    )
 
-    field :status, :string, required: true,
+    field(:status, :string,
+      required: true,
       description: "success, partial_success, failure, or timeout"
+    )
 
-    field :confidence, :number, required: true,
+    field(:confidence, :number,
+      required: true,
       description: "0.0-1.0 confidence in this outcome signal"
+    )
 
-    field :causal_node_ids, :string, required: true,
+    field(:causal_node_ids, :string,
+      required: true,
       description: "JSON array of node IDs that informed this action"
+    )
 
-    field :evidence, :string,
-      description: "Optional JSON object with additional evidence"
+    field(:evidence, :string, description: "Optional JSON object with additional evidence")
+
+    field(:retrieval_trace_id, :string,
+      description: "Optional retrieval trace identifier for causal provenance"
+    )
+
+    field(:decision_trace_id, :string,
+      description: "Optional decision trace identifier linking planner/executor context"
+    )
+
+    field(:action_linkage, :string,
+      description: "Optional JSON object describing action linkage metadata"
+    )
+
+    field(:grounding, :string,
+      description: "Optional JSON object for outcome grounding provenance"
+    )
   end
 
   @impl true
@@ -36,17 +59,27 @@ defmodule Graphonomous.MCP.LearnFromOutcome do
          {:ok, confidence} <- read_confidence(params),
          {:ok, causal_node_ids} <- read_causal_node_ids(params),
          {:ok, evidence} <- read_evidence(params),
+         {:ok, retrieval_trace_id} <- read_optional_string(params, :retrieval_trace_id),
+         {:ok, decision_trace_id} <- read_optional_string(params, :decision_trace_id),
+         {:ok, action_linkage} <- read_optional_json_map(params, :action_linkage),
+         {:ok, grounding} <- read_optional_json_map(params, :grounding),
          {:ok, result} <-
            do_learn(%{
              action_id: action_id,
              status: status,
              confidence: confidence,
              causal_node_ids: causal_node_ids,
-             evidence: evidence
+             evidence: evidence,
+             retrieval_trace_id: retrieval_trace_id,
+             decision_trace_id: decision_trace_id,
+             action_linkage: action_linkage,
+             grounding: grounding
            }) do
       response = %{
         action_id: action_id,
         status: to_string(status),
+        retrieval_trace_id: retrieval_trace_id,
+        decision_trace_id: decision_trace_id,
         processed: Map.get(result, :processed, length(causal_node_ids)),
         updated: Map.get(result, :updated, 0),
         skipped: Map.get(result, :skipped, 0),
@@ -180,6 +213,48 @@ defmodule Graphonomous.MCP.LearnFromOutcome do
     end
   end
 
+  defp read_optional_string(params, key) do
+    case fetch(params, key) do
+      nil ->
+        {:ok, nil}
+
+      value when is_binary(value) ->
+        trimmed = String.trim(value)
+        {:ok, if(trimmed == "", do: nil, else: trimmed)}
+
+      other ->
+        {:error, {:invalid_optional_string, key, other}}
+    end
+  end
+
+  defp read_optional_json_map(params, key) do
+    case fetch(params, key) do
+      nil ->
+        {:ok, %{}}
+
+      value when is_map(value) ->
+        {:ok, value}
+
+      value when is_binary(value) ->
+        trimmed = String.trim(value)
+
+        cond do
+          trimmed == "" ->
+            {:ok, %{}}
+
+          true ->
+            case Jason.decode(trimmed) do
+              {:ok, decoded} when is_map(decoded) -> {:ok, decoded}
+              {:ok, _} -> {:error, {:invalid_optional_json_map, key, value}}
+              {:error, _} -> {:error, {:invalid_optional_json_map, key, value}}
+            end
+        end
+
+      other ->
+        {:error, {:invalid_optional_json_map, key, other}}
+    end
+  end
+
   defp fetch(params, key) do
     Map.get(params, key, Map.get(params, Atom.to_string(key)))
   end
@@ -189,10 +264,30 @@ defmodule Graphonomous.MCP.LearnFromOutcome do
   defp clamp01(v), do: v
 
   defp format_reason({:missing_or_invalid, key}), do: "#{key} is required"
-  defp format_reason({:invalid_status, _}), do: "status must be one of: success, partial_success, failure, timeout"
-  defp format_reason({:invalid_confidence, _}), do: "confidence must be a number in the range 0.0..1.0"
-  defp format_reason({:invalid_causal_node_ids, _}), do: "causal_node_ids must be a JSON array of node ID strings"
+
+  defp format_reason({:invalid_status, _}),
+    do: "status must be one of: success, partial_success, failure, timeout"
+
+  defp format_reason({:invalid_confidence, _}),
+    do: "confidence must be a number in the range 0.0..1.0"
+
+  defp format_reason({:invalid_causal_node_ids, _}),
+    do: "causal_node_ids must be a JSON array of node ID strings"
+
   defp format_reason({:invalid_evidence, _}), do: "evidence must be a JSON object string"
+
+  defp format_reason({:invalid_optional_string, :retrieval_trace_id, _}),
+    do: "retrieval_trace_id must be a string"
+
+  defp format_reason({:invalid_optional_string, :decision_trace_id, _}),
+    do: "decision_trace_id must be a string"
+
+  defp format_reason({:invalid_optional_json_map, :action_linkage, _}),
+    do: "action_linkage must be a JSON object string"
+
+  defp format_reason({:invalid_optional_json_map, :grounding, _}),
+    do: "grounding must be a JSON object string"
+
   defp format_reason({:unexpected_result, _}), do: "unexpected learning result"
   defp format_reason(other), do: inspect(other)
 end

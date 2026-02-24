@@ -4,10 +4,10 @@ _Last Updated: 2026-02-24_
 
 ## Overall Status
 
-**Current Phase:** Foundation + Core CL Engine + GoalGraph/Coverage expansion (spec Sections 4, 5, 6, 7, 8, 9)  
+**Current Phase:** Foundation + Core CL Engine + GoalGraph/Coverage + MCP resources + grounding fidelity pass (spec Sections 4, 5, 6, 7, 8, 9)  
 **Health:** ✅ Compiling and testable  
-**Test Status:** ✅ `27 tests, 0 failures`  
-**Runtime Shape:** ✅ OTP app with core supervised services + durable goal orchestration + coverage scoring
+**Test Status:** ✅ `30 tests, 0 failures`  
+**Runtime Shape:** ✅ OTP app with core supervised services + durable goal orchestration + coverage scoring + read-only MCP resources + startup cache warm
 
 ---
 
@@ -47,12 +47,14 @@ Implemented typed structs:
 
 ## 4) Storage Layer (Spec §4.3)
 Implemented `Graphonomous.Store`:
-- ✅ SQLite schema bootstrap on startup (`nodes`, `edges`, `outcomes` + indexes)
+- ✅ SQLite schema bootstrap on startup (`nodes`, `edges`, `outcomes`, `goals` + indexes)
 - ✅ Node CRUD operations
 - ✅ Edge upsert + lookup by node
 - ✅ Outcome insert + list
 - ✅ ETS hot cache (v0.1 fast-path)
+- ✅ Startup cache warm/rebuild from SQLite for crash/restart consistency
 - ✅ Optional sqlite-vec extension load hook
+- ✅ Parameterized prepared execution for delete paths (`nodes`, `goals`)
 
 ## 5) Public API Surface
 Implemented `Graphonomous` module with stable entry points:
@@ -85,6 +87,9 @@ Implemented MCP server + tool components:
 - ✅ `Graphonomous.MCP.ManageGoal`
 - ✅ `Graphonomous.MCP.ReviewGoal`
 - ✅ `Graphonomous.MCP.RunConsolidation`
+- ✅ MCP resources enabled on server capability surface
+- ✅ `Graphonomous.MCP.Resources.HealthSnapshot`
+- ✅ `Graphonomous.MCP.Resources.GoalsSnapshot`
 
 ## 8) GoalGraph + Epistemic Coverage (Spec §6.1.2 / §6.1.3)
 Implemented:
@@ -98,13 +103,13 @@ Implemented:
 
 ## 9) Test Coverage
 Implemented and passing:
-- ✅ `store_test.exs`
+- ✅ `store_test.exs` (expanded for cache rebuild + grounding trace persistence)
 - ✅ `graph_test.exs`
 - ✅ `retriever_test.exs`
-- ✅ `learner_test.exs`
+- ✅ `learner_test.exs` (expanded for trace propagation assertions)
 - ✅ `goal_graph_test.exs`
 - ✅ `coverage_test.exs`
-- ✅ `mcp_integration_test.exs`
+- ✅ `mcp_integration_test.exs` (expanded for MCP resource snapshot coverage)
 
 ---
 
@@ -133,16 +138,16 @@ Implemented and passing:
 ## B) MCP Feature Completeness (Spec §5.2/§5.3)
 - ✅ Added goal-graph operations (`manage_goal`) and consolidation control (`run_consolidation`) tools.
 - ✅ Added coverage review tool (`review_goal`) for epistemic policy loop.
-- ⏳ Add MCP resources endpoints (read-only resource surfaces).
+- ✅ Added MCP resources endpoints (read-only resource surfaces): health and goals snapshots.
 
 ## C) Continual Learning Deepening (Spec §6)
 - ✅ Implemented GoalGraph persistence module and retrieval path.
 - ✅ Implemented epistemic coverage scoring (`act vs learn vs escalate`) signal.
-- ⏳ Implement explicit outcome grounding records tied to retrieval causal context contract (trace IDs + richer causality provenance).
+- ✅ Implemented explicit outcome grounding trace records tied to causal context (`retrieval_trace_id`, `decision_trace_id`, `action_linkage`, `grounding`).
 
 ## D) Storage Hardening
-- ⏳ Improve SQL safety by replacing interpolated SQL with prepared/parameterized execution where possible.
-- ⏳ Add startup cache warm/rebuild from persistent DB.
+- 🟡 SQL safety improved with prepared/parameterized execution on delete paths; broader conversion still pending.
+- ✅ Added startup cache warm/rebuild from persistent DB.
 - ⏳ Add migration/versioning strategy for schema evolution.
 
 ## E) Runtime/Operations
@@ -158,11 +163,11 @@ Implemented and passing:
 **Goal:** harden durability, MCP resource surfaces, and grounding fidelity against `project_spec/README.md`.
 
 Planned sequence:
-1. Add startup cache warm/rebuild from SQLite to improve crash/restart consistency.
-2. Add MCP resources surfaces (read-only state snapshots for goals/graph health).
-3. Add explicit outcome-grounding trace fields (retrieval trace IDs, decision provenance, action linkage).
-4. Improve SQL safety posture with parameterized execution where possible.
-5. Add CI + release-hardening docs for reproducible bootstrap and verification.
+1. ✅ Add startup cache warm/rebuild from SQLite to improve crash/restart consistency.
+2. ✅ Add MCP resources surfaces (read-only state snapshots for goals/graph health).
+3. ✅ Add explicit outcome-grounding trace fields (retrieval trace IDs, decision provenance, action linkage).
+4. 🟡 Continue SQL safety posture hardening with broader parameterized execution coverage.
+5. ⏳ Add CI + release-hardening docs for reproducible bootstrap and verification.
 
 ---
 
@@ -193,5 +198,9 @@ Planned sequence:
 - Expanded implementation with durable GoalGraph persistence and lifecycle operations.
 - Added epistemic coverage scoring (`act | learn | escalate`) and review flow integration.
 - Added new MCP tools: `manage_goal`, `review_goal`, `run_consolidation`.
-- Expanded passing test suite to `27/27`.
+- Added startup cache warm/rebuild path to repopulate ETS from SQLite.
+- Added read-only MCP resources: `graphonomous://runtime/health` and `graphonomous://goals/snapshot`.
+- Added explicit outcome grounding trace fields (`retrieval_trace_id`, `decision_trace_id`, `action_linkage`, `grounding`) across API, learner, and store persistence.
+- Improved SQL safety posture by moving delete operations to prepared/parameterized execution.
+- Expanded passing test suite to `30/30` with new coverage for cache rebuild, grounding traces, and MCP resources.
 - Created and updated this ongoing progress tracker.

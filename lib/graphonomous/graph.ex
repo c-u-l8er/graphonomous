@@ -301,7 +301,10 @@ defmodule Graphonomous.Graph do
   defp decode_embedding_blob(_), do: []
 
   defp decode_f32_le(<<>>, acc), do: Enum.reverse(acc)
-  defp decode_f32_le(<<f::float-little-32, rest::binary>>, acc), do: decode_f32_le(rest, [f | acc])
+
+  defp decode_f32_le(<<f::float-little-32, rest::binary>>, acc),
+    do: decode_f32_le(rest, [f | acc])
+
   defp decode_f32_le(_partial, acc), do: Enum.reverse(acc)
 
   defp cosine_similarity([], _), do: 0.0
@@ -418,8 +421,9 @@ defmodule Graphonomous.Graph do
 
   defp normalize_node_type(_), do: :semantic
 
-  defp normalize_edge_type(type) when type in [:causal, :related, :contradicts, :supports, :derived_from],
-    do: type
+  defp normalize_edge_type(type)
+       when type in [:causal, :related, :contradicts, :supports, :derived_from],
+       do: type
 
   defp normalize_edge_type(type) when is_binary(type) do
     case String.downcase(String.trim(type)) do

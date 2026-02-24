@@ -56,6 +56,10 @@ defmodule Graphonomous.Learner do
     - `confidence` (0.0..1.0)
     - `causal_node_ids` ([string])
     - `evidence` (map, optional)
+    - `retrieval_trace_id` (string, optional)
+    - `decision_trace_id` (string, optional)
+    - `action_linkage` (map, optional)
+    - `grounding` (map, optional)
     - `observed_at` (DateTime or ISO8601 string, optional)
   """
   @spec learn_from_outcome(map()) :: {:ok, learn_result()} | {:error, term()}
@@ -69,7 +73,10 @@ defmodule Graphonomous.Learner do
   def init(opts) do
     learning_rate =
       opts
-      |> Keyword.get(:learning_rate, Application.get_env(:graphonomous, :learning_rate, @default_learning_rate))
+      |> Keyword.get(
+        :learning_rate,
+        Application.get_env(:graphonomous, :learning_rate, @default_learning_rate)
+      )
       |> normalize_probability()
 
     {:ok, %{learning_rate: learning_rate}}
@@ -87,6 +94,10 @@ defmodule Graphonomous.Learner do
       result = %{
         action_id: outcome.action_id,
         status: outcome.status,
+        retrieval_trace_id: outcome.retrieval_trace_id,
+        decision_trace_id: outcome.decision_trace_id,
+        action_linkage: outcome.action_linkage,
+        grounding: outcome.grounding,
         processed: length(outcome.causal_node_ids),
         updated: updated,
         skipped: skipped,
@@ -96,7 +107,12 @@ defmodule Graphonomous.Learner do
       :telemetry.execute(
         [:graphonomous, :outcome, :processed],
         %{processed: result.processed, updated: result.updated, skipped: result.skipped},
-        %{action_id: outcome.action_id, status: outcome.status}
+        %{
+          action_id: outcome.action_id,
+          status: outcome.status,
+          retrieval_trace_id: outcome.retrieval_trace_id,
+          decision_trace_id: outcome.decision_trace_id
+        }
       )
 
       {:reply, {:ok, result}, state}
@@ -138,6 +154,10 @@ defmodule Graphonomous.Learner do
           outcome_confidence: outcome.confidence,
           old_confidence: old_conf,
           new_confidence: new_conf,
+          retrieval_trace_id: outcome.retrieval_trace_id,
+          decision_trace_id: outcome.decision_trace_id,
+          action_linkage: outcome.action_linkage,
+          grounding: outcome.grounding,
           observed_at: DateTime.to_iso8601(outcome.observed_at)
         }
 
@@ -204,7 +224,7 @@ defmodule Graphonomous.Learner do
   # Scale by outcome confidence, then map [-1, 1] to [0, 1]
   defp scale_signal(raw_signal, outcome_confidence) do
     scaled = raw_signal * normalize_probability(outcome_confidence)
-    (scaled + 1.0) / 2.0 |> normalize_probability()
+    ((scaled + 1.0) / 2.0) |> normalize_probability()
   end
 
   ## Normalization
@@ -218,6 +238,10 @@ defmodule Graphonomous.Learner do
       confidence: normalize_probability(map_get(attrs, :confidence, 0.5)),
       causal_node_ids: normalize_node_ids(map_get(attrs, :causal_node_ids, [])),
       evidence: normalize_map(map_get(attrs, :evidence, %{})),
+      retrieval_trace_id: normalize_optional_string(map_get(attrs, :retrieval_trace_id, nil)),
+      decision_trace_id: normalize_optional_string(map_get(attrs, :decision_trace_id, nil)),
+      action_linkage: normalize_map(map_get(attrs, :action_linkage, %{})),
+      grounding: normalize_map(map_get(attrs, :grounding, %{})),
       observed_at: normalize_datetime(map_get(attrs, :observed_at, now), now)
     }
   end
@@ -250,6 +274,17 @@ defmodule Graphonomous.Learner do
 
   defp normalize_map(v) when is_map(v), do: v
   defp normalize_map(_), do: %{}
+
+  defp normalize_optional_string(nil), do: nil
+
+  defp normalize_optional_string(v) when is_binary(v) do
+    case String.trim(v) do
+      "" -> nil
+      trimmed -> trimmed
+    end
+  end
+
+  defp normalize_optional_string(v), do: v |> to_string() |> normalize_optional_string()
 
   defp normalize_node_ids(v) when is_list(v) do
     v

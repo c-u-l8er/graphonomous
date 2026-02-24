@@ -12,23 +12,22 @@ defmodule Graphonomous.MCP.QueryGraph do
   use Anubis.Server.Component, type: :tool
 
   schema do
-    field :operation, :string, required: true,
+    field(:operation, :string,
+      required: true,
       description: "list_nodes, get_node, get_edges, or similarity_search"
+    )
 
-    field :node_id, :string,
-      description: "Required for get_node/get_edges"
+    field(:node_id, :string, description: "Required for get_node/get_edges")
 
-    field :node_type, :string,
+    field(:node_type, :string,
       description: "Optional filter for list_nodes (episodic|semantic|procedural)"
+    )
 
-    field :min_confidence, :number,
-      description: "Optional filter for list_nodes (0.0-1.0)"
+    field(:min_confidence, :number, description: "Optional filter for list_nodes (0.0-1.0)")
 
-    field :limit, :number,
-      description: "Optional max results for list_nodes/similarity_search"
+    field(:limit, :number, description: "Optional max results for list_nodes/similarity_search")
 
-    field :query, :string,
-      description: "Natural-language query for similarity_search"
+    field(:query, :string, description: "Natural-language query for similarity_search")
   end
 
   @impl true

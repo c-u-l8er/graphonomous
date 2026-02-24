@@ -16,24 +16,31 @@ defmodule Graphonomous.MCP.ReviewGoal do
   @default_apply_decision true
 
   schema do
-    field :goal_id, :string, required: true,
+    field(:goal_id, :string,
+      required: true,
       description: "Goal ID to review"
+    )
 
-    field :signal, :string, required: true,
+    field(:signal, :string,
+      required: true,
       description:
         "Coverage signal as a JSON object. Example: {\"retrieved_nodes\": [...], \"outcomes\": [...], \"contradictions\": 1}"
+    )
 
-    field :options, :string,
+    field(:options, :string,
       description:
         "Optional JSON object for coverage options (top_k, min_context_nodes, freshness_half_life_hours, graph_support_target, weights, thresholds)"
+    )
 
-    field :apply_decision, :string,
+    field(:apply_decision, :string,
       description:
         "Optional boolean-like flag (true/false). If true, applies decision -> status transition policy"
+    )
 
-    field :transition_metadata, :string,
+    field(:transition_metadata, :string,
       description:
         "Optional JSON object merged into transition metadata when apply_decision is enabled"
+    )
   end
 
   @impl true
@@ -261,11 +268,20 @@ defmodule Graphonomous.MCP.ReviewGoal do
 
   defp read_bool(params, key, default) do
     case fetch(params, key) do
-      nil -> default
-      value when is_boolean(value) -> value
-      value when is_integer(value) -> value != 0
-      value when is_binary(value) -> String.downcase(String.trim(value)) in ["1", "true", "yes", "y"]
-      _ -> default
+      nil ->
+        default
+
+      value when is_boolean(value) ->
+        value
+
+      value when is_integer(value) ->
+        value != 0
+
+      value when is_binary(value) ->
+        String.downcase(String.trim(value)) in ["1", "true", "yes", "y"]
+
+      _ ->
+        default
     end
   end
 
@@ -281,8 +297,12 @@ defmodule Graphonomous.MCP.ReviewGoal do
     value = Map.get(map, key, default)
 
     cond do
-      is_integer(value) -> value
-      is_float(value) -> value
+      is_integer(value) ->
+        value
+
+      is_float(value) ->
+        value
+
       is_binary(value) ->
         case Float.parse(String.trim(value)) do
           {f, _} -> f

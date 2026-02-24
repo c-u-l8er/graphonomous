@@ -304,7 +304,8 @@ defmodule Graphonomous.Coverage do
       |> Enum.map(&node_score/1)
       |> stddev()
 
-    (0.45 * semantic_gap + 0.25 * score_dispersion + 0.20 * low_evidence_penalty + 0.10 * known_unknowns)
+    (0.45 * semantic_gap + 0.25 * score_dispersion + 0.20 * low_evidence_penalty +
+       0.10 * known_unknowns)
     |> clamp01()
   end
 
@@ -329,12 +330,12 @@ defmodule Graphonomous.Coverage do
   defp pick_decision(coverage, uncertainty, risk, thresholds) do
     cond do
       coverage >= t(thresholds, :act_coverage) and
-          uncertainty <= t(thresholds, :act_max_uncertainty) and
+        uncertainty <= t(thresholds, :act_max_uncertainty) and
           risk <= t(thresholds, :act_max_risk) ->
         :act
 
       coverage >= t(thresholds, :learn_coverage) and
-          uncertainty <= t(thresholds, :learn_max_uncertainty) and
+        uncertainty <= t(thresholds, :learn_max_uncertainty) and
           risk <= t(thresholds, :learn_max_risk) ->
         :learn
 
@@ -481,6 +482,7 @@ defmodule Graphonomous.Coverage do
 
   defp freshness_from_timestamp(timestamp, now, half_life_hours) do
     age_hours = max(DateTime.diff(now, timestamp, :second), 0) / 3600.0
+
     :math.exp(-age_hours / max(half_life_hours * 1.0, 1.0))
     |> clamp01()
   end
@@ -502,7 +504,8 @@ defmodule Graphonomous.Coverage do
 
   defp parse_datetime(_), do: nil
 
-  defp normalize_status(status) when status in [:success, :partial_success, :failure, :timeout], do: status
+  defp normalize_status(status) when status in [:success, :partial_success, :failure, :timeout],
+    do: status
 
   defp normalize_status(status) when is_binary(status) do
     case String.downcase(String.trim(status)) do
@@ -537,15 +540,20 @@ defmodule Graphonomous.Coverage do
     value = get_val(map, key, default)
 
     cond do
-      is_integer(value) -> value * 1.0
-      is_float(value) -> value
+      is_integer(value) ->
+        value * 1.0
+
+      is_float(value) ->
+        value
+
       is_binary(value) ->
         case Float.parse(String.trim(value)) do
           {f, _} -> f
           :error -> default
         end
 
-      true -> default
+      true ->
+        default
     end
   end
 

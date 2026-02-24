@@ -97,7 +97,10 @@ defmodule Graphonomous.CoverageTest do
       result = Coverage.evaluate(signal)
 
       assert result.decision == :escalate
-      assert result.risk_score > 0.45 or result.uncertainty_score > 0.70 or result.coverage_score < 0.45
+
+      assert result.risk_score > 0.45 or result.uncertainty_score > 0.70 or
+               result.coverage_score < 0.45
+
       assert result.decision_confidence >= 0.0 and result.decision_confidence <= 1.0
     end
   end
@@ -141,7 +144,15 @@ defmodule Graphonomous.CoverageTest do
       rec = Coverage.recommend(signal)
 
       assert Map.keys(rec) |> Enum.sort() ==
-               [:coverage_score, :decision, :decision_confidence, :rationale, :risk_score, :uncertainty_score] |> Enum.sort()
+               [
+                 :coverage_score,
+                 :decision,
+                 :decision_confidence,
+                 :rationale,
+                 :risk_score,
+                 :uncertainty_score
+               ]
+               |> Enum.sort()
 
       assert rec.decision in [:act, :learn, :escalate]
       assert is_float(rec.coverage_score)
@@ -155,9 +166,27 @@ defmodule Graphonomous.CoverageTest do
 
       signal = %{
         "retrieved_nodes" => [
-          %{"score" => 0.93, "confidence" => 0.95, "similarity" => 0.94, "updated_at" => now_iso, "edge_count" => 9},
-          %{"score" => 0.91, "confidence" => 0.93, "similarity" => 0.92, "updated_at" => now_iso, "edge_count" => 8},
-          %{"score" => 0.89, "confidence" => 0.92, "similarity" => 0.91, "updated_at" => now_iso, "edge_count" => 7}
+          %{
+            "score" => 0.93,
+            "confidence" => 0.95,
+            "similarity" => 0.94,
+            "updated_at" => now_iso,
+            "edge_count" => 9
+          },
+          %{
+            "score" => 0.91,
+            "confidence" => 0.93,
+            "similarity" => 0.92,
+            "updated_at" => now_iso,
+            "edge_count" => 8
+          },
+          %{
+            "score" => 0.89,
+            "confidence" => 0.92,
+            "similarity" => 0.91,
+            "updated_at" => now_iso,
+            "edge_count" => 7
+          }
         ],
         "outcomes" => [
           %{"status" => "success", "confidence" => 0.95}

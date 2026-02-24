@@ -32,34 +32,35 @@ defmodule Graphonomous.MCP.ManageGoal do
   )
 
   schema do
-    field :operation, :string, required: true,
+    field(:operation, :string,
+      required: true,
       description:
         "Goal operation: create_goal|get_goal|list_goals|update_goal|delete_goal|transition_goal|set_progress|link_nodes|unlink_nodes|review_goal"
+    )
 
-    field :goal_id, :string,
-      description: "Goal ID (required for get/update/delete/transition/set_progress/link_nodes/unlink_nodes/review_goal)"
+    field(:goal_id, :string,
+      description:
+        "Goal ID (required for get/update/delete/transition/set_progress/link_nodes/unlink_nodes/review_goal)"
+    )
 
-    field :payload, :string,
+    field(:payload, :string,
       description:
         "JSON object for create/update/list filters. Example: {\"title\":\"Ship v0.1\",\"priority\":\"high\"}"
+    )
 
-    field :status, :string,
-      description: "Target status for transition_goal"
+    field(:status, :string, description: "Target status for transition_goal")
 
-    field :progress, :number,
-      description: "Progress value in [0.0, 1.0] for set_progress"
+    field(:progress, :number, description: "Progress value in [0.0, 1.0] for set_progress")
 
-    field :node_ids, :string,
-      description: "JSON array of node IDs for link_nodes/unlink_nodes"
+    field(:node_ids, :string, description: "JSON array of node IDs for link_nodes/unlink_nodes")
 
-    field :metadata, :string,
-      description: "JSON object metadata for transition_goal"
+    field(:metadata, :string, description: "JSON object metadata for transition_goal")
 
-    field :signal, :string,
+    field(:signal, :string,
       description: "JSON object signal for review_goal (coverage evaluation input)"
+    )
 
-    field :opts, :string,
-      description: "JSON object options for review_goal coverage evaluation"
+    field(:opts, :string, description: "JSON object options for review_goal coverage evaluation")
   end
 
   @impl true
@@ -104,6 +105,7 @@ defmodule Graphonomous.MCP.ManageGoal do
 
   defp dispatch("list_goals", params) do
     filters = payload_map(params)
+
     Graphonomous.list_goals(filters)
     |> normalize_result()
   end
@@ -209,8 +211,12 @@ defmodule Graphonomous.MCP.ManageGoal do
     value = fetch(params, :progress)
 
     cond do
-      is_float(value) -> {:ok, clamp01(value)}
-      is_integer(value) -> {:ok, clamp01(value * 1.0)}
+      is_float(value) ->
+        {:ok, clamp01(value)}
+
+      is_integer(value) ->
+        {:ok, clamp01(value * 1.0)}
+
       is_binary(value) ->
         case Float.parse(String.trim(value)) do
           {f, _} -> {:ok, clamp01(f)}

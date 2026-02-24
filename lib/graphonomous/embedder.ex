@@ -219,7 +219,8 @@ defmodule Graphonomous.Embedder do
     end
   end
 
-  defp ensure_dimension({:ok, vector}, dimension) when is_list(vector) and is_integer(dimension) do
+  defp ensure_dimension({:ok, vector}, dimension)
+       when is_list(vector) and is_integer(dimension) do
     cond do
       length(vector) == dimension ->
         {:ok, l2_normalize(vector)}
@@ -263,7 +264,8 @@ defmodule Graphonomous.Embedder do
 
   ## Deterministic fallback embedder
 
-  defp fallback_embed(text, dimension) when is_binary(text) and is_integer(dimension) and dimension > 0 do
+  defp fallback_embed(text, dimension)
+       when is_binary(text) and is_integer(dimension) and dimension > 0 do
     text = String.trim(text)
 
     tokens =

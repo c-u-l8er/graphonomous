@@ -38,30 +38,61 @@ defmodule Graphonomous.Store do
   def ping, do: GenServer.call(__MODULE__, :ping)
 
   def insert_node(attrs) when is_map(attrs), do: GenServer.call(__MODULE__, {:insert_node, attrs})
-  def get_node(node_id) when is_binary(node_id), do: GenServer.call(__MODULE__, {:get_node, node_id})
-  def list_nodes(filters \\ %{}) when is_map(filters), do: GenServer.call(__MODULE__, {:list_nodes, filters})
-  def update_node(node_id, attrs) when is_binary(node_id) and is_map(attrs), do: GenServer.call(__MODULE__, {:update_node, node_id, attrs})
-  def delete_node(node_id) when is_binary(node_id), do: GenServer.call(__MODULE__, {:delete_node, node_id})
-  def increment_access(node_id) when is_binary(node_id), do: GenServer.call(__MODULE__, {:increment_access, node_id})
+
+  def get_node(node_id) when is_binary(node_id),
+    do: GenServer.call(__MODULE__, {:get_node, node_id})
+
+  def list_nodes(filters \\ %{}) when is_map(filters),
+    do: GenServer.call(__MODULE__, {:list_nodes, filters})
+
+  def update_node(node_id, attrs) when is_binary(node_id) and is_map(attrs),
+    do: GenServer.call(__MODULE__, {:update_node, node_id, attrs})
+
+  def delete_node(node_id) when is_binary(node_id),
+    do: GenServer.call(__MODULE__, {:delete_node, node_id})
+
+  def increment_access(node_id) when is_binary(node_id),
+    do: GenServer.call(__MODULE__, {:increment_access, node_id})
 
   def upsert_edge(attrs) when is_map(attrs), do: GenServer.call(__MODULE__, {:upsert_edge, attrs})
-  def list_edges_for_node(node_id) when is_binary(node_id), do: GenServer.call(__MODULE__, {:list_edges_for_node, node_id})
 
-  def insert_outcome(attrs) when is_map(attrs), do: GenServer.call(__MODULE__, {:insert_outcome, attrs})
-  def list_outcomes(limit \\ 100) when is_integer(limit) and limit > 0, do: GenServer.call(__MODULE__, {:list_outcomes, limit})
+  def list_edges_for_node(node_id) when is_binary(node_id),
+    do: GenServer.call(__MODULE__, {:list_edges_for_node, node_id})
+
+  def insert_outcome(attrs) when is_map(attrs),
+    do: GenServer.call(__MODULE__, {:insert_outcome, attrs})
+
+  def list_outcomes(limit \\ 100) when is_integer(limit) and limit > 0,
+    do: GenServer.call(__MODULE__, {:list_outcomes, limit})
 
   def insert_goal(attrs) when is_map(attrs), do: GenServer.call(__MODULE__, {:insert_goal, attrs})
-  def get_goal(goal_id) when is_binary(goal_id), do: GenServer.call(__MODULE__, {:get_goal, goal_id})
-  def list_goals(filters \\ %{}) when is_map(filters), do: GenServer.call(__MODULE__, {:list_goals, filters})
-  def update_goal(goal_id, attrs) when is_binary(goal_id) and is_map(attrs), do: GenServer.call(__MODULE__, {:update_goal, goal_id, attrs})
-  def delete_goal(goal_id) when is_binary(goal_id), do: GenServer.call(__MODULE__, {:delete_goal, goal_id})
+
+  def get_goal(goal_id) when is_binary(goal_id),
+    do: GenServer.call(__MODULE__, {:get_goal, goal_id})
+
+  def list_goals(filters \\ %{}) when is_map(filters),
+    do: GenServer.call(__MODULE__, {:list_goals, filters})
+
+  def update_goal(goal_id, attrs) when is_binary(goal_id) and is_map(attrs),
+    do: GenServer.call(__MODULE__, {:update_goal, goal_id, attrs})
+
+  def delete_goal(goal_id) when is_binary(goal_id),
+    do: GenServer.call(__MODULE__, {:delete_goal, goal_id})
+
+  def rebuild_cache, do: GenServer.call(__MODULE__, :rebuild_cache)
 
   ## GenServer
 
   @impl true
   def init(opts) do
     db_path = Keyword.get(opts, :db_path, "priv/graphonomous.db")
-    vec_extension_path = Keyword.get(opts, :vec_extension_path, Application.get_env(:graphonomous, :sqlite_vec_extension_path))
+
+    vec_extension_path =
+      Keyword.get(
+        opts,
+        :vec_extension_path,
+        Application.get_env(:graphonomous, :sqlite_vec_extension_path)
+      )
 
     :ok = ensure_parent_dir(db_path)
     :ok = ensure_cache_tables()
@@ -75,7 +106,9 @@ defmodule Graphonomous.Store do
     case Sqlite3.open(db_path) do
       {:ok, conn} ->
         with :ok <- bootstrap_schema(conn),
-             :ok <- maybe_load_vec_extension(conn, vec_extension_path) do
+             :ok <- backfill_outcomes_grounding_columns(conn),
+             :ok <- maybe_load_vec_extension(conn, vec_extension_path),
+             :ok <- warm_cache_from_db(conn) do
           {:ok, %{state | conn: conn}}
         else
           {:error, reason} -> {:stop, {:bootstrap_failed, reason}}
@@ -88,6 +121,16 @@ defmodule Graphonomous.Store do
 
   @impl true
   def handle_call(:ping, _from, state), do: {:reply, :pong, state}
+
+  def handle_call(:rebuild_cache, _from, state) do
+    reply =
+      case warm_cache_from_db(state.conn) do
+        :ok -> :ok
+        {:error, reason} -> {:error, reason}
+      end
+
+    {:reply, reply, state}
+  end
 
   def handle_call({:insert_node, attrs}, _from, state) do
     node = build_node(attrs)
@@ -142,9 +185,7 @@ defmodule Graphonomous.Store do
   def handle_call({:delete_node, node_id}, _from, state) do
     :ets.delete(@nodes_table, node_id)
 
-    sql = "DELETE FROM nodes WHERE id = '#{sql_escape(node_id)}';"
-
-    case Sqlite3.execute(state.conn, sql) do
+    case execute_prepared(state.conn, "DELETE FROM nodes WHERE id = ?;", [node_id]) do
       :ok -> {:reply, :ok, state}
       {:error, reason} -> {:reply, {:error, reason}, state}
     end
@@ -199,7 +240,12 @@ defmodule Graphonomous.Store do
     outcome = build_outcome(attrs)
 
     with :ok <- persist_outcome(state.conn, outcome) do
-      true = :ets.insert(@outcomes_table, {outcome.action_id <> "::" <> iso8601(outcome.observed_at), outcome})
+      true =
+        :ets.insert(
+          @outcomes_table,
+          {outcome.action_id <> "::" <> iso8601(outcome.observed_at), outcome}
+        )
+
       {:reply, {:ok, outcome}, state}
     else
       {:error, reason} -> {:reply, {:error, reason}, state}
@@ -285,19 +331,23 @@ defmodule Graphonomous.Store do
             description: map_get(attrs, :description, existing.description),
             status: normalize_goal_status(map_get(attrs, :status, existing.status)),
             timescale: normalize_goal_timescale(map_get(attrs, :timescale, existing.timescale)),
-            source_type: normalize_goal_source_type(map_get(attrs, :source_type, existing.source_type)),
+            source_type:
+              normalize_goal_source_type(map_get(attrs, :source_type, existing.source_type)),
             priority: normalize_goal_priority(map_get(attrs, :priority, existing.priority)),
             confidence: normalize_probability(map_get(attrs, :confidence, existing.confidence)),
             progress: normalize_probability(map_get(attrs, :progress, existing.progress)),
             owner: map_get(attrs, :owner, existing.owner),
             tags: normalize_string_list(map_get(attrs, :tags, existing.tags)),
             constraints: normalize_map(map_get(attrs, :constraints, existing.constraints)),
-            success_criteria: normalize_map(map_get(attrs, :success_criteria, existing.success_criteria)),
+            success_criteria:
+              normalize_map(map_get(attrs, :success_criteria, existing.success_criteria)),
             metadata: normalize_map(map_get(attrs, :metadata, existing.metadata)),
-            linked_node_ids: normalize_string_list(map_get(attrs, :linked_node_ids, existing.linked_node_ids)),
+            linked_node_ids:
+              normalize_string_list(map_get(attrs, :linked_node_ids, existing.linked_node_ids)),
             parent_goal_id: map_get(attrs, :parent_goal_id, existing.parent_goal_id),
             updated_at: now,
-            due_at: map_get(attrs, :due_at, existing.due_at) |> normalize_datetime(existing.due_at),
+            due_at:
+              map_get(attrs, :due_at, existing.due_at) |> normalize_datetime(existing.due_at),
             completed_at:
               map_get(attrs, :completed_at, existing.completed_at)
               |> normalize_datetime(existing.completed_at),
@@ -321,9 +371,7 @@ defmodule Graphonomous.Store do
   def handle_call({:delete_goal, goal_id}, _from, state) do
     :ets.delete(@goals_table, goal_id)
 
-    sql = "DELETE FROM goals WHERE id = '#{sql_escape(goal_id)}';"
-
-    case Sqlite3.execute(state.conn, sql) do
+    case execute_prepared(state.conn, "DELETE FROM goals WHERE id = ?;", [goal_id]) do
       :ok -> {:reply, :ok, state}
       {:error, reason} -> {:reply, {:error, reason}, state}
     end
@@ -335,6 +383,208 @@ defmodule Graphonomous.Store do
   def terminate(_reason, %{conn: conn}) do
     _ = Sqlite3.close(conn)
     :ok
+  end
+
+  ## Cache warm/rebuild
+
+  defp warm_cache_from_db(conn) do
+    clear_cache_tables()
+
+    with {:ok, node_rows} <-
+           select_all(conn, """
+           SELECT id, content, node_type, confidence, embedding, metadata, source, access_count, created_at, updated_at, last_accessed_at
+           FROM nodes;
+           """),
+         {:ok, edge_rows} <-
+           select_all(conn, """
+           SELECT id, source_id, target_id, edge_type, weight, metadata, created_at, last_activated_at
+           FROM edges;
+           """),
+         {:ok, outcome_rows} <-
+           select_all(conn, """
+           SELECT id, action_id, status, confidence, causal_node_ids, evidence, retrieval_trace_id, decision_trace_id, action_linkage, grounding, observed_at
+           FROM outcomes;
+           """),
+         {:ok, goal_rows} <-
+           select_all(conn, """
+           SELECT id, title, description, status, timescale, source_type, priority, confidence, progress, owner, tags, constraints, success_criteria, metadata, linked_node_ids, parent_goal_id, created_at, updated_at, due_at, completed_at, last_reviewed_at
+           FROM goals;
+           """) do
+      Enum.each(node_rows, &cache_node_row/1)
+      Enum.each(edge_rows, &cache_edge_row/1)
+      Enum.each(outcome_rows, &cache_outcome_row/1)
+      Enum.each(goal_rows, &cache_goal_row/1)
+      :ok
+    end
+  end
+
+  defp clear_cache_tables do
+    :ets.delete_all_objects(@nodes_table)
+    :ets.delete_all_objects(@edges_table)
+    :ets.delete_all_objects(@outcomes_table)
+    :ets.delete_all_objects(@goals_table)
+  end
+
+  defp cache_node_row([
+         id,
+         content,
+         node_type,
+         confidence,
+         embedding,
+         metadata,
+         source,
+         access_count,
+         created_at,
+         updated_at,
+         last_accessed_at
+       ]) do
+    now = DateTime.utc_now()
+
+    node = %Node{
+      id: id,
+      content: to_string(content || ""),
+      node_type: normalize_node_type(node_type),
+      confidence: normalize_probability(confidence),
+      embedding: normalize_db_embedding(embedding),
+      metadata: normalize_db_json_map(metadata),
+      source: source,
+      access_count: normalize_integer(access_count, 0),
+      created_at: normalize_datetime(created_at, now),
+      updated_at: normalize_datetime(updated_at, now),
+      last_accessed_at: normalize_datetime(last_accessed_at, now)
+    }
+
+    true = :ets.insert(@nodes_table, {node.id, node})
+  end
+
+  defp cache_edge_row([
+         id,
+         source_id,
+         target_id,
+         edge_type,
+         weight,
+         metadata,
+         created_at,
+         last_activated_at
+       ]) do
+    now = DateTime.utc_now()
+
+    edge = %Edge{
+      id: id,
+      source_id: source_id,
+      target_id: target_id,
+      edge_type: normalize_edge_type(edge_type),
+      weight: normalize_probability(weight),
+      metadata: normalize_db_json_map(metadata),
+      created_at: normalize_datetime(created_at, now),
+      last_activated_at: normalize_datetime(last_activated_at, now)
+    }
+
+    true = :ets.insert(@edges_table, {edge.id, edge})
+  end
+
+  defp cache_outcome_row([
+         row_id,
+         action_id,
+         status,
+         confidence,
+         causal_node_ids,
+         evidence,
+         retrieval_trace_id,
+         decision_trace_id,
+         action_linkage,
+         grounding,
+         observed_at
+       ]) do
+    now = DateTime.utc_now()
+
+    outcome = %Outcome{
+      action_id: to_string(action_id || ""),
+      status: normalize_status(status),
+      confidence: normalize_probability(confidence),
+      causal_node_ids: normalize_db_json_list(causal_node_ids),
+      evidence: normalize_db_json_map(evidence),
+      retrieval_trace_id: retrieval_trace_id,
+      decision_trace_id: decision_trace_id,
+      action_linkage: normalize_db_json_map(action_linkage),
+      grounding: normalize_db_json_map(grounding),
+      observed_at: normalize_datetime(observed_at, now)
+    }
+
+    true = :ets.insert(@outcomes_table, {to_string(row_id || id("outcome")), outcome})
+  end
+
+  defp cache_goal_row([
+         id,
+         title,
+         description,
+         status,
+         timescale,
+         source_type,
+         priority,
+         confidence,
+         progress,
+         owner,
+         tags,
+         constraints,
+         success_criteria,
+         metadata,
+         linked_node_ids,
+         parent_goal_id,
+         created_at,
+         updated_at,
+         due_at,
+         completed_at,
+         last_reviewed_at
+       ]) do
+    now = DateTime.utc_now()
+
+    goal = %Goal{
+      id: id,
+      title: to_string(title || ""),
+      description: description,
+      status: normalize_goal_status(status),
+      timescale: normalize_goal_timescale(timescale),
+      source_type: normalize_goal_source_type(source_type),
+      priority: normalize_goal_priority(priority),
+      confidence: normalize_probability(confidence),
+      progress: normalize_probability(progress),
+      owner: owner,
+      tags: normalize_db_json_list(tags),
+      constraints: normalize_db_json_map(constraints),
+      success_criteria: normalize_db_json_map(success_criteria),
+      metadata: normalize_db_json_map(metadata),
+      linked_node_ids: normalize_db_json_list(linked_node_ids),
+      parent_goal_id: parent_goal_id,
+      created_at: normalize_datetime(created_at, now),
+      updated_at: normalize_datetime(updated_at, now),
+      due_at: normalize_datetime(due_at, nil),
+      completed_at: normalize_datetime(completed_at, nil),
+      last_reviewed_at: normalize_datetime(last_reviewed_at, nil)
+    }
+
+    true = :ets.insert(@goals_table, {goal.id, goal})
+  end
+
+  defp select_all(conn, sql) when is_binary(sql) do
+    with {:ok, stmt} <- Sqlite3.prepare(conn, sql),
+         {:ok, rows} <- Sqlite3.fetch_all(conn, stmt) do
+      _ = Sqlite3.release(conn, stmt)
+      {:ok, rows}
+    else
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp execute_prepared(conn, sql, params) when is_binary(sql) and is_list(params) do
+    with {:ok, stmt} <- Sqlite3.prepare(conn, sql),
+         :ok <- Sqlite3.bind(stmt, params),
+         {:ok, _rows} <- Sqlite3.fetch_all(conn, stmt) do
+      _ = Sqlite3.release(conn, stmt)
+      :ok
+    else
+      {:error, reason} -> {:error, reason}
+    end
   end
 
   ## Schema bootstrap
@@ -376,6 +626,10 @@ defmodule Graphonomous.Store do
         confidence REAL NOT NULL,
         causal_node_ids TEXT NOT NULL,
         evidence TEXT DEFAULT '{}',
+        retrieval_trace_id TEXT,
+        decision_trace_id TEXT,
+        action_linkage TEXT DEFAULT '{}',
+        grounding TEXT DEFAULT '{}',
         observed_at TEXT NOT NULL,
         processed_at TEXT
       );
@@ -422,6 +676,36 @@ defmodule Graphonomous.Store do
         {:error, reason} -> {:halt, {:error, reason}}
       end
     end)
+  end
+
+  defp backfill_outcomes_grounding_columns(conn) do
+    alters = [
+      "ALTER TABLE outcomes ADD COLUMN retrieval_trace_id TEXT;",
+      "ALTER TABLE outcomes ADD COLUMN decision_trace_id TEXT;",
+      "ALTER TABLE outcomes ADD COLUMN action_linkage TEXT DEFAULT '{}';",
+      "ALTER TABLE outcomes ADD COLUMN grounding TEXT DEFAULT '{}';"
+    ]
+
+    Enum.reduce_while(alters, :ok, fn sql, :ok ->
+      case Sqlite3.execute(conn, sql) do
+        :ok ->
+          {:cont, :ok}
+
+        {:error, reason} ->
+          if duplicate_column_error?(reason) do
+            {:cont, :ok}
+          else
+            {:halt, {:error, reason}}
+          end
+      end
+    end)
+  end
+
+  defp duplicate_column_error?(reason) do
+    reason
+    |> to_string()
+    |> String.downcase()
+    |> String.contains?("duplicate column name")
   end
 
   defp maybe_load_vec_extension(_conn, nil), do: :ok
@@ -485,7 +769,7 @@ defmodule Graphonomous.Store do
 
     sql = """
     INSERT INTO outcomes
-    (id, action_id, status, confidence, causal_node_ids, evidence, observed_at, processed_at)
+    (id, action_id, status, confidence, causal_node_ids, evidence, retrieval_trace_id, decision_trace_id, action_linkage, grounding, observed_at, processed_at)
     VALUES
     (
       '#{sql_escape(row_id)}',
@@ -494,6 +778,10 @@ defmodule Graphonomous.Store do
       #{float_sql(outcome.confidence)},
       '#{sql_escape(json_encode(outcome.causal_node_ids))}',
       '#{sql_escape(json_encode(outcome.evidence))}',
+      #{quoted_or_null(outcome.retrieval_trace_id)},
+      #{quoted_or_null(outcome.decision_trace_id)},
+      '#{sql_escape(json_encode(outcome.action_linkage))}',
+      '#{sql_escape(json_encode(outcome.grounding))}',
       '#{sql_escape(iso8601(outcome.observed_at))}',
       NULL
     );
@@ -566,7 +854,8 @@ defmodule Graphonomous.Store do
         embedding: normalize_embedding(map_get(attrs, :embedding, node.embedding)),
         metadata: normalize_map(map_get(attrs, :metadata, node.metadata)),
         source: map_get(attrs, :source, node.source),
-        access_count: normalize_integer(map_get(attrs, :access_count, node.access_count), node.access_count),
+        access_count:
+          normalize_integer(map_get(attrs, :access_count, node.access_count), node.access_count),
         updated_at: now
     }
   end
@@ -601,6 +890,10 @@ defmodule Graphonomous.Store do
       confidence: normalize_probability(map_get(attrs, :confidence, 0.5)),
       causal_node_ids: causal_ids,
       evidence: normalize_map(map_get(attrs, :evidence, %{})),
+      retrieval_trace_id: map_get(attrs, :retrieval_trace_id, nil),
+      decision_trace_id: map_get(attrs, :decision_trace_id, nil),
+      action_linkage: normalize_map(map_get(attrs, :action_linkage, %{})),
+      grounding: normalize_map(map_get(attrs, :grounding, %{})),
       observed_at: map_get(attrs, :observed_at, now) |> normalize_datetime(now)
     }
   end
@@ -682,8 +975,17 @@ defmodule Graphonomous.Store do
 
   defp ensure_table(name) do
     case :ets.whereis(name) do
-      :undefined -> :ets.new(name, [:set, :named_table, :public, read_concurrency: true, write_concurrency: true])
-      _tid -> :ok
+      :undefined ->
+        :ets.new(name, [
+          :set,
+          :named_table,
+          :public,
+          read_concurrency: true,
+          write_concurrency: true
+        ])
+
+      _tid ->
+        :ok
     end
   end
 
@@ -699,7 +1001,8 @@ defmodule Graphonomous.Store do
 
   defp normalize_node_type(_), do: :semantic
 
-  defp normalize_edge_type(type) when type in [:causal, :related, :contradicts, :supports, :derived_from], do: type
+  defp normalize_edge_type(type)
+       when type in [:causal, :related, :contradicts, :supports, :derived_from], do: type
 
   defp normalize_edge_type(type) when is_binary(type) do
     case String.downcase(String.trim(type)) do
@@ -713,7 +1016,8 @@ defmodule Graphonomous.Store do
 
   defp normalize_edge_type(_), do: :related
 
-  defp normalize_status(status) when status in [:success, :partial_success, :failure, :timeout], do: status
+  defp normalize_status(status) when status in [:success, :partial_success, :failure, :timeout],
+    do: status
 
   defp normalize_status(status) when is_binary(status) do
     case String.downcase(String.trim(status)) do
@@ -760,7 +1064,8 @@ defmodule Graphonomous.Store do
 
   defp normalize_goal_timescale(_), do: :short_term
 
-  defp normalize_goal_source_type(source_type) when source_type in [:user, :system, :inferred, :policy], do: source_type
+  defp normalize_goal_source_type(source_type)
+       when source_type in [:user, :system, :inferred, :policy], do: source_type
 
   defp normalize_goal_source_type(source_type) when is_binary(source_type) do
     case String.downcase(String.trim(source_type)) do
@@ -773,7 +1078,8 @@ defmodule Graphonomous.Store do
 
   defp normalize_goal_source_type(_), do: :user
 
-  defp normalize_goal_priority(priority) when priority in [:low, :normal, :high, :critical], do: priority
+  defp normalize_goal_priority(priority) when priority in [:low, :normal, :high, :critical],
+    do: priority
 
   defp normalize_goal_priority(priority) when is_binary(priority) do
     case String.downcase(String.trim(priority)) do
@@ -827,6 +1133,41 @@ defmodule Graphonomous.Store do
   defp normalize_embedding(nil), do: nil
   defp normalize_embedding(v) when is_binary(v), do: v
   defp normalize_embedding(_), do: nil
+
+  defp normalize_db_embedding(nil), do: nil
+
+  defp normalize_db_embedding(value) when is_binary(value) do
+    case Base.decode64(value) do
+      {:ok, decoded} -> decoded
+      :error -> value
+    end
+  end
+
+  defp normalize_db_embedding(_), do: nil
+
+  defp normalize_db_json_map(nil), do: %{}
+
+  defp normalize_db_json_map(value) when is_binary(value) do
+    case Jason.decode(value) do
+      {:ok, decoded} when is_map(decoded) -> decoded
+      _ -> %{}
+    end
+  end
+
+  defp normalize_db_json_map(value) when is_map(value), do: value
+  defp normalize_db_json_map(_), do: %{}
+
+  defp normalize_db_json_list(nil), do: []
+
+  defp normalize_db_json_list(value) when is_binary(value) do
+    case Jason.decode(value) do
+      {:ok, decoded} when is_list(decoded) -> normalize_string_list(decoded)
+      _ -> []
+    end
+  end
+
+  defp normalize_db_json_list(value) when is_list(value), do: normalize_string_list(value)
+  defp normalize_db_json_list(_), do: []
 
   defp normalize_datetime(%DateTime{} = dt, _fallback), do: dt
 

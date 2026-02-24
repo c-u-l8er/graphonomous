@@ -18,11 +18,13 @@ defmodule Graphonomous.MCP.RunConsolidation do
   @max_wait_ms 30_000
 
   schema do
-    field :action, :string,
+    field(:action, :string,
       description: "run | status | run_and_status (default: run_and_status)"
+    )
 
-    field :wait_ms, :number,
+    field(:wait_ms, :number,
       description: "Optional delay in milliseconds before returning status (0..30000)"
+    )
   end
 
   @impl true

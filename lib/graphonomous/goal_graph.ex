@@ -67,7 +67,8 @@ defmodule Graphonomous.GoalGraph do
     GenServer.call(__MODULE__, {:delete_goal, goal_id})
   end
 
-  @spec transition_goal(binary(), goal_status() | binary(), map()) :: {:ok, Goal.t()} | {:error, term()}
+  @spec transition_goal(binary(), goal_status() | binary(), map()) ::
+          {:ok, Goal.t()} | {:error, term()}
   def transition_goal(goal_id, to_status, metadata \\ %{})
       when is_binary(goal_id) and is_map(metadata) do
     GenServer.call(__MODULE__, {:transition_goal, goal_id, to_status, metadata})
@@ -228,7 +229,9 @@ defmodule Graphonomous.GoalGraph do
       with {:ok, _dep_goal} <- Store.get_goal(dependency_goal_id),
            {:ok, goal} <- Store.get_goal(goal_id) do
         deps =
-          (goal.constraints |> normalize_map() |> Map.get("dependency_goal_ids", []))
+          goal.constraints
+          |> normalize_map()
+          |> Map.get("dependency_goal_ids", [])
           |> normalize_string_list()
           |> Kernel.++([dependency_goal_id])
           |> Enum.uniq()
@@ -253,7 +256,9 @@ defmodule Graphonomous.GoalGraph do
     reply =
       with {:ok, goal} <- Store.get_goal(goal_id) do
         deps =
-          (goal.constraints |> normalize_map() |> Map.get("dependency_goal_ids", []))
+          goal.constraints
+          |> normalize_map()
+          |> Map.get("dependency_goal_ids", [])
           |> normalize_string_list()
           |> Enum.reject(&(&1 == dependency_goal_id))
 
@@ -494,10 +499,16 @@ defmodule Graphonomous.GoalGraph do
       store_filters:
         %{}
         |> maybe_put_filter(:status, normalize_status_optional(map_get(filters, :status, nil)))
-        |> maybe_put_filter(:priority, normalize_priority_optional(map_get(filters, :priority, nil)))
+        |> maybe_put_filter(
+          :priority,
+          normalize_priority_optional(map_get(filters, :priority, nil))
+        )
         |> maybe_put_filter(:owner, normalize_optional_string(map_get(filters, :owner, nil)))
         |> maybe_put_filter(:tag, normalize_optional_string(map_get(filters, :tag, nil)))
-        |> maybe_put_filter(:min_progress, normalize_probability_optional(map_get(filters, :min_progress, nil)))
+        |> maybe_put_filter(
+          :min_progress,
+          normalize_probability_optional(map_get(filters, :min_progress, nil))
+        )
         |> maybe_put_filter(:limit, limit)
     }
   end
@@ -506,10 +517,14 @@ defmodule Graphonomous.GoalGraph do
   defp maybe_put_filter(map, key, value), do: Map.put(map, key, value)
 
   defp maybe_filter_by_timescale(goals, nil), do: goals
-  defp maybe_filter_by_timescale(goals, timescale), do: Enum.filter(goals, &(&1.timescale == timescale))
+
+  defp maybe_filter_by_timescale(goals, timescale),
+    do: Enum.filter(goals, &(&1.timescale == timescale))
 
   defp maybe_filter_by_parent(goals, nil), do: goals
-  defp maybe_filter_by_parent(goals, parent_goal_id), do: Enum.filter(goals, &(&1.parent_goal_id == parent_goal_id))
+
+  defp maybe_filter_by_parent(goals, parent_goal_id),
+    do: Enum.filter(goals, &(&1.parent_goal_id == parent_goal_id))
 
   defp maybe_filter_abandoned(goals, true), do: goals
   defp maybe_filter_abandoned(goals, false), do: Enum.reject(goals, &(&1.status == :abandoned))

@@ -86,14 +86,53 @@ defmodule Graphonomous.LearnerTest do
       assert update_b.result == :updated
       assert update_missing.result == :skipped_not_found
 
-      assert_in_delta update_a.new_confidence, expected_new(update_a.old_confidence, :partial_success, 1.0), 1.0e-9
-      assert_in_delta update_b.new_confidence, expected_new(update_b.old_confidence, :partial_success, 1.0), 1.0e-9
+      assert_in_delta update_a.new_confidence,
+                      expected_new(update_a.old_confidence, :partial_success, 1.0),
+                      1.0e-9
+
+      assert_in_delta update_b.new_confidence,
+                      expected_new(update_b.old_confidence, :partial_success, 1.0),
+                      1.0e-9
 
       updated_a = Graphonomous.get_node(node_a.id)
       updated_b = Graphonomous.get_node(node_b.id)
 
       assert_in_delta updated_a.confidence, update_a.new_confidence, 1.0e-9
       assert_in_delta updated_b.confidence, update_b.new_confidence, 1.0e-9
+    end
+
+    test "propagates retrieval and decision trace fields through learner result and node feedback metadata" do
+      node = create_node(0.55)
+      retrieval_trace_id = "retrieval_#{System.unique_integer([:positive, :monotonic])}"
+      decision_trace_id = "decision_#{System.unique_integer([:positive, :monotonic])}"
+
+      result =
+        Graphonomous.learn_from_outcome(%{
+          action_id: unique_action_id(),
+          status: "success",
+          confidence: 0.9,
+          causal_node_ids: [node.id],
+          evidence: %{source: "learner_test"},
+          retrieval_trace_id: retrieval_trace_id,
+          decision_trace_id: decision_trace_id,
+          action_linkage: %{"step" => "execute"},
+          grounding: %{"basis" => "retrieval_context"}
+        })
+
+      assert is_map(result)
+      assert result.retrieval_trace_id == retrieval_trace_id
+      assert result.decision_trace_id == decision_trace_id
+      assert result.action_linkage["step"] == "execute"
+      assert result.grounding["basis"] == "retrieval_context"
+
+      updated = Graphonomous.get_node(node.id)
+      feedback = updated.metadata["last_feedback"]
+
+      assert is_map(feedback)
+      assert Map.get(feedback, :retrieval_trace_id) == retrieval_trace_id
+      assert Map.get(feedback, :decision_trace_id) == decision_trace_id
+      assert Map.get(feedback, :action_linkage)["step"] == "execute"
+      assert Map.get(feedback, :grounding)["basis"] == "retrieval_context"
     end
   end
 

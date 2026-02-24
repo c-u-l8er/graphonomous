@@ -74,6 +74,8 @@ defmodule Graphonomous.StoreTest do
     source_id = unique_id("source")
     target_id = unique_id("target")
     action_id = unique_id("action")
+    retrieval_trace_id = unique_id("retrieval_trace")
+    decision_trace_id = unique_id("decision_trace")
 
     on_exit(fn ->
       _ = Store.delete_node(source_id)
@@ -123,18 +125,76 @@ defmodule Graphonomous.StoreTest do
                status: :success,
                confidence: 0.8,
                causal_node_ids: [source_id, target_id],
-               evidence: %{"latency_ms" => 42}
+               evidence: %{"latency_ms" => 42},
+               retrieval_trace_id: retrieval_trace_id,
+               decision_trace_id: decision_trace_id,
+               action_linkage: %{"executor" => "store_test"},
+               grounding: %{"decision_basis" => "benchmark_evidence"}
              })
 
     assert outcome.action_id == action_id
     assert outcome.status == :success
     assert outcome.causal_node_ids == [source_id, target_id]
+    assert outcome.retrieval_trace_id == retrieval_trace_id
+    assert outcome.decision_trace_id == decision_trace_id
+    assert outcome.action_linkage["executor"] == "store_test"
+    assert outcome.grounding["decision_basis"] == "benchmark_evidence"
 
     assert {:ok, outcomes} = Store.list_outcomes(200)
 
     assert Enum.any?(outcomes, fn o ->
              o.action_id == action_id and
+               o.retrieval_trace_id == retrieval_trace_id and
+               o.decision_trace_id == decision_trace_id and
                Enum.sort(o.causal_node_ids) == Enum.sort([source_id, target_id])
+           end)
+  end
+
+  test "cache rebuild repopulates ETS state from persisted SQLite rows" do
+    node_id = unique_id("node")
+    action_id = unique_id("action")
+    retrieval_trace_id = unique_id("retrieval_trace")
+    decision_trace_id = unique_id("decision_trace")
+
+    on_exit(fn ->
+      _ = Store.delete_node(node_id)
+    end)
+
+    assert {:ok, node} =
+             Store.insert_node(%{
+               id: node_id,
+               content: "Rebuild cache durability check",
+               node_type: :semantic,
+               confidence: 0.77
+             })
+
+    assert {:ok, _outcome} =
+             Store.insert_outcome(%{
+               action_id: action_id,
+               status: :partial_success,
+               confidence: 0.7,
+               causal_node_ids: [node.id],
+               evidence: %{"suite" => "store_test"},
+               retrieval_trace_id: retrieval_trace_id,
+               decision_trace_id: decision_trace_id,
+               action_linkage: %{"phase" => "rebuild"},
+               grounding: %{"note" => "verify warm cache"}
+             })
+
+    assert :ok = Store.rebuild_cache()
+
+    assert {:ok, fetched_node} = Store.get_node(node.id)
+    assert fetched_node.id == node.id
+    assert fetched_node.content == node.content
+
+    assert {:ok, outcomes} = Store.list_outcomes(200)
+
+    assert Enum.any?(outcomes, fn o ->
+             o.action_id == action_id and
+               o.retrieval_trace_id == retrieval_trace_id and
+               o.decision_trace_id == decision_trace_id and
+               o.action_linkage["phase"] == "rebuild" and
+               o.grounding["note"] == "verify warm cache"
            end)
   end
 
