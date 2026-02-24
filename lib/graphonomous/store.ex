@@ -106,7 +106,7 @@ defmodule Graphonomous.Store do
     case Sqlite3.open(db_path) do
       {:ok, conn} ->
         with :ok <- bootstrap_schema(conn),
-             :ok <- backfill_outcomes_grounding_columns(conn),
+             :ok <- run_migrations(conn),
              :ok <- maybe_load_vec_extension(conn, vec_extension_path),
              :ok <- warm_cache_from_db(conn) do
           {:ok, %{state | conn: conn}}
@@ -678,21 +678,76 @@ defmodule Graphonomous.Store do
     end)
   end
 
-  defp backfill_outcomes_grounding_columns(conn) do
-    alters = [
-      "ALTER TABLE outcomes ADD COLUMN retrieval_trace_id TEXT;",
-      "ALTER TABLE outcomes ADD COLUMN decision_trace_id TEXT;",
-      "ALTER TABLE outcomes ADD COLUMN action_linkage TEXT DEFAULT '{}';",
-      "ALTER TABLE outcomes ADD COLUMN grounding TEXT DEFAULT '{}';"
-    ]
+  defp run_migrations(conn) do
+    with :ok <- ensure_schema_migrations_table(conn),
+         {:ok, applied_ids} <- list_applied_migrations(conn),
+         :ok <- apply_pending_migrations(conn, applied_ids, migrations()) do
+      :ok
+    end
+  end
 
-    Enum.reduce_while(alters, :ok, fn sql, :ok ->
+  defp ensure_schema_migrations_table(conn) do
+    Sqlite3.execute(
+      conn,
+      """
+      CREATE TABLE IF NOT EXISTS schema_migrations (
+        id TEXT PRIMARY KEY,
+        applied_at TEXT NOT NULL
+      );
+      """
+    )
+  end
+
+  defp list_applied_migrations(conn) do
+    with {:ok, rows} <- select_all(conn, "SELECT id FROM schema_migrations;") do
+      ids =
+        rows
+        |> Enum.map(fn [id] -> to_string(id) end)
+        |> MapSet.new()
+
+      {:ok, ids}
+    end
+  end
+
+  defp migrations do
+    [
+      {"2026_02_24_outcomes_grounding_columns",
+       [
+         "ALTER TABLE outcomes ADD COLUMN retrieval_trace_id TEXT;",
+         "ALTER TABLE outcomes ADD COLUMN decision_trace_id TEXT;",
+         "ALTER TABLE outcomes ADD COLUMN action_linkage TEXT DEFAULT '{}';",
+         "ALTER TABLE outcomes ADD COLUMN grounding TEXT DEFAULT '{}';"
+       ]}
+    ]
+  end
+
+  defp apply_pending_migrations(conn, applied_ids, migration_specs) do
+    Enum.reduce_while(migration_specs, :ok, fn {migration_id, statements}, :ok ->
+      if MapSet.member?(applied_ids, migration_id) do
+        {:cont, :ok}
+      else
+        case run_migration_statements(conn, statements) do
+          :ok ->
+            case mark_migration_applied(conn, migration_id) do
+              :ok -> {:cont, :ok}
+              {:error, reason} -> {:halt, {:error, reason}}
+            end
+
+          {:error, reason} ->
+            {:halt, {:error, reason}}
+        end
+      end
+    end)
+  end
+
+  defp run_migration_statements(conn, statements) when is_list(statements) do
+    Enum.reduce_while(statements, :ok, fn sql, :ok ->
       case Sqlite3.execute(conn, sql) do
         :ok ->
           {:cont, :ok}
 
         {:error, reason} ->
-          if duplicate_column_error?(reason) do
+          if ignorable_migration_error?(reason) do
             {:cont, :ok}
           else
             {:halt, {:error, reason}}
@@ -701,11 +756,22 @@ defmodule Graphonomous.Store do
     end)
   end
 
-  defp duplicate_column_error?(reason) do
-    reason
-    |> to_string()
-    |> String.downcase()
-    |> String.contains?("duplicate column name")
+  defp mark_migration_applied(conn, migration_id) do
+    execute_prepared(
+      conn,
+      """
+      INSERT OR REPLACE INTO schema_migrations (id, applied_at)
+      VALUES (?, ?);
+      """,
+      [migration_id, DateTime.utc_now() |> DateTime.to_iso8601()]
+    )
+  end
+
+  defp ignorable_migration_error?(reason) do
+    normalized = reason |> to_string() |> String.downcase()
+
+    String.contains?(normalized, "duplicate column name") or
+      String.contains?(normalized, "already exists")
   end
 
   defp maybe_load_vec_extension(_conn, nil), do: :ok
@@ -722,105 +788,115 @@ defmodule Graphonomous.Store do
   ## Persistence helpers
 
   defp persist_node(conn, %Node{} = node) do
-    sql = """
-    INSERT OR REPLACE INTO nodes
-    (id, content, node_type, confidence, embedding, metadata, source, access_count, created_at, updated_at, last_accessed_at)
-    VALUES
-    (
-      '#{sql_escape(node.id)}',
-      '#{sql_escape(node.content || "")}',
-      '#{sql_escape(to_string(node.node_type))}',
-      #{float_sql(node.confidence)},
-      #{blob_or_null(node.embedding)},
-      '#{sql_escape(json_encode(node.metadata))}',
-      #{quoted_or_null(node.source)},
-      #{node.access_count},
-      '#{sql_escape(iso8601(node.created_at))}',
-      '#{sql_escape(iso8601(node.updated_at))}',
-      '#{sql_escape(iso8601(node.last_accessed_at))}'
-    );
-    """
+    embedding =
+      case node.embedding do
+        nil -> nil
+        value when is_binary(value) -> Base.encode64(value)
+      end
 
-    Sqlite3.execute(conn, sql)
+    execute_prepared(
+      conn,
+      """
+      INSERT OR REPLACE INTO nodes
+      (id, content, node_type, confidence, embedding, metadata, source, access_count, created_at, updated_at, last_accessed_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+      """,
+      [
+        node.id,
+        node.content || "",
+        to_string(node.node_type),
+        normalize_probability(node.confidence),
+        embedding,
+        json_encode(node.metadata),
+        node.source,
+        normalize_integer(node.access_count, 0),
+        iso8601(node.created_at),
+        iso8601(node.updated_at),
+        iso8601(node.last_accessed_at)
+      ]
+    )
   end
 
   defp persist_edge(conn, %Edge{} = edge) do
-    sql = """
-    INSERT OR REPLACE INTO edges
-    (id, source_id, target_id, edge_type, weight, metadata, created_at, last_activated_at)
-    VALUES
-    (
-      '#{sql_escape(edge.id)}',
-      '#{sql_escape(edge.source_id)}',
-      '#{sql_escape(edge.target_id)}',
-      '#{sql_escape(to_string(edge.edge_type))}',
-      #{float_sql(edge.weight)},
-      '#{sql_escape(json_encode(edge.metadata))}',
-      '#{sql_escape(iso8601(edge.created_at))}',
-      '#{sql_escape(iso8601(edge.last_activated_at))}'
-    );
-    """
-
-    Sqlite3.execute(conn, sql)
+    execute_prepared(
+      conn,
+      """
+      INSERT OR REPLACE INTO edges
+      (id, source_id, target_id, edge_type, weight, metadata, created_at, last_activated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+      """,
+      [
+        edge.id,
+        edge.source_id,
+        edge.target_id,
+        to_string(edge.edge_type),
+        normalize_probability(edge.weight),
+        json_encode(edge.metadata),
+        iso8601(edge.created_at),
+        iso8601(edge.last_activated_at)
+      ]
+    )
   end
 
   defp persist_outcome(conn, %Outcome{} = outcome) do
     row_id = id("outcome")
 
-    sql = """
-    INSERT INTO outcomes
-    (id, action_id, status, confidence, causal_node_ids, evidence, retrieval_trace_id, decision_trace_id, action_linkage, grounding, observed_at, processed_at)
-    VALUES
-    (
-      '#{sql_escape(row_id)}',
-      '#{sql_escape(outcome.action_id)}',
-      '#{sql_escape(to_string(outcome.status))}',
-      #{float_sql(outcome.confidence)},
-      '#{sql_escape(json_encode(outcome.causal_node_ids))}',
-      '#{sql_escape(json_encode(outcome.evidence))}',
-      #{quoted_or_null(outcome.retrieval_trace_id)},
-      #{quoted_or_null(outcome.decision_trace_id)},
-      '#{sql_escape(json_encode(outcome.action_linkage))}',
-      '#{sql_escape(json_encode(outcome.grounding))}',
-      '#{sql_escape(iso8601(outcome.observed_at))}',
-      NULL
-    );
-    """
-
-    Sqlite3.execute(conn, sql)
+    execute_prepared(
+      conn,
+      """
+      INSERT INTO outcomes
+      (id, action_id, status, confidence, causal_node_ids, evidence, retrieval_trace_id, decision_trace_id, action_linkage, grounding, observed_at, processed_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+      """,
+      [
+        row_id,
+        outcome.action_id,
+        to_string(outcome.status),
+        normalize_probability(outcome.confidence),
+        json_encode(outcome.causal_node_ids),
+        json_encode(outcome.evidence),
+        outcome.retrieval_trace_id,
+        outcome.decision_trace_id,
+        json_encode(outcome.action_linkage),
+        json_encode(outcome.grounding),
+        iso8601(outcome.observed_at),
+        nil
+      ]
+    )
   end
 
   defp persist_goal(conn, %Goal{} = goal) do
-    sql = """
-    INSERT OR REPLACE INTO goals
-    (id, title, description, status, timescale, source_type, priority, confidence, progress, owner, tags, constraints, success_criteria, metadata, linked_node_ids, parent_goal_id, created_at, updated_at, due_at, completed_at, last_reviewed_at)
-    VALUES
-    (
-      '#{sql_escape(goal.id)}',
-      '#{sql_escape(goal.title || "")}',
-      #{quoted_or_null(goal.description)},
-      '#{sql_escape(to_string(goal.status))}',
-      '#{sql_escape(to_string(goal.timescale))}',
-      '#{sql_escape(to_string(goal.source_type))}',
-      '#{sql_escape(to_string(goal.priority))}',
-      #{float_sql(goal.confidence)},
-      #{float_sql(goal.progress)},
-      #{quoted_or_null(goal.owner)},
-      '#{sql_escape(json_encode(goal.tags))}',
-      '#{sql_escape(json_encode(goal.constraints))}',
-      '#{sql_escape(json_encode(goal.success_criteria))}',
-      '#{sql_escape(json_encode(goal.metadata))}',
-      '#{sql_escape(json_encode(goal.linked_node_ids))}',
-      #{quoted_or_null(goal.parent_goal_id)},
-      '#{sql_escape(iso8601(goal.created_at))}',
-      '#{sql_escape(iso8601(goal.updated_at))}',
-      #{quoted_or_null(nullable_iso8601(goal.due_at))},
-      #{quoted_or_null(nullable_iso8601(goal.completed_at))},
-      #{quoted_or_null(nullable_iso8601(goal.last_reviewed_at))}
-    );
-    """
-
-    Sqlite3.execute(conn, sql)
+    execute_prepared(
+      conn,
+      """
+      INSERT OR REPLACE INTO goals
+      (id, title, description, status, timescale, source_type, priority, confidence, progress, owner, tags, constraints, success_criteria, metadata, linked_node_ids, parent_goal_id, created_at, updated_at, due_at, completed_at, last_reviewed_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+      """,
+      [
+        goal.id,
+        goal.title || "",
+        goal.description,
+        to_string(goal.status),
+        to_string(goal.timescale),
+        to_string(goal.source_type),
+        to_string(goal.priority),
+        normalize_probability(goal.confidence),
+        normalize_probability(goal.progress),
+        goal.owner,
+        json_encode(goal.tags),
+        json_encode(goal.constraints),
+        json_encode(goal.success_criteria),
+        json_encode(goal.metadata),
+        json_encode(goal.linked_node_ids),
+        goal.parent_goal_id,
+        iso8601(goal.created_at),
+        iso8601(goal.updated_at),
+        nullable_iso8601(goal.due_at),
+        nullable_iso8601(goal.completed_at),
+        nullable_iso8601(goal.last_reviewed_at)
+      ]
+    )
   end
 
   ## Builders
@@ -1214,18 +1290,4 @@ defmodule Graphonomous.Store do
   end
 
   defp sql_escape(value), do: value |> to_string() |> sql_escape()
-
-  defp quoted_or_null(nil), do: "NULL"
-  defp quoted_or_null(value) when is_binary(value), do: "'#{sql_escape(value)}'"
-  defp quoted_or_null(value), do: "'#{sql_escape(to_string(value))}'"
-
-  defp blob_or_null(nil), do: "NULL"
-
-  defp blob_or_null(value) when is_binary(value) do
-    "'#{sql_escape(Base.encode64(value))}'"
-  end
-
-  defp float_sql(value) when is_float(value), do: :erlang.float_to_binary(value, decimals: 6)
-  defp float_sql(value) when is_integer(value), do: float_sql(value * 1.0)
-  defp float_sql(_), do: "0.500000"
 end

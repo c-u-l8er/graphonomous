@@ -4,10 +4,10 @@ _Last Updated: 2026-02-24_
 
 ## Overall Status
 
-**Current Phase:** Foundation + Core CL Engine + GoalGraph/Coverage + MCP resources + grounding fidelity pass (spec Sections 4, 5, 6, 7, 8, 9)  
+**Current Phase:** Foundation + Core CL Engine + GoalGraph/Coverage + MCP resources + grounding fidelity pass + migration/versioning + SQL parameterization hardening + CI/bootstrap docs pass (spec Sections 4, 5, 6, 7, 8, 9)  
 **Health:** ✅ Compiling and testable  
-**Test Status:** ✅ `30 tests, 0 failures`  
-**Runtime Shape:** ✅ OTP app with core supervised services + durable goal orchestration + coverage scoring + read-only MCP resources + startup cache warm
+**Test Status:** ✅ `31 tests, 0 failures`  
+**Runtime Shape:** ✅ OTP app with core supervised services + durable goal orchestration + coverage scoring + read-only MCP resources + startup cache warm + migration tracking + CI quality gate + runtime env overlay config
 
 ---
 
@@ -54,7 +54,8 @@ Implemented `Graphonomous.Store`:
 - ✅ ETS hot cache (v0.1 fast-path)
 - ✅ Startup cache warm/rebuild from SQLite for crash/restart consistency
 - ✅ Optional sqlite-vec extension load hook
-- ✅ Parameterized prepared execution for delete paths (`nodes`, `goals`)
+- ✅ Schema migration versioning via `schema_migrations` table + idempotent migration runner
+- ✅ Parameterized prepared execution for delete paths (`nodes`, `goals`) and all core persistence writes (`nodes`, `edges`, `outcomes`, `goals`)
 
 ## 5) Public API Surface
 Implemented `Graphonomous` module with stable entry points:
@@ -146,14 +147,14 @@ Implemented and passing:
 - ✅ Implemented explicit outcome grounding trace records tied to causal context (`retrieval_trace_id`, `decision_trace_id`, `action_linkage`, `grounding`).
 
 ## D) Storage Hardening
-- 🟡 SQL safety improved with prepared/parameterized execution on delete paths; broader conversion still pending.
+- ✅ SQL safety hardened with prepared/parameterized execution across delete paths and core persistence writes.
 - ✅ Added startup cache warm/rebuild from persistent DB.
-- ⏳ Add migration/versioning strategy for schema evolution.
+- ✅ Added migration/versioning strategy for schema evolution (`schema_migrations` + tracked migration IDs).
 
 ## E) Runtime/Operations
 - ⏳ Add executable MCP entrypoint command path for standard client launch flow.
-- ⏳ Add runtime docs + environment configuration matrix.
-- ⏳ Add CI workflow and reproducible local bootstrap instructions.
+- ✅ Added runtime docs + environment configuration matrix (`docs/BOOTSTRAP.md` + `config/runtime.exs` env surface).
+- ✅ Added CI workflow and reproducible local bootstrap instructions (`.github/workflows/ci.yml` + verification commands).
 
 ---
 
@@ -166,8 +167,8 @@ Planned sequence:
 1. ✅ Add startup cache warm/rebuild from SQLite to improve crash/restart consistency.
 2. ✅ Add MCP resources surfaces (read-only state snapshots for goals/graph health).
 3. ✅ Add explicit outcome-grounding trace fields (retrieval trace IDs, decision provenance, action linkage).
-4. 🟡 Continue SQL safety posture hardening with broader parameterized execution coverage.
-5. ⏳ Add CI + release-hardening docs for reproducible bootstrap and verification.
+4. ✅ Complete SQL safety posture hardening with broader parameterized execution coverage.
+5. ✅ Add CI + release-hardening docs for reproducible bootstrap and verification.
 
 ---
 
@@ -202,5 +203,11 @@ Planned sequence:
 - Added read-only MCP resources: `graphonomous://runtime/health` and `graphonomous://goals/snapshot`.
 - Added explicit outcome grounding trace fields (`retrieval_trace_id`, `decision_trace_id`, `action_linkage`, `grounding`) across API, learner, and store persistence.
 - Improved SQL safety posture by moving delete operations to prepared/parameterized execution.
-- Expanded passing test suite to `30/30` with new coverage for cache rebuild, grounding traces, and MCP resources.
+- Added schema migration versioning (`schema_migrations`) and idempotent migration application at startup.
+- Expanded SQL parameterization to core persistence write paths (`nodes`, `edges`, `outcomes`, `goals`).
+- Added migration tracking test coverage for applied migration IDs.
+- Added CI workflow (`.github/workflows/ci.yml`) for format/compile/test quality gates.
+- Added runtime environment overlay configuration (`config/runtime.exs`) with validated env parsing and per-environment defaults.
+- Added reproducible bootstrap and release-hardening guide (`docs/BOOTSTRAP.md`) and replaced placeholder project README with implementation/runtime verification docs.
+- Expanded passing test suite to `31/31` with coverage for cache rebuild, grounding traces, MCP resources, and migration bookkeeping.
 - Created and updated this ongoing progress tracker.

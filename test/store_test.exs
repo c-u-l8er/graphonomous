@@ -1,6 +1,7 @@
 defmodule Graphonomous.StoreTest do
   use ExUnit.Case, async: false
 
+  alias Exqlite.Sqlite3
   alias Graphonomous.Store
 
   setup do
@@ -196,6 +197,30 @@ defmodule Graphonomous.StoreTest do
                o.action_linkage["phase"] == "rebuild" and
                o.grounding["note"] == "verify warm cache"
            end)
+  end
+
+  test "schema migration tracking table records applied migrations" do
+    db_path = "tmp/graphonomous_test.db"
+
+    assert :pong = Store.ping()
+    assert {:ok, conn} = Sqlite3.open(db_path)
+
+    on_exit(fn ->
+      _ = Sqlite3.close(conn)
+    end)
+
+    assert {:ok, stmt} =
+             Sqlite3.prepare(
+               conn,
+               "SELECT id FROM schema_migrations ORDER BY id;"
+             )
+
+    assert {:ok, rows} = Sqlite3.fetch_all(conn, stmt)
+    assert :ok = Sqlite3.release(conn, stmt)
+
+    migration_ids = Enum.map(rows, fn [id] -> to_string(id) end)
+
+    assert "2026_02_24_outcomes_grounding_columns" in migration_ids
   end
 
   defp unique_id(prefix) do
