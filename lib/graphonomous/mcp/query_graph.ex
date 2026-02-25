@@ -11,6 +11,8 @@ defmodule Graphonomous.MCP.QueryGraph do
 
   use Anubis.Server.Component, type: :tool
 
+  alias Anubis.Server.Response
+
   schema do
     field(:operation, :string,
       required: true,
@@ -45,24 +47,24 @@ defmodule Graphonomous.MCP.QueryGraph do
         :similarity_search -> do_similarity_search(params)
       end
 
-    payload =
+    {payload, is_error} =
       case result do
         {:ok, data} ->
-          %{
-            operation: Atom.to_string(operation),
-            status: "ok",
-            result: data
-          }
+          {%{
+             operation: Atom.to_string(operation),
+             status: "ok",
+             result: data
+           }, false}
 
         {:error, reason} ->
-          %{
-            operation: Atom.to_string(operation),
-            status: "error",
-            error: format_reason(reason)
-          }
+          {%{
+             operation: Atom.to_string(operation),
+             status: "error",
+             error: format_reason(reason)
+           }, true}
       end
 
-    {:ok, Jason.encode!(payload), frame}
+    {:reply, tool_response(payload, is_error), frame}
   end
 
   defp do_list_nodes(params) do
@@ -188,6 +190,14 @@ defmodule Graphonomous.MCP.QueryGraph do
       similarity: Map.get(match, :similarity),
       score: Map.get(match, :score)
     }
+  end
+
+  defp tool_response(payload, is_error) when is_map(payload) do
+    response =
+      Response.tool()
+      |> Response.text(Jason.encode!(payload))
+
+    if is_error, do: %{response | isError: true}, else: response
   end
 
   defp normalize_operation(op) when is_binary(op) do

@@ -18,6 +18,8 @@ defmodule Graphonomous.Graph do
   alias Graphonomous.Types.Node
 
   @default_similarity_limit 10
+  @default_call_timeout 5_000
+  @default_retrieve_timeout 30_000
 
   @type node_id :: binary()
   @type edge_id :: binary()
@@ -81,12 +83,33 @@ defmodule Graphonomous.Graph do
 
   @spec query(map()) :: {:ok, term()} | {:error, term()}
   def query(params \\ %{}) when is_map(params) do
-    GenServer.call(__MODULE__, {:query, params})
+    operation =
+      Map.get(params, :operation) ||
+        Map.get(params, "operation") ||
+        Map.get(params, :action) ||
+        Map.get(params, "action")
+
+    timeout =
+      case operation do
+        :similarity_search -> @default_retrieve_timeout
+        "similarity_search" -> @default_retrieve_timeout
+        _ -> @default_call_timeout
+      end
+
+    GenServer.call(__MODULE__, {:query, params}, timeout)
   end
 
   @spec retrieve_similar(binary(), keyword()) :: {:ok, [map()]} | {:error, term()}
   def retrieve_similar(text, opts \\ []) when is_binary(text) and is_list(opts) do
-    GenServer.call(__MODULE__, {:retrieve_similar, text, opts})
+    timeout =
+      opts
+      |> Keyword.get(:timeout, @default_retrieve_timeout)
+      |> case do
+        value when is_integer(value) and value > 0 -> value
+        _ -> @default_retrieve_timeout
+      end
+
+    GenServer.call(__MODULE__, {:retrieve_similar, text, opts}, timeout)
   end
 
   @spec touch_node(node_id()) :: {:ok, Node.t()} | {:error, term()}

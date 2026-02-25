@@ -17,6 +17,7 @@ defmodule Graphonomous.MCP.ManageGoal do
   """
 
   use Anubis.Server.Component, type: :tool
+  alias Anubis.Server.Response
 
   @valid_operations ~w(
     create_goal
@@ -67,23 +68,23 @@ defmodule Graphonomous.MCP.ManageGoal do
   def execute(params, frame) do
     with {:ok, operation} <- read_operation(params),
          {:ok, result} <- dispatch(operation, params) do
-      response = %{
+      payload = %{
         status: "ok",
         operation: operation,
         result: serialize(result)
       }
 
-      {:ok, Jason.encode!(response), frame}
-    else
-      {:error, reason} ->
-        response = %{
-          status: "error",
-          error: format_error(reason)
-        }
+      {:reply, tool_response(payload), frame}
+  else
+    {:error, reason} ->
+      payload = %{
+        status: "error",
+        error: format_error(reason)
+      }
 
-        {:ok, Jason.encode!(response), frame}
-    end
+      {:reply, tool_response(payload, true), frame}
   end
+end
 
   # -- Dispatch ----------------------------------------------------------------
 
@@ -369,6 +370,14 @@ defmodule Graphonomous.MCP.ManageGoal do
 
   defp normalize_result({:error, _} = err), do: err
   defp normalize_result(other), do: {:ok, other}
+
+  defp tool_response(payload, is_error \\ false) when is_map(payload) do
+    response =
+      Response.tool()
+      |> Response.text(Jason.encode!(payload))
+
+    if is_error, do: %{response | isError: true}, else: response
+  end
 
   defp serialize(value) when is_list(value), do: Enum.map(value, &serialize/1)
 

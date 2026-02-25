@@ -90,7 +90,7 @@ defmodule Graphonomous.Embedder do
 
         _ ->
           Logger.info("Graphonomous.Embedder starting async Bumblebee warmup model=#{model_id}")
-          send(self(), :warmup_bumblebee)
+          Process.send_after(self(), :warmup_bumblebee, 0)
           warming_state(model_id, dimension)
       end
 
@@ -170,9 +170,20 @@ defmodule Graphonomous.Embedder do
   end
 
   @impl true
-  def handle_info(:warmup_bumblebee, %{model_id: model_id, dimension: dimension}) do
+  def handle_info(:warmup_bumblebee, %{model_id: model_id} = state) do
+    parent = self()
+
+    Task.start(fn ->
+      result = load_bumblebee_serving(model_id)
+      send(parent, {:warmup_bumblebee_complete, result})
+    end)
+
+    {:noreply, state}
+  end
+
+  def handle_info({:warmup_bumblebee_complete, result}, %{model_id: model_id, dimension: dimension}) do
     new_state =
-      case load_bumblebee_serving(model_id) do
+      case result do
         {:ok, serving} ->
           Logger.info("Graphonomous.Embedder warmup complete with Bumblebee model=#{model_id}")
           bumblebee_state(serving, model_id, dimension)

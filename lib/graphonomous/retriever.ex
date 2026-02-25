@@ -21,6 +21,7 @@ defmodule Graphonomous.Retriever do
   @default_expansion_hops 1
   @default_neighbors_per_node 5
   @default_hop_decay 0.85
+  @default_similarity_timeout_ms 25_000
 
   @type retrieve_opts :: keyword()
   @type retrieval_result :: %{
@@ -35,7 +36,8 @@ defmodule Graphonomous.Retriever do
           final_limit: pos_integer(),
           expansion_hops: non_neg_integer(),
           neighbors_per_node: pos_integer(),
-          hop_decay: float()
+          hop_decay: float(),
+          similarity_timeout_ms: pos_integer()
         }
 
   ## Public API
@@ -62,7 +64,12 @@ defmodule Graphonomous.Retriever do
       final_limit: Keyword.get(opts, :final_limit, @default_final_limit),
       expansion_hops: Keyword.get(opts, :expansion_hops, @default_expansion_hops),
       neighbors_per_node: Keyword.get(opts, :neighbors_per_node, @default_neighbors_per_node),
-      hop_decay: Keyword.get(opts, :hop_decay, @default_hop_decay)
+      hop_decay: Keyword.get(opts, :hop_decay, @default_hop_decay),
+      similarity_timeout_ms:
+        normalize_timeout_ms(
+          Keyword.get(opts, :similarity_timeout_ms, @default_similarity_timeout_ms),
+          @default_similarity_timeout_ms
+        )
     }
 
     {:ok, state}
@@ -73,7 +80,8 @@ defmodule Graphonomous.Retriever do
     cfg = merge_opts(state, call_opts)
 
     reply =
-      with {:ok, seed_hits} <- Graph.retrieve_similar(query, limit: cfg.similarity_limit),
+      with {:ok, seed_hits} <-
+             safe_graph_retrieve_similar(query, cfg.similarity_limit, cfg.similarity_timeout_ms),
            {:ok, seed_entries} <- seed_entries(seed_hits),
            {:ok, expanded} <- expand_neighbors(seed_entries, cfg) do
         ranked =
@@ -96,6 +104,16 @@ defmodule Graphonomous.Retriever do
       end
 
     {:reply, reply, state}
+  end
+
+  defp safe_graph_retrieve_similar(query, limit, timeout_ms)
+       when is_binary(query) and is_integer(limit) and is_integer(timeout_ms) do
+    try do
+      GenServer.call(Graphonomous.Graph, {:retrieve_similar, query, [limit: limit]}, timeout_ms)
+    catch
+      :exit, reason ->
+        {:error, {:graph_retrieve_similar_exit, reason}}
+    end
   end
 
   ## Build seed entries (from similarity search)
@@ -280,6 +298,11 @@ defmodule Graphonomous.Retriever do
           to_float(Keyword.get(opts, :hop_decay, state.hop_decay)),
           0.1,
           1.0
+        ),
+      similarity_timeout_ms:
+        normalize_timeout_ms(
+          Keyword.get(opts, :similarity_timeout_ms, state.similarity_timeout_ms),
+          @default_similarity_timeout_ms
         )
     }
   end
@@ -305,6 +328,17 @@ defmodule Graphonomous.Retriever do
   end
 
   defp normalize_non_neg_int(_, fallback), do: fallback
+
+  defp normalize_timeout_ms(v, _fallback) when is_integer(v) and v > 0, do: v
+
+  defp normalize_timeout_ms(v, fallback) when is_binary(v) do
+    case Integer.parse(v) do
+      {i, _} when i > 0 -> i
+      _ -> fallback
+    end
+  end
+
+  defp normalize_timeout_ms(_, fallback), do: fallback
 
   defp to_float(v) when is_float(v), do: v
   defp to_float(v) when is_integer(v), do: v * 1.0

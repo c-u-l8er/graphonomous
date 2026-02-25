@@ -39,7 +39,9 @@ defmodule Graphonomous.MCP.StoreNode do
           confidence: confidence
         }
 
-        {:ok, Jason.encode!(payload), frame}
+        {:reply,
+         Anubis.Server.Response.tool()
+         |> Anubis.Server.Response.structured(payload), frame}
 
       {:error, reason} ->
         payload = %{
@@ -48,7 +50,10 @@ defmodule Graphonomous.MCP.StoreNode do
           reason: inspect(reason)
         }
 
-        {:ok, Jason.encode!(payload), frame}
+        {:reply,
+         Anubis.Server.Response.tool()
+         |> Anubis.Server.Response.structured(payload)
+         |> Map.put(:isError, true), frame}
 
       other ->
         payload = %{
@@ -57,7 +62,10 @@ defmodule Graphonomous.MCP.StoreNode do
           reason: inspect(other)
         }
 
-        {:ok, Jason.encode!(payload), frame}
+        {:reply,
+         Anubis.Server.Response.tool()
+         |> Anubis.Server.Response.structured(payload)
+         |> Map.put(:isError, true), frame}
     end
   end
 

@@ -13,6 +13,7 @@ defmodule Graphonomous.MCP.RunConsolidation do
   """
 
   use Anubis.Server.Component, type: :tool
+  alias Anubis.Server.Response
 
   @allowed_actions ~w(run status run_and_status)
   @max_wait_ms 30_000
@@ -51,24 +52,24 @@ defmodule Graphonomous.MCP.RunConsolidation do
           do_run_and_status(wait_ms)
       end
 
-    payload =
+    {payload, is_error} =
       case result do
         {:ok, data} ->
-          %{
-            status: "ok",
-            action: Atom.to_string(action),
-            result: serialize_term(data)
-          }
+          {%{
+             status: "ok",
+             action: Atom.to_string(action),
+             result: serialize_term(data)
+           }, false}
 
         {:error, reason} ->
-          %{
-            status: "error",
-            action: Atom.to_string(action),
-            error: format_reason(reason)
-          }
+          {%{
+             status: "error",
+             action: Atom.to_string(action),
+             error: format_reason(reason)
+           }, true}
       end
 
-    {:ok, Jason.encode!(payload), frame}
+    {:reply, tool_response(payload, is_error), frame}
   end
 
   defp do_run(wait_ms) do
@@ -153,6 +154,14 @@ defmodule Graphonomous.MCP.RunConsolidation do
 
   defp p(map, key, default) when is_map(map) do
     Map.get(map, key, Map.get(map, Atom.to_string(key), default))
+  end
+
+  defp tool_response(payload, is_error) when is_map(payload) do
+    response =
+      Response.tool()
+      |> Response.text(Jason.encode!(payload))
+
+    if is_error, do: %{response | isError: true}, else: response
   end
 
   defp serialize_term(%DateTime{} = dt), do: DateTime.to_iso8601(dt)

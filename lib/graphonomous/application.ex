@@ -31,7 +31,8 @@ defmodule Graphonomous.Application do
           :graphonomous,
           :embedding_model_id,
           "sentence-transformers/all-MiniLM-L6-v2"
-        )
+        ),
+      backend: Application.get_env(:graphonomous, :embedder_backend, :auto)
     ]
   end
 

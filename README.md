@@ -50,7 +50,7 @@ npx -y graphonomous --db ~/.graphonomous/knowledge.db --embedder-backend fallbac
 
 ### 3) Zed setup (custom context server)
 
-In Zed settings JSON, use either installed command or `npx`.
+In Zed settings JSON, use either installed command, `npx`, or a local wrapper script (recommended for dev logging/debugging).
 
 #### Installed command
 
@@ -82,6 +82,22 @@ In Zed settings JSON, use either installed command or `npx`.
 }
 ```
 
+#### Local wrapper script (recommended for local dev + logs)
+
+Use a wrapper that launches local source via `mix run` and writes stderr logs to `~/.graphonomous/logs`.
+
+```/dev/null/settings.json#L1-12
+{
+  "context_servers": {
+    "graphonomous": {
+      "command": "/home/travis/ProjectAmp2/graphonomous/scripts/graphonomous_mcp_wrapper.sh",
+      "args": [],
+      "env": {}
+    }
+  }
+}
+```
+
 After saving:
 1. Open Zed Agent panel.
 2. Confirm server is active.
@@ -100,9 +116,26 @@ graphonomous --help
 ```/dev/null/shell.sh#L1-1
 graphonomous --db ~/.graphonomous/knowledge.db --embedder-backend fallback --request-timeout 180000
 ```
-3. Use the same args in Zed `context_servers` config.
-4. Fully restart Zed after changing MCP config.
-5. Reinstall/upgrade your global package if needed:
+3. Prefer local wrapper-script mode for debugging to capture server stderr logs:
+```/dev/null/settings.json#L1-12
+{
+  "context_servers": {
+    "graphonomous": {
+      "command": "/home/travis/ProjectAmp2/graphonomous/scripts/graphonomous_mcp_wrapper.sh",
+      "args": [],
+      "env": {}
+    }
+  }
+}
+```
+4. After reproducing once, inspect wrapper logs:
+```/dev/null/shell.sh#L1-3
+ls -lt ~/.graphonomous/logs | head
+LATEST="$(ls -1t ~/.graphonomous/logs/zed-mcp-*.log | head -n1)"
+tail -n 200 "$LATEST"
+```
+5. Fully restart Zed after changing MCP config.
+6. Reinstall/upgrade your global package if needed:
 ```/dev/null/shell.sh#L1-2
 npm uninstall -g graphonomous
 npm i -g graphonomous

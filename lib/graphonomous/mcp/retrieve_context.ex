@@ -10,6 +10,8 @@ defmodule Graphonomous.MCP.RetrieveContext do
 
   use Anubis.Server.Component, type: :tool
 
+  alias Anubis.Server.Response
+
   schema do
     field(:query, :string,
       required: true,
@@ -40,11 +42,11 @@ defmodule Graphonomous.MCP.RetrieveContext do
       |> normalize_query()
 
     if is_nil(query) do
-      {:ok,
-       Jason.encode!(%{
+      {:reply,
+       tool_response(%{
          status: "error",
          error: "query is required"
-       }), frame}
+       }, true), frame}
     else
       opts = build_opts(params)
 
@@ -54,8 +56,8 @@ defmodule Graphonomous.MCP.RetrieveContext do
           results = Map.get(retrieval, :results, [])
           causal_context = Map.get(retrieval, :causal_context, [])
 
-          {:ok,
-           Jason.encode!(%{
+          {:reply,
+           tool_response(%{
              status: "ok",
              query: query,
              count: length(results),
@@ -65,21 +67,21 @@ defmodule Graphonomous.MCP.RetrieveContext do
            }), frame}
 
         {:error, reason} ->
-          {:ok,
-           Jason.encode!(%{
+          {:reply,
+           tool_response(%{
              status: "error",
              query: query,
              error: inspect(reason)
-           }), frame}
+           }, true), frame}
 
         other ->
-          {:ok,
-           Jason.encode!(%{
+          {:reply,
+           tool_response(%{
              status: "error",
              query: query,
              error: "unexpected retrieval response",
              details: inspect(other)
-           }), frame}
+           }, true), frame}
       end
     end
   end
@@ -163,6 +165,14 @@ defmodule Graphonomous.MCP.RetrieveContext do
       hops: Map.get(result, :hops),
       via: Map.get(result, :via)
     }
+  end
+
+  defp tool_response(payload, is_error \\ false) when is_map(payload) do
+    response =
+      Response.tool()
+      |> Response.structured(payload)
+
+    if is_error, do: Map.put(response, :isError, true), else: response
   end
 
   defp fetch_param(params, key) when is_map(params) and is_atom(key) do

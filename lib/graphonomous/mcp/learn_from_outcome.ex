@@ -9,6 +9,7 @@ defmodule Graphonomous.MCP.LearnFromOutcome do
   """
 
   use Anubis.Server.Component, type: :tool
+  alias Anubis.Server.Response
 
   @allowed_statuses ~w(success partial_success failure timeout)
 
@@ -86,10 +87,10 @@ defmodule Graphonomous.MCP.LearnFromOutcome do
         updates: Map.get(result, :updates, [])
       }
 
-      {:ok, Jason.encode!(response), frame}
+      {:reply, tool_response(response), frame}
     else
       {:error, reason} ->
-        {:ok, Jason.encode!(%{error: format_reason(reason)}), frame}
+        {:reply, tool_response(%{error: format_reason(reason)}, true), frame}
     end
   end
 
@@ -99,6 +100,14 @@ defmodule Graphonomous.MCP.LearnFromOutcome do
       %{} = result -> {:ok, result}
       other -> {:error, {:unexpected_result, other}}
     end
+  end
+
+  defp tool_response(payload, is_error \\ false) when is_map(payload) do
+    response =
+      Response.tool()
+      |> Response.text(Jason.encode!(payload))
+
+    if is_error, do: %{response | isError: true}, else: response
   end
 
   defp read_required_string(params, key) do

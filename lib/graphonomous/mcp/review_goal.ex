@@ -12,6 +12,7 @@ defmodule Graphonomous.MCP.ReviewGoal do
   """
 
   use Anubis.Server.Component, type: :tool
+  alias Anubis.Server.Response
 
   @default_apply_decision true
 
@@ -74,7 +75,7 @@ defmodule Graphonomous.MCP.ReviewGoal do
               evaluation: serialize_term(evaluation)
             }
 
-          {:ok, Jason.encode!(payload), frame}
+          {:reply, tool_response(payload), frame}
 
         {:error, reason} ->
           error = %{
@@ -83,7 +84,7 @@ defmodule Graphonomous.MCP.ReviewGoal do
             reason: inspect(reason)
           }
 
-          {:ok, Jason.encode!(error), frame}
+          {:reply, tool_response(error), frame}
 
         other ->
           fallback = %{
@@ -92,11 +93,11 @@ defmodule Graphonomous.MCP.ReviewGoal do
             result: inspect(other)
           }
 
-          {:ok, Jason.encode!(fallback), frame}
+          {:reply, tool_response(fallback), frame}
       end
     else
       {:error, reason} ->
-        {:ok, Jason.encode!(%{status: "error", error: format_reason(reason)}), frame}
+        {:reply, tool_response(%{status: "error", error: format_reason(reason)}), frame}
     end
   end
 
@@ -206,6 +207,11 @@ defmodule Graphonomous.MCP.ReviewGoal do
 
   defp maybe_put_opt(opts, _key, nil), do: opts
   defp maybe_put_opt(opts, key, value), do: Keyword.put(opts, key, value)
+
+  defp tool_response(payload) when is_map(payload) do
+    Response.tool()
+    |> Response.text(Jason.encode!(payload))
+  end
 
   defp read_required_string(params, key) do
     case fetch(params, key) do
