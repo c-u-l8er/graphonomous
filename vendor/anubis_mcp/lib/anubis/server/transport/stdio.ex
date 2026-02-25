@@ -65,6 +65,15 @@ defmodule Anubis.Server.Transport.STDIO do
     end
   end
 
+  @impl true
+  def child_spec(opts) do
+    %{
+      id: __MODULE__,
+      start: {__MODULE__, :start_link, [opts]},
+      restart: :transient
+    }
+  end
+
   @doc """
   Sends a message to the client via stdout.
 
@@ -140,6 +149,10 @@ defmodule Anubis.Server.Transport.STDIO do
         task = Task.async(fn -> read_from_stdin() end)
         {:noreply, %{state | reading_task: task}}
 
+      {:error, :eof} ->
+        Logging.transport_event("disconnect", %{reason: :eof}, level: :info)
+        {:stop, :normal, state}
+
       {:error, reason} ->
         Logging.transport_event("read_error", %{reason: reason}, level: :error)
         {:stop, {:error, reason}, state}
@@ -193,7 +206,7 @@ defmodule Anubis.Server.Transport.STDIO do
   # Private helper functions
 
   defp read_from_stdin do
-    case IO.binread(:stdio, 1) do
+    case IO.binread(:stdio, 4096) do
       :eof ->
         Logging.transport_event("eof", "End of input stream", level: :info)
 
@@ -237,13 +250,16 @@ defmodule Anubis.Server.Transport.STDIO do
     buffer = state.input_buffer <> data
     {payloads, rest, detected_mode} = decode_payloads_from_buffer(buffer)
 
+    state =
+      state
+      |> Map.put(:input_buffer, rest)
+      |> maybe_update_framing_mode(detected_mode)
+
     Enum.each(payloads, fn payload ->
       process_payload(payload, state)
     end)
 
     state
-    |> Map.put(:input_buffer, rest)
-    |> maybe_update_framing_mode(detected_mode)
   end
 
   defp process_payload(payload, state) when is_binary(payload) do
@@ -303,15 +319,29 @@ defmodule Anubis.Server.Transport.STDIO do
   end
 
   defp decode_payloads_from_buffer(buffer) when is_binary(buffer) do
-    if starts_with_content_length_header?(buffer) do
-      decode_content_length_payloads(buffer, [])
-    else
-      decode_line_payloads(buffer)
+    cond do
+      starts_with_content_length_header?(buffer) ->
+        decode_content_length_payloads(buffer, [])
+
+      maybe_content_length_header_prefix?(buffer) ->
+        {[], buffer, :content_length}
+
+      true ->
+        decode_line_payloads(buffer)
     end
   end
 
   defp starts_with_content_length_header?(buffer) do
     String.match?(buffer, ~r/^\s*content-length\s*:/i)
+  end
+
+  defp maybe_content_length_header_prefix?(buffer) do
+    normalized =
+      buffer
+      |> String.trim_leading()
+      |> String.downcase()
+
+    normalized != "" and String.starts_with?("content-length", normalized)
   end
 
   defp decode_line_payloads(buffer) do

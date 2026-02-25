@@ -6,6 +6,7 @@ defmodule Graphonomous.Application do
   @impl true
   def start(_type, _args) do
     children = [
+      {Anubis.Server.Registry, []},
       {Graphonomous.Store, store_opts()},
       {Graphonomous.Embedder, embedder_opts()},
       {Graphonomous.Graph, []},

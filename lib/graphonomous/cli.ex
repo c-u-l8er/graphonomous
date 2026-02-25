@@ -42,8 +42,8 @@ defmodule Graphonomous.CLI do
         configure_runtime(opts)
         Process.flag(:trap_exit, true)
         start_runtime()
-        {:ok, server_pid} = start_stdio_mcp_server(opts)
-        wait_forever(server_pid)
+        {:ok, monitor_pid} = start_stdio_mcp_server(opts)
+        wait_forever(monitor_pid)
 
       {:error, message} ->
         IO.puts(:stderr, "graphonomous: #{message}\n")
@@ -174,8 +174,8 @@ defmodule Graphonomous.CLI do
     end)
 
     # Keep STDOUT reserved for MCP protocol frames.
-    # Route all Logger console output to STDERR in CLI/MCP mode.
-    Logger.configure_backend(:console, device: :standard_error)
+    # Route all Logger output (Elixir + Erlang handlers) to STDERR in CLI/MCP mode.
+    force_stderr_logging!()
 
     :ok
   end
@@ -208,11 +208,11 @@ defmodule Graphonomous.CLI do
            transport: :stdio,
            request_timeout: timeout
          ) do
-      {:ok, pid} ->
-        {:ok, pid}
+      {:ok, supervisor_pid} ->
+        {:ok, monitor_target_pid(supervisor_pid)}
 
-      {:error, {:already_started, pid}} ->
-        {:ok, pid}
+      {:error, {:already_started, supervisor_pid}} ->
+        {:ok, monitor_target_pid(supervisor_pid)}
 
       {:error, reason} ->
         halt_with_error("failed to start MCP stdio server: #{inspect(reason)}")
@@ -220,19 +220,55 @@ defmodule Graphonomous.CLI do
   end
 
   @spec wait_forever(pid()) :: no_return()
-  defp wait_forever(server_pid) when is_pid(server_pid) do
-    ref = Process.monitor(server_pid)
+  defp wait_forever(monitor_pid) when is_pid(monitor_pid) do
+    ref = Process.monitor(monitor_pid)
 
     receive do
-      {:DOWN, ^ref, :process, ^server_pid, reason} ->
-        halt_with_error("MCP server terminated: #{inspect(reason)}")
+      {:DOWN, ^ref, :process, ^monitor_pid, reason} ->
+        handle_server_termination(reason)
 
-      {:EXIT, ^server_pid, reason} ->
-        halt_with_error("MCP server terminated: #{inspect(reason)}")
+      {:EXIT, ^monitor_pid, reason} ->
+        handle_server_termination(reason)
     after
       :infinity ->
         System.halt(0)
     end
+  end
+
+  @spec monitor_target_pid(pid()) :: pid()
+  defp monitor_target_pid(supervisor_pid) when is_pid(supervisor_pid) do
+    case resolve_stdio_transport_pid(20) do
+      pid when is_pid(pid) -> pid
+      _ -> supervisor_pid
+    end
+  end
+
+  @spec resolve_stdio_transport_pid(non_neg_integer()) :: pid() | nil
+  defp resolve_stdio_transport_pid(0), do: nil
+
+  defp resolve_stdio_transport_pid(attempts) when is_integer(attempts) and attempts > 0 do
+    case Anubis.Server.Registry.whereis_transport(Graphonomous.MCP.Server, :stdio) do
+      pid when is_pid(pid) ->
+        pid
+
+      _ ->
+        Process.sleep(10)
+        resolve_stdio_transport_pid(attempts - 1)
+    end
+  end
+
+  @spec handle_server_termination(term()) :: no_return()
+  defp handle_server_termination(reason)
+       when reason in [:normal, :shutdown, :eof] do
+    System.halt(0)
+  end
+
+  defp handle_server_termination({:error, :eof}), do: System.halt(0)
+  defp handle_server_termination({:shutdown, :normal}), do: System.halt(0)
+  defp handle_server_termination({:shutdown, {:error, :eof}}), do: System.halt(0)
+
+  defp handle_server_termination(reason) do
+    halt_with_error("MCP server terminated: #{inspect(reason)}")
   end
 
   @spec normalize_backend(nil | String.t()) ::
@@ -287,6 +323,23 @@ defmodule Graphonomous.CLI do
   defp halt_with_error(message) do
     IO.puts(:stderr, "graphonomous: #{message}")
     System.halt(1)
+  end
+
+  @spec force_stderr_logging!() :: :ok
+  defp force_stderr_logging! do
+    Logger.configure_backend(:console, device: :standard_error)
+
+    # Erlang's default logger handler may still target stdout.
+    # Best-effort switch it to stderr without crashing CLI startup.
+    try do
+      :logger.set_handler_config(:default, :type, :standard_error)
+    rescue
+      _ -> :ok
+    catch
+      _, _ -> :ok
+    end
+
+    :ok
   end
 
   @spec version_text() :: String.t()
