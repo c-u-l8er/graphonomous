@@ -170,7 +170,7 @@ defmodule Graphonomous.Embedder do
   end
 
   @impl true
-  def handle_info(:warmup_bumblebee, %{model_id: model_id, dimension: dimension} = state) do
+  def handle_info(:warmup_bumblebee, %{model_id: model_id, dimension: dimension}) do
     new_state =
       case load_bumblebee_serving(model_id) do
         {:ok, serving} ->

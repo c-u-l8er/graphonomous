@@ -65,7 +65,6 @@ defmodule Anubis.Server.Transport.STDIO do
     end
   end
 
-  @impl true
   def child_spec(opts) do
     %{
       id: __MODULE__,
@@ -206,7 +205,7 @@ defmodule Anubis.Server.Transport.STDIO do
   # Private helper functions
 
   defp read_from_stdin do
-    case IO.binread(:stdio, 4096) do
+    case IO.binread(:stdio, 1) do
       :eof ->
         Logging.transport_event("eof", "End of input stream", level: :info)
 

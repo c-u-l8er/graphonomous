@@ -102,6 +102,12 @@ defmodule Graphonomous.CLI do
   defp normalize_parsed_options(parsed) do
     with {:ok, backend} <- normalize_backend(parsed[:embedder_backend] || "fallback"),
          {:ok, level} <- normalize_log_level(parsed[:log_level]),
+         {:ok, db_path} <- normalize_filesystem_path(parsed[:db], "--db"),
+         {:ok, sqlite_vec_extension_path} <-
+           normalize_filesystem_path(
+             parsed[:sqlite_vec_extension_path],
+             "--sqlite-vec-extension-path"
+           ),
          {:ok, interval_ms} <-
            validate_positive_int(parsed[:consolidator_interval_ms], "--consolidator-interval-ms"),
          {:ok, timeout} <- validate_positive_int(parsed[:request_timeout], "--request-timeout"),
@@ -120,10 +126,10 @@ defmodule Graphonomous.CLI do
          :ok <- validate_probability(parsed[:learning_rate], "--learning-rate") do
       opts =
         %{}
-        |> maybe_put(:db_path, parsed[:db])
+        |> maybe_put(:db_path, db_path)
         |> maybe_put(:embedding_model_id, parsed[:embedding_model])
         |> maybe_put(:embedder_backend, backend)
-        |> maybe_put(:sqlite_vec_extension_path, parsed[:sqlite_vec_extension_path])
+        |> maybe_put(:sqlite_vec_extension_path, sqlite_vec_extension_path)
         |> maybe_put(:consolidator_interval_ms, interval_ms)
         |> maybe_put(:consolidator_decay_rate, parsed[:consolidator_decay_rate])
         |> maybe_put(:consolidator_prune_threshold, parsed[:consolidator_prune_threshold])
@@ -176,6 +182,11 @@ defmodule Graphonomous.CLI do
     # Keep STDOUT reserved for MCP protocol frames.
     # Route all Logger output (Elixir + Erlang handlers) to STDERR in CLI/MCP mode.
     force_stderr_logging!()
+
+    # Keep MCP transport/protocol output clean for strict stdio clients.
+    # Anubis logs are noisy during handshake and can interfere with clients that
+    # aggressively parse startup output, so disable Anubis logging in CLI mode.
+    Application.put_env(:anubis_mcp, :log, false)
 
     :ok
   end
@@ -282,7 +293,7 @@ defmodule Graphonomous.CLI do
 
   @spec normalize_log_level(nil | String.t()) ::
           {:ok, Logger.level() | nil} | {:error, String.t()}
-  defp normalize_log_level(nil), do: {:ok, nil}
+  defp normalize_log_level(nil), do: {:ok, :error}
   defp normalize_log_level("debug"), do: {:ok, :debug}
   defp normalize_log_level("info"), do: {:ok, :info}
   defp normalize_log_level("warning"), do: {:ok, :warning}
@@ -308,6 +319,46 @@ defmodule Graphonomous.CLI do
   defp validate_probability(value, flag),
     do: {:error, "invalid #{flag}=#{inspect(value)} (must be in [0.0, 1.0])"}
 
+  @spec normalize_filesystem_path(nil | String.t(), String.t()) ::
+          {:ok, String.t() | nil} | {:error, String.t()}
+  defp normalize_filesystem_path(nil, _flag), do: {:ok, nil}
+
+  defp normalize_filesystem_path(path, flag) when is_binary(path) do
+    trimmed = String.trim(path)
+
+    if trimmed == "" do
+      {:error, "invalid #{flag}=#{inspect(path)} (must not be empty)"}
+    else
+      normalized =
+        trimmed
+        |> expand_user_path()
+        |> Path.expand()
+
+      {:ok, normalized}
+    end
+  end
+
+  defp normalize_filesystem_path(other, flag),
+    do: {:error, "invalid #{flag}=#{inspect(other)} (must be a string path)"}
+
+  @spec expand_user_path(String.t()) :: String.t()
+  defp expand_user_path(""), do: ""
+
+  defp expand_user_path(path) do
+    home = System.get_env("HOME") || ""
+
+    cond do
+      path == "~" and home != "" ->
+        home
+
+      String.starts_with?(path, "~/") and home != "" ->
+        Path.join(home, String.trim_leading(path, "~/"))
+
+      true ->
+        path
+    end
+  end
+
   @spec maybe_put(map(), atom(), any()) :: map()
   defp maybe_put(map, _key, nil), do: map
   defp maybe_put(map, key, value), do: Map.put(map, key, value)
@@ -327,12 +378,19 @@ defmodule Graphonomous.CLI do
 
   @spec force_stderr_logging!() :: :ok
   defp force_stderr_logging! do
+    # Elixir console backend
     Logger.configure_backend(:console, device: :standard_error)
 
-    # Erlang's default logger handler may still target stdout.
-    # Best-effort switch it to stderr without crashing CLI startup.
+    # OTP logger default handler (and any fallback/legacy path).
+    # Keep this best-effort so CLI startup never fails due to logger differences.
     try do
       :logger.set_handler_config(:default, :type, :standard_error)
+
+      :logger.update_handler_config(:default, fn config ->
+        handler_config = Map.get(config, :config, %{})
+        updated_handler_config = Map.put(handler_config, :type, :standard_error)
+        Map.put(config, :config, updated_handler_config)
+      end)
     rescue
       _ -> :ok
     catch

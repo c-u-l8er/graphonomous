@@ -1,6 +1,6 @@
 {
   "name": "graphonomous",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "npm wrapper for the Graphonomous MCP server CLI",
   "private": false,
   "license": "UNLICENSED",

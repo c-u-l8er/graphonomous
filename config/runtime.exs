@@ -138,4 +138,12 @@ config :logger,
       "LOG_LEVEL",
       [:debug, :info, :warning, :error],
       get_default.(current_logger, :level, :info)
-    )
+    ),
+  default_handler: [
+    config: [
+      type: :standard_error
+    ]
+  ]
+
+config :anubis_mcp,
+  log: false

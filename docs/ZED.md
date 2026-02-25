@@ -16,7 +16,19 @@ From the project root:
 
 ---
 
-## 2) Build the executable command
+## 2) Choose a launch mode
+
+You can run Graphonomous in two modes:
+
+### A) Fast dev mode (recommended while iterating)
+
+Use Mix with no compile step:
+
+    mix run --no-compile -e 'Graphonomous.CLI.main(["--db","~/.graphonomous/knowledge.db","--embedder-backend","fallback"])'
+
+This is the easiest way to test local changes quickly.
+
+### B) Built executable mode (recommended for stable deployment)
 
 Build the `graphonomous` executable:
 
@@ -30,11 +42,23 @@ This creates:
 
 ## 3) Quick local run check (recommended)
 
-Before wiring Zed, verify the command starts:
+Before wiring Zed, verify the command starts.
+
+If using fast dev mode:
+
+    mix run --no-compile -e 'Graphonomous.CLI.main(["--help"])'
+
+If using built executable mode:
 
     ./graphonomous --help
 
-Then run server mode (stdio MCP transport):
+Then run server mode (stdio MCP transport).
+
+Fast dev mode:
+
+    mix run --no-compile -e 'Graphonomous.CLI.main(["--db","~/.graphonomous/knowledge.db","--embedder-backend","fallback"])'
+
+Built executable mode:
 
     ./graphonomous --db ~/.graphonomous/knowledge.db --embedder-backend fallback
 
@@ -42,11 +66,34 @@ Notes:
 - `--embedder-backend fallback` is the safest default for constrained laptops.
 - Press `Ctrl+C` to stop.
 
+### MCP smoke test workflow (pre-deploy)
+
+Run this before deploying or updating your Zed config:
+
+    python scripts/mcp_smoke_test.py --cwd .
+
+What it validates:
+1. `initialize` handshake succeeds
+2. `notifications/initialized` is accepted
+3. `tools/list` responds
+4. `resources/list` responds
+5. response latencies stay within thresholds
+
+Useful variants:
+
+    # verbose stderr while testing
+    python scripts/mcp_smoke_test.py --cwd . --tee-stderr
+
+    # stricter latency gates (example)
+    python scripts/mcp_smoke_test.py --cwd . --max-initialize-ms 2500 --max-discovery-ms 2500
+
 ---
 
 ## 4) Configure Zed (`context_servers`)
 
-Open your Zed settings JSON and add this block:
+Open your Zed settings JSON and add one of the following.
+
+### Option A: Built executable (recommended for stable use)
 
     {
       "context_servers": {
@@ -71,6 +118,25 @@ If `graphonomous` is on your `PATH`, you can use:
     "command": "graphonomous"
 
 instead of an absolute path.
+
+### Option B: Fast dev mode with no compile
+
+    {
+      "context_servers": {
+        "graphonomous": {
+          "command": "sh",
+          "args": [
+            "-lc",
+            "cd /absolute/path/to/ProjectAmp2/graphonomous && mix run --no-compile -e 'Graphonomous.CLI.main([\"--db\",\"~/.graphonomous/knowledge.db\",\"--embedder-backend\",\"fallback\"])'"
+          ],
+          "env": {
+            "LOG_LEVEL": "info"
+          }
+        }
+      }
+    }
+
+Use Option B while actively changing code; switch to Option A for daily/stable usage.
 
 ---
 
