@@ -173,6 +173,10 @@ defmodule Graphonomous.CLI do
         :ok
     end)
 
+    # Keep STDOUT reserved for MCP protocol frames.
+    # Route all Logger console output to STDERR in CLI/MCP mode.
+    Logger.configure_backend(:console, device: :standard_error)
+
     :ok
   end
 
