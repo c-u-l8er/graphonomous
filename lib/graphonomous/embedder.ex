@@ -20,14 +20,15 @@ defmodule Graphonomous.Embedder do
   @default_dimension 384
   @default_timeout 15_000
 
-  @type backend :: :bumblebee | :fallback
+  @type backend :: :bumblebee | :fallback | :warming
   @type embedding :: [float()]
 
   @type state :: %{
           backend: backend(),
           serving: term() | nil,
           model_id: String.t(),
-          dimension: pos_integer()
+          dimension: pos_integer(),
+          warmup_in_progress: boolean()
         }
 
   ## Public API
@@ -88,18 +89,9 @@ defmodule Graphonomous.Embedder do
           fallback_state(model_id, dimension)
 
         _ ->
-          case load_bumblebee_serving(model_id) do
-            {:ok, serving} ->
-              Logger.info("Graphonomous.Embedder started with Bumblebee model=#{model_id}")
-              bumblebee_state(serving, model_id, dimension)
-
-            {:error, reason} ->
-              Logger.warning(
-                "Graphonomous.Embedder falling back to deterministic embedder: #{inspect(reason)}"
-              )
-
-              fallback_state(model_id, dimension)
-          end
+          Logger.info("Graphonomous.Embedder starting async Bumblebee warmup model=#{model_id}")
+          send(self(), :warmup_bumblebee)
+          warming_state(model_id, dimension)
       end
 
     {:ok, state}
@@ -131,7 +123,8 @@ defmodule Graphonomous.Embedder do
       backend: :bumblebee,
       serving: serving,
       model_id: model_id,
-      dimension: dimension
+      dimension: dimension,
+      warmup_in_progress: false
     }
   end
 
@@ -140,7 +133,18 @@ defmodule Graphonomous.Embedder do
       backend: :fallback,
       serving: nil,
       model_id: model_id,
-      dimension: dimension
+      dimension: dimension,
+      warmup_in_progress: false
+    }
+  end
+
+  defp warming_state(model_id, dimension) do
+    %{
+      backend: :warming,
+      serving: nil,
+      model_id: model_id,
+      dimension: dimension,
+      warmup_in_progress: true
     }
   end
 
@@ -165,6 +169,30 @@ defmodule Graphonomous.Embedder do
     {:reply, result, state}
   end
 
+  @impl true
+  def handle_info(:warmup_bumblebee, %{model_id: model_id, dimension: dimension} = state) do
+    new_state =
+      case load_bumblebee_serving(model_id) do
+        {:ok, serving} ->
+          Logger.info("Graphonomous.Embedder warmup complete with Bumblebee model=#{model_id}")
+          bumblebee_state(serving, model_id, dimension)
+
+        {:error, reason} ->
+          Logger.warning(
+            "Graphonomous.Embedder warmup failed; using deterministic fallback: #{inspect(reason)}"
+          )
+
+          fallback_state(model_id, dimension)
+      end
+
+    {:noreply, new_state}
+  end
+
+  @impl true
+  def handle_info(_msg, state) do
+    {:noreply, state}
+  end
+
   ## Internal embedding
 
   defp embed_with_state(text, %{backend: :bumblebee} = state) do
@@ -180,6 +208,10 @@ defmodule Graphonomous.Embedder do
 
         {:ok, fallback_embed(text, state.dimension)}
     end
+  end
+
+  defp embed_with_state(text, %{backend: :warming, dimension: dim}) do
+    {:ok, fallback_embed(text, dim)}
   end
 
   defp embed_with_state(text, %{backend: :fallback, dimension: dim}) do
