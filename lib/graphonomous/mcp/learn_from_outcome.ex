@@ -24,7 +24,7 @@ defmodule Graphonomous.MCP.LearnFromOutcome do
       description: "success, partial_success, failure, or timeout"
     )
 
-    field(:confidence, :number,
+    field(:confidence, :float,
       required: true,
       description: "0.0-1.0 confidence in this outcome signal"
     )

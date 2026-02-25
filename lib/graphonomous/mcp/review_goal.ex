@@ -22,23 +22,23 @@ defmodule Graphonomous.MCP.ReviewGoal do
       description: "Goal ID to review"
     )
 
-    field(:signal, :string,
+    field(:signal, :any,
       required: true,
       description:
         "Coverage signal as a JSON object. Example: {\"retrieved_nodes\": [...], \"outcomes\": [...], \"contradictions\": 1}"
     )
 
-    field(:options, :string,
+    field(:options, :any,
       description:
         "Optional JSON object for coverage options (top_k, min_context_nodes, freshness_half_life_hours, graph_support_target, weights, thresholds)"
     )
 
-    field(:apply_decision, :string,
+    field(:apply_decision, :any,
       description:
         "Optional boolean-like flag (true/false). If true, applies decision -> status transition policy"
     )
 
-    field(:transition_metadata, :string,
+    field(:transition_metadata, :any,
       description:
         "Optional JSON object merged into transition metadata when apply_decision is enabled"
     )
@@ -53,7 +53,7 @@ defmodule Graphonomous.MCP.ReviewGoal do
       review_opts = build_review_opts(options_map)
       apply_decision? = read_bool(params, :apply_decision, @default_apply_decision)
 
-      case Graphonomous.review_goal(goal_id, signal, review_opts) do
+      case safe_review_goal(goal_id, signal, review_opts) do
         {:ok, goal, evaluation} when is_map(goal) and is_map(evaluation) ->
           transition_result =
             maybe_apply_decision_transition(goal, evaluation, apply_decision?, transition_meta)
@@ -207,6 +207,15 @@ defmodule Graphonomous.MCP.ReviewGoal do
 
   defp maybe_put_opt(opts, _key, nil), do: opts
   defp maybe_put_opt(opts, key, value), do: Keyword.put(opts, key, value)
+
+  defp safe_review_goal(goal_id, signal, review_opts) do
+    try do
+      GenServer.call(Graphonomous.GoalGraph, {:review_goal, goal_id, signal, review_opts}, 30_000)
+    catch
+      :exit, reason ->
+        {:error, {:review_goal_call_exit, reason}}
+    end
+  end
 
   defp tool_response(payload) when is_map(payload) do
     Response.tool()

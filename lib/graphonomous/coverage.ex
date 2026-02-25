@@ -14,7 +14,7 @@ defmodule Graphonomous.Coverage do
   ## Expected input shape
 
       %{
-        retrieved_nodes: [map()],
+        retrieved_nodes: [map() | binary()],
         outcomes: [map()],
         contradictions: non_neg_integer() | [map()],
         graph_support: non_neg_integer(),
@@ -408,6 +408,20 @@ defmodule Graphonomous.Coverage do
 
   # -- primitives --------------------------------------------------------------
 
+  defp node_score(node) when is_binary(node) do
+    # Accept review signals that pass retrieved node IDs instead of full node maps.
+    case Graphonomous.get_node(node) do
+      %{} = resolved ->
+        node_score(resolved)
+
+      {:ok, %{} = resolved} ->
+        node_score(resolved)
+
+      _ ->
+        0.0
+    end
+  end
+
   defp node_score(node) when is_map(node) do
     explicit = get_num(node, :score, nil)
 
@@ -424,6 +438,8 @@ defmodule Graphonomous.Coverage do
 
     clamp01(score)
   end
+
+  defp node_score(_), do: 0.0
 
   defp outcome_reliability(outcome) when is_map(outcome) do
     status = normalize_status(get_val(outcome, :status, :failure))

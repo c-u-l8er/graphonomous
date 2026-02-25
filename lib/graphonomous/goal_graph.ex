@@ -26,6 +26,7 @@ defmodule Graphonomous.GoalGraph do
   @valid_timescales [:immediate, :short_term, :medium_term, :long_term]
   @valid_sources [:user, :system, :inferred, :policy]
   @valid_priorities [:low, :normal, :high, :critical]
+  @review_goal_timeout_ms 30_000
 
   @transitions %{
     proposed: [:active, :blocked, :abandoned],
@@ -104,7 +105,7 @@ defmodule Graphonomous.GoalGraph do
   @spec review_goal(binary(), map(), keyword()) :: {:ok, Goal.t(), map()} | {:error, term()}
   def review_goal(goal_id, signal, opts \\ [])
       when is_binary(goal_id) and is_map(signal) and is_list(opts) do
-    GenServer.call(__MODULE__, {:review_goal, goal_id, signal, opts})
+    GenServer.call(__MODULE__, {:review_goal, goal_id, signal, opts}, @review_goal_timeout_ms)
   end
 
   ## GenServer callbacks
