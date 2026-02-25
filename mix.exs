@@ -4,13 +4,13 @@ defmodule Graphonomous.MixProject do
   def project do
     [
       app: :graphonomous,
-      version: "0.1.0",
+      version: "0.1.1",
       elixir: "~> 1.17",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       name: "Graphonomous",
       description: "Continual learning engine — self-evolving knowledge graphs for AI agents",
-      source_url: "https://github.com/ampersandbox/graphonomous",
+      source_url: "https://github.com/c-u-l8er/graphonomous",
       escript: [main_module: Graphonomous.CLI]
     ]
   end

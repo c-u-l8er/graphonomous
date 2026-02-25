@@ -114,21 +114,32 @@ If you prefer not to install globally:
 
 ## Release asset override instructions
 
-The installer supports override environment variables for custom repos/tags/asset hosting.
+By default, the installer resolves the GitHub release source from this package metadata (`repository.url`, then `homepage`, then `bugs.url`).
+
+Current default source in this package points to:
+
+- Owner: `c-u-l8er`
+- Repo: `graphonomous`
+
+So for version `X.Y.Z`, the default asset URL pattern is:
+
+- `https://github.com/c-u-l8er/graphonomous/releases/download/vX.Y.Z/graphonomous-vX.Y.Z-<platform>-<arch>.tar.gz`
+
+You can override this behavior with environment variables for custom repos/tags/asset hosting.
 
 ### Override GitHub owner/repo/tag
 
 ```sh
 GRAPHONOMOUS_GITHUB_OWNER=my-org \
 GRAPHONOMOUS_GITHUB_REPO=graphonomous \
-GRAPHONOMOUS_RELEASE_TAG=v0.1.0 \
+GRAPHONOMOUS_RELEASE_TAG=v0.1.1 \
 npm i graphonomous
 ```
 
 ### Override version used for asset naming
 
 ```sh
-GRAPHONOMOUS_VERSION=0.1.0 npm i graphonomous
+GRAPHONOMOUS_VERSION=0.1.1 npm i graphonomous
 ```
 
 ### Use custom release base URL (bypass GitHub release URL construction)
@@ -141,7 +152,7 @@ Example:
 
 ```sh
 GRAPHONOMOUS_RELEASE_BASE_URL=https://downloads.example.com/graphonomous \
-GRAPHONOMOUS_VERSION=0.1.0 \
+GRAPHONOMOUS_VERSION=0.1.1 \
 npm i graphonomous
 ```
 

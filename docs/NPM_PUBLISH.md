@@ -1,228 +1,171 @@
-# Graphonomous npm Publishing + Maintenance Runbook
+# Graphonomous npm Publishing + Maintenance Runbook (Manual-First)
 
-This runbook gives you a repeatable process to publish Graphonomous as an npm-installable MCP command, while keeping the Elixir implementation as the source of truth.
+This runbook is the **manual release path** for publishing `graphonomous` without relying on long-lived CI publish credentials.
+
+It is designed for the reality that npm credentials/tokens may rotate or expire frequently.
 
 ---
 
 ## 1) Goal
 
-Enable users to run Graphonomous with a familiar Node/npm workflow, e.g.:
+Publish Graphonomous so users can run:
 
-- `npx graphonomous --db ~/.graphonomous/knowledge.db --embedder-backend fallback`
+- `npx graphonomous --help`
 - `npm i -g graphonomous`
-- then `graphonomous --db ~/.graphonomous/knowledge.db --embedder-backend fallback`
+- `graphonomous --db ~/.graphonomous/knowledge.db --embedder-backend fallback`
 
-Important: npm is used as a distribution/launcher channel.  
-The core runtime is still the Elixir CLI (`Graphonomous.CLI`).
-
----
-
-## 2) Distribution Model (Recommended)
-
-Use an npm wrapper package that installs/runs a prebuilt Graphonomous binary.
-
-### Why this model
-- Best user experience for MCP users (especially editor integrations).
-- No requirement for end users to have Elixir/Erlang installed.
-- Works well with `npx` and global npm installs.
-
-### Packaging strategy
-- Build release binaries per target platform/arch.
-- Publish assets on GitHub Releases.
-- npm package `postinstall` selects/downloads matching release asset and resolves the runnable command.
-- npm package exposes `"bin": { "graphonomous": "bin/graphonomous.js" }`.
+while keeping the Elixir implementation as source of truth.
 
 ---
 
-## 3) Supported Targets (initial)
+## 2) Principles
 
-Start with:
-- Linux x64
-- Linux arm64
-- macOS x64
-- macOS arm64
-
-Optional later:
-- Windows x64
-
----
-
-## 4) Versioning Rules
-
-Use SemVer across Elixir app + npm wrapper:
-- `mix.exs` version: `X.Y.Z`
-- npm `package.json` version: `X.Y.Z`
-- Git tag: `vX.Y.Z`
-- Release artifact names include same `X.Y.Z`
-
-Do not publish npm with a version that has no matching binary release assets.
+1. **Manual over automated publish**
+   - You run the release and npm publish commands locally.
+2. **No dependency on permanent CI tokens**
+   - No long-lived npm automation token required.
+3. **Version parity is strict**
+   - `mix.exs`, `npm/package.json`, git tag, and release assets must all match.
+4. **Never overwrite versions**
+   - npm versions are immutable once published.
 
 ---
 
-## 5) One-Time Setup Checklist
+## 3) Required Local Tooling
 
-## 5.1 npm package scope/name
-Choose one:
-- Unscoped: `graphonomous`
-- Scoped: `@your-org/graphonomous`
-
-Recommendation for broad adoption: `graphonomous` (if available).
-
-## 5.2 npm account and auth
-1. Create/login npm account.
-2. Run:
-   - `npm login`
-3. Verify:
-   - `npm whoami`
-
-## 5.3 GitHub release permissions
-Ensure you can create tags/releases and upload artifacts.
-
-## 5.4 Add GitHub Actions release workflow
-Use the repository workflow:
-
-- `.github/workflows/release_npm.yml`
-
-Workflow behavior:
-1. Triggers on SemVer tags (`v*.*.*`) and manual dispatch.
-2. Builds release assets for:
-   - `linux-x64`
-   - `linux-arm64`
-   - `darwin-x64`
-   - `darwin-arm64`
-3. Packages assets as:
-   - `graphonomous-vX.Y.Z-<target>.tar.gz`
-4. Publishes/updates GitHub Release for the pushed tag.
-5. Publishes npm package from `npm/` when tag version matches `npm/package.json`.
-
-## 5.5 Required GitHub/npm Secrets
-
-Configure these repository secrets before tag-based release:
-
-- `NPM_TOKEN` (required)
-  - npm automation token with publish permission for the target package.
-- `GITHUB_TOKEN`
-  - provided automatically by GitHub Actions; ensure workflow permissions include `contents: write` (already set in workflow).
-- Optional for private release asset testing:
-  - `GRAPHONOMOUS_GITHUB_TOKEN` (only needed for private asset download scenarios in installer tests)
-
-Validation checklist:
-1. `NPM_TOKEN` is added under repository settings.
-2. npm account has access to publish the package name.
-3. Workflow permission block includes `contents: write`.
-4. Tag and npm version are aligned (`vX.Y.Z` == `npm/package.json` version).
+- Elixir `1.17.x`
+- Erlang/OTP `27.x`
+- Node.js `>= 18`
+- npm account with publish permission
+- `git`
+- `tar` (for packaging release assets)
+- Optional: `gh` CLI (otherwise use GitHub web UI)
 
 ---
 
-## 6) npm Wrapper Layout (Scaffolded)
+## 4) One-Time Setup
 
-The npm wrapper scaffold is now present in this repo under `npm/`.
+## 4.1 npm auth
+- Run `npm login`
+- Verify with `npm whoami`
 
-Current structure:
-- `npm/package.json`
-- `npm/README.md`
-- `npm/bin/graphonomous.js`
-- `npm/scripts/postinstall.js`
-- `npm/scripts/resolve-platform.js`
-- `npm/scripts/download-release-asset.js`
-- `npm/vendor/.gitkeep`
+If your org/package requires 2FA, keep your authenticator available during `npm publish`.
 
-Implemented behavior:
-1. Determine platform/arch.
-2. Locate/download matching binary release asset during install.
-3. Mark executable (`chmod +x` on unix).
-4. Spawn binary with passed-through args and stdio inherited.
+## 4.2 Repo/package naming
+Package is expected as:
+- `graphonomous` (unscoped)  
+or
+- `@your-org/graphonomous` (scoped)
 
 ---
 
-## 7) Binary Naming Convention
+## 5) Release Asset Convention
 
-Use deterministic names like:
+Release assets are platform-specific `.tar.gz` files:
 
 - `graphonomous-vX.Y.Z-linux-x64.tar.gz`
 - `graphonomous-vX.Y.Z-linux-arm64.tar.gz`
 - `graphonomous-vX.Y.Z-darwin-x64.tar.gz`
 - `graphonomous-vX.Y.Z-darwin-arm64.tar.gz`
 
-Inside each archive (OTP release layout):
-- `graphonomous/` (release root directory)
-- `graphonomous/bin/graphonomous` (runnable command)
-- release runtime directories/files required by BEAM/NIF dependencies
+Each archive should contain the OTP release root:
+
+- `graphonomous/`
+- `graphonomous/bin/graphonomous`
+- required runtime dirs/files for BEAM + NIFs
 
 ---
 
-## 8) Release Procedure (Every Version)
+## 6) Full Manual Release Procedure (No GitHub Actions Publish Step)
 
-## 8.1 Prepare release branch
-From repo root:
-- `git checkout -b release/vX.Y.Z`
+Perform from repo root (`ProjectAmp2/graphonomous`).
 
-## 8.2 Update versions
-1. Edit `mix.exs`:
-   - `version: "X.Y.Z"`
-2. Edit `npm/package.json`:
-   - `"version": "X.Y.Z"`
+## 6.1 Create release branch
+    git checkout -b release/vX.Y.Z
 
-## 8.3 Run quality checks
-From `ProjectAmp2/graphonomous`:
-- `mix deps.get`
-- `mix format --check-formatted`
-- `mix compile --warnings-as-errors`
-- `mix test`
+## 6.2 Update versions
+1. `mix.exs` → `version: "X.Y.Z"`
+2. `npm/package.json` → `"version": "X.Y.Z"`
 
-## 8.4 Build local OTP release sanity check
-- `MIX_ENV=prod mix release --overwrite`
-- `_build/prod/rel/graphonomous/bin/graphonomous start`
+## 6.3 Quality checks
+    mix deps.get
+    mix format --check-formatted
+    mix compile --warnings-as-errors
+    mix test
 
-## 8.5 Commit + tag
-- `git add .`
-- `git commit -m "release: vX.Y.Z"`
-- `git tag vX.Y.Z`
-- `git push origin release/vX.Y.Z`
-- `git push origin vX.Y.Z`
+## 6.4 Build OTP release locally
+    MIX_ENV=prod mix release --overwrite
 
-## 8.6 Publish GitHub Release with assets
-Primary path (recommended):
-- Push tag `vX.Y.Z`; GitHub Actions workflow `.github/workflows/release_npm.yml` creates/updates the release and uploads `dist/*.tar.gz`.
+Sanity check command path:
+    _build/prod/rel/graphonomous/bin/graphonomous version
 
-Verification:
-- Confirm release exists for `vX.Y.Z`.
-- Confirm all expected assets are attached:
-  - `graphonomous-vX.Y.Z-linux-x64.tar.gz`
-  - `graphonomous-vX.Y.Z-linux-arm64.tar.gz`
-  - `graphonomous-vX.Y.Z-darwin-x64.tar.gz`
-  - `graphonomous-vX.Y.Z-darwin-arm64.tar.gz`
+CLI sanity check via eval entrypoint:
+    _build/prod/rel/graphonomous/bin/graphonomous eval "Graphonomous.CLI.main(System.argv())" --help
 
-## 8.7 Smoke test npm package locally before publish
+## 6.5 Create release assets locally
+
+Example for your current machine target:
+    VERSION=X.Y.Z
+    TARGET=linux-x64
+    mkdir -p dist
+    tar -czf "dist/graphonomous-v${VERSION}-${TARGET}.tar.gz" -C "_build/prod/rel" graphonomous
+
+Repeat on each required OS/arch machine to produce all target artifacts:
+- linux x64
+- linux arm64
+- macOS x64
+- macOS arm64
+
+## 6.6 Commit + tag
+    git add .
+    git commit -m "release: vX.Y.Z"
+    git tag vX.Y.Z
+    git push origin release/vX.Y.Z
+    git push origin vX.Y.Z
+
+## 6.7 Create GitHub Release manually
+
+Option A: GitHub Web UI
+1. Open Releases → Draft new release
+2. Tag: `vX.Y.Z`
+3. Title: `vX.Y.Z`
+4. Upload all `dist/*.tar.gz` assets
+5. Publish release
+
+Option B: `gh` CLI
+    gh release create "vX.Y.Z" dist/*.tar.gz --title "vX.Y.Z" --notes "Manual release"
+
+Verify uploaded assets match naming convention exactly.
+
+## 6.8 npm pre-publish smoke test (local)
 From `npm/`:
-- `npm pack`
-- In temp dir: `npm i /path/to/graphonomous-X.Y.Z.tgz`
-- Run:
-  - `npx graphonomous --help`
+    cd npm
+    npm pack --dry-run
+    npm pack
 
-## 8.8 Publish npm package
-Primary path (recommended):
-- Let `.github/workflows/release_npm.yml` publish automatically after release asset upload.
+In a temporary directory:
+    mkdir -p /tmp/graphonomous-npm-smoke
+    cd /tmp/graphonomous-npm-smoke
+    npm init -y
+    npm i /absolute/path/to/ProjectAmp2/graphonomous/npm/graphonomous-X.Y.Z.tgz
+    npx graphonomous --help
 
-Manual fallback:
-From `npm/`:
-- `npm publish --access public`
+## 6.9 Publish npm manually (local machine)
+From `ProjectAmp2/graphonomous/npm`:
+    npm publish --access public
 
-Note:
-- Workflow enforces tag/version parity:
-  - `GITHUB_REF_NAME#v` must equal `npm/package.json` version.
+If 2FA is enabled, complete OTP prompt.
 
-## 8.9 Post-publish verification
-Run:
-- `npm view graphonomous version`
-- `npx graphonomous --help`
-- `npx graphonomous --db ~/.graphonomous/knowledge.db --embedder-backend fallback`
+## 6.10 Post-publish verification
+    npm view graphonomous version
+    npx -y graphonomous --help
+    npx -y graphonomous --db ~/.graphonomous/knowledge.db --embedder-backend fallback
 
 ---
 
-## 9) Zed MCP Quick Config (npm-installed command)
+## 7) Zed Config (npm-installed command)
 
-In Zed settings JSON:
+Use in Zed settings JSON:
 
 {
   "context_servers": {
@@ -236,85 +179,97 @@ In Zed settings JSON:
   }
 }
 
-If using `npx` directly (not global install), use:
-- `"command": "npx"`
-- `"args": ["-y", "graphonomous", "--db", "~/.graphonomous/knowledge.db", "--embedder-backend", "fallback"]`
+Or one-off via `npx`:
+
+{
+  "context_servers": {
+    "graphonomous": {
+      "command": "npx",
+      "args": ["-y", "graphonomous", "--db", "~/.graphonomous/knowledge.db", "--embedder-backend", "fallback"],
+      "env": {}
+    }
+  }
+}
 
 ---
 
-## 10) Maintenance Routine (Keep Updated)
+## 8) Maintenance Routine
 
-For every merged feature/fix that should ship:
-1. Update `PROGRESS.md` change log.
-2. Update root `README.md` user-facing install/run docs.
-3. Update `docs/ZED.md` if MCP editor flow changed.
-4. If CLI flags changed:
-   - update `Graphonomous.CLI --help` text
-   - update npm wrapper docs/examples
-5. Cut a new SemVer release (`X.Y.Z`).
+For each shipped change:
+1. Update `PROGRESS.md`.
+2. Update root `README.md` user docs.
+3. Update `docs/ZED.md` if editor setup changed.
+4. If CLI args changed, update:
+   - `Graphonomous.CLI` help text
+   - `npm/README.md`
+   - this runbook if needed
+5. Cut next SemVer release (`X.Y.Z`).
 
-Monthly hygiene:
-- test `npx graphonomous --help` on macOS + Linux
-- verify GitHub release asset links are valid
-- verify npm install path still works cleanly
+Monthly:
+- Test `npx -y graphonomous --help` on Linux + macOS.
+- Verify GitHub release assets are accessible.
+- Verify fresh npm install works.
 
 ---
 
-## 11) Rollback and Hotfix
+## 9) Rollback / Hotfix Policy
 
 If bad npm publish:
-1. Do NOT overwrite same version.
-2. Publish hotfix version:
-   - `X.Y.(Z+1)`
-3. Deprecate bad version:
-   - `npm deprecate graphonomous@X.Y.Z "Broken release; use X.Y.(Z+1)"`
+1. Do not republish same version.
+2. Publish patch increment (`X.Y.(Z+1)`).
+3. Deprecate broken version:
+    npm deprecate graphonomous@X.Y.Z "Broken release; use X.Y.(Z+1)"
 
-If binary asset missing for a published npm version:
-1. Publish missing GitHub release assets if possible.
-2. If install logic still fails, publish patched npm version.
-
----
-
-## 12) Security Notes
-
-- Never hardcode API keys in package scripts.
-- Treat downloaded binaries as trusted only from your official release source.
-- Use checksums for release assets and verify at install time.
-- Keep dependencies in npm wrapper minimal.
+If release assets are missing:
+1. Upload missing assets to the existing GitHub release for that version (if possible).
+2. If npm installs are already broken, publish fixed patch version.
 
 ---
 
-## 13) Minimal Command Cheat Sheet
+## 10) Security Notes (Manual Flow)
 
-From `ProjectAmp2/graphonomous`:
+- Do not commit tokens or credentials.
+- Use local `npm login` sessions only on trusted machines.
+- Keep local environment clean after release work.
+- Prefer short-lived credentials and explicit logout if needed:
+    npm logout
+- Use checksums/signatures for release artifacts when you add that capability.
 
-Release checks:
-- `mix deps.get`
-- `mix format --check-formatted`
-- `mix compile --warnings-as-errors`
-- `mix test`
-- `MIX_ENV=prod mix release --overwrite`
-- `_build/prod/rel/graphonomous/bin/graphonomous start`
+---
+
+## 11) Minimal Command Cheat Sheet
+
+From repo root:
+    mix deps.get
+    mix format --check-formatted
+    mix compile --warnings-as-errors
+    mix test
+    MIX_ENV=prod mix release --overwrite
+
+Asset packaging:
+    VERSION=X.Y.Z
+    TARGET=linux-x64
+    mkdir -p dist
+    tar -czf "dist/graphonomous-v${VERSION}-${TARGET}.tar.gz" -C "_build/prod/rel" graphonomous
 
 Tagging:
-- `git tag vX.Y.Z`
-- `git push origin vX.Y.Z`
+    git tag vX.Y.Z
+    git push origin vX.Y.Z
 
-npm (from `ProjectAmp2/graphonomous/npm`):
-- `npm pack`
-- `npm publish --access public`
-- `npm view graphonomous version`
-- `npx graphonomous --help`
+npm publish (manual):
+    cd npm
+    npm pack --dry-run
+    npm publish --access public
+    npm view graphonomous version
 
 ---
 
-## 14) Current Status Notes
+## 12) Current Status
 
-As of now, Graphonomous already supports:
-- executable CLI entrypoint (`Graphonomous.CLI`)
+Graphonomous already has:
+- `Graphonomous.CLI` entrypoint
 - stdio MCP launch path
+- npm wrapper scaffold under `npm/`
 - docs for bootstrap and Zed integration
-- npm wrapper scaffold files committed under `npm/`
-- npm packaging dry-run validation (`npm pack --dry-run`) with expected file set
 
-This runbook now reflects an immediate publishing workflow using the already-scaffolded npm wrapper.
+This runbook is now explicitly optimized for **manual releases and manual npm publish**, with no dependency on permanent GitHub Actions publish credentials.

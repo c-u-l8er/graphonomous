@@ -194,21 +194,21 @@ cd ProjectAmp2/graphonomous/npm
 npm pack
 mkdir -p /tmp/graphonomous-npm-smoke && cd /tmp/graphonomous-npm-smoke
 npm init -y
-npm i /home/travis/ProjectAmp2/graphonomous/npm/graphonomous-0.1.0.tgz
+npm i /home/travis/ProjectAmp2/graphonomous/npm/graphonomous-0.1.1.tgz
 npx graphonomous --help
 ```
 
 ---
 
-### Release + publish flow (high level)
+### Release + publish flow (high level, manual-first)
 
 1. Ensure versions align (`mix.exs`, `npm/package.json`, git tag `vX.Y.Z`).
-2. Push tag `vX.Y.Z`.
-3. Release workflow builds platform assets and publishes GitHub release.
-4. npm publish step runs from CI (requires `NPM_TOKEN` secret).
+2. Build release assets locally and upload them to GitHub Release `vX.Y.Z`.
+3. Run `npm publish` locally from `ProjectAmp2/graphonomous/npm`.
+4. Verify with `npm view graphonomous version` and `npx -y graphonomous --help`.
 
 See full operational runbook:
-- `docs/NPM_PUBLISH.md`
+- `docs/NPM_PUBLISH.md` (manual publish path; no CI token dependency required)
 
 ---
 

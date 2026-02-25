@@ -1,17 +1,17 @@
 {
   "name": "graphonomous",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "npm wrapper for the Graphonomous MCP server CLI",
   "private": false,
   "license": "UNLICENSED",
   "author": "Ampersandbox",
-  "homepage": "https://github.com/ampersandbox/graphonomous#readme",
+  "homepage": "https://github.com/c-u-l8er/graphonomous#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ampersandbox/graphonomous.git"
+    "url": "git+https://github.com/c-u-l8er/graphonomous.git"
   },
   "bugs": {
-    "url": "https://github.com/ampersandbox/graphonomous/issues"
+    "url": "https://github.com/c-u-l8er/graphonomous/issues"
   },
   "type": "commonjs",
   "bin": {

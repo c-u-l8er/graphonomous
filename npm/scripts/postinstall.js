@@ -18,6 +18,32 @@ function readPackageJson() {
   return JSON.parse(raw);
 }
 
+function parseGitHubRepoFromPackage(pkg) {
+  const candidates = [
+    pkg && pkg.repository && pkg.repository.url,
+    pkg && pkg.homepage,
+    pkg && pkg.bugs && pkg.bugs.url,
+  ].filter(Boolean);
+
+  for (const value of candidates) {
+    const normalized = String(value);
+    const match = normalized.match(
+      /github\.com[:/](?<owner>[^/]+)\/(?<repo>[^/#?]+)/i,
+    );
+
+    if (!match || !match.groups) continue;
+
+    const owner = match.groups.owner.trim();
+    const repo = match.groups.repo.replace(/\.git$/i, "").trim();
+
+    if (owner && repo) {
+      return { owner, repo };
+    }
+  }
+
+  return null;
+}
+
 function envFlag(name, defaultValue = false) {
   const raw = process.env[name];
   if (raw == null) return defaultValue;
@@ -26,8 +52,13 @@ function envFlag(name, defaultValue = false) {
 }
 
 function getConfig(pkg) {
-  const owner = process.env.GRAPHONOMOUS_GITHUB_OWNER || "ampersandbox";
-  const repo = process.env.GRAPHONOMOUS_GITHUB_REPO || "graphonomous";
+  const inferredRepo = parseGitHubRepoFromPackage(pkg) || {
+    owner: "c-u-l8er",
+    repo: "graphonomous",
+  };
+
+  const owner = process.env.GRAPHONOMOUS_GITHUB_OWNER || inferredRepo.owner;
+  const repo = process.env.GRAPHONOMOUS_GITHUB_REPO || inferredRepo.repo;
   const version = process.env.GRAPHONOMOUS_VERSION || pkg.version;
   const tag =
     process.env.GRAPHONOMOUS_RELEASE_TAG || `v${version.replace(/^v/, "")}`;
