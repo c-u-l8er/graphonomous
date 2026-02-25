@@ -241,7 +241,7 @@ Minimal command checklist
 ```bash
 # note: bump version in mix.exs and npm/package.json too
 cd /home/travis/ProjectAmp2/graphonomous
-VERSION="0.1.3"; TAG="v${VERSION}"; TARGET="linux-x64"; ASSET="graphonomous-v${VERSION}-${TARGET}.tar.gz"
+VERSION="0.1.4"; TAG="v${VERSION}"; TARGET="linux-x64"; ASSET="graphonomous-v${VERSION}-${TARGET}.tar.gz"
 MIX_ENV=prod mix release --overwrite
 mkdir -p dist
 tar -czf "dist/${ASSET}" -C _build/prod/rel graphonomous
@@ -250,4 +250,6 @@ git push origin "${TAG}"
 gh release create "${TAG}" "dist/${ASSET}" --title "${TAG}" --notes "Manual release assets upload" || gh release upload "${TAG}" "dist/${ASSET}" --clobber
 npm i -g graphonomous
 graphonomous --help
+cd ./npm
+npm publish
 ```

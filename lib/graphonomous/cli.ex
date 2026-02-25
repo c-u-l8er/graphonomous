@@ -185,6 +185,14 @@ defmodule Graphonomous.CLI do
       {:error, reason} ->
         halt_with_error("failed to start graphonomous application: #{inspect(reason)}")
     end
+
+    case Application.ensure_all_started(:anubis_mcp) do
+      {:ok, _started} ->
+        :ok
+
+      {:error, reason} ->
+        halt_with_error("failed to start anubis_mcp application: #{inspect(reason)}")
+    end
   end
 
   @spec start_stdio_mcp_server(cli_options()) :: {:ok, pid()}

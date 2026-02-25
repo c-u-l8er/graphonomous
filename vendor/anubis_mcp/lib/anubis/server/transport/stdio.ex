@@ -105,7 +105,10 @@ defmodule Anubis.Server.Transport.STDIO do
       server: opts.server,
       reading_task: nil,
       registry: opts.registry,
-      request_timeout: opts.request_timeout
+      request_timeout: opts.request_timeout,
+      input_buffer: "",
+      framing_mode: :line,
+      response_mode: :mirrored
     }
 
     Logger.metadata(mcp_transport: :stdio, mcp_server: state.server)
@@ -132,7 +135,7 @@ defmodule Anubis.Server.Transport.STDIO do
 
     case result do
       {:ok, data} ->
-        handle_incoming_data(data, state)
+        state = handle_incoming_data(data, state)
 
         task = Task.async(fn -> read_from_stdin() end)
         {:noreply, %{state | reading_task: task}}
@@ -148,20 +151,14 @@ defmodule Anubis.Server.Transport.STDIO do
   end
 
   @impl GenServer
+  def handle_call({:send, message}, _from, state) do
+    emit_outgoing(message, state)
+    {:reply, :ok, state}
+  end
+
+  @impl GenServer
   def handle_cast({:send, message}, state) do
-    Logging.transport_event(
-      "outgoing",
-      %{transport: :stdio, message_size: byte_size(message)},
-      level: :debug
-    )
-
-    Telemetry.execute(
-      Telemetry.event_transport_send(),
-      %{system_time: System.system_time()},
-      %{transport: :stdio, message_size: byte_size(message)}
-    )
-
-    IO.write(message)
+    emit_outgoing(message, state)
     {:noreply, state}
   end
 
@@ -196,7 +193,7 @@ defmodule Anubis.Server.Transport.STDIO do
   # Private helper functions
 
   defp read_from_stdin do
-    case IO.read(:stdio, :line) do
+    case IO.binread(:stdio, 1) do
       :eof ->
         Logging.transport_event("eof", "End of input stream", level: :info)
 
@@ -237,7 +234,20 @@ defmodule Anubis.Server.Transport.STDIO do
       %{transport: :stdio, message_size: byte_size(data)}
     )
 
-    case Message.decode(data) do
+    buffer = state.input_buffer <> data
+    {payloads, rest, detected_mode} = decode_payloads_from_buffer(buffer)
+
+    Enum.each(payloads, fn payload ->
+      process_payload(payload, state)
+    end)
+
+    state
+    |> Map.put(:input_buffer, rest)
+    |> maybe_update_framing_mode(detected_mode)
+  end
+
+  defp process_payload(payload, state) when is_binary(payload) do
+    case Message.decode(payload) do
       {:ok, messages} when is_list(messages) ->
         Enum.each(messages, fn message ->
           process_message(message, state)
@@ -247,7 +257,11 @@ defmodule Anubis.Server.Transport.STDIO do
         process_message(message, state)
 
       {:ok, other} ->
-        Logging.transport_event("parse_error", %{reason: {:unexpected_decoded_payload, other}}, level: :error)
+        Logging.transport_event(
+          "parse_error",
+          %{reason: {:unexpected_decoded_payload, other}},
+          level: :error
+        )
 
       {:error, reason} ->
         Logging.transport_event("parse_error", %{reason: reason}, level: :error)
@@ -269,19 +283,7 @@ defmodule Anubis.Server.Transport.STDIO do
     else
       case GenServer.call(server, {:request, message, "stdio", context}, timeout) do
         {:ok, response} when is_binary(response) ->
-          Logging.transport_event(
-            "outgoing",
-            %{transport: :stdio, message_size: byte_size(response)},
-            level: :debug
-          )
-
-          Telemetry.execute(
-            Telemetry.event_transport_send(),
-            %{system_time: System.system_time()},
-            %{transport: :stdio, message_size: byte_size(response)}
-          )
-
-          IO.write(response)
+          emit_outgoing(response, state)
           :ok
 
         {:ok, other} ->
@@ -299,4 +301,131 @@ defmodule Anubis.Server.Transport.STDIO do
     :exit, reason ->
       Logging.transport_event("server_call_failed", %{reason: reason}, level: :error)
   end
+
+  defp decode_payloads_from_buffer(buffer) when is_binary(buffer) do
+    if starts_with_content_length_header?(buffer) do
+      decode_content_length_payloads(buffer, [])
+    else
+      decode_line_payloads(buffer)
+    end
+  end
+
+  defp starts_with_content_length_header?(buffer) do
+    String.match?(buffer, ~r/^\s*content-length\s*:/i)
+  end
+
+  defp decode_line_payloads(buffer) do
+    case String.split(buffer, "\n") do
+      [_only] ->
+        {[], buffer, :line}
+
+      parts ->
+        {complete, [rest]} = Enum.split(parts, length(parts) - 1)
+
+        payloads =
+          complete
+          |> Enum.map(&String.trim/1)
+          |> Enum.reject(&(&1 == ""))
+
+        {payloads, rest, :line}
+    end
+  end
+
+  defp decode_content_length_payloads(buffer, acc) do
+    case header_split(buffer) do
+      {:incomplete, _} ->
+        {Enum.reverse(acc), buffer, :content_length}
+
+      {:ok, header, body_and_rest} ->
+        case parse_content_length(header) do
+          {:ok, length} ->
+            if byte_size(body_and_rest) < length do
+              {Enum.reverse(acc), buffer, :content_length}
+            else
+              payload = binary_part(body_and_rest, 0, length)
+              rest = binary_part(body_and_rest, length, byte_size(body_and_rest) - length)
+              rest = trim_leading_crlf(rest)
+              decode_content_length_payloads(rest, [payload | acc])
+            end
+
+          :error ->
+            decode_line_payloads(buffer)
+        end
+    end
+  end
+
+  defp header_split(buffer) do
+    cond do
+      String.contains?(buffer, "\r\n\r\n") ->
+        [header, body] = String.split(buffer, "\r\n\r\n", parts: 2)
+        {:ok, header, body}
+
+      String.contains?(buffer, "\n\n") ->
+        [header, body] = String.split(buffer, "\n\n", parts: 2)
+        {:ok, header, body}
+
+      true ->
+        {:incomplete, buffer}
+    end
+  end
+
+  defp parse_content_length(header) do
+    lines = String.split(header, ~r/\r?\n/, trim: true)
+
+    value =
+      Enum.find_value(lines, fn line ->
+        case Regex.run(~r/^\s*content-length\s*:\s*(\d+)\s*$/i, line) do
+          [_, v] -> v
+          _ -> nil
+        end
+      end)
+
+    case value do
+      nil -> :error
+      v -> {:ok, String.to_integer(v)}
+    end
+  end
+
+  defp trim_leading_crlf(<<"\r\n", rest::binary>>), do: rest
+  defp trim_leading_crlf(<<"\n", rest::binary>>), do: rest
+  defp trim_leading_crlf(rest), do: rest
+
+  defp maybe_update_framing_mode(state, mode) when mode in [:line, :content_length],
+    do: %{state | framing_mode: mode}
+
+  defp maybe_update_framing_mode(state, _mode), do: state
+
+  defp emit_outgoing(message, state) when is_binary(message) do
+    framed = maybe_frame_outgoing(message, state)
+
+    Logging.transport_event(
+      "outgoing",
+      %{transport: :stdio, message_size: byte_size(framed), framing_mode: framing_mode(state)},
+      level: :debug
+    )
+
+    Telemetry.execute(
+      Telemetry.event_transport_send(),
+      %{system_time: System.system_time()},
+      %{transport: :stdio, message_size: byte_size(framed), framing_mode: framing_mode(state)}
+    )
+
+    IO.write(framed)
+  end
+
+  defp maybe_frame_outgoing(message, state) do
+    case framing_mode(state) do
+      :content_length ->
+        payload = String.trim_trailing(message, "\n")
+        "Content-Length: #{byte_size(payload)}\r\n\r\n#{payload}"
+
+      _ ->
+        if String.ends_with?(message, "\n"), do: message, else: message <> "\n"
+    end
+  end
+
+  defp framing_mode(%{response_mode: :content_length}), do: :content_length
+  defp framing_mode(%{response_mode: :line}), do: :line
+  defp framing_mode(%{response_mode: :mirrored, framing_mode: mode}) when mode in [:line, :content_length], do: mode
+  defp framing_mode(_), do: :line
 end
