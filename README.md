@@ -59,7 +59,7 @@ In Zed settings JSON, use either installed command or `npx`.
   "context_servers": {
     "graphonomous": {
       "command": "graphonomous",
-      "args": ["--db", "~/.graphonomous/knowledge.db", "--embedder-backend", "fallback"],
+      "args": ["--db", "./.graphonomous/knowledge.db", "--embedder-backend", "fallback"],
       "env": {
         "GRAPHONOMOUS_EMBEDDING_MODEL": "sentence-transformers/all-MiniLM-L6-v2"
       }
@@ -75,7 +75,7 @@ In Zed settings JSON, use either installed command or `npx`.
   "context_servers": {
     "graphonomous": {
       "command": "npx",
-      "args": ["-y", "graphonomous", "--db", "~/.graphonomous/knowledge.db", "--embedder-backend", "fallback"],
+      "args": ["-y", "graphonomous", "--db", "./.graphonomous/knowledge.db", "--embedder-backend", "fallback"],
       "env": {}
     }
   }
