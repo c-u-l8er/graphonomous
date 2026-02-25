@@ -186,6 +186,34 @@ gh release view "${TAG}" --json assets --jq '.assets[].name'
 Name must match exactly:
 `graphonomous-vX.Y.Z-linux-x64.tar.gz`
 
+### D) Zed shows "context server request timeout"
+This can occur if your runtime is using older stdio transport behavior from upstream Anubis MCP (decoded message list handling / stdio response write issues).
+
+Graphonomous production path uses a vendored Anubis patch:
+- dependency is pinned to `vendor/anubis_mcp`
+- stdio transport fixes are in:
+  - `vendor/anubis_mcp/lib/anubis/server/transport/stdio.ex`
+
+Verify your runtime is actually using vendored dependency code (not stale compiled deps):
+
+```bash
+cd /home/travis/ProjectAmp2/graphonomous
+mix deps.get
+mix clean
+rm -rf _build deps
+mix deps.get
+mix compile --warnings-as-errors
+mix test test/mcp_integration_test.exs
+```
+
+If timeout persists in Zed:
+1. Restart Zed completely.
+2. Confirm your MCP command points at the expected `graphonomous` binary/version.
+3. Run `graphonomous --help` in shell from the same environment as Zed launch.
+4. Re-check npm package version and release source:
+   - `npm view graphonomous version`
+   - `npm ls -g --depth=0 graphonomous`
+
 ---
 
 Multi-platform publishing (later)
@@ -212,7 +240,7 @@ Minimal command checklist
 
 ```bash
 cd /home/travis/ProjectAmp2/graphonomous
-VERSION="0.1.1"; TAG="v${VERSION}"; TARGET="linux-x64"; ASSET="graphonomous-v${VERSION}-${TARGET}.tar.gz"
+VERSION="0.1.2"; TAG="v${VERSION}"; TARGET="linux-x64"; ASSET="graphonomous-v${VERSION}-${TARGET}.tar.gz"
 MIX_ENV=prod mix release --overwrite
 mkdir -p dist
 tar -czf "dist/${ASSET}" -C _build/prod/rel graphonomous

@@ -24,8 +24,8 @@ defmodule Graphonomous.MixProject do
 
   defp deps do
     [
-      # MCP server
-      {:anubis_mcp, "~> 0.17"},
+      # MCP server (pinned to vendored patched source for reliable STDIO transport)
+      {:anubis_mcp, path: "vendor/anubis_mcp"},
 
       # Storage
       {:exqlite, "~> 0.27"},

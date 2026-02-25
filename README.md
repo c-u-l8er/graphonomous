@@ -255,6 +255,7 @@ Primary module: `Graphonomous`
 - EXLA is currently optional to avoid environment-level NIF/CUDA mismatch issues.
 - sqlite-vec extension loading is optional.
 - OpenSentience integration is **not required** to start using Graphonomous.
+- MCP stdio reliability is currently ensured by a vendored `anubis_mcp` dependency patch (`vendor/anubis_mcp`) that fixes decoded message list handling and request-response writes in the STDIO transport path.
 
 ---
 
