@@ -87,9 +87,30 @@ After saving:
 2. Confirm server is active.
 3. Ask explicitly for Graphonomous tool usage (for example: “use `graphonomous` to retrieve context for …”).
 
+### 4) Zed timeout troubleshooting
+
+If Zed shows `context server request timeout`:
+
+1. Confirm CLI works first:
+```/dev/null/shell.sh#L1-2
+graphonomous --version
+graphonomous --help
+```
+2. Start with fallback embedder and a longer request timeout:
+```/dev/null/shell.sh#L1-1
+graphonomous --db ~/.graphonomous/knowledge.db --embedder-backend fallback --request-timeout 180000
+```
+3. Use the same args in Zed `context_servers` config.
+4. Fully restart Zed after changing MCP config.
+5. Reinstall/upgrade your global package if needed:
+```/dev/null/shell.sh#L1-2
+npm uninstall -g graphonomous
+npm i -g graphonomous
+```
+
 ---
 
-### 4) Core MCP tools you’ll use first
+### 5) Core MCP tools you’ll use first
 
 - `store_node`
 - `retrieve_context`
@@ -106,7 +127,7 @@ After saving:
 
 ---
 
-### 5) Recommended laptop setting
+### 6) Recommended laptop setting
 
 Use:
 
@@ -116,9 +137,10 @@ This avoids heavyweight backend friction and is the quickest reliable starting p
 
 ---
 
-### 6) Common CLI flags
+### 7) Common CLI flags
 
 - `--db PATH`
+- `-v, --version`
 - `--embedding-model MODEL`
 - `--embedder-backend auto|fallback`
 - `--sqlite-vec-extension-path PATH`
@@ -132,13 +154,14 @@ This avoids heavyweight backend friction and is the quickest reliable starting p
 
 Help:
 
-```/dev/null/shell.sh#L1-1
+```/dev/null/shell.sh#L1-2
+graphonomous --version
 graphonomous --help
 ```
 
 ---
 
-### 7) Runtime environment variables
+### 8) Runtime environment variables
 
 - `GRAPHONOMOUS_DB_PATH` (default: `priv/graphonomous.db`)
 - `GRAPHONOMOUS_EMBEDDING_MODEL` (default: `sentence-transformers/all-MiniLM-L6-v2`)

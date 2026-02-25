@@ -11,7 +11,7 @@ defmodule Graphonomous.CLI do
   standard input/output.
   """
 
-  @default_request_timeout 30_000
+  @default_request_timeout 120_000
 
   @type cli_options :: %{
           optional(:db_path) => String.t(),
@@ -30,6 +30,10 @@ defmodule Graphonomous.CLI do
   @spec main([String.t()]) :: no_return()
   def main(args) when is_list(args) do
     case parse_args(args) do
+      {:version} ->
+        IO.puts(version_text())
+        System.halt(0)
+
       {:help} ->
         IO.puts(help_text())
         System.halt(0)
@@ -48,12 +52,14 @@ defmodule Graphonomous.CLI do
     end
   end
 
-  @spec parse_args([String.t()]) :: {:ok, cli_options()} | {:help} | {:error, String.t()}
+  @spec parse_args([String.t()]) ::
+          {:ok, cli_options()} | {:help} | {:version} | {:error, String.t()}
   defp parse_args(args) do
     {parsed, rest, invalid} =
       OptionParser.parse(args,
         strict: [
           help: :boolean,
+          version: :boolean,
           db: :string,
           embedding_model: :string,
           embedder_backend: :string,
@@ -68,12 +74,16 @@ defmodule Graphonomous.CLI do
         ],
         aliases: [
           h: :help,
+          v: :version,
           d: :db,
           m: :embedding_model
         ]
       )
 
     cond do
+      parsed[:version] ->
+        {:version}
+
       parsed[:help] ->
         {:help}
 
@@ -90,7 +100,7 @@ defmodule Graphonomous.CLI do
 
   @spec normalize_parsed_options(keyword()) :: {:ok, cli_options()} | {:error, String.t()}
   defp normalize_parsed_options(parsed) do
-    with {:ok, backend} <- normalize_backend(parsed[:embedder_backend]),
+    with {:ok, backend} <- normalize_backend(parsed[:embedder_backend] || "fallback"),
          {:ok, level} <- normalize_log_level(parsed[:log_level]),
          {:ok, interval_ms} <-
            validate_positive_int(parsed[:consolidator_interval_ms], "--consolidator-interval-ms"),
@@ -267,6 +277,15 @@ defmodule Graphonomous.CLI do
     System.halt(1)
   end
 
+  @spec version_text() :: String.t()
+  defp version_text do
+    case Application.spec(:graphonomous, :vsn) do
+      vsn when is_list(vsn) -> "graphonomous #{List.to_string(vsn)}"
+      vsn when is_binary(vsn) -> "graphonomous #{vsn}"
+      _ -> "graphonomous unknown"
+    end
+  end
+
   @spec help_text() :: String.t()
   defp help_text do
     """
@@ -277,6 +296,7 @@ defmodule Graphonomous.CLI do
 
     Options:
       -h, --help                               Show this help
+      -v, --version                            Show CLI/app version
       -d, --db PATH                            SQLite DB path (GRAPHONOMOUS_DB_PATH)
       -m, --embedding-model MODEL              Embedding model id (GRAPHONOMOUS_EMBEDDING_MODEL)
           --embedder-backend MODE              auto | fallback
