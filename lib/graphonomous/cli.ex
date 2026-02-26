@@ -24,7 +24,15 @@ defmodule Graphonomous.CLI do
           optional(:consolidator_merge_similarity) => float(),
           optional(:learning_rate) => float(),
           optional(:log_level) => Logger.level(),
-          optional(:request_timeout) => pos_integer()
+          optional(:request_timeout) => pos_integer(),
+          optional(:recursive) => boolean(),
+          optional(:include_hidden) => boolean(),
+          optional(:follow_symlinks) => boolean(),
+          optional(:extensions) => [String.t()],
+          optional(:poll_interval_ms) => pos_integer(),
+          optional(:ingest_on_start) => boolean(),
+          optional(:max_file_size_bytes) => pos_integer(),
+          optional(:max_read_bytes) => pos_integer()
         }
 
   @spec main([String.t()]) :: no_return()
@@ -45,6 +53,16 @@ defmodule Graphonomous.CLI do
         {:ok, monitor_pid} = start_stdio_mcp_server(opts)
         wait_forever(monitor_pid)
 
+      {:scan, root_path, opts} ->
+        configure_runtime(opts)
+        start_runtime()
+        run_scan(root_path, opts)
+
+      {:watch, root_path, opts} ->
+        configure_runtime(opts)
+        start_runtime()
+        run_watch(root_path, opts)
+
       {:error, message} ->
         IO.puts(:stderr, "graphonomous: #{message}\n")
         IO.puts(:stderr, help_text())
@@ -53,7 +71,12 @@ defmodule Graphonomous.CLI do
   end
 
   @spec parse_args([String.t()]) ::
-          {:ok, cli_options()} | {:help} | {:version} | {:error, String.t()}
+          {:ok, cli_options()}
+          | {:scan, String.t(), cli_options()}
+          | {:watch, String.t(), cli_options()}
+          | {:help}
+          | {:version}
+          | {:error, String.t()}
   defp parse_args(args) do
     {parsed, rest, invalid} =
       OptionParser.parse(args,
@@ -70,7 +93,15 @@ defmodule Graphonomous.CLI do
           consolidator_merge_similarity: :float,
           learning_rate: :float,
           log_level: :string,
-          request_timeout: :integer
+          request_timeout: :integer,
+          recursive: :boolean,
+          include_hidden: :boolean,
+          follow_symlinks: :boolean,
+          extensions: :string,
+          poll_interval_ms: :integer,
+          ingest_on_start: :boolean,
+          max_file_size_bytes: :integer,
+          max_read_bytes: :integer
         ],
         aliases: [
           h: :help,
@@ -90,11 +121,8 @@ defmodule Graphonomous.CLI do
       invalid != [] ->
         {:error, "invalid option(s): #{format_invalid(invalid)}"}
 
-      rest != [] ->
-        {:error, "unexpected argument(s): #{Enum.join(rest, " ")}"}
-
       true ->
-        normalize_parsed_options(parsed)
+        parse_command(rest, parsed)
     end
   end
 
@@ -111,6 +139,12 @@ defmodule Graphonomous.CLI do
          {:ok, interval_ms} <-
            validate_positive_int(parsed[:consolidator_interval_ms], "--consolidator-interval-ms"),
          {:ok, timeout} <- validate_positive_int(parsed[:request_timeout], "--request-timeout"),
+         {:ok, poll_interval_ms} <-
+           validate_positive_int(parsed[:poll_interval_ms], "--poll-interval-ms"),
+         {:ok, max_file_size_bytes} <-
+           validate_positive_int(parsed[:max_file_size_bytes], "--max-file-size-bytes"),
+         {:ok, max_read_bytes} <-
+           validate_positive_int(parsed[:max_read_bytes], "--max-read-bytes"),
          :ok <-
            validate_probability(parsed[:consolidator_decay_rate], "--consolidator-decay-rate"),
          :ok <-
@@ -137,6 +171,14 @@ defmodule Graphonomous.CLI do
         |> maybe_put(:learning_rate, parsed[:learning_rate])
         |> maybe_put(:log_level, level)
         |> maybe_put(:request_timeout, timeout)
+        |> maybe_put(:recursive, parsed[:recursive])
+        |> maybe_put(:include_hidden, parsed[:include_hidden])
+        |> maybe_put(:follow_symlinks, parsed[:follow_symlinks])
+        |> maybe_put(:extensions, normalize_extensions(parsed[:extensions]))
+        |> maybe_put(:poll_interval_ms, poll_interval_ms)
+        |> maybe_put(:ingest_on_start, parsed[:ingest_on_start])
+        |> maybe_put(:max_file_size_bytes, max_file_size_bytes)
+        |> maybe_put(:max_read_bytes, max_read_bytes)
 
       {:ok, opts}
     end
@@ -176,6 +218,9 @@ defmodule Graphonomous.CLI do
         Logger.configure(level: value)
 
       {:request_timeout, _value} ->
+        :ok
+
+      _ ->
         :ok
     end)
 
@@ -281,6 +326,101 @@ defmodule Graphonomous.CLI do
   defp handle_server_termination(reason) do
     halt_with_error("MCP server terminated: #{inspect(reason)}")
   end
+
+  @spec parse_command([String.t()], keyword()) ::
+          {:ok, cli_options()}
+          | {:scan, String.t(), cli_options()}
+          | {:watch, String.t(), cli_options()}
+          | {:error, String.t()}
+  defp parse_command([], parsed), do: normalize_parsed_options(parsed)
+
+  defp parse_command(["scan", root_path], parsed) do
+    with {:ok, opts} <- normalize_parsed_options(parsed) do
+      {:scan, root_path, opts}
+    end
+  end
+
+  defp parse_command(["watch", root_path], parsed) do
+    with {:ok, opts} <- normalize_parsed_options(parsed) do
+      {:watch, root_path, opts}
+    end
+  end
+
+  defp parse_command(["scan"], _parsed), do: {:error, "missing required directory path for scan"}
+
+  defp parse_command(["watch"], _parsed),
+    do: {:error, "missing required directory path for watch"}
+
+  defp parse_command(rest, _parsed) do
+    {:error, "unexpected argument(s): #{Enum.join(rest, " ")}"}
+  end
+
+  @spec run_scan(String.t(), cli_options()) :: no_return()
+  defp run_scan(root_path, opts) do
+    case Graphonomous.FilesystemTraversal.scan_directory(root_path, filesystem_opts(opts)) do
+      {:ok, result} ->
+        IO.puts("scan complete")
+        IO.puts("  root: #{result.root_path}")
+        IO.puts("  discovered: #{result.files_discovered}")
+        IO.puts("  ingested: #{result.files_ingested}")
+        IO.puts("  failed: #{result.files_failed}")
+        IO.puts("  duration_ms: #{result.duration_ms}")
+        System.halt(0)
+
+      {:error, reason} ->
+        halt_with_error("scan failed: #{inspect(reason)}")
+    end
+  end
+
+  @spec run_watch(String.t(), cli_options()) :: no_return()
+  defp run_watch(root_path, opts) do
+    IO.puts("watch started: #{root_path}")
+    IO.puts("press Ctrl+C to stop")
+
+    case Graphonomous.FilesystemTraversal.watch_directory(root_path, filesystem_opts(opts)) do
+      {:stopped, _stats} ->
+        System.halt(0)
+
+      :ok ->
+        System.halt(0)
+
+      {:error, reason} ->
+        halt_with_error("watch failed: #{inspect(reason)}")
+    end
+  end
+
+  @spec filesystem_opts(cli_options()) :: keyword()
+  defp filesystem_opts(opts) do
+    []
+    |> maybe_kw_put(:recursive, Map.get(opts, :recursive))
+    |> maybe_kw_put(:include_hidden, Map.get(opts, :include_hidden))
+    |> maybe_kw_put(:follow_symlinks, Map.get(opts, :follow_symlinks))
+    |> maybe_kw_put(:extensions, Map.get(opts, :extensions))
+    |> maybe_kw_put(:poll_interval_ms, Map.get(opts, :poll_interval_ms))
+    |> maybe_kw_put(:ingest_on_start, Map.get(opts, :ingest_on_start))
+    |> maybe_kw_put(:max_file_size_bytes, Map.get(opts, :max_file_size_bytes))
+    |> maybe_kw_put(:max_read_bytes, Map.get(opts, :max_read_bytes))
+  end
+
+  @spec maybe_kw_put(keyword(), atom(), any()) :: keyword()
+  defp maybe_kw_put(kw, _key, nil), do: kw
+  defp maybe_kw_put(kw, key, value), do: Keyword.put(kw, key, value)
+
+  @spec normalize_extensions(nil | String.t()) :: [String.t()] | nil
+  defp normalize_extensions(nil), do: nil
+
+  defp normalize_extensions(value) when is_binary(value) do
+    value
+    |> String.split(",", trim: true)
+    |> Enum.map(&String.trim/1)
+    |> Enum.reject(&(&1 == ""))
+    |> case do
+      [] -> nil
+      list -> list
+    end
+  end
+
+  defp normalize_extensions(_), do: nil
 
   @spec normalize_backend(nil | String.t()) ::
           {:ok, :auto | :fallback | nil} | {:error, String.t()}
@@ -412,12 +552,14 @@ defmodule Graphonomous.CLI do
   @spec help_text() :: String.t()
   defp help_text do
     """
-    Graphonomous MCP server (STDIO)
+    Graphonomous CLI
 
     Usage:
       graphonomous [options]
+      graphonomous scan <directory> [options]
+      graphonomous watch <directory> [options]
 
-    Options:
+    Global options:
       -h, --help                               Show this help
       -v, --version                            Show CLI/app version
       -d, --db PATH                            SQLite DB path (GRAPHONOMOUS_DB_PATH)
@@ -432,9 +574,21 @@ defmodule Graphonomous.CLI do
           --log-level LEVEL                    debug | info | warning | error
           --request-timeout MS                 MCP request timeout in milliseconds (> 0)
 
+    Filesystem traversal options (scan/watch):
+          --recursive                          Traverse directories recursively (default: true)
+          --include-hidden                     Include hidden files/directories
+          --follow-symlinks                    Follow symlinks during traversal
+          --extensions CSV                     Comma-separated extensions (example: .ex,.md,.txt)
+          --poll-interval-ms MS                Watch poll interval in milliseconds (> 0)
+          --ingest-on-start                    In watch mode, ingest existing files at startup
+          --max-file-size-bytes N              Max file size to read for preview (> 0)
+          --max-read-bytes N                   Max preview bytes read per file (> 0)
+
     Examples:
       graphonomous
       graphonomous --db ~/.graphonomous/knowledge.db
+      graphonomous scan ./lib --extensions .ex,.exs
+      graphonomous watch ./docs --poll-interval-ms 1500 --ingest-on-start
       graphonomous --db ~/.graphonomous/knowledge.db --embedder-backend fallback --log-level info
     """
   end

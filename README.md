@@ -17,17 +17,21 @@ Use whichever fits your workflow.
 
 #### Option A — One-off run with `npx` (no global install)
 
-```/dev/null/shell.sh#L1-2
+```/dev/null/shell.sh#L1-5
 npx -y graphonomous --help
 npx -y graphonomous --db ~/.graphonomous/knowledge.db --embedder-backend fallback
+npx -y graphonomous scan ./docs --extensions .md,.txt
+npx -y graphonomous watch ./docs --poll-interval-ms 1500 --ingest-on-start
 ```
 
 #### Option B — Global install
 
-```/dev/null/shell.sh#L1-3
+```/dev/null/shell.sh#L1-6
 npm i -g graphonomous
 graphonomous --help
 graphonomous --db ~/.graphonomous/knowledge.db --embedder-backend fallback
+graphonomous scan ./docs --extensions .md,.txt
+graphonomous watch ./docs --poll-interval-ms 1500 --ingest-on-start
 ```
 
 ---
@@ -172,6 +176,14 @@ This avoids heavyweight backend friction and is the quickest reliable starting p
 
 ### 7) Common CLI flags
 
+Command modes:
+
+- `graphonomous` (start MCP server over stdio)
+- `graphonomous scan <directory>` (one-shot traversal from scratch)
+- `graphonomous watch <directory>` (continuous change detection + traversal)
+
+Global options:
+
 - `--db PATH`
 - `-v, --version`
 - `--embedding-model MODEL`
@@ -184,6 +196,17 @@ This avoids heavyweight backend friction and is the quickest reliable starting p
 - `--learning-rate FLOAT`
 - `--log-level debug|info|warning|error`
 - `--request-timeout MS`
+
+Filesystem traversal options (`scan` / `watch`):
+
+- `--recursive`
+- `--include-hidden`
+- `--follow-symlinks`
+- `--extensions .ex,.md,.txt`
+- `--poll-interval-ms MS`
+- `--ingest-on-start`
+- `--max-file-size-bytes N`
+- `--max-read-bytes N`
 
 Help:
 
