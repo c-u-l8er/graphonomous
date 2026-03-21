@@ -32,7 +32,24 @@ defmodule Graphonomous.CLI do
           optional(:poll_interval_ms) => pos_integer(),
           optional(:ingest_on_start) => boolean(),
           optional(:max_file_size_bytes) => pos_integer(),
-          optional(:max_read_bytes) => pos_integer()
+          optional(:max_read_bytes) => pos_integer(),
+          optional(:traversal_root) => String.t(),
+          optional(:goal_id) => String.t(),
+          optional(:objective_query) => String.t(),
+          optional(:lm_studio_base_url) => String.t(),
+          optional(:lm_studio_endpoint) => String.t(),
+          optional(:lm_studio_model) => String.t(),
+          optional(:lm_studio_temperature) => float(),
+          optional(:max_iterations) => pos_integer(),
+          optional(:sleep_ms) => pos_integer(),
+          optional(:backoff_ms) => pos_integer(),
+          optional(:target_progress) => float(),
+          optional(:required_stable_acts) => pos_integer(),
+          optional(:max_consecutive_failures) => pos_integer(),
+          optional(:consolidation_cadence) => non_neg_integer(),
+          optional(:stop_file) => String.t(),
+          optional(:traverse_prompt_path) => String.t(),
+          optional(:prompt) => String.t()
         }
 
   @spec main([String.t()]) :: no_return()
@@ -63,6 +80,11 @@ defmodule Graphonomous.CLI do
         start_runtime()
         run_watch(root_path, opts)
 
+      {:traverse, opts} ->
+        configure_runtime(opts)
+        start_runtime()
+        run_traverse(opts)
+
       {:error, message} ->
         IO.puts(:stderr, "graphonomous: #{message}\n")
         IO.puts(:stderr, help_text())
@@ -74,6 +96,7 @@ defmodule Graphonomous.CLI do
           {:ok, cli_options()}
           | {:scan, String.t(), cli_options()}
           | {:watch, String.t(), cli_options()}
+          | {:traverse, cli_options()}
           | {:help}
           | {:version}
           | {:error, String.t()}
@@ -101,7 +124,23 @@ defmodule Graphonomous.CLI do
           poll_interval_ms: :integer,
           ingest_on_start: :boolean,
           max_file_size_bytes: :integer,
-          max_read_bytes: :integer
+          max_read_bytes: :integer,
+          traversal_root: :string,
+          goal_id: :string,
+          objective_query: :string,
+          lm_studio_base_url: :string,
+          lm_studio_endpoint: :string,
+          lm_studio_model: :string,
+          lm_studio_temperature: :float,
+          max_iterations: :integer,
+          sleep_ms: :integer,
+          backoff_ms: :integer,
+          target_progress: :float,
+          required_stable_acts: :integer,
+          max_consecutive_failures: :integer,
+          consolidation_cadence: :integer,
+          stop_file: :string,
+          traverse_prompt_path: :string
         ],
         aliases: [
           h: :help,
@@ -331,6 +370,7 @@ defmodule Graphonomous.CLI do
           {:ok, cli_options()}
           | {:scan, String.t(), cli_options()}
           | {:watch, String.t(), cli_options()}
+          | {:traverse, cli_options()}
           | {:error, String.t()}
   defp parse_command([], parsed), do: normalize_parsed_options(parsed)
 
@@ -346,10 +386,76 @@ defmodule Graphonomous.CLI do
     end
   end
 
+  defp parse_command(["traverse"], parsed), do: parse_traverse_command(parsed, nil)
+
+  defp parse_command(["traverse", root_path], parsed),
+    do: parse_traverse_command(parsed, root_path)
+
+  defp parse_traverse_command(parsed, positional_root_path) do
+    with {:ok, opts} <- normalize_parsed_options(parsed),
+         {:ok, traversal_root} <-
+           resolve_traversal_root_path(parsed[:traversal_root], positional_root_path),
+         {:ok, stop_file} <- normalize_filesystem_path(parsed[:stop_file], "--stop-file"),
+         {:ok, traverse_prompt_path} <-
+           normalize_filesystem_path(parsed[:traverse_prompt_path], "--traverse-prompt-path"),
+         {:ok, prompt} <- read_optional_prompt_file(traverse_prompt_path),
+         {:ok, max_iterations} <- validate_positive_int(parsed[:max_iterations], "--max-iterations"),
+         {:ok, sleep_ms} <- validate_positive_int(parsed[:sleep_ms], "--sleep-ms"),
+         {:ok, backoff_ms} <- validate_positive_int(parsed[:backoff_ms], "--backoff-ms"),
+         {:ok, required_stable_acts} <-
+           validate_positive_int(parsed[:required_stable_acts], "--required-stable-acts"),
+         {:ok, max_consecutive_failures} <-
+           validate_positive_int(parsed[:max_consecutive_failures], "--max-consecutive-failures"),
+         {:ok, consolidation_cadence} <-
+           validate_non_negative_int(parsed[:consolidation_cadence], "--consolidation-cadence"),
+         :ok <- validate_probability(parsed[:target_progress], "--target-progress") do
+      traverse_opts =
+        opts
+        |> maybe_put(:traversal_root, traversal_root)
+        |> maybe_put(:goal_id, parsed[:goal_id])
+        |> maybe_put(:objective_query, parsed[:objective_query])
+        |> maybe_put(:lm_studio_base_url, parsed[:lm_studio_base_url])
+        |> maybe_put(:lm_studio_endpoint, parsed[:lm_studio_endpoint])
+        |> maybe_put(:model, parsed[:lm_studio_model])
+        |> maybe_put(:temperature, parsed[:lm_studio_temperature])
+        |> maybe_put(:prompt, prompt)
+        |> maybe_put(:traverse_prompt_path, traverse_prompt_path)
+        |> maybe_put(:max_iterations, max_iterations)
+        |> maybe_put(:sleep_ms, sleep_ms)
+        |> maybe_put(:backoff_ms, backoff_ms)
+        |> maybe_put(:target_progress, parsed[:target_progress])
+        |> maybe_put(:required_stable_acts, required_stable_acts)
+        |> maybe_put(:max_consecutive_failures, max_consecutive_failures)
+        |> maybe_put(:consolidation_cadence, consolidation_cadence)
+        |> maybe_put(:stop_file, stop_file)
+
+      {:traverse, traverse_opts}
+    end
+  end
+
+  defp resolve_traversal_root_path(nil, nil),
+    do:
+      {:error,
+       "missing traversal root (use `graphonomous traverse <directory>` or `--traversal-root PATH`)"}
+
+  defp resolve_traversal_root_path(flag_root, _positional_root) when is_binary(flag_root),
+    do: normalize_filesystem_path(flag_root, "--traversal-root")
+
+  defp resolve_traversal_root_path(nil, positional_root) when is_binary(positional_root),
+    do: normalize_filesystem_path(positional_root, "--traversal-root")
+
+  defp resolve_traversal_root_path(_, _),
+    do:
+      {:error,
+       "missing traversal root (use `graphonomous traverse <directory>` or `--traversal-root PATH`)"}
+
   defp parse_command(["scan"], _parsed), do: {:error, "missing required directory path for scan"}
 
   defp parse_command(["watch"], _parsed),
     do: {:error, "missing required directory path for watch"}
+
+  defp parse_command(["traverse" | rest], _parsed),
+    do: {:error, "unexpected argument(s) for traverse: #{Enum.join(rest, " ")}"}
 
   defp parse_command(rest, _parsed) do
     {:error, "unexpected argument(s): #{Enum.join(rest, " ")}"}
@@ -386,6 +492,23 @@ defmodule Graphonomous.CLI do
 
       {:error, reason} ->
         halt_with_error("watch failed: #{inspect(reason)}")
+    end
+  end
+
+  @spec run_traverse(cli_options()) :: no_return()
+  defp run_traverse(opts) do
+    case Graphonomous.Traverse.run(opts) do
+      {:ok, result} ->
+        IO.puts("traverse complete")
+        IO.puts("  reason: #{inspect(Map.get(result, :reason))}")
+        IO.puts("  iterations: #{inspect(Map.get(result, :iterations))}")
+        IO.puts("  stable_acts: #{inspect(Map.get(result, :stable_acts))}")
+        IO.puts("  final_goal_progress: #{inspect(Map.get(result, :final_goal_progress))}")
+        IO.puts("  final_goal_status: #{inspect(Map.get(result, :final_goal_status))}")
+        System.halt(0)
+
+      {:error, reason} ->
+        halt_with_error("traverse failed: #{inspect(reason)}")
     end
   end
 
@@ -450,6 +573,16 @@ defmodule Graphonomous.CLI do
   defp validate_positive_int(value, flag),
     do: {:error, "invalid #{flag}=#{inspect(value)} (must be > 0)"}
 
+  @spec validate_non_negative_int(nil | integer(), String.t()) ::
+          {:ok, non_neg_integer() | nil} | {:error, String.t()}
+  defp validate_non_negative_int(nil, _flag), do: {:ok, nil}
+
+  defp validate_non_negative_int(value, _flag) when is_integer(value) and value >= 0,
+    do: {:ok, value}
+
+  defp validate_non_negative_int(value, flag),
+    do: {:error, "invalid #{flag}=#{inspect(value)} (must be >= 0)"}
+
   @spec validate_probability(nil | number(), String.t()) :: :ok | {:error, String.t()}
   defp validate_probability(nil, _flag), do: :ok
 
@@ -480,6 +613,23 @@ defmodule Graphonomous.CLI do
 
   defp normalize_filesystem_path(other, flag),
     do: {:error, "invalid #{flag}=#{inspect(other)} (must be a string path)"}
+
+  @spec read_optional_prompt_file(nil | String.t()) :: {:ok, String.t() | nil} | {:error, String.t()}
+  defp read_optional_prompt_file(nil), do: {:ok, nil}
+
+  defp read_optional_prompt_file(path) when is_binary(path) do
+    case File.read(path) do
+      {:ok, content} ->
+        if String.trim(content) == "" do
+          {:error, "invalid --traverse-prompt-path=#{inspect(path)} (file is empty)"}
+        else
+          {:ok, content}
+        end
+
+      {:error, reason} ->
+        {:error, "failed to read --traverse-prompt-path=#{inspect(path)}: #{inspect(reason)}"}
+    end
+  end
 
   @spec expand_user_path(String.t()) :: String.t()
   defp expand_user_path(""), do: ""
@@ -558,6 +708,7 @@ defmodule Graphonomous.CLI do
       graphonomous [options]
       graphonomous scan <directory> [options]
       graphonomous watch <directory> [options]
+      graphonomous traverse [directory] [options]
 
     Global options:
       -h, --help                               Show this help
@@ -584,11 +735,30 @@ defmodule Graphonomous.CLI do
           --max-file-size-bytes N              Max file size to read for preview (> 0)
           --max-read-bytes N                   Max preview bytes read per file (> 0)
 
+    Traverse options (traverse):
+          --traversal-root PATH                Traversal root directory (or pass as positional `directory`)
+          --goal-id ID                         Required GoalGraph goal id
+          --objective-query TEXT               Retrieval query template for each iteration
+          --traverse-prompt-path PATH          Load iteration prompt text from file
+          --lm-studio-base-url URL             LM Studio base URL (default: http://127.0.0.1:1234/v1)
+          --lm-studio-endpoint URL             Full LM Studio endpoint override
+          --lm-studio-model MODEL              LM Studio model id/name
+          --lm-studio-temperature FLOAT        LM Studio temperature (0.0..1.0)
+          --max-iterations N                   Max iterations before stopping (> 0)
+          --sleep-ms MS                        Delay after successful iteration (> 0)
+          --backoff-ms MS                      Delay after failed iteration (> 0)
+          --target-progress FLOAT              Graph-grounded completion threshold (0.0..1.0)
+          --required-stable-acts N             Required consecutive `act` decisions (> 0)
+          --max-consecutive-failures N         Stop after N consecutive failures (> 0)
+          --consolidation-cadence N            Run consolidation every N iterations (>= 0)
+          --stop-file PATH                     Optional kill-switch file path
+
     Examples:
       graphonomous
       graphonomous --db ~/.graphonomous/knowledge.db
       graphonomous scan ./lib --extensions .ex,.exs
       graphonomous watch ./docs --poll-interval-ms 1500 --ingest-on-start
+      graphonomous traverse --traversal-root /home/travis/ProjectAmp2 --goal-id codebase-comprehension-parent --traverse-prompt-path ./AmperSandboxDesign/docs/GRAPHONOMOUS_PROMPT.md --lm-studio-model local-model
       graphonomous --db ~/.graphonomous/knowledge.db --embedder-backend fallback --log-level info
     """
   end
