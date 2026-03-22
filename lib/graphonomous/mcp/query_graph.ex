@@ -161,7 +161,10 @@ defmodule Graphonomous.MCP.QueryGraph do
         node
       end
 
-    Enum.into(node, %{}, fn
+    node
+    # Drop raw binary embedding — not JSON-serializable
+    |> Map.drop([:embedding])
+    |> Enum.into(%{}, fn
       {k, %DateTime{} = v} -> {k, DateTime.to_iso8601(v)}
       {k, v} -> {k, v}
     end)
@@ -175,7 +178,9 @@ defmodule Graphonomous.MCP.QueryGraph do
         edge
       end
 
-    Enum.into(edge, %{}, fn
+    edge
+    |> Map.drop([:embedding])
+    |> Enum.into(%{}, fn
       {k, %DateTime{} = v} -> {k, DateTime.to_iso8601(v)}
       {k, v} -> {k, v}
     end)

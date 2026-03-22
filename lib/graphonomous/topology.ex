@@ -33,8 +33,7 @@ defmodule Graphonomous.Topology do
   @type kappa_result :: %{
           kappa: non_neg_integer(),
           approximate: boolean(),
-          min_cut_partition: {list(node_id()), list(node_id())} | nil,
-          fault_line_edges: list(%{source: node_id(), target: node_id()})
+          fault_line_edges: list(edge_tuple())
         }
 
   @type scc_result :: %{
@@ -93,7 +92,7 @@ defmodule Graphonomous.Topology do
   @doc """
   Iterative Tarjan SCC decomposition over adjacency map.
 
-  Returns all SCCs (including trivial singleton SCCs).
+  Returns only nontrivial SCCs (size > 1).
   """
   @spec tarjan_scc(adjacency()) :: [MapSet.t(node_id())]
   def tarjan_scc(adjacency) when is_map(adjacency) do
@@ -120,7 +119,9 @@ defmodule Graphonomous.Topology do
         end
       end)
 
-    state.sccs |> Enum.reverse()
+    state.sccs
+    |> Enum.reverse()
+    |> Enum.filter(&(MapSet.size(&1) > 1))
   end
 
   @doc """
@@ -145,7 +146,6 @@ defmodule Graphonomous.Topology do
         %{
           kappa: 0,
           approximate: false,
-          min_cut_partition: nil,
           fault_line_edges: []
         }
 
@@ -153,7 +153,6 @@ defmodule Graphonomous.Topology do
         %{
           kappa: size,
           approximate: true,
-          min_cut_partition: nil,
           fault_line_edges: []
         }
 
@@ -276,7 +275,6 @@ defmodule Graphonomous.Topology do
     nontrivial_sccs =
       adjacency
       |> tarjan_scc()
-      |> Enum.filter(&(MapSet.size(&1) > 1))
       |> Enum.map(fn scc ->
         scc
         |> MapSet.to_list()
@@ -299,7 +297,7 @@ defmodule Graphonomous.Topology do
           nodes: scc_set |> MapSet.to_list() |> Enum.sort(),
           kappa: k,
           approximate: kappa.approximate,
-          fault_line_edges: kappa.fault_line_edges,
+          fault_line_edges: Enum.map(kappa.fault_line_edges, &to_fault_line/1),
           routing: if(k > 0, do: :deliberate, else: :fast),
           deliberation_budget: deliberation_budget(k)
         }
@@ -376,7 +374,7 @@ defmodule Graphonomous.Topology do
               %{
                 kappa: cut,
                 partition: {a_nodes, b_nodes},
-                fault_line_edges: Enum.map(fault_lines, &to_fault_line/1)
+                fault_line_edges: fault_lines
               }
             else
               best
@@ -393,7 +391,6 @@ defmodule Graphonomous.Topology do
     %{
       kappa: normalize_kappa(best.kappa),
       approximate: false,
-      min_cut_partition: best.partition,
       fault_line_edges: best.fault_line_edges
     }
   end

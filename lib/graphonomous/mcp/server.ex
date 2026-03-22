@@ -12,6 +12,7 @@ defmodule Graphonomous.MCP.Server do
     capabilities: [:tools, :resources]
 
   # MCP tool components
+  component(Graphonomous.MCP.StoreEdge)
   component(Graphonomous.MCP.StoreNode)
   component(Graphonomous.MCP.RetrieveContext)
   component(Graphonomous.MCP.LearnFromOutcome)

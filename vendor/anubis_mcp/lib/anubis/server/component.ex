@@ -478,6 +478,16 @@ defmodule Anubis.Server.Component do
     {:custom, &__validate_naive_datetime__/1}
   end
 
+  # Peri 0.6.2 :number type is broken — convert to {:either, {:float, :integer}}
+  defp __inject_transforms__(:number) do
+    {:either, {:float, :integer}}
+  end
+
+  # Peri uses :list, not :array — convert for MCP schema compatibility
+  defp __inject_transforms__(:array) do
+    {:list, :any}
+  end
+
   defp __inject_transforms__({:required, type}) do
     {:required, __inject_transforms__(type)}
   end
