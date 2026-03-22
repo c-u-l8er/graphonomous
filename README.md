@@ -278,7 +278,7 @@ cd ProjectAmp2/graphonomous/npm
 npm pack
 mkdir -p /tmp/graphonomous-npm-smoke && cd /tmp/graphonomous-npm-smoke
 npm init -y
-npm i /home/travis/ProjectAmp2/graphonomous/npm/graphonomous-0.1.11.tgz
+npm i /home/travis/ProjectAmp2/graphonomous/npm/graphonomous-0.1.12.tgz
 npx graphonomous --help
 ```
 
