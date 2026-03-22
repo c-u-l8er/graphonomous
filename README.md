@@ -1,10 +1,13 @@
 # Graphonomous
 
-Continual learning engine for AI agents, implemented as an Elixir OTP application with a durable SQLite-backed knowledge graph, confidence-updating learning loop, GoalGraph orchestration, and MCP tools/resources.
+Continual learning engine for AI agents, implemented as an Elixir OTP application with a durable SQLite-backed knowledge graph, confidence-updating learning loop, GoalGraph orchestration, κ-aware topology routing, and MCP tools/resources.
+
+**Phase 0 complete:** κ-aware routing works end-to-end on live MCP calls. The system detects circular dependencies via Tarjan's SCC algorithm, computes the κ invariant, and routes inference depth automatically — `κ = 0` triggers fast retrieval, `κ > 0` triggers deliberation with fault-line decomposition.
 
 > **TL;DR**
 > - Use Graphonomous as an MCP server over stdio.
 > - Easiest onboarding is npm/npx.
+> - κ-aware topology routing ships out of the box — no configuration needed.
 > - OpenSentience is optional; you can start immediately with built-in MCP tools.
 
 ---
@@ -150,7 +153,9 @@ npm i -g graphonomous
 ### 5) Core MCP tools you’ll use first
 
 - `store_node`
-- `retrieve_context`
+- `store_edge`
+- `retrieve_context` — κ-aware: includes topology annotations on retrieval
+- `analyze_topology` — κ-aware: computes SCCs, κ values, routing decision, fault-line edges
 - `learn_from_outcome`
 - `query_graph`
 - `manage_goal`
@@ -273,7 +278,7 @@ cd ProjectAmp2/graphonomous/npm
 npm pack
 mkdir -p /tmp/graphonomous-npm-smoke && cd /tmp/graphonomous-npm-smoke
 npm init -y
-npm i /home/travis/ProjectAmp2/graphonomous/npm/graphonomous-0.1.1.tgz
+npm i /home/travis/ProjectAmp2/graphonomous/npm/graphonomous-0.1.11.tgz
 npx graphonomous --help
 ```
 
