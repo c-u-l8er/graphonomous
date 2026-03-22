@@ -43,10 +43,13 @@ defmodule Graphonomous.MCP.RetrieveContext do
 
     if is_nil(query) do
       {:reply,
-       tool_response(%{
-         status: "error",
-         error: "query is required"
-       }, true), frame}
+       tool_response(
+         %{
+           status: "error",
+           error: "query is required"
+         },
+         true
+       ), frame}
     else
       opts = build_opts(params)
 
@@ -63,25 +66,41 @@ defmodule Graphonomous.MCP.RetrieveContext do
              count: length(results),
              causal_context: causal_context,
              stats: Map.get(retrieval, :stats, %{}),
+             topology:
+               retrieval
+               |> Map.get(:topology, %{
+                 routing: :fast,
+                 max_kappa: 0,
+                 scc_count: 0,
+                 sccs: [],
+                 dag_nodes: []
+               })
+               |> serialize_topology(),
              results: Enum.map(results, &serialize_result/1)
            }), frame}
 
         {:error, reason} ->
           {:reply,
-           tool_response(%{
-             status: "error",
-             query: query,
-             error: inspect(reason)
-           }, true), frame}
+           tool_response(
+             %{
+               status: "error",
+               query: query,
+               error: inspect(reason)
+             },
+             true
+           ), frame}
 
         other ->
           {:reply,
-           tool_response(%{
-             status: "error",
-             query: query,
-             error: "unexpected retrieval response",
-             details: inspect(other)
-           }, true), frame}
+           tool_response(
+             %{
+               status: "error",
+               query: query,
+               error: "unexpected retrieval response",
+               details: inspect(other)
+             },
+             true
+           ), frame}
       end
     end
   end
@@ -166,6 +185,51 @@ defmodule Graphonomous.MCP.RetrieveContext do
       via: Map.get(result, :via)
     }
   end
+
+  defp serialize_topology(topology) when is_map(topology) do
+    sccs =
+      topology
+      |> Map.get(:sccs, [])
+      |> Enum.map(&serialize_scc/1)
+
+    %{
+      routing: normalize_routing(Map.get(topology, :routing)),
+      max_kappa: parse_non_neg_int(Map.get(topology, :max_kappa)) || 0,
+      scc_count: parse_non_neg_int(Map.get(topology, :scc_count)) || length(sccs),
+      sccs: sccs,
+      dag_nodes: Map.get(topology, :dag_nodes, [])
+    }
+  end
+
+  defp serialize_topology(_),
+    do: %{routing: "fast", max_kappa: 0, scc_count: 0, sccs: [], dag_nodes: []}
+
+  defp serialize_scc(scc) when is_map(scc) do
+    %{
+      id: Map.get(scc, :id),
+      nodes: Map.get(scc, :nodes, []),
+      kappa: parse_non_neg_int(Map.get(scc, :kappa)) || 0,
+      approximate: Map.get(scc, :approximate, false) == true,
+      fault_line_edges: Map.get(scc, :fault_line_edges, []),
+      routing: normalize_routing(Map.get(scc, :routing)),
+      deliberation_budget: Map.get(scc, :deliberation_budget, %{})
+    }
+  end
+
+  defp serialize_scc(_), do: %{}
+
+  defp normalize_routing(:deliberate), do: "deliberate"
+  defp normalize_routing(:fast), do: "fast"
+
+  defp normalize_routing(v) when is_binary(v) do
+    case String.downcase(String.trim(v)) do
+      "deliberate" -> "deliberate"
+      "fast" -> "fast"
+      _ -> "fast"
+    end
+  end
+
+  defp normalize_routing(_), do: "fast"
 
   defp tool_response(payload, is_error \\ false) when is_map(payload) do
     response =

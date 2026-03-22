@@ -151,6 +151,100 @@ defmodule Graphonomous.StoreTest do
            end)
   end
 
+  test "list_edges_between returns only edges fully inside the provided node set" do
+    a_id = unique_id("node_a")
+    b_id = unique_id("node_b")
+    c_id = unique_id("node_c")
+    d_id = unique_id("node_d")
+
+    on_exit(fn ->
+      _ = Store.delete_node(a_id)
+      _ = Store.delete_node(b_id)
+      _ = Store.delete_node(c_id)
+      _ = Store.delete_node(d_id)
+    end)
+
+    for {id, content} <- [
+          {a_id, "Node A"},
+          {b_id, "Node B"},
+          {c_id, "Node C"},
+          {d_id, "Node D"}
+        ] do
+      assert {:ok, _} =
+               Store.insert_node(%{
+                 id: id,
+                 content: content,
+                 node_type: :semantic,
+                 confidence: 0.7
+               })
+    end
+
+    ab_id = unique_id("edge_ab")
+    bc_id = unique_id("edge_bc")
+    ca_id = unique_id("edge_ca")
+    cd_id = unique_id("edge_cd")
+    da_id = unique_id("edge_da")
+
+    assert {:ok, _} =
+             Store.upsert_edge(%{
+               id: ab_id,
+               source_id: a_id,
+               target_id: b_id,
+               edge_type: :related,
+               weight: 0.8
+             })
+
+    assert {:ok, _} =
+             Store.upsert_edge(%{
+               id: bc_id,
+               source_id: b_id,
+               target_id: c_id,
+               edge_type: :related,
+               weight: 0.8
+             })
+
+    assert {:ok, _} =
+             Store.upsert_edge(%{
+               id: ca_id,
+               source_id: c_id,
+               target_id: a_id,
+               edge_type: :related,
+               weight: 0.8
+             })
+
+    assert {:ok, _} =
+             Store.upsert_edge(%{
+               id: cd_id,
+               source_id: c_id,
+               target_id: d_id,
+               edge_type: :related,
+               weight: 0.8
+             })
+
+    assert {:ok, _} =
+             Store.upsert_edge(%{
+               id: da_id,
+               source_id: d_id,
+               target_id: a_id,
+               edge_type: :related,
+               weight: 0.8
+             })
+
+    assert {:ok, scoped_edges} = Store.list_edges_between([a_id, b_id, c_id])
+
+    scoped_ids =
+      scoped_edges
+      |> Enum.map(& &1.id)
+      |> MapSet.new()
+
+    assert MapSet.equal?(scoped_ids, MapSet.new([ab_id, bc_id, ca_id]))
+    refute MapSet.member?(scoped_ids, cd_id)
+    refute MapSet.member?(scoped_ids, da_id)
+
+    assert {:ok, none} = Store.list_edges_between([])
+    assert none == []
+  end
+
   test "cache rebuild repopulates ETS state from persisted SQLite rows" do
     node_id = unique_id("node")
     action_id = unique_id("action")

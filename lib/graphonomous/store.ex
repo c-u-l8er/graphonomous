@@ -59,6 +59,9 @@ defmodule Graphonomous.Store do
   def list_edges_for_node(node_id) when is_binary(node_id),
     do: GenServer.call(__MODULE__, {:list_edges_for_node, node_id})
 
+  def list_edges_between(node_ids) when is_list(node_ids),
+    do: GenServer.call(__MODULE__, {:list_edges_between, node_ids})
+
   def insert_outcome(attrs) when is_map(attrs),
     do: GenServer.call(__MODULE__, {:insert_outcome, attrs})
 
@@ -232,6 +235,28 @@ defmodule Graphonomous.Store do
       |> :ets.tab2list()
       |> Enum.map(fn {_id, edge} -> edge end)
       |> Enum.filter(&(&1.source_id == node_id or &1.target_id == node_id))
+
+    {:reply, {:ok, edges}, state}
+  end
+
+  def handle_call({:list_edges_between, node_ids}, _from, state) do
+    node_set =
+      node_ids
+      |> normalize_string_list()
+      |> MapSet.new()
+
+    edges =
+      if MapSet.size(node_set) == 0 do
+        []
+      else
+        @edges_table
+        |> :ets.tab2list()
+        |> Enum.map(fn {_id, edge} -> edge end)
+        |> Enum.filter(fn edge ->
+          MapSet.member?(node_set, edge.source_id) and
+            MapSet.member?(node_set, edge.target_id)
+        end)
+      end
 
     {:reply, {:ok, edges}, state}
   end

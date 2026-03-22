@@ -13,7 +13,7 @@ defmodule Graphonomous.Retriever do
 
   use GenServer
 
-  alias Graphonomous.Graph
+  alias Graphonomous.{Graph, Store, Topology}
   alias Graphonomous.Types.Node
 
   @default_similarity_limit 10
@@ -28,7 +28,8 @@ defmodule Graphonomous.Retriever do
           query: String.t(),
           results: [map()],
           causal_context: [String.t()],
-          stats: map()
+          stats: map(),
+          topology: map()
         }
 
   @type state :: %{
@@ -90,6 +91,8 @@ defmodule Graphonomous.Retriever do
           |> Enum.sort_by(& &1.score, :desc)
           |> Enum.take(cfg.final_limit)
 
+        topology = analyze_topology(ranked)
+
         {:ok,
          %{
            query: query,
@@ -99,7 +102,8 @@ defmodule Graphonomous.Retriever do
              seed_count: map_size(seed_entries),
              expanded_count: max(map_size(expanded) - map_size(seed_entries), 0),
              returned: length(ranked)
-           }
+           },
+           topology: topology
          }}
       end
 
@@ -267,6 +271,33 @@ defmodule Graphonomous.Retriever do
             entries
         end
     end
+  end
+
+  defp analyze_topology(ranked_results) when is_list(ranked_results) do
+    node_ids =
+      ranked_results
+      |> Enum.map(&Map.get(&1, :node_id))
+      |> Enum.filter(&is_binary/1)
+      |> Enum.uniq()
+
+    adjacency =
+      case node_ids do
+        [] ->
+          %{}
+
+        ids ->
+          edges =
+            case Store.list_edges_between(ids) do
+              {:ok, list} when is_list(list) -> list
+              _ -> []
+            end
+
+          Topology.build_adjacency(ids, edges)
+      end
+
+    topology = Topology.analyze(adjacency)
+    _ = Topology.emit_retrieve_route_telemetry(topology)
+    topology
   end
 
   ## Config + utils
