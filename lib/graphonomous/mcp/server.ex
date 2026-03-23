@@ -21,6 +21,9 @@ defmodule Graphonomous.MCP.Server do
   component(Graphonomous.MCP.ReviewGoal)
   component(Graphonomous.MCP.RunConsolidation)
   component(Graphonomous.MCP.TopologyAnalyze)
+  component(Graphonomous.MCP.Deliberate)
+  component(Graphonomous.MCP.AttentionSurvey)
+  component(Graphonomous.MCP.AttentionRunCycle)
 
   # MCP resource components
   component(Graphonomous.MCP.Resources.HealthSnapshot)

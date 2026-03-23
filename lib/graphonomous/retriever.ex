@@ -13,7 +13,7 @@ defmodule Graphonomous.Retriever do
 
   use GenServer
 
-  alias Graphonomous.{Graph, Store, Topology}
+  alias Graphonomous.{Attention, CostTracker, Deliberator, Graph, ModelTier, Store, Topology}
   alias Graphonomous.Types.Node
 
   @default_similarity_limit 10
@@ -93,18 +93,19 @@ defmodule Graphonomous.Retriever do
 
         topology = analyze_topology(ranked)
 
-        {:ok,
-         %{
-           query: query,
-           results: ranked,
-           causal_context: Enum.map(ranked, & &1.node_id),
-           stats: %{
-             seed_count: map_size(seed_entries),
-             expanded_count: max(map_size(expanded) - map_size(seed_entries), 0),
-             returned: length(ranked)
-           },
-           topology: topology
-         }}
+        base_result = %{
+          query: query,
+          results: ranked,
+          causal_context: Enum.map(ranked, & &1.node_id),
+          stats: %{
+            seed_count: map_size(seed_entries),
+            expanded_count: max(map_size(expanded) - map_size(seed_entries), 0),
+            returned: length(ranked)
+          },
+          topology: topology
+        }
+
+        {:ok, maybe_enrich_or_deliberate(base_result, query, call_opts)}
       end
 
     {:reply, reply, state}
@@ -299,6 +300,122 @@ defmodule Graphonomous.Retriever do
     _ = Topology.emit_retrieve_route_telemetry(topology)
     topology
   end
+
+  defp maybe_enrich_or_deliberate(result, query, opts) when is_map(result) and is_binary(query) do
+    tier = resolve_tier(opts)
+    tier_cfg = ModelTier.deliberation_config(tier)
+    attention_cfg = ModelTier.attention_config(tier)
+    max_kappa = result |> Map.get(:topology, %{}) |> Map.get(:max_kappa, 0)
+    floor = tier_cfg |> Map.get(:kappa_deliberation_floor, 1) |> normalize_non_neg_int(1)
+
+    result =
+      cond do
+        max_kappa == 0 ->
+          result
+
+        max_kappa < floor ->
+          enrich_with_topology_notes(result)
+
+        Keyword.get(opts, :auto_deliberate, false) ->
+          deliberation_opts = [model_tier: tier, write_back: true]
+
+          started_at = System.monotonic_time(:millisecond)
+
+          case Deliberator.deliberate(
+                 Map.get(result, :topology, %{}),
+                 query,
+                 Map.get(result, :results, []),
+                 deliberation_opts
+               ) do
+            %{} = deliberation ->
+              duration_ms = max(System.monotonic_time(:millisecond) - started_at, 0)
+
+              _ =
+                CostTracker.record(%{
+                  operation: :deliberation,
+                  tier: tier,
+                  tokens_in: approx_token_count(query),
+                  tokens_out:
+                    approx_token_count(inspect(Map.get(deliberation, :conclusions, []))),
+                  inference_ms: duration_ms * 1.0,
+                  timestamp: DateTime.utc_now()
+                })
+
+              Map.put(result, :deliberation, deliberation)
+
+            _ ->
+              result
+          end
+
+        true ->
+          result
+      end
+
+    if attention_cfg[:trigger_mode] == :demand and max_kappa > 0 do
+      maybe_trigger_demand_attention(Map.get(result, :topology, %{}), query)
+    end
+
+    result
+  end
+
+  defp maybe_enrich_or_deliberate(result, _query, _opts), do: result
+
+  defp enrich_with_topology_notes(result) when is_map(result) do
+    topology = Map.get(result, :topology, %{})
+
+    topology_notes =
+      topology
+      |> Map.get(:sccs, [])
+      |> Enum.map(fn scc ->
+        fault_lines =
+          scc
+          |> Map.get(:fault_line_edges, [])
+          |> Enum.map(fn
+            %{source: s, target: t} -> "#{s} → #{t}"
+            %{"source" => s, "target" => t} -> "#{s} → #{t}"
+            _ -> nil
+          end)
+          |> Enum.reject(&is_nil/1)
+          |> Enum.join(", ")
+
+        %{
+          scc_id: Map.get(scc, :id),
+          kappa: Map.get(scc, :kappa, 0),
+          node_ids: Map.get(scc, :nodes, []),
+          note:
+            "These #{length(Map.get(scc, :nodes, []))} concepts form a feedback loop (κ=#{Map.get(scc, :kappa, 0)}). " <>
+              "Weakest link: #{if(fault_lines == "", do: "unknown", else: fault_lines)}. " <>
+              "Consider this circularity when reasoning."
+        }
+      end)
+
+    Map.put(result, :topology_notes, topology_notes)
+  end
+
+  defp maybe_trigger_demand_attention(topology, query) do
+    Task.start(fn ->
+      _ = Attention.on_demand_check(topology, query)
+    end)
+
+    :ok
+  rescue
+    _ -> :ok
+  end
+
+  defp resolve_tier(opts) do
+    opts
+    |> Keyword.get(:model_tier, ModelTier.current_tier())
+    |> ModelTier.normalize_tier()
+  end
+
+  defp approx_token_count(text) when is_binary(text) do
+    text
+    |> String.split(~r/\s+/u, trim: true)
+    |> length()
+    |> max(1)
+  end
+
+  defp approx_token_count(_), do: 1
 
   ## Config + utils
 

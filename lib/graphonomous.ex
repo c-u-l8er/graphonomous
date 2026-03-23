@@ -6,7 +6,7 @@ defmodule Graphonomous do
   It normalizes incoming payloads and delegates to the core runtime modules.
   """
 
-  alias Graphonomous.{Consolidator, Coverage, GoalGraph, Graph, Learner, Retriever}
+  alias Graphonomous.{Consolidator, Coverage, Deliberator, GoalGraph, Graph, Learner, Retriever}
 
   @allowed_node_types [:episodic, :semantic, :procedural]
   @allowed_statuses [:success, :partial_success, :failure, :timeout]
@@ -39,6 +39,22 @@ defmodule Graphonomous do
 
   def retrieve_context(query, opts) when is_binary(query) and is_list(opts) do
     Retriever.retrieve(query, opts)
+    |> unwrap_ok()
+  end
+
+  @doc """
+  Run κ-driven deliberation over a topology and retrieval context.
+
+  Expected arguments:
+
+    * `topology` - map with SCC/routing output (typically from topology analysis)
+    * `query` - natural-language problem statement
+    * `retrieval_results` - retrieval rows used as deliberation evidence
+    * `opts` - optional controls (`:agent_fn`, `:budget`, `:write_back`, etc.)
+  """
+  def deliberate(topology, query, retrieval_results, opts \\ [])
+      when is_map(topology) and is_binary(query) and is_list(retrieval_results) and is_list(opts) do
+    Deliberator.deliberate(topology, query, retrieval_results, opts)
     |> unwrap_ok()
   end
 
@@ -254,6 +270,7 @@ defmodule Graphonomous do
       retriever: process_state(Retriever),
       learner: process_state(Learner),
       goal_graph: process_state(GoalGraph),
+      attention: process_state(Graphonomous.Attention),
       consolidator: process_state(Consolidator)
     }
   end

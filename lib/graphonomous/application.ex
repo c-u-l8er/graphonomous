@@ -13,6 +13,7 @@ defmodule Graphonomous.Application do
       {Graphonomous.Retriever, []},
       {Graphonomous.Learner, []},
       {Graphonomous.GoalGraph, []},
+      {Graphonomous.Attention, []},
       {Graphonomous.Consolidator, consolidator_opts()}
     ]
 
