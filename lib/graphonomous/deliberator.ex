@@ -338,13 +338,33 @@ defmodule Graphonomous.Deliberator do
         }
       }
 
-      case Graphonomous.store_node(attrs) do
-        %{id: id} when is_binary(id) -> {:ok, id}
-        {:ok, %{id: id}} when is_binary(id) -> {:ok, id}
-        {:error, reason} -> {:error, reason}
-        other -> {:error, {:unexpected_store_node_response, other}}
+      {duration_us, store_result} =
+        :timer.tc(fn ->
+          Graphonomous.store_node(attrs)
+        end)
+
+      duration_ms = duration_us / 1000.0
+
+      case store_result do
+        %{id: id} when is_binary(id) ->
+          _ = emit_crystallization_telemetry(:ok, conclusion, scc, duration_ms)
+          {:ok, id}
+
+        {:ok, %{id: id}} when is_binary(id) ->
+          _ = emit_crystallization_telemetry(:ok, conclusion, scc, duration_ms)
+          {:ok, id}
+
+        {:error, reason} ->
+          _ = emit_crystallization_telemetry(:error, conclusion, scc, duration_ms, reason)
+          {:error, reason}
+
+        other ->
+          reason = {:unexpected_store_node_response, other}
+          _ = emit_crystallization_telemetry(:error, conclusion, scc, duration_ms, reason)
+          {:error, reason}
       end
     else
+      _ = emit_crystallization_telemetry(:skipped, conclusion, scc, 0.0, :write_back_disabled)
       :skipped
     end
   end
@@ -565,6 +585,25 @@ defmodule Graphonomous.Deliberator do
       end
     end)
     |> then(fn {count, ids} -> {count, Enum.reverse(ids)} end)
+  end
+
+  defp emit_crystallization_telemetry(status, conclusion, scc, duration_ms, reason \\ nil) do
+    :telemetry.execute(
+      [:graphonomous, :deliberator, :crystallization],
+      %{
+        count: if(status == :ok, do: 1, else: 0),
+        duration_ms: duration_ms
+      },
+      %{
+        status: status,
+        source_scc_id: get_in_any(scc, :id, nil),
+        source_kappa: as_non_neg_int(Map.get(conclusion, :source_kappa, 0)),
+        confidence: to_float(Map.get(conclusion, :confidence, 0.0)),
+        reason: if(is_nil(reason), do: nil, else: inspect(reason))
+      }
+    )
+
+    :ok
   end
 
   # --- Default local agent (deterministic fallback) ---
