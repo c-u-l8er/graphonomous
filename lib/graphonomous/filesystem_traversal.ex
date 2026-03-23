@@ -54,13 +54,13 @@ defmodule Graphonomous.FilesystemTraversal do
           | {:on_cycle, (map() -> any())}
         ]
 
-  @typep snapshot :: %{
-           optional(String.t()) => %{
-             size: non_neg_integer(),
-             mtime: term(),
-             content_sig: String.t() | nil
-           }
-         }
+  @type snapshot :: %{
+          optional(String.t()) => %{
+            size: non_neg_integer(),
+            mtime: term(),
+            content_sig: String.t() | nil
+          }
+        }
 
   # --------------------
   # Public API
@@ -346,7 +346,7 @@ defmodule Graphonomous.FilesystemTraversal do
   defp normalize_on_error(:ignore), do: :ignore
   defp normalize_on_error(_), do: :log
 
-  defp normalize_pos_int(value, fallback) when is_integer(value) and value > 0, do: value
+  defp normalize_pos_int(value, _fallback) when is_integer(value) and value > 0, do: value
   defp normalize_pos_int(_, fallback), do: fallback
 
   # --------------------
@@ -509,7 +509,12 @@ defmodule Graphonomous.FilesystemTraversal do
             nil ->
               acc
 
-            %{pattern: pattern, negated?: negated?, directory_only?: directory_only?, anchored?: anchored?} ->
+            %{
+              pattern: pattern,
+              negated?: negated?,
+              directory_only?: directory_only?,
+              anchored?: anchored?
+            } ->
               acc ++
                 [
                   %{
@@ -625,7 +630,7 @@ defmodule Graphonomous.FilesystemTraversal do
       |> String.replace("\\*", "[^/]*")
       |> String.replace("\\?", "[^/]")
       |> String.replace("§§DOUBLESTAR§§", ".*")
-      |> then(&"^" <> &1 <> "$")
+      |> then(&("^" <> &1 <> "$"))
 
     Regex.match?(Regex.compile!(regex), value)
   end
@@ -636,7 +641,7 @@ defmodule Graphonomous.FilesystemTraversal do
       |> Regex.escape()
       |> String.replace("\\*", ".*")
       |> String.replace("\\?", ".")
-      |> then(&"^" <> &1 <> "$")
+      |> then(&("^" <> &1 <> "$"))
 
     Regex.match?(Regex.compile!(regex), value)
   end

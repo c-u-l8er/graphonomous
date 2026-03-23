@@ -391,6 +391,18 @@ defmodule Graphonomous.CLI do
   defp parse_command(["traverse", root_path], parsed),
     do: parse_traverse_command(parsed, root_path)
 
+  defp parse_command(["scan"], _parsed), do: {:error, "missing required directory path for scan"}
+
+  defp parse_command(["watch"], _parsed),
+    do: {:error, "missing required directory path for watch"}
+
+  defp parse_command(["traverse" | rest], _parsed),
+    do: {:error, "unexpected argument(s) for traverse: #{Enum.join(rest, " ")}"}
+
+  defp parse_command(rest, _parsed) do
+    {:error, "unexpected argument(s): #{Enum.join(rest, " ")}"}
+  end
+
   defp parse_traverse_command(parsed, positional_root_path) do
     with {:ok, opts} <- normalize_parsed_options(parsed),
          {:ok, traversal_root} <-
@@ -399,7 +411,8 @@ defmodule Graphonomous.CLI do
          {:ok, traverse_prompt_path} <-
            normalize_filesystem_path(parsed[:traverse_prompt_path], "--traverse-prompt-path"),
          {:ok, prompt} <- read_optional_prompt_file(traverse_prompt_path),
-         {:ok, max_iterations} <- validate_positive_int(parsed[:max_iterations], "--max-iterations"),
+         {:ok, max_iterations} <-
+           validate_positive_int(parsed[:max_iterations], "--max-iterations"),
          {:ok, sleep_ms} <- validate_positive_int(parsed[:sleep_ms], "--sleep-ms"),
          {:ok, backoff_ms} <- validate_positive_int(parsed[:backoff_ms], "--backoff-ms"),
          {:ok, required_stable_acts} <-
@@ -448,18 +461,6 @@ defmodule Graphonomous.CLI do
     do:
       {:error,
        "missing traversal root (use `graphonomous traverse <directory>` or `--traversal-root PATH`)"}
-
-  defp parse_command(["scan"], _parsed), do: {:error, "missing required directory path for scan"}
-
-  defp parse_command(["watch"], _parsed),
-    do: {:error, "missing required directory path for watch"}
-
-  defp parse_command(["traverse" | rest], _parsed),
-    do: {:error, "unexpected argument(s) for traverse: #{Enum.join(rest, " ")}"}
-
-  defp parse_command(rest, _parsed) do
-    {:error, "unexpected argument(s): #{Enum.join(rest, " ")}"}
-  end
 
   @spec run_scan(String.t(), cli_options()) :: no_return()
   defp run_scan(root_path, opts) do
@@ -614,7 +615,8 @@ defmodule Graphonomous.CLI do
   defp normalize_filesystem_path(other, flag),
     do: {:error, "invalid #{flag}=#{inspect(other)} (must be a string path)"}
 
-  @spec read_optional_prompt_file(nil | String.t()) :: {:ok, String.t() | nil} | {:error, String.t()}
+  @spec read_optional_prompt_file(nil | String.t()) ::
+          {:ok, String.t() | nil} | {:error, String.t()}
   defp read_optional_prompt_file(nil), do: {:ok, nil}
 
   defp read_optional_prompt_file(path) when is_binary(path) do

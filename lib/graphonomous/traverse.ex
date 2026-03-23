@@ -282,7 +282,7 @@ defmodule Graphonomous.Traverse do
   defp lmstudio_chat_request(cfg, body) do
     endpoint = lm_endpoint(cfg)
 
-    headers = [{'content-type', 'application/json'}]
+    headers = [{~c"content-type", ~c"application/json"}]
     request_body = Jason.encode!(body)
 
     http_opts = [
@@ -290,7 +290,7 @@ defmodule Graphonomous.Traverse do
       connect_timeout: cfg.connect_timeout_ms
     ]
 
-    request = {to_charlist(endpoint), headers, 'application/json', request_body}
+    request = {to_charlist(endpoint), headers, ~c"application/json", request_body}
 
     case :httpc.request(:post, request, http_opts, body_format: :binary) do
       {:ok, {{_http, 200, _reason}, _resp_headers, resp_body}} ->
@@ -603,12 +603,18 @@ defmodule Graphonomous.Traverse do
                 System.get_env("LM_STUDIO_BASE_URL") || @default_lm_base_url
               ),
             lm_studio_endpoint: Keyword.get(opts, :lm_studio_endpoint, nil),
-            temperature: normalize_number(Keyword.get(opts, :temperature, @default_temperature), 0.2),
+            temperature:
+              normalize_number(Keyword.get(opts, :temperature, @default_temperature), 0.2),
             objective_query: Keyword.get(opts, :objective_query, @default_iteration_query),
-            retrieve_limit: normalize_positive_int(Keyword.get(opts, :retrieve_limit, @default_retrieve_limit), @default_retrieve_limit),
+            retrieve_limit:
+              normalize_positive_int(
+                Keyword.get(opts, :retrieve_limit, @default_retrieve_limit),
+                @default_retrieve_limit
+              ),
             goal_id: goal_id,
             traversal_root: normalized_root,
-            target_progress: normalize_confidence(Keyword.get(opts, :target_progress, @default_target_progress)),
+            target_progress:
+              normalize_confidence(Keyword.get(opts, :target_progress, @default_target_progress)),
             required_stable_acts:
               normalize_positive_int(
                 Keyword.get(opts, :required_stable_acts, @default_required_stable_acts),
@@ -620,8 +626,16 @@ defmodule Graphonomous.Traverse do
                 @default_max_consecutive_failures
               ),
             max_iterations: Keyword.get(opts, :max_iterations, nil),
-            sleep_ms: normalize_positive_int(Keyword.get(opts, :sleep_ms, @default_sleep_ms), @default_sleep_ms),
-            backoff_ms: normalize_positive_int(Keyword.get(opts, :backoff_ms, @default_backoff_ms), @default_backoff_ms),
+            sleep_ms:
+              normalize_positive_int(
+                Keyword.get(opts, :sleep_ms, @default_sleep_ms),
+                @default_sleep_ms
+              ),
+            backoff_ms:
+              normalize_positive_int(
+                Keyword.get(opts, :backoff_ms, @default_backoff_ms),
+                @default_backoff_ms
+              ),
             request_timeout_ms:
               normalize_positive_int(
                 Keyword.get(opts, :request_timeout_ms, @default_request_timeout_ms),

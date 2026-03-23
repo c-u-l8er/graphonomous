@@ -181,7 +181,10 @@ defmodule Graphonomous.Embedder do
     {:noreply, state}
   end
 
-  def handle_info({:warmup_bumblebee_complete, result}, %{model_id: model_id, dimension: dimension}) do
+  def handle_info({:warmup_bumblebee_complete, result}, %{
+        model_id: model_id,
+        dimension: dimension
+      }) do
     new_state =
       case result do
         {:ok, serving} ->

@@ -75,16 +75,16 @@ defmodule Graphonomous.MCP.ManageGoal do
       }
 
       {:reply, tool_response(payload), frame}
-  else
-    {:error, reason} ->
-      payload = %{
-        status: "error",
-        error: format_error(reason)
-      }
+    else
+      {:error, reason} ->
+        payload = %{
+          status: "error",
+          error: format_error(reason)
+        }
 
-      {:reply, tool_response(payload, true), frame}
+        {:reply, tool_response(payload, true), frame}
+    end
   end
-end
 
   # -- Dispatch ----------------------------------------------------------------
 
