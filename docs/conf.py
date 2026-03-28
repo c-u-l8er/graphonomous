@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 project = "Graphonomous"
-author = "Graphonomous Contributors"
+author = "Travis Burandt"
 copyright = "2026, Graphonomous"
 release = "latest"
 version = release
