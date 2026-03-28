@@ -140,15 +140,45 @@ Use Option B while actively changing code; switch to Option A for daily/stable u
 
 ---
 
+## 4.1) Always-on skills prompt wiring (required for every chat)
+
+To make Graphonomous usage consistent in every chat, load the skills pack into your agent prompt context at chat start.
+
+Minimum required context:
+
+1. `docs/skills/AGENT_BOOTSTRAP_PROMPT.md`
+2. `docs/skills/SKILLS.md`
+
+Recommended full context:
+
+- `docs/skills/01_RETRIEVE_AND_REMEMBER.md`
+- `docs/skills/02_LEARNING_LOOP.md`
+- `docs/skills/03_GRAPH_INSPECTION.md`
+- `docs/skills/04_GOAL_MANAGEMENT.md`
+- `docs/skills/05_COVERAGE_AND_REVIEW.md`
+- `docs/skills/06_TOPOLOGY_AND_DELIBERATION.md`
+- `docs/skills/07_CONSOLIDATION.md`
+- `docs/skills/08_ATTENTION.md`
+- `docs/skills/09_WORKFLOWS.md`
+- `docs/skills/10_ANTI_PATTERNS.md`
+
+If your Zed workflow supports per-assistant system/developer instructions, include the bootstrap prompt there so it is applied automatically each chat.
+
+---
+
 ## 5) Validate in Zed
 
 1. Open the Agent panel.
 2. Go to MCP/context server settings.
 3. Confirm `graphonomous` is active (running indicator).
-4. Start a prompt and ask it to use Graphonomous tools explicitly, e.g.:
-   - “Use `graphonomous` to store this as semantic memory…”
-   - “Use `graphonomous` to retrieve context for…”
-   - “Use `graphonomous` to learn from this outcome…”
+4. At the start of each new chat, load the prompt context from:
+   - `docs/skills/AGENT_BOOTSTRAP_PROMPT.md`
+   - `docs/skills/SKILLS.md`
+5. For best results, also load the numbered skills files in `docs/skills/`.
+6. Start the prompt and ask it to use Graphonomous tools explicitly, e.g.:
+   - “Use `graphonomous` to retrieve context before answering.”
+   - “Use `graphonomous` to store this as semantic memory.”
+   - “Use `graphonomous` to report outcome feedback with `learn_from_outcome`.”
 
 ---
 

@@ -12,6 +12,45 @@ Continual learning engine for AI agents, implemented as an Elixir OTP applicatio
 
 ---
 
+## Always-On Agent Skills Wiring (Required)
+
+To ensure Graphonomous MCP is used correctly **every chat**, this repo ships an always-on skills pack and bootstrap prompt.
+
+### Skills pack location
+
+- `docs/skills/SKILLS.md` (index)
+- `docs/skills/AGENT_BOOTSTRAP_PROMPT.md` (always-on bootstrap policy)
+- `docs/skills/01_RETRIEVE_AND_REMEMBER.md`
+- `docs/skills/02_LEARNING_LOOP.md`
+- `docs/skills/03_GRAPH_INSPECTION.md`
+- `docs/skills/04_GOAL_MANAGEMENT.md`
+- `docs/skills/05_COVERAGE_AND_REVIEW.md`
+- `docs/skills/06_TOPOLOGY_AND_DELIBERATION.md`
+- `docs/skills/07_CONSOLIDATION.md`
+- `docs/skills/08_ATTENTION.md`
+- `docs/skills/09_WORKFLOWS.md`
+- `docs/skills/10_ANTI_PATTERNS.md`
+
+### Prompt injection guidance (system/developer context)
+
+When configuring any agent/chat runtime, inject:
+
+1. `docs/skills/AGENT_BOOTSTRAP_PROMPT.md` (required)
+2. `docs/skills/SKILLS.md` (required)
+3. Relevant numbered skill files (or all files for general-purpose sessions)
+
+Minimum acceptable wiring: bootstrap prompt + skills index.
+
+### Repository wiring status
+
+This repository already wires these policies into:
+
+- `AGENTS.md`
+- `CLAUDE.md`
+
+That means local repo-aware agent sessions should default to a Graphonomous-first loop:
+retrieve → reason/act → store → learn_from_outcome → consolidate.
+
 ## For Users (npm-first)
 
 ### 1) Install and run
@@ -155,7 +194,7 @@ npm i -g graphonomous
 - `store_node`
 - `store_edge`
 - `retrieve_context` — κ-aware: includes topology annotations on retrieval
-- `analyze_topology` — κ-aware: computes SCCs, κ values, routing decision, fault-line edges
+- `topology_analyze` — κ-aware: computes SCCs, κ values, routing decision, fault-line edges
 - `learn_from_outcome`
 - `query_graph`
 - `manage_goal`
@@ -330,6 +369,7 @@ Primary module: `Graphonomous`
 - `docs/BOOTSTRAP.md` — bootstrap + verification
 - `docs/ZED.md` — Zed integration details
 - `docs/NPM_PUBLISH.md` — npm publishing and maintenance runbook
+- `docs/skills/` — always-on Graphonomous agent skills pack and bootstrap prompt
 - `npm/README.md` — npm wrapper package usage and overrides
 
 ---

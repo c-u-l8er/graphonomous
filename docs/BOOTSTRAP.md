@@ -214,7 +214,43 @@ Before merging/releasing, verify:
 
 ---
 
-## 10) One-Command Local Verification Script (optional)
+## 10) Always-On Skills Pack Wiring Verification
+
+Before considering local bootstrap complete, verify the agent skills wiring is present and discoverable.
+
+### Required files
+
+- `docs/skills/AGENT_BOOTSTRAP_PROMPT.md`
+- `docs/skills/SKILLS.md`
+- `docs/skills/01_RETRIEVE_AND_REMEMBER.md`
+- `docs/skills/02_LEARNING_LOOP.md`
+- `docs/skills/03_GRAPH_INSPECTION.md`
+- `docs/skills/04_GOAL_MANAGEMENT.md`
+- `docs/skills/05_COVERAGE_AND_REVIEW.md`
+- `docs/skills/06_TOPOLOGY_AND_DELIBERATION.md`
+- `docs/skills/07_CONSOLIDATION.md`
+- `docs/skills/08_ATTENTION.md`
+- `docs/skills/09_WORKFLOWS.md`
+- `docs/skills/10_ANTI_PATTERNS.md`
+
+### Wiring checkpoints
+
+- `AGENTS.md` references the skills pack as mandatory session context.
+- `CLAUDE.md` references the bootstrap prompt and skills index.
+- `README.md` includes "Always-On Agent Skills Wiring (Required)" guidance.
+- `docs/ZED.md` includes "Always-on skills prompt wiring" guidance.
+
+### Expected behavior
+
+For non-trivial chat sessions, agent behavior should default to:
+
+1. retrieve context first
+2. reason + act
+3. store durable knowledge
+4. report outcomes
+5. run consolidation periodically
+
+## 11) One-Command Local Verification Script (optional)
 
 You can use this command sequence for a quick confidence run (including MCP executable build):
 
