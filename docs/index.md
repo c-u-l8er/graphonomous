@@ -16,9 +16,30 @@ If you're new to the project, begin with:
 
 ## Documentation
 
+
+```{toctree}
+:maxdepth: 1
+:caption: Homepages
+
+[&] Ampersand Box <https://ampersandboxdesign.com>
+Graphonomous <https://graphonomous.com>
+BendScript <https://bendscript.com>
+WebHost.Systems <https://webhost.systems>
+```
+
+```{toctree}
+:maxdepth: 1
+:caption: Root Docs
+
+[&] Protocol Docs <https://docs.ampersandboxdesign.com>
+Graphonomous Docs <https://docs.graphonomous.com>
+BendScript Docs <https://docs.bendscript.com>
+WebHost.System Docs <https://docs.webhost.systems>
+```
+
 :::{toctree}
 :maxdepth: 2
-:caption: Core Docs
+:caption: Graphonomous Docs
 
 quickstart
 architecture
