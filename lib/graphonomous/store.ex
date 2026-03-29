@@ -22,6 +22,7 @@ defmodule Graphonomous.Store do
   @edges_table :graphonomous_edges
   @outcomes_table :graphonomous_outcomes
   @goals_table :graphonomous_goals
+  @write_timeout_ms 30_000
 
   @type state :: %{
           conn: reference() | nil,
@@ -37,7 +38,7 @@ defmodule Graphonomous.Store do
 
   def ping, do: GenServer.call(__MODULE__, :ping)
 
-  def insert_node(attrs) when is_map(attrs), do: GenServer.call(__MODULE__, {:insert_node, attrs})
+  def insert_node(attrs) when is_map(attrs), do: GenServer.call(__MODULE__, {:insert_node, attrs}, @write_timeout_ms)
 
   def get_node(node_id) when is_binary(node_id),
     do: GenServer.call(__MODULE__, {:get_node, node_id})
@@ -46,15 +47,15 @@ defmodule Graphonomous.Store do
     do: GenServer.call(__MODULE__, {:list_nodes, filters})
 
   def update_node(node_id, attrs) when is_binary(node_id) and is_map(attrs),
-    do: GenServer.call(__MODULE__, {:update_node, node_id, attrs})
+    do: GenServer.call(__MODULE__, {:update_node, node_id, attrs}, @write_timeout_ms)
 
   def delete_node(node_id) when is_binary(node_id),
-    do: GenServer.call(__MODULE__, {:delete_node, node_id})
+    do: GenServer.call(__MODULE__, {:delete_node, node_id}, @write_timeout_ms)
 
   def increment_access(node_id) when is_binary(node_id),
-    do: GenServer.call(__MODULE__, {:increment_access, node_id})
+    do: GenServer.call(__MODULE__, {:increment_access, node_id}, @write_timeout_ms)
 
-  def upsert_edge(attrs) when is_map(attrs), do: GenServer.call(__MODULE__, {:upsert_edge, attrs})
+  def upsert_edge(attrs) when is_map(attrs), do: GenServer.call(__MODULE__, {:upsert_edge, attrs}, @write_timeout_ms)
 
   def list_edges_for_node(node_id) when is_binary(node_id),
     do: GenServer.call(__MODULE__, {:list_edges_for_node, node_id})
@@ -63,12 +64,12 @@ defmodule Graphonomous.Store do
     do: GenServer.call(__MODULE__, {:list_edges_between, node_ids})
 
   def insert_outcome(attrs) when is_map(attrs),
-    do: GenServer.call(__MODULE__, {:insert_outcome, attrs})
+    do: GenServer.call(__MODULE__, {:insert_outcome, attrs}, @write_timeout_ms)
 
   def list_outcomes(limit \\ 100) when is_integer(limit) and limit > 0,
     do: GenServer.call(__MODULE__, {:list_outcomes, limit})
 
-  def insert_goal(attrs) when is_map(attrs), do: GenServer.call(__MODULE__, {:insert_goal, attrs})
+  def insert_goal(attrs) when is_map(attrs), do: GenServer.call(__MODULE__, {:insert_goal, attrs}, @write_timeout_ms)
 
   def get_goal(goal_id) when is_binary(goal_id),
     do: GenServer.call(__MODULE__, {:get_goal, goal_id})
@@ -77,12 +78,12 @@ defmodule Graphonomous.Store do
     do: GenServer.call(__MODULE__, {:list_goals, filters})
 
   def update_goal(goal_id, attrs) when is_binary(goal_id) and is_map(attrs),
-    do: GenServer.call(__MODULE__, {:update_goal, goal_id, attrs})
+    do: GenServer.call(__MODULE__, {:update_goal, goal_id, attrs}, @write_timeout_ms)
 
   def delete_goal(goal_id) when is_binary(goal_id),
-    do: GenServer.call(__MODULE__, {:delete_goal, goal_id})
+    do: GenServer.call(__MODULE__, {:delete_goal, goal_id}, @write_timeout_ms)
 
-  def rebuild_cache, do: GenServer.call(__MODULE__, :rebuild_cache)
+  def rebuild_cache, do: GenServer.call(__MODULE__, :rebuild_cache, @write_timeout_ms)
 
   ## GenServer
 

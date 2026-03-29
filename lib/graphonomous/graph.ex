@@ -18,7 +18,7 @@ defmodule Graphonomous.Graph do
   alias Graphonomous.Types.Node
 
   @default_similarity_limit 10
-  @default_call_timeout 5_000
+  @default_call_timeout 30_000
   @default_retrieve_timeout 30_000
 
   @type node_id :: binary()

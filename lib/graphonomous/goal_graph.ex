@@ -26,6 +26,7 @@ defmodule Graphonomous.GoalGraph do
   @valid_timescales [:immediate, :short_term, :medium_term, :long_term]
   @valid_sources [:user, :system, :inferred, :policy]
   @valid_priorities [:low, :normal, :high, :critical]
+  @write_timeout_ms 30_000
   @review_goal_timeout_ms 30_000
 
   @transitions %{
@@ -45,7 +46,7 @@ defmodule Graphonomous.GoalGraph do
 
   @spec create_goal(map()) :: {:ok, Goal.t()} | {:error, term()}
   def create_goal(attrs) when is_map(attrs) do
-    GenServer.call(__MODULE__, {:create_goal, attrs})
+    GenServer.call(__MODULE__, {:create_goal, attrs}, @write_timeout_ms)
   end
 
   @spec get_goal(binary()) :: {:ok, Goal.t()} | {:error, :not_found}
@@ -60,46 +61,46 @@ defmodule Graphonomous.GoalGraph do
 
   @spec update_goal(binary(), map()) :: {:ok, Goal.t()} | {:error, term()}
   def update_goal(goal_id, attrs) when is_binary(goal_id) and is_map(attrs) do
-    GenServer.call(__MODULE__, {:update_goal, goal_id, attrs})
+    GenServer.call(__MODULE__, {:update_goal, goal_id, attrs}, @write_timeout_ms)
   end
 
   @spec delete_goal(binary()) :: :ok | {:error, :not_found}
   def delete_goal(goal_id) when is_binary(goal_id) do
-    GenServer.call(__MODULE__, {:delete_goal, goal_id})
+    GenServer.call(__MODULE__, {:delete_goal, goal_id}, @write_timeout_ms)
   end
 
   @spec transition_goal(binary(), goal_status() | binary(), map()) ::
           {:ok, Goal.t()} | {:error, term()}
   def transition_goal(goal_id, to_status, metadata \\ %{})
       when is_binary(goal_id) and is_map(metadata) do
-    GenServer.call(__MODULE__, {:transition_goal, goal_id, to_status, metadata})
+    GenServer.call(__MODULE__, {:transition_goal, goal_id, to_status, metadata}, @write_timeout_ms)
   end
 
   @spec add_dependency(binary(), binary()) :: {:ok, Goal.t()} | {:error, term()}
   def add_dependency(goal_id, dependency_goal_id)
       when is_binary(goal_id) and is_binary(dependency_goal_id) do
-    GenServer.call(__MODULE__, {:add_dependency, goal_id, dependency_goal_id})
+    GenServer.call(__MODULE__, {:add_dependency, goal_id, dependency_goal_id}, @write_timeout_ms)
   end
 
   @spec remove_dependency(binary(), binary()) :: {:ok, Goal.t()} | {:error, term()}
   def remove_dependency(goal_id, dependency_goal_id)
       when is_binary(goal_id) and is_binary(dependency_goal_id) do
-    GenServer.call(__MODULE__, {:remove_dependency, goal_id, dependency_goal_id})
+    GenServer.call(__MODULE__, {:remove_dependency, goal_id, dependency_goal_id}, @write_timeout_ms)
   end
 
   @spec link_nodes(binary(), [binary()]) :: {:ok, Goal.t()} | {:error, term()}
   def link_nodes(goal_id, node_ids) when is_binary(goal_id) and is_list(node_ids) do
-    GenServer.call(__MODULE__, {:link_nodes, goal_id, node_ids})
+    GenServer.call(__MODULE__, {:link_nodes, goal_id, node_ids}, @write_timeout_ms)
   end
 
   @spec unlink_nodes(binary(), [binary()]) :: {:ok, Goal.t()} | {:error, term()}
   def unlink_nodes(goal_id, node_ids) when is_binary(goal_id) and is_list(node_ids) do
-    GenServer.call(__MODULE__, {:unlink_nodes, goal_id, node_ids})
+    GenServer.call(__MODULE__, {:unlink_nodes, goal_id, node_ids}, @write_timeout_ms)
   end
 
   @spec set_progress(binary(), number()) :: {:ok, Goal.t()} | {:error, term()}
   def set_progress(goal_id, progress) when is_binary(goal_id) do
-    GenServer.call(__MODULE__, {:set_progress, goal_id, progress})
+    GenServer.call(__MODULE__, {:set_progress, goal_id, progress}, @write_timeout_ms)
   end
 
   @spec review_goal(binary(), map(), keyword()) :: {:ok, Goal.t(), map()} | {:error, term()}
