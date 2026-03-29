@@ -9,8 +9,9 @@ This page is a practical reference for using the current tool surface.
 ## Tool Categories
 
 - **Knowledge graph write**: `store_node`, `store_edge`
-- **Knowledge graph read/query**: `retrieve_context`, `query_graph`, `topology_analyze`
-- **Learning loop**: `learn_from_outcome`, `deliberate`
+- **Knowledge graph read/query**: `retrieve_context`, `query_graph`, `topology_analyze`, `graph_traverse`, `graph_stats`
+- **Specialized retrieval**: `retrieve_episodic`, `retrieve_procedural`, `coverage_query`
+- **Learning loop**: `learn_from_outcome`, `learn_from_feedback`, `learn_detect_novelty`, `learn_from_interaction`, `deliberate`
 - **Goal orchestration**: `manage_goal`, `review_goal`
 - **Maintenance**: `run_consolidation`
 - **Autonomy & prioritization**: `attention_survey`, `attention_run_cycle`
@@ -311,6 +312,142 @@ Execute one survey + triage + dispatch cycle.
 
 ---
 
+## 13) `graph_traverse`
+
+BFS walk from a starting node with depth and relationship filters.
+
+### Required
+- `start_node_id` (string)
+
+### Optional
+- `max_depth` (integer, default 3)
+- `relationship_types` (comma-separated string, e.g. `"causal,supports"`)
+- `include_content` (bool, default true)
+
+### Returns
+Subgraph with visited nodes, edges, depth map, and traversal metadata.
+
+---
+
+## 14) `graph_stats`
+
+Aggregate graph statistics and health indicators.
+
+### No required inputs
+
+### Returns
+- `node_count`, `edge_count`
+- `type_distribution` (node types)
+- `edge_type_distribution`
+- Confidence statistics (mean, min, max, std_dev)
+- `orphan_count` (nodes with no edges)
+
+---
+
+## 15) `coverage_query`
+
+Standalone epistemic coverage assessment without goal binding.
+
+### Required
+- `query` (string)
+
+### Optional
+- `limit` (integer)
+- `expansion_hops` (integer)
+- `min_confidence` (float)
+
+### Returns
+Coverage score, decision (`act`/`learn`/`escalate`), relevant nodes, and confidence stats.
+
+---
+
+## 16) `retrieve_episodic`
+
+Retrieve episodic (event/observation) nodes filtered by time range.
+
+### Optional
+- `since` (ISO 8601 datetime)
+- `until` (ISO 8601 datetime)
+- `limit` (integer, default 20)
+
+### Returns
+Episodic nodes sorted by recency.
+
+---
+
+## 17) `retrieve_procedural`
+
+Semantic search scoped to procedural (how-to) nodes.
+
+### Required
+- `query` (string)
+
+### Optional
+- `limit` (integer, default 10)
+- `min_confidence` (float)
+
+### Returns
+Procedural nodes with extracted steps from content.
+
+---
+
+## 18) `learn_from_feedback`
+
+Process explicit feedback (positive/negative/correction) on a node.
+
+### Required
+- `node_id` (string)
+- `feedback_type` (`positive` | `negative` | `correction`)
+
+### Optional
+- `correction` (string — required when `feedback_type` is `correction`)
+- `source` (string)
+
+### Behavior
+- `positive` → `learn_from_outcome` with status `success`
+- `negative` → `learn_from_outcome` with status `failure`
+- `correction` → directly updates node content via `update_node`
+
+---
+
+## 19) `learn_detect_novelty`
+
+Check whether a query represents novel knowledge not yet in the graph.
+
+### Required
+- `query` (string)
+
+### Optional
+- `threshold` (float, default 0.35)
+
+### Returns
+- `is_novel` (bool)
+- `novelty_score` (float, 0.0–1.0)
+- `nearest_nodes` with similarity scores
+
+---
+
+## 20) `learn_from_interaction`
+
+Full learning pipeline for a user-model interaction.
+
+### Required
+- `user_message` (string)
+- `model_response` (string)
+
+### Optional
+- `context` (JSON string)
+- `novelty_threshold` (float, default 0.35)
+
+### Pipeline
+1. Novelty check on user message
+2. Store episodic node for the interaction
+3. Extract semantic claims from response sentences
+4. Create `derived_from` edges to episodic node
+5. Link to nearest existing nodes
+
+---
+
 ## Resources (Read-Only)
 
 ### `graphonomous://runtime/health`
@@ -318,6 +455,15 @@ Returns runtime health plus lightweight counts.
 
 ### `graphonomous://goals/snapshot`
 Returns goal totals, status breakdown, and serialized goals.
+
+### `graphonomous://graph/node/{id}`
+Individual node details by ID, including content, confidence, metadata, and connected edges. URI template — replace `{id}` with the node ID.
+
+### `graphonomous://graph/recent`
+Recently added or accessed knowledge nodes (default limit 20), sorted by recency.
+
+### `graphonomous://consolidation/log`
+Consolidation state (cycle count, last run, config) and orchestrator plasticity metrics (learning rate, churn, counters).
 
 ---
 

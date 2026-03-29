@@ -2,12 +2,13 @@
 
 Continual learning engine for AI agents, implemented as an Elixir OTP application with a durable SQLite-backed knowledge graph, confidence-updating learning loop, GoalGraph orchestration, κ-aware topology routing, and MCP tools/resources.
 
-**Phase 0 complete:** κ-aware routing works end-to-end on live MCP calls. The system detects circular dependencies via Tarjan's SCC algorithm, computes the κ invariant, and routes inference depth automatically — `κ = 0` triggers fast retrieval, `κ > 0` triggers deliberation with fault-line decomposition.
+**Phase 2 complete:** Full spec implementation — 21 MCP tools, 5 MCP resources, Orchestrator for stability-plasticity monitoring, and streamable HTTP transport alongside stdio. κ-aware routing works end-to-end on live MCP calls. The system detects circular dependencies via Tarjan's SCC algorithm, computes the κ invariant, and routes inference depth automatically — `κ = 0` triggers fast retrieval, `κ > 0` triggers deliberation with fault-line decomposition.
 
 > **TL;DR**
-> - Use Graphonomous as an MCP server over stdio.
+> - Use Graphonomous as an MCP server over stdio or HTTP.
 > - Easiest onboarding is npm/npx.
 > - κ-aware topology routing ships out of the box — no configuration needed.
+> - 21 tools covering knowledge CRUD, retrieval, learning, goals, consolidation, and attention.
 > - OpenSentience is optional; you can start immediately with built-in MCP tools.
 
 ---
@@ -189,22 +190,43 @@ npm i -g graphonomous
 
 ---
 
-### 5) Core MCP tools you’ll use first
+### 5) MCP tools (21 total)
 
-- `store_node`
-- `store_edge`
-- `retrieve_context` — κ-aware: includes topology annotations on retrieval
-- `topology_analyze` — κ-aware: computes SCCs, κ values, routing decision, fault-line edges
-- `learn_from_outcome`
-- `query_graph`
-- `manage_goal`
-- `review_goal`
-- `run_consolidation`
+**Knowledge graph write:**
+- `store_node`, `store_edge`
 
-### MCP resources (read-only)
+**Knowledge graph read/query:**
+- `retrieve_context` — κ-aware ranked retrieval with topology annotations
+- `query_graph` — operation-based graph inspection
+- `topology_analyze` — SCC/κ analysis with routing recommendation
+- `graph_traverse` — BFS walk with depth/relationship filters
+- `graph_stats` — aggregate counts, distributions, confidence stats
 
-- `graphonomous://runtime/health`
-- `graphonomous://goals/snapshot`
+**Specialized retrieval:**
+- `retrieve_episodic` — time-range filtered episodic nodes
+- `retrieve_procedural` — semantic search scoped to procedural nodes
+- `coverage_query` — standalone epistemic coverage (act/learn/escalate)
+
+**Learning loop:**
+- `learn_from_outcome` — causal confidence updates
+- `learn_from_feedback` — positive/negative/correction feedback
+- `learn_detect_novelty` — similarity-based novelty scoring
+- `learn_from_interaction` — full pipeline (novelty → store → extract → link)
+- `deliberate` — κ-driven deliberation over cyclic regions
+
+**Goal orchestration:**
+- `manage_goal`, `review_goal`
+
+**Maintenance & autonomy:**
+- `run_consolidation`, `attention_survey`, `attention_run_cycle`
+
+### MCP resources (5 read-only)
+
+- `graphonomous://runtime/health` — runtime health + service status
+- `graphonomous://goals/snapshot` — goal totals, status breakdown
+- `graphonomous://graph/node/{id}` — individual node details + edges
+- `graphonomous://graph/recent` — recently accessed/modified nodes
+- `graphonomous://consolidation/log` — consolidator state + orchestrator plasticity metrics
 
 ---
 
@@ -223,6 +245,7 @@ This avoids heavyweight backend friction and is the quickest reliable starting p
 Command modes:
 
 - `graphonomous` (start MCP server over stdio)
+- `graphonomous --transport streamable_http --port 4100` (start MCP server over HTTP)
 - `graphonomous scan <directory>` (one-shot traversal from scratch)
 - `graphonomous watch <directory>` (continuous change detection + traversal)
 
@@ -342,6 +365,7 @@ Supervised services:
 - `Graphonomous.Embedder`
 - `Graphonomous.Graph`
 - `Graphonomous.Retriever`
+- `Graphonomous.Orchestrator` — stability-plasticity monitoring, adaptive learning rates
 - `Graphonomous.Learner`
 - `Graphonomous.GoalGraph`
 - `Graphonomous.Consolidator`
@@ -361,6 +385,7 @@ Primary module: `Graphonomous`
 - Retrieval + learning: `retrieve_context/2`, `learn_from_outcome/1`
 - GoalGraph: `create_goal/1`, `get_goal/1`, `list_goals/1`, `update_goal/2`, `delete_goal/1`, `transition_goal/3`, `link_goal_nodes/2`, `unlink_goal_nodes/2`, `set_goal_progress/2`, `review_goal/3`
 - Coverage + ops: `evaluate_coverage/2`, `decide_coverage/2`, `run_consolidation_now/0`, `rebuild_cache/0`, `consolidator_info/0`, `health/0`
+- Orchestrator: `orchestrator_info/0`, `current_learning_rate/0`, `recommend_timescale/1`
 
 ---
 

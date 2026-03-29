@@ -55,6 +55,9 @@ Every interaction should follow this rhythm:
 | `store_node` | Store a knowledge node | `content` (required), `node_type`, `confidence`, `source`, `metadata` |
 | `store_edge` | Create a directed edge between nodes | `source_id` + `target_id` (required), `edge_type`, `weight`, `metadata` |
 | `learn_from_outcome` | Report action outcome and update causal node confidence | `action_id` + `status` + `confidence` + `causal_node_ids` (required) |
+| `learn_from_feedback` | Process positive/negative/correction feedback on a node | `node_id` + `feedback_type` (required), `correction` |
+| `learn_detect_novelty` | Check if a query represents novel knowledge | `query` (required), `threshold` |
+| `learn_from_interaction` | Full learning pipeline: novelty → episodic → semantic extraction → edges | `user_message` + `model_response` (required), `context` |
 | `manage_goal` | Goal CRUD and lifecycle operations | `operation` (required), varies by operation |
 | `review_goal` | Epistemic coverage evaluation with decision policy | `goal_id` + `signal` (required) |
 | `deliberate` | κ-driven deliberation over cyclic knowledge regions | `query` (required), `node_ids`, `write_back` |
@@ -67,6 +70,11 @@ Every interaction should follow this rhythm:
 | `retrieve_context` | Semantic search with neighborhood expansion + topology | `query` (required), `limit`, `expansion_hops`, `min_score`, `node_type` |
 | `query_graph` | Inspect graph state (list, get, edges, similarity) | `operation` (required), varies by operation |
 | `topology_analyze` | Compute SCCs, κ values, routing decision | `node_ids`, `query` |
+| `graph_traverse` | BFS walk from a starting node with depth/relationship filters | `start_node_id` (required), `max_depth`, `relationship_types` |
+| `graph_stats` | Aggregate graph statistics (counts, distributions, orphans) | _(none required)_ |
+| `retrieve_episodic` | Time-range filtered episodic node retrieval | `since`, `until`, `limit` |
+| `retrieve_procedural` | Semantic search scoped to procedural nodes | `query` (required), `limit`, `min_confidence` |
+| `coverage_query` | Standalone epistemic coverage assessment (act/learn/escalate) | `query` (required), `limit`, `expansion_hops` |
 | `attention_survey` | Read current attention priority map | `include_idle` |
 
 ### Resources (Read-Only)
@@ -74,6 +82,9 @@ Every interaction should follow this rhythm:
 |-----|----------------|
 | `graphonomous://runtime/health` | Runtime health: node/edge counts, consolidator state, uptime |
 | `graphonomous://goals/snapshot` | Current GoalGraph snapshot: all goals with status/progress |
+| `graphonomous://graph/node/{id}` | Individual node details + connected edges (URI template) |
+| `graphonomous://graph/recent` | Recently added/accessed nodes, sorted by recency |
+| `graphonomous://consolidation/log` | Consolidator state + orchestrator plasticity metrics |
 
 ---
 

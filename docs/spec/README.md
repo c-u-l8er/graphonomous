@@ -262,71 +262,76 @@ Graphonomous exposes itself as a single MCP server via `hermes_mcp`. All operati
 
 ```elixir
 defmodule Graphonomous.MCP.Server do
-  use Hermes.Server,
+  use Anubis.Server,
     name: "graphonomous",
     version: "0.1.0",
-    protocol_version: "2025-06-18"
+    capabilities: [:tools, :resources]
 
-  # Tools are the primary interface
-  # Resources provide read-only graph/stats access
+  # 21 tool components + 5 resource components registered via component/1
 end
 ```
 
-### 5.2 MCP Tools
+### 5.2 MCP Tools (Implemented)
 
-#### Graph Operations
+#### Knowledge Graph Write
 
-| Tool | Description | Input | Output |
-|------|------------|-------|--------|
-| `graph_query` | Semantic search across the knowledge graph | `{query: string, limit?: int, types?: [string], min_confidence?: float}` | `{nodes: [Node], edges: [Edge]}` |
-| `graph_traverse` | Walk the graph from a starting node | `{node_id: string, depth?: int, relationships?: [string]}` | `{subgraph: {nodes, edges}}` |
-| `graph_add_node` | Manually add knowledge to the graph | `{content: string, type: string, metadata?: object}` | `{node: Node}` |
-| `graph_add_edge` | Create a relationship between nodes | `{source_id: string, target_id: string, relationship: string}` | `{edge: Edge}` |
-| `graph_stats` | Graph statistics and health | `{}` | `{node_count, edge_count, type_distribution, avg_confidence, ...}` |
+| Tool | Description | Key Inputs |
+|------|------------|------------|
+| `store_node` | Store an atomic knowledge node | `content`, `node_type?`, `confidence?`, `source?`, `metadata?` |
+| `store_edge` | Create a directed relationship | `source_id`, `target_id`, `edge_type?`, `weight?` |
 
-#### Continual Learning Operations
+#### Knowledge Graph Read/Query
 
-| Tool | Description | Input | Output |
-|------|------------|-------|--------|
-| `learn_from_interaction` | Process a user-model interaction for learning | `{user_message: string, model_response: string, context?: object}` | `{learned: [Node], edges_created: int}` |
-| `learn_from_feedback` | Integrate explicit feedback | `{node_id: string, feedback: "positive"\|"negative"\|"correction", correction?: string}` | `{updated: Node}` |
-| `learn_detect_novelty` | Check if a query contains novel concepts | `{query: string}` | `{is_novel: bool, novelty_score: float, nearest_nodes: [Node]}` |
-| `learn_from_outcome` | **Grounding loop.** Ingest an action outcome and causally update the nodes that drove the action | `{outcome_id: string, action_id: string, agent_id: string, goal_id?: string, result_status: "success"\|"failure"\|"partial_success"\|"timeout", evidence_type: "performance"\|"resource"\|"schema"\|"latency"\|"historical"\|"external", evidence_payload?: object, confidence: float, causal_node_ids: [string], duration_ms?: int, observed_at?: string}` | `{outcome_node: Node, updated_nodes: [Node], deltas: [%{node_id: string, confidence_delta: float}]}` |
-| `coverage_query` | Epistemic self-modeling: assess whether the graph adequately covers a proposed task before acting | `{task_description: string, critical_topics?: [string], min_confidence?: float}` | `{relevant_nodes: [Node], coverage_score: float, confidence_mean: float, knowledge_gaps: [string], recommendation: "act"\|"learn_first"\|"escalate"}` |
+| Tool | Description | Key Inputs |
+|------|------------|------------|
+| `retrieve_context` | κ-aware ranked retrieval with topology annotations | `query`, `limit?`, `expansion_hops?`, `node_type?` |
+| `query_graph` | Operation-based graph inspection (list_nodes, get_node, get_edges, similarity_search) | `operation`, `node_id?`, `query?`, `limit?` |
+| `topology_analyze` | SCC/κ complexity analysis with routing recommendation | `node_ids?`, `query?` |
+| `graph_traverse` | BFS walk from a starting node with depth/relationship filters | `start_node_id`, `max_depth?`, `relationship_types?` |
+| `graph_stats` | Aggregate graph statistics (counts, distributions, confidence stats, orphans) | _(none required)_ |
 
-#### GoalGraph Operations
+#### Specialized Retrieval
 
-| Tool | Description | Input | Output |
-|------|------------|-------|--------|
-| `goal_create` | Create a durable goal node (persists across sessions) | `{content: string, completion_criteria: object, horizon: "short"\|"medium"\|"long", parent_goal_id?: string, metadata?: object}` | `{goal: Node}` |
-| `goal_update_status` | Transition a goal state with optional evidence | `{goal_id: string, status: "active"\|"completed"\|"failed"\|"suspended", evidence?: object}` | `{goal: Node}` |
-| `goal_retrieve_active` | Retrieve all active goals (optionally scoped) | `{org_id?: string, agent_id?: string, limit?: int}` | `{goals: [Node]}` |
-| `goal_decompose` | Attach/replace a goal’s decomposition into subgoals | `{goal_id: string, subgoals: [string]}` | `{goal: Node}` |
+| Tool | Description | Key Inputs |
+|------|------------|------------|
+| `retrieve_episodic` | Time-range filtered episodic node retrieval | `since?`, `until?`, `limit?` |
+| `retrieve_procedural` | Semantic search scoped to procedural nodes with step extraction | `query`, `limit?`, `min_confidence?` |
+| `coverage_query` | Standalone epistemic coverage assessment (act/learn/escalate) | `query`, `limit?`, `expansion_hops?` |
 
-#### Context Retrieval (for LLM augmentation)
+#### Continual Learning
 
-| Tool | Description | Input | Output |
-|------|------------|-------|--------|
-| `retrieve_context` | Get relevant graph context for an LLM prompt | `{query: string, max_tokens?: int, include_edges?: bool}` | `{context: string, sources: [Node], confidence: float}` |
-| `retrieve_episodic` | Get recent interaction memories | `{limit?: int, since?: datetime}` | `{episodes: [Node]}` |
-| `retrieve_procedural` | Get how-to knowledge | `{task: string}` | `{procedures: [Node], steps: [string]}` |
+| Tool | Description | Key Inputs |
+|------|------------|------------|
+| `learn_from_outcome` | Close feedback loop — update confidence on causal nodes | `action_id`, `status`, `confidence`, `causal_node_ids` |
+| `learn_from_feedback` | Process positive/negative/correction feedback on a node | `node_id`, `feedback_type`, `correction?` |
+| `learn_detect_novelty` | Similarity-based novelty scoring against existing knowledge | `query`, `threshold?` |
+| `learn_from_interaction` | Full pipeline: novelty → episodic store → semantic extraction → edges | `user_message`, `model_response`, `context?` |
+| `deliberate` | κ-driven deliberation over cyclic knowledge regions | `query`, `node_ids?`, `write_back?` |
 
-#### Consolidation Operations
+#### Goal Orchestration
 
-| Tool | Description | Input | Output |
-|------|------------|-------|--------|
-| `consolidate_now` | Trigger an immediate consolidation cycle | `{strategy?: "full"\|"prune"\|"merge"\|"strengthen"}` | `{pruned: int, merged: int, strengthened: int, duration_ms: int}` |
-| `consolidate_status` | Check consolidation state | `{}` | `{last_run: datetime, next_scheduled: datetime, stats: object}` |
+| Tool | Description | Key Inputs |
+|------|------------|------------|
+| `manage_goal` | GoalGraph CRUD + lifecycle (create, get, list, update, delete, transition, set_progress, link/unlink nodes, review) | `operation`, `goal_id?`, `payload?` |
+| `review_goal` | Coverage-driven decision gate (act/learn/escalate) | `goal_id`, `signal` |
 
-### 5.3 MCP Resources
+#### Maintenance & Autonomy
 
-```
-resources://graph/stats          → Real-time graph statistics
-resources://graph/node/{id}      → Individual node details
-resources://graph/recent         → Recently added/accessed nodes
-resources://graph/health         → Health metrics (orphans, weak edges, etc)
-resources://consolidation/log    → Consolidation history
-```
+| Tool | Description | Key Inputs |
+|------|------------|------------|
+| `run_consolidation` | Trigger or inspect consolidation cycles | `action?` (run/status/run_and_status) |
+| `attention_survey` | Read current attention priority map | `include_idle?` |
+| `attention_run_cycle` | Execute one survey + triage + dispatch cycle | `autonomy_override?` |
+
+### 5.3 MCP Resources (Implemented)
+
+| URI | Description |
+|-----|------------|
+| `graphonomous://runtime/health` | Runtime health, service status, lightweight counts |
+| `graphonomous://goals/snapshot` | Goal totals, status breakdown, serialized goals |
+| `graphonomous://graph/node/{id}` | Individual node details + connected edges (URI template) |
+| `graphonomous://graph/recent` | Recently added/accessed nodes, sorted by recency |
+| `graphonomous://consolidation/log` | Consolidator state + orchestrator plasticity metrics |
 
 ### 5.4 Example: Claude Desktop Integration
 
@@ -348,7 +353,8 @@ Once configured, Claude (or any MCP client) can:
 1. **Before answering:** Call `retrieve_context` to get relevant domain knowledge
 2. **After answering:** Call `learn_from_interaction` to record new knowledge
 3. **On feedback:** Call `learn_from_feedback` to adjust confidence
-4. **On idle:** Call `consolidate_now` to strengthen memories
+4. **On outcomes:** Call `learn_from_outcome` to close the causal feedback loop
+5. **On idle:** Call `run_consolidation` to maintain graph quality
 
 ---
 
