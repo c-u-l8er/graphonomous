@@ -169,7 +169,7 @@ Before ending a productive session:
 ## 13) Project-Specific Constraints (Keep)
 
 - Follow source-of-truth spec first:
-  - `../graphonomous.com/project_spec/README.md`
+  - `docs/spec/README.md`
   - `../AmpersandBoxDesign/prompts/GRAPHONOMOUS_PROMPT.md`
 - Keep vendored MCP dependency approach intact.
 - Do not reintroduce EXLA dependency.

@@ -172,7 +172,7 @@ Before ending a productive session:
 ## 13) Project Constraints (Keep Intact)
 
 - Source of truth:
-  - `../graphonomous.com/project_spec/README.md`
+  - `docs/spec/README.md`
   - `../AmpersandBoxDesign/prompts/GRAPHONOMOUS_PROMPT.md`
 - Keep vendored MCP dependency approach in `vendor/anubis_mcp`
 - Do **not** add EXLA
