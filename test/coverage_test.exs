@@ -206,6 +206,94 @@ defmodule Graphonomous.CoverageTest do
     end
   end
 
+  describe "graph_support signal key aliases" do
+    test "supporting_evidence_count is accepted as graph_support alias" do
+      now = DateTime.utc_now()
+
+      signal = %{
+        retrieved_nodes: [
+          node(0.96, 0.98, 0.96, now, 10),
+          node(0.93, 0.95, 0.94, now, 9),
+          node(0.91, 0.94, 0.93, now, 8)
+        ],
+        outcomes: [%{status: :success, confidence: 0.9}],
+        contradictions: 0,
+        supporting_evidence_count: 8
+      }
+
+      result = Coverage.evaluate(signal)
+      assert result.components.graph_support > 0.0
+    end
+
+    test "string key supporting_evidence_count maps to graph_support" do
+      now_iso = DateTime.utc_now() |> DateTime.to_iso8601()
+
+      signal = %{
+        "retrieved_nodes" => [
+          %{"score" => 0.9, "confidence" => 0.9, "similarity" => 0.9, "updated_at" => now_iso}
+        ],
+        "outcomes" => [],
+        "contradictions" => 0,
+        "supporting_evidence_count" => 6
+      }
+
+      result = Coverage.evaluate(signal)
+      assert result.components.graph_support > 0.0
+    end
+
+    test "graph_support takes precedence when both keys present" do
+      now = DateTime.utc_now()
+
+      signal_explicit = %{
+        retrieved_nodes: [node(0.9, 0.9, 0.9, now, 0)],
+        outcomes: [],
+        contradictions: 0,
+        graph_support: 10
+      }
+
+      signal_alias = %{
+        retrieved_nodes: [node(0.9, 0.9, 0.9, now, 0)],
+        outcomes: [],
+        contradictions: 0,
+        supporting_evidence_count: 10
+      }
+
+      result_explicit = Coverage.evaluate(signal_explicit)
+      result_alias = Coverage.evaluate(signal_alias)
+
+      assert_in_delta result_explicit.components.graph_support,
+                      result_alias.components.graph_support,
+                      0.001
+    end
+
+    test "edge_count fallback works when no explicit graph_support" do
+      now = DateTime.utc_now()
+
+      signal_with_edges = %{
+        retrieved_nodes: [
+          node(0.9, 0.9, 0.9, now, 5),
+          node(0.8, 0.8, 0.8, now, 3)
+        ],
+        outcomes: [],
+        contradictions: 0
+      }
+
+      signal_no_edges = %{
+        retrieved_nodes: [
+          node(0.9, 0.9, 0.9, now, 0),
+          node(0.8, 0.8, 0.8, now, 0)
+        ],
+        outcomes: [],
+        contradictions: 0
+      }
+
+      result_edges = Coverage.evaluate(signal_with_edges)
+      result_no_edges = Coverage.evaluate(signal_no_edges)
+
+      assert result_edges.components.graph_support > result_no_edges.components.graph_support
+    end
+  end
+
   defp node(score, confidence, similarity, updated_at, edge_count) do
     %{
       score: score,

@@ -82,8 +82,18 @@ defmodule Graphonomous.Coverage do
     "outcomes" => :outcomes,
     "contradictions" => :contradictions,
     "graph_support" => :graph_support,
+    "supporting_evidence_count" => :graph_support,
     "known_unknowns" => :known_unknowns,
-    "goal_criticality" => :goal_criticality
+    "goal_criticality" => :goal_criticality,
+    "knowledge_gaps" => :knowledge_gaps,
+    "coverage_estimate" => :coverage_estimate
+  }
+
+  # Atom-key aliases that should map to canonical atom keys
+  @atom_aliases %{
+    supporting_evidence_count: :graph_support,
+    knowledge_gaps: :knowledge_gaps,
+    coverage_estimate: :coverage_estimate
   }
 
   @doc """
@@ -250,20 +260,52 @@ defmodule Graphonomous.Coverage do
 
     score =
       cond do
-        is_number(explicit_support) ->
+        is_number(explicit_support) and explicit_support > 0 ->
           saturation(explicit_support, target)
 
         true ->
-          edge_count =
+          # First try edge_count fields on node maps (if present)
+          inline_count =
             signal
             |> Map.get(:retrieved_nodes, [])
             |> Enum.map(&get_num(&1, :edge_count, 0))
             |> Enum.sum()
 
-          saturation(edge_count, target)
+          if inline_count > 0 do
+            saturation(inline_count, target)
+          else
+            # Fallback: query actual edges from graph for each retrieved node
+            edge_count = count_edges_for_retrieved_nodes(signal)
+            saturation(edge_count, target)
+          end
       end
 
     clamp01(score)
+  end
+
+  defp count_edges_for_retrieved_nodes(signal) do
+    signal
+    |> Map.get(:retrieved_nodes, [])
+    |> Enum.map(fn node ->
+      node_id =
+        cond do
+          is_binary(node) -> node
+          is_map(node) -> get_val(node, :node_id, nil) || get_val(node, :id, nil)
+          true -> nil
+        end
+
+      if is_binary(node_id) do
+        case Graphonomous.Graph.get_edges_for_node(node_id) do
+          {:ok, edges} when is_list(edges) -> length(edges)
+          _ -> 0
+        end
+      else
+        0
+      end
+    end)
+    |> Enum.sum()
+  rescue
+    _ -> 0
   end
 
   defp outcome_reliability_score(signal) do
@@ -391,7 +433,9 @@ defmodule Graphonomous.Coverage do
     signal =
       Enum.reduce(signal, %{}, fn
         {k, v}, acc when is_atom(k) ->
-          Map.put(acc, k, v)
+          # Apply atom aliases (e.g. :supporting_evidence_count -> :graph_support)
+          canonical = Map.get(@atom_aliases, k, k)
+          Map.put(acc, canonical, v)
 
         {k, v}, acc when is_binary(k) ->
           atom_key = Map.get(@known_signal_keys, k, nil)
