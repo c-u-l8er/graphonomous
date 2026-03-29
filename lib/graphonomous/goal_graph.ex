@@ -73,7 +73,11 @@ defmodule Graphonomous.GoalGraph do
           {:ok, Goal.t()} | {:error, term()}
   def transition_goal(goal_id, to_status, metadata \\ %{})
       when is_binary(goal_id) and is_map(metadata) do
-    GenServer.call(__MODULE__, {:transition_goal, goal_id, to_status, metadata}, @write_timeout_ms)
+    GenServer.call(
+      __MODULE__,
+      {:transition_goal, goal_id, to_status, metadata},
+      @write_timeout_ms
+    )
   end
 
   @spec add_dependency(binary(), binary()) :: {:ok, Goal.t()} | {:error, term()}
@@ -85,7 +89,11 @@ defmodule Graphonomous.GoalGraph do
   @spec remove_dependency(binary(), binary()) :: {:ok, Goal.t()} | {:error, term()}
   def remove_dependency(goal_id, dependency_goal_id)
       when is_binary(goal_id) and is_binary(dependency_goal_id) do
-    GenServer.call(__MODULE__, {:remove_dependency, goal_id, dependency_goal_id}, @write_timeout_ms)
+    GenServer.call(
+      __MODULE__,
+      {:remove_dependency, goal_id, dependency_goal_id},
+      @write_timeout_ms
+    )
   end
 
   @spec link_nodes(binary(), [binary()]) :: {:ok, Goal.t()} | {:error, term()}

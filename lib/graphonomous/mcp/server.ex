@@ -24,8 +24,19 @@ defmodule Graphonomous.MCP.Server do
   component(Graphonomous.MCP.Deliberate)
   component(Graphonomous.MCP.AttentionSurvey)
   component(Graphonomous.MCP.AttentionRunCycle)
+  component(Graphonomous.MCP.GraphTraverse)
+  component(Graphonomous.MCP.GraphStats)
+  component(Graphonomous.MCP.CoverageQuery)
+  component(Graphonomous.MCP.RetrieveEpisodic)
+  component(Graphonomous.MCP.RetrieveProcedural)
+  component(Graphonomous.MCP.LearnFromFeedback)
+  component(Graphonomous.MCP.LearnDetectNovelty)
+  component(Graphonomous.MCP.LearnFromInteraction)
 
   # MCP resource components
   component(Graphonomous.MCP.Resources.HealthSnapshot)
   component(Graphonomous.MCP.Resources.GoalsSnapshot)
+  component(Graphonomous.MCP.Resources.NodeDetail)
+  component(Graphonomous.MCP.Resources.RecentNodes)
+  component(Graphonomous.MCP.Resources.ConsolidationLog)
 end

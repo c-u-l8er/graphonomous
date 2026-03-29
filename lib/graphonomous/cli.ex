@@ -11,6 +11,8 @@ defmodule Graphonomous.CLI do
   standard input/output.
   """
 
+  require Logger
+
   @default_request_timeout 120_000
 
   @type cli_options :: %{
@@ -67,7 +69,7 @@ defmodule Graphonomous.CLI do
         configure_runtime(opts)
         Process.flag(:trap_exit, true)
         start_runtime()
-        {:ok, monitor_pid} = start_stdio_mcp_server(opts)
+        {:ok, monitor_pid} = start_mcp_server(opts)
         wait_forever(monitor_pid)
 
       {:scan, root_path, opts} ->
@@ -140,7 +142,9 @@ defmodule Graphonomous.CLI do
           max_consecutive_failures: :integer,
           consolidation_cadence: :integer,
           stop_file: :string,
-          traverse_prompt_path: :string
+          traverse_prompt_path: :string,
+          transport: :string,
+          port: :integer
         ],
         aliases: [
           h: :help,
@@ -218,6 +222,8 @@ defmodule Graphonomous.CLI do
         |> maybe_put(:ingest_on_start, parsed[:ingest_on_start])
         |> maybe_put(:max_file_size_bytes, max_file_size_bytes)
         |> maybe_put(:max_read_bytes, max_read_bytes)
+        |> maybe_put(:transport, normalize_transport(parsed[:transport]))
+        |> maybe_put(:port, parsed[:port])
 
       {:ok, opts}
     end
@@ -294,23 +300,39 @@ defmodule Graphonomous.CLI do
     end
   end
 
-  @spec start_stdio_mcp_server(cli_options()) :: {:ok, pid()}
-  defp start_stdio_mcp_server(opts) do
+  @spec start_mcp_server(cli_options()) :: {:ok, pid()}
+  defp start_mcp_server(opts) do
     timeout = Map.get(opts, :request_timeout, @default_request_timeout)
+    transport = Map.get(opts, :transport, :stdio)
+
+    transport_config =
+      case transport do
+        :streamable_http ->
+          port = Map.get(opts, :port, 4100)
+          {:streamable_http, port: port}
+
+        _ ->
+          :stdio
+      end
 
     case Anubis.Server.Supervisor.start_link(
            Graphonomous.MCP.Server,
-           transport: :stdio,
+           transport: transport_config,
            request_timeout: timeout
          ) do
       {:ok, supervisor_pid} ->
-        {:ok, monitor_target_pid(supervisor_pid)}
+        if transport == :streamable_http do
+          port = Map.get(opts, :port, 4100)
+          Logger.info("MCP server listening on http://0.0.0.0:#{port}")
+        end
+
+        {:ok, monitor_target_pid(supervisor_pid, transport)}
 
       {:error, {:already_started, supervisor_pid}} ->
-        {:ok, monitor_target_pid(supervisor_pid)}
+        {:ok, monitor_target_pid(supervisor_pid, transport)}
 
       {:error, reason} ->
-        halt_with_error("failed to start MCP stdio server: #{inspect(reason)}")
+        halt_with_error("failed to start MCP server (#{transport}): #{inspect(reason)}")
     end
   end
 
@@ -330,25 +352,32 @@ defmodule Graphonomous.CLI do
     end
   end
 
-  @spec monitor_target_pid(pid()) :: pid()
-  defp monitor_target_pid(supervisor_pid) when is_pid(supervisor_pid) do
-    case resolve_stdio_transport_pid(20) do
+  @spec monitor_target_pid(pid(), atom()) :: pid()
+  defp monitor_target_pid(supervisor_pid, transport) when is_pid(supervisor_pid) do
+    case resolve_transport_pid(transport, 20) do
       pid when is_pid(pid) -> pid
       _ -> supervisor_pid
     end
   end
 
-  @spec resolve_stdio_transport_pid(non_neg_integer()) :: pid() | nil
-  defp resolve_stdio_transport_pid(0), do: nil
+  @spec resolve_transport_pid(atom(), non_neg_integer()) :: pid() | nil
+  defp resolve_transport_pid(_transport, 0), do: nil
 
-  defp resolve_stdio_transport_pid(attempts) when is_integer(attempts) and attempts > 0 do
-    case Anubis.Server.Registry.whereis_transport(Graphonomous.MCP.Server, :stdio) do
+  defp resolve_transport_pid(transport, attempts)
+       when is_integer(attempts) and attempts > 0 do
+    transport_key =
+      case transport do
+        :streamable_http -> :streamable_http
+        _ -> :stdio
+      end
+
+    case Anubis.Server.Registry.whereis_transport(Graphonomous.MCP.Server, transport_key) do
       pid when is_pid(pid) ->
         pid
 
       _ ->
         Process.sleep(10)
-        resolve_stdio_transport_pid(attempts - 1)
+        resolve_transport_pid(transport, attempts - 1)
     end
   end
 
@@ -545,6 +574,13 @@ defmodule Graphonomous.CLI do
   end
 
   defp normalize_extensions(_), do: nil
+
+  @spec normalize_transport(nil | String.t()) :: :stdio | :streamable_http
+  defp normalize_transport(nil), do: :stdio
+  defp normalize_transport("stdio"), do: :stdio
+  defp normalize_transport("streamable_http"), do: :streamable_http
+  defp normalize_transport("http"), do: :streamable_http
+  defp normalize_transport(_), do: :stdio
 
   @spec normalize_backend(nil | String.t()) ::
           {:ok, :auto | :fallback | nil} | {:error, String.t()}

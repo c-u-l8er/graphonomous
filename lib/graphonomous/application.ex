@@ -11,6 +11,7 @@ defmodule Graphonomous.Application do
       {Graphonomous.Embedder, embedder_opts()},
       {Graphonomous.Graph, []},
       {Graphonomous.Retriever, []},
+      {Graphonomous.Orchestrator, orchestrator_opts()},
       {Graphonomous.Learner, []},
       {Graphonomous.GoalGraph, []},
       {Graphonomous.Attention, []},
@@ -34,6 +35,16 @@ defmodule Graphonomous.Application do
           "sentence-transformers/all-MiniLM-L6-v2"
         ),
       backend: Application.get_env(:graphonomous, :embedder_backend, :auto)
+    ]
+  end
+
+  defp orchestrator_opts do
+    [
+      learning_rate: Application.get_env(:graphonomous, :learning_rate, 0.2),
+      min_learning_rate: Application.get_env(:graphonomous, :min_learning_rate, 0.05),
+      max_learning_rate: Application.get_env(:graphonomous, :max_learning_rate, 0.4),
+      metrics_interval_ms:
+        Application.get_env(:graphonomous, :orchestrator_metrics_interval_ms, 30_000)
     ]
   end
 

@@ -6,7 +6,16 @@ defmodule Graphonomous do
   It normalizes incoming payloads and delegates to the core runtime modules.
   """
 
-  alias Graphonomous.{Consolidator, Coverage, Deliberator, GoalGraph, Graph, Learner, Retriever}
+  alias Graphonomous.{
+    Consolidator,
+    Coverage,
+    Deliberator,
+    GoalGraph,
+    Graph,
+    Learner,
+    Orchestrator,
+    Retriever
+  }
 
   @allowed_node_types [:episodic, :semantic, :procedural]
   @allowed_statuses [:success, :partial_success, :failure, :timeout]
@@ -262,6 +271,27 @@ defmodule Graphonomous do
   end
 
   @doc """
+  Return orchestrator runtime information (learning rate, plasticity metrics).
+  """
+  def orchestrator_info do
+    Orchestrator.info()
+  end
+
+  @doc """
+  Get the current adaptive learning rate from the Orchestrator.
+  """
+  def current_learning_rate do
+    Orchestrator.current_learning_rate()
+  end
+
+  @doc """
+  Recommend a timescale for new knowledge based on type and graph dynamics.
+  """
+  def recommend_timescale(attrs) when is_map(attrs) do
+    Orchestrator.recommend_timescale(attrs)
+  end
+
+  @doc """
   Basic health information for runtime visibility.
   """
   def health do
@@ -270,6 +300,7 @@ defmodule Graphonomous do
       retriever: process_state(Retriever),
       learner: process_state(Learner),
       goal_graph: process_state(GoalGraph),
+      orchestrator: process_state(Orchestrator),
       attention: process_state(Graphonomous.Attention),
       consolidator: process_state(Consolidator)
     }
