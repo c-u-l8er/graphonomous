@@ -72,6 +72,14 @@ defmodule Anubis.Server.Handlers.Tools do
       {:error, %Error{} = error, frame} ->
         {:error, error, frame}
     end
+  rescue
+    exception ->
+      message = "Tool #{tool.name} crashed: #{Exception.message(exception)}"
+      {:error, Error.execution(message, %{tool: tool.name}), frame}
+  catch
+    :exit, reason ->
+      message = "Tool #{tool.name} exited: #{inspect(reason)}"
+      {:error, Error.execution(message, %{tool: tool.name}), frame}
   end
 
   defp forward_to(_server, %Tool{handler: handler} = tool, params, frame) do
@@ -85,6 +93,14 @@ defmodule Anubis.Server.Handlers.Tools do
       {:error, %Error{} = error, frame} ->
         {:error, error, frame}
     end
+  rescue
+    exception ->
+      message = "Tool #{tool.name} crashed: #{Exception.message(exception)}"
+      {:error, Error.execution(message, %{tool: tool.name}), frame}
+  catch
+    :exit, reason ->
+      message = "Tool #{tool.name} exited: #{inspect(reason)}"
+      {:error, Error.execution(message, %{tool: tool.name}), frame}
   end
 
   @output_schema_err "Tool doesnt conform for it output schema"

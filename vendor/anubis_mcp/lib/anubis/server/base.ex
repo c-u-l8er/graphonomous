@@ -133,6 +133,20 @@ defmodule Anubis.Server.Base do
           {:reply, {:error, error}, new_state}
       end
     end
+  rescue
+    exception ->
+      request_id = decoded["id"]
+      method = decoded["method"] || "unknown"
+      message = "Request #{method} crashed: #{Exception.message(exception)}"
+      error = Error.execution(message, %{method: method})
+      {:reply, Error.to_json_rpc(error, request_id), state}
+  catch
+    :exit, reason ->
+      request_id = decoded["id"]
+      method = decoded["method"] || "unknown"
+      message = "Request #{method} exited: #{inspect(reason)}"
+      error = Error.execution(message, %{method: method})
+      {:reply, Error.to_json_rpc(error, request_id), state}
   end
 
   def handle_call(request, from, %{module: module} = state) do

@@ -106,7 +106,12 @@ defmodule Anubis.Server.Transport.STDIO do
 
   @impl GenServer
   def init(opts) do
-    :ok = :io.setopts(encoding: :utf8)
+    # Set both stdin and stdout to binary/latin1 mode so the MCP transport
+    # handles raw bytes without Erlang IO encoding translation.
+    # JSON-RPC payloads are already valid UTF-8 binaries — we don't want
+    # the IO server to re-encode them, which causes {:no_translation, :unicode, :latin1}
+    # crashes on non-ASCII characters like κ, é, etc.
+    :ok = :io.setopts(:standard_io, encoding: :latin1)
     Process.flag(:trap_exit, true)
 
     state = %{
@@ -285,7 +290,6 @@ defmodule Anubis.Server.Transport.STDIO do
 
   defp process_message(message, %{server: server_name, registry: registry} = state) do
     server = registry.whereis_server(server_name)
-    timeout = state.request_timeout
 
     context = %{
       type: :stdio,
@@ -296,25 +300,47 @@ defmodule Anubis.Server.Transport.STDIO do
     if Message.is_notification(message) do
       GenServer.cast(server, {:notification, message, "stdio", context})
     else
-      case GenServer.call(server, {:request, message, "stdio", context}, timeout) do
-        {:ok, response} when is_binary(response) ->
-          emit_outgoing(response, state)
-          :ok
+      # Spawn request processing so parallel requests don't block each other
+      # or the stdin read loop. The server GenServer serializes actual execution.
+      timeout = state.request_timeout
+      transport_state = state
 
-        {:ok, other} ->
-          Logging.transport_event(
-            "server_error",
-            %{reason: {:unexpected_server_response, other}},
-            level: :error
-          )
+      Task.start(fn ->
+        try do
+          case GenServer.call(server, {:request, message, "stdio", context}, timeout) do
+            {:ok, response} when is_binary(response) ->
+              emit_outgoing(response, transport_state)
 
-        {:error, reason} ->
-          Logging.transport_event("server_error", %{reason: reason}, level: :error)
-      end
+            {:ok, other} ->
+              Logging.transport_event(
+                "server_error",
+                %{reason: {:unexpected_server_response, other}},
+                level: :error
+              )
+
+            {:error, reason} ->
+              Logging.transport_event("server_error", %{reason: reason}, level: :error)
+          end
+        catch
+          :exit, reason ->
+            Logging.transport_event("server_call_failed", %{reason: reason}, level: :error)
+
+            request_id = if is_map(message), do: message["id"]
+
+            if request_id do
+              error = %{
+                "error" => %{
+                  "code" => -32603,
+                  "message" => "Internal error: server call failed (#{inspect(reason)})"
+                }
+              }
+
+              error_response = Message.encode_error(error, request_id)
+              emit_outgoing(error_response, transport_state)
+            end
+        end
+      end)
     end
-  catch
-    :exit, reason ->
-      Logging.transport_event("server_call_failed", %{reason: reason}, level: :error)
   end
 
   defp decode_payloads_from_buffer(buffer) when is_binary(buffer) do
@@ -439,7 +465,11 @@ defmodule Anubis.Server.Transport.STDIO do
       %{transport: :stdio, message_size: byte_size(framed), framing_mode: framing_mode(state)}
     )
 
-    IO.write(framed)
+    # Use binwrite to avoid {:no_translation, :unicode, :latin1} errors
+    # when responses contain non-ASCII characters (e.g., κ, é, etc.).
+    # IO.write goes through Erlang's encoding layer which may reject
+    # valid UTF-8 if stdout is configured for Latin-1.
+    IO.binwrite(framed)
   end
 
   defp maybe_frame_outgoing(message, state) do
