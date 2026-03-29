@@ -509,6 +509,8 @@ defmodule Graphonomous.Coverage do
     parse_datetime(updated) || parse_datetime(created)
   end
 
+  defp node_timestamp(_non_map), do: nil
+
   defp parse_datetime(%DateTime{} = dt), do: dt
 
   defp parse_datetime(value) when is_binary(value) do
