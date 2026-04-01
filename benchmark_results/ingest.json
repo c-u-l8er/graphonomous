@@ -1,0 +1,60 @@
+{
+  "timestamp": "2026-04-01T19:52:58.793555Z",
+  "extensions": [
+    ".ex",
+    ".exs",
+    ".md",
+    ".json",
+    ".ts",
+    ".tsx",
+    ".js",
+    ".html",
+    ".css",
+    ".toml",
+    ".yml",
+    ".yaml"
+  ],
+  "scan": {
+    "files_discovered": 18155,
+    "files_ingested": 18155,
+    "files_failed": 0,
+    "root_path": "/home/travis/ProjectAmp2",
+    "error_count": 0,
+    "scan_duration_ms": 1869121
+  },
+  "method": "scan_directory",
+  "benchmark": "OS-E001:ingest",
+  "graph": {
+    "by_type": {
+      "episodic": 18155
+    },
+    "node_count": 18155,
+    "confidence": {
+      "max": 0.65,
+      "min": 0.65,
+      "mean": 0.6499999999997847
+    },
+    "by_source": {
+      "filesystem_traversal": 18155
+    },
+    "edges_created": 9,
+    "extension_distribution": {
+      ".css": 28,
+      ".ex": 1077,
+      ".exs": 190,
+      ".html": 73,
+      ".js": 10015,
+      ".json": 1062,
+      ".md": 1501,
+      ".toml": 6,
+      ".ts": 4167,
+      ".tsx": 32,
+      ".yml": 4
+    }
+  },
+  "performance": {
+    "edge_creation_us": 22900,
+    "throughput_files_per_sec": 9.713121836414015,
+    "total_scan_us": 1869141300
+  }
+}

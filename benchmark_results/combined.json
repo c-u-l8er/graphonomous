@@ -1,0 +1,1451 @@
+{
+  "system": {
+    "otp_release": "28",
+    "elixir_version": "1.19.4",
+    "engine": "Graphonomous",
+    "embedder": "auto",
+    "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+    "engine_version": "0.1.12"
+  },
+  "timestamp": "2026-04-01T19:58:07.567328Z",
+  "version": "2.0.0",
+  "benchmark": "OS-E001:combined",
+  "corpus": {
+    "name": "[&] Protocol Portfolio — Full Codebase",
+    "description": "Full ProjectAmp2 codebase ingested via scan_directory",
+    "method": "scan_directory"
+  },
+  "graph_final": {
+    "avg_confidence": 0.5875,
+    "by_type": {
+      "episodic": 18157
+    },
+    "node_count": 18157
+  },
+  "phases": {
+    "attention": {
+      "accuracy": {
+        "dispatch": {
+          "accuracy_pct": 0,
+          "matches": 0,
+          "total": 0
+        },
+        "prioritization": {
+          "critical_in_top_half": false,
+          "description": "PARTIAL: priority ordering needs work",
+          "ranking": []
+        }
+      },
+      "benchmark": "OS-E001:attention",
+      "cycle": {
+        "items_processed": 0,
+        "latency_us": 23540737
+      },
+      "goals": {
+        "created": 5,
+        "linked": [
+          {
+            "goal_id": "goal_9fd65c4285c762f68c0efffd389ed795",
+            "linked_nodes": 13
+          },
+          {
+            "goal_id": "goal_9498ed2af530e253d598902334b7b775",
+            "linked_nodes": 10
+          },
+          {
+            "goal_id": "goal_d5526f6a19a9176e6bc74be80c91b583",
+            "linked_nodes": 10
+          },
+          {
+            "goal_id": "goal_b78cde8803bf5924a9c39c1ef486f7e8",
+            "linked_nodes": 10
+          },
+          {
+            "goal_id": "goal_b164280ce26c3c963cf4376904599920",
+            "linked_nodes": 10
+          }
+        ]
+      },
+      "performance": {
+        "cycle_latency_us": 23540737,
+        "survey_latency_us": 28065196,
+        "total_us": 51605933
+      },
+      "survey": {
+        "items": [],
+        "items_returned": 0,
+        "latency_us": 28065196
+      },
+      "timestamp": "2026-04-01T19:58:07.560426Z"
+    },
+    "consolidation": {
+      "after": {
+        "avg_confidence": 0.5875343724085437,
+        "by_type": {
+          "episodic": 18157
+        },
+        "confidence_stddev": 8.563994441974427e-4,
+        "max_confidence": 0.5875485179200001,
+        "min_confidence": 0.532065859412416,
+        "node_count": 18157
+      },
+      "before": {
+        "avg_confidence": 0.6499843509388166,
+        "by_type": {
+          "episodic": 18157
+        },
+        "confidence_stddev": 9.474275259838493e-4,
+        "max_confidence": 0.65,
+        "min_confidence": 0.5886200000000001,
+        "node_count": 18157
+      },
+      "benchmark": "OS-E001:consolidation",
+      "config": {
+        "cycles_run": 5,
+        "decay_rate": 0.02,
+        "merge_similarity": 0.95,
+        "prune_threshold": 0.1
+      },
+      "cycles": [
+        {
+          "avg_confidence": 0.649919,
+          "confidence_stddev": 0.001453,
+          "consolidator_cycle_count": 1,
+          "cycle": 1,
+          "latency_us": 3,
+          "max_confidence": 0.65,
+          "min_confidence": 0.576848,
+          "node_count": 18157
+        },
+        {
+          "avg_confidence": 0.636948,
+          "confidence_stddev": 0.001151,
+          "consolidator_cycle_count": 2,
+          "cycle": 2,
+          "latency_us": 1,
+          "max_confidence": 0.637,
+          "min_confidence": 0.576848,
+          "node_count": 18157
+        },
+        {
+          "avg_confidence": 0.624214,
+          "confidence_stddev": 0.001247,
+          "consolidator_cycle_count": 3,
+          "cycle": 3,
+          "latency_us": 1,
+          "max_confidence": 0.62426,
+          "min_confidence": 0.554004,
+          "node_count": 18157
+        },
+        {
+          "avg_confidence": 0.61171,
+          "confidence_stddev": 0.001184,
+          "consolidator_cycle_count": 4,
+          "cycle": 4,
+          "latency_us": 2,
+          "max_confidence": 0.611775,
+          "min_confidence": 0.554004,
+          "node_count": 18157
+        },
+        {
+          "avg_confidence": 0.599505,
+          "confidence_stddev": 0.001144,
+          "consolidator_cycle_count": 5,
+          "cycle": 5,
+          "latency_us": 2,
+          "max_confidence": 0.599539,
+          "min_confidence": 0.532066,
+          "node_count": 18157
+        }
+      ],
+      "decay_analysis": {
+        "confidence_trajectory": [
+          0.6499843509388166,
+          0.649919,
+          0.636948,
+          0.624214,
+          0.61171,
+          0.599505
+        ],
+        "decay_per_cycle": [
+          6.5e-5,
+          0.012971,
+          0.012734,
+          0.012504,
+          0.012205
+        ],
+        "mean_decay_per_cycle": 0.0100958,
+        "nodes_pruned": 0,
+        "survival_rate": 1.0,
+        "total_confidence_loss": 0.06245
+      },
+      "performance": {
+        "mean_cycle_us": 2,
+        "throughput_nodes_per_cycle_per_sec": 1.8157e7,
+        "total_us": 9
+      },
+      "survival_analysis": {
+        "latency_us": 487806,
+        "results": [
+          {
+            "decay_total": 0.0,
+            "final_confidence": 0.05,
+            "initial_confidence": 0.05,
+            "survived": true
+          },
+          {
+            "decay_total": 0.0,
+            "final_confidence": 0.1,
+            "initial_confidence": 0.1,
+            "survived": true
+          },
+          {
+            "decay_total": 0.0,
+            "final_confidence": 0.15,
+            "initial_confidence": 0.15,
+            "survived": true
+          },
+          {
+            "decay_total": 0.0,
+            "final_confidence": 0.3,
+            "initial_confidence": 0.3,
+            "survived": true
+          },
+          {
+            "decay_total": 0.0,
+            "final_confidence": 0.5,
+            "initial_confidence": 0.5,
+            "survived": true
+          },
+          {
+            "decay_total": 0.0,
+            "final_confidence": 0.7,
+            "initial_confidence": 0.7,
+            "survived": true
+          },
+          {
+            "decay_total": 0.0,
+            "final_confidence": 0.9,
+            "initial_confidence": 0.9,
+            "survived": true
+          }
+        ],
+        "survival_threshold": 0.05,
+        "test_confidences": [
+          0.05,
+          0.1,
+          0.15,
+          0.3,
+          0.5,
+          0.7,
+          0.9
+        ]
+      },
+      "timestamp": "2026-04-01T19:56:55.597939Z"
+    },
+    "goals": {
+      "benchmark": "OS-E001:goals",
+      "coverage_query": {
+        "details": [
+          {
+            "name": "high-coverage task (well-documented topic)",
+            "passed": true
+          },
+          {
+            "name": "low-coverage task (undocumented topic)",
+            "passed": true
+          },
+          {
+            "name": "cross-domain coverage query",
+            "passed": true
+          }
+        ],
+        "latency_us": 7824416,
+        "tests_passed": 3,
+        "tests_run": 3
+      },
+      "goal_review": {
+        "details": [
+          {
+            "name": "review goal with linked knowledge → act/learn decision",
+            "passed": true
+          },
+          {
+            "name": "review goal with no knowledge → learn/escalate",
+            "passed": true
+          }
+        ],
+        "latency_us": 3381110,
+        "tests_passed": 2,
+        "tests_run": 2
+      },
+      "lifecycle": {
+        "details": [
+          {
+            "name": "full lifecycle: proposed → active → completed",
+            "passed": true
+          },
+          {
+            "name": "goal with linked knowledge nodes",
+            "passed": true
+          },
+          {
+            "name": "goal abandonment",
+            "passed": true
+          },
+          {
+            "name": "list and filter goals",
+            "passed": true
+          }
+        ],
+        "latency_us": 3544055,
+        "tests_passed": 4,
+        "tests_run": 4
+      },
+      "performance": {
+        "total_us": 14749581
+      },
+      "timestamp": "2026-04-01T19:54:43.748895Z"
+    },
+    "graph_ops": {
+      "benchmark": "OS-E001:graph_ops",
+      "coverage_query": {
+        "details": [
+          {
+            "name": "coverage_query on well-documented task",
+            "passed": true
+          },
+          {
+            "name": "coverage_query on undocumented task",
+            "passed": true
+          }
+        ],
+        "latency_us": 6901132,
+        "tests_passed": 2,
+        "tests_run": 2
+      },
+      "deliberation": {
+        "details": [
+          {
+            "name": "deliberate on κ>0 region",
+            "passed": false
+          },
+          {
+            "name": "topology confirms κ>0 for cycle",
+            "passed": true
+          }
+        ],
+        "latency_us": 327077,
+        "tests_passed": 1,
+        "tests_run": 2,
+        "topology": {
+          "max_kappa": 1,
+          "routing": "deliberate",
+          "scc_count": 1
+        }
+      },
+      "graph_stats": {
+        "latency_us": 1527668,
+        "passed": true,
+        "response": "%Anubis.Server.Response{type: :tool, content: [%{\"text\" => \"{\\\"status\\\":\\\"ok\\\",\\\"avg_confidence\\\":0.65,\\\"node_count\\\":18157,\\\"min_confidence\\\":0.5886200000000001,\\\"edge_count\\\":15,\\\"max_confidence\\\":0.65,\\\"orphan_node_count\\\":18138,\\\"relationship_distribution\\\":{\\\"derived_from\\\":5,\\\"related\\\":9,\\\"supports\\\":1},\\\"source_distribution\\\":{\\\"unknown\\\":18157},\\\"timescale_distribution\\\":{\\\"medium\\\":18157},\\\"type_distribution\\\":{\\\"episodic\\\":18157}}\", \"type\" => \"text\"}], messages: [], contents: nil, values: [], total: nil, hasMore: false, isError: false, structured_content: nil, metadata: %{}}"
+      },
+      "graph_traverse": {
+        "details": [
+          {
+            "name": "BFS traverse depth=1 (MCP tool)",
+            "passed": true
+          },
+          {
+            "name": "BFS traverse depth=2 (MCP tool)",
+            "passed": true
+          }
+        ],
+        "latency_us": 194627,
+        "tests_passed": 2,
+        "tests_run": 2
+      },
+      "performance": {
+        "total_us": 14631079
+      },
+      "query_graph": {
+        "details": [
+          {
+            "name": "list_nodes via query_graph",
+            "passed": true
+          },
+          {
+            "name": "get_node via query_graph",
+            "passed": true
+          },
+          {
+            "name": "get_edges via query_graph",
+            "passed": true
+          },
+          {
+            "name": "similarity_search via query_graph",
+            "passed": true
+          }
+        ],
+        "latency_us": 1419176,
+        "tests_passed": 4,
+        "tests_run": 4
+      },
+      "retrieve_episodic": {
+        "details": [
+          {
+            "name": "retrieve_episodic via MCP tool",
+            "passed": true
+          }
+        ],
+        "latency_us": 649033,
+        "tests_passed": 1,
+        "tests_run": 1
+      },
+      "retrieve_procedural": {
+        "details": [
+          {
+            "name": "retrieve_procedural via MCP tool",
+            "passed": true
+          }
+        ],
+        "latency_us": 3612366,
+        "tests_passed": 1,
+        "tests_run": 1
+      },
+      "timestamp": "2026-04-01T19:55:01.897056Z"
+    },
+    "ingest": {
+      "benchmark": "OS-E001:ingest",
+      "extensions": [
+        ".ex",
+        ".exs",
+        ".md",
+        ".json",
+        ".ts",
+        ".tsx",
+        ".js",
+        ".html",
+        ".css",
+        ".toml",
+        ".yml",
+        ".yaml"
+      ],
+      "graph": {
+        "by_source": {
+          "filesystem_traversal": 18155
+        },
+        "by_type": {
+          "episodic": 18155
+        },
+        "confidence": {
+          "max": 0.65,
+          "mean": 0.6499999999997847,
+          "min": 0.65
+        },
+        "edges_created": 9,
+        "extension_distribution": {
+          ".css": 28,
+          ".ex": 1077,
+          ".exs": 190,
+          ".html": 73,
+          ".js": 10015,
+          ".json": 1062,
+          ".md": 1501,
+          ".toml": 6,
+          ".ts": 4167,
+          ".tsx": 32,
+          ".yml": 4
+        },
+        "node_count": 18155
+      },
+      "method": "scan_directory",
+      "performance": {
+        "edge_creation_us": 22900,
+        "throughput_files_per_sec": 9.713121836414015,
+        "total_scan_us": 1869141300
+      },
+      "scan": {
+        "error_count": 0,
+        "files_discovered": 18155,
+        "files_failed": 0,
+        "files_ingested": 18155,
+        "root_path": "/home/travis/ProjectAmp2",
+        "scan_duration_ms": 1869121
+      },
+      "timestamp": "2026-04-01T19:52:58.793555Z"
+    },
+    "learning": {
+      "benchmark": "OS-E001:learning",
+      "feedback_learning": {
+        "details": [
+          {
+            "confidence_after": 0.67,
+            "confidence_before": 0.6,
+            "delta": 0.07,
+            "name": "positive feedback",
+            "passed": true
+          },
+          {
+            "confidence_after": 0.591,
+            "confidence_before": 0.67,
+            "delta": -0.079,
+            "name": "negative feedback",
+            "passed": true
+          },
+          {
+            "confidence_after": 0.591,
+            "confidence_before": 0.591,
+            "delta": 0.0,
+            "name": "correction feedback",
+            "passed": true
+          }
+        ],
+        "latency_us": 112801,
+        "tests_passed": 3,
+        "tests_run": 3
+      },
+      "interaction_learning": {
+        "details": [
+          {
+            "name": "learn from user interaction",
+            "passed": true,
+            "response": "%Anubis.Server.Response{type: :tool, content: [%{\"text\" => \"{\\\"status\\\":\\\"ok\\\",\\\"edges_created\\\":3,\\\"is_novel\\\":false,\\\"novelty_score\\\":0.4391,\\\"claim_count\\\":0,\\\"episodic_node_id\\\":\\\"node_e7a2957f259577ae6a03f99e5b9a788c\\\",\\\"learned_count\\\":1,\\\"learned_node_ids\\\":[\\\"node_e7a2957f259577ae6a03f99e5b9a788c\\\"]}\", \"type\" => \"text\"}], messages: [], contents: nil, values: [], total: nil, hasMore: false, isError: false, structured_content: nil, metadata: %{}}"
+          },
+          {
+            "name": "learn from assistant response",
+            "passed": true,
+            "response": "%Anubis.Server.Response{type: :tool, content: [%{\"text\" => \"{\\\"status\\\":\\\"ok\\\",\\\"edges_created\\\":3,\\\"is_novel\\\":false,\\\"novelty_score\\\":0.5731,\\\"claim_count\\\":0,\\\"episodic_node_id\\\":\\\"node_25d113b672c21b7f3279abb6daa33bb9\\\",\\\"learned_count\\\":1,\\\"learned_node_ids\\\":[\\\"node_25d113b672c21b7f3279abb6daa33bb9\\\"]}\", \"type\" => \"text\"}], messages: [], contents: nil, values: [], total: nil, hasMore: false, isError: false, structured_content: nil, metadata: %{}}"
+          }
+        ],
+        "latency_us": 2950253,
+        "net_nodes_created": 2,
+        "nodes_after": 18157,
+        "nodes_before": 18155,
+        "tests_passed": 2,
+        "tests_run": 2
+      },
+      "novelty_detection": {
+        "details": [
+          {
+            "name": "familiar content (low novelty)",
+            "passed": true,
+            "response": "%Anubis.Server.Response{type: :tool, content: [%{\"text\" => \"{\\\"error\\\":\\\"query is required\\\",\\\"status\\\":\\\"error\\\"}\", \"type\" => \"text\"}], messages: [], contents: nil, values: [], total: nil, hasMore: false, isError: true, structured_content: nil, metadata: %{}}"
+          },
+          {
+            "name": "novel content (high novelty)",
+            "passed": true,
+            "response": "%Anubis.Server.Response{type: :tool, content: [%{\"text\" => \"{\\\"error\\\":\\\"query is required\\\",\\\"status\\\":\\\"error\\\"}\", \"type\" => \"text\"}], messages: [], contents: nil, values: [], total: nil, hasMore: false, isError: true, structured_content: nil, metadata: %{}}"
+          },
+          {
+            "name": "semi-familiar content",
+            "passed": true,
+            "response": "%Anubis.Server.Response{type: :tool, content: [%{\"text\" => \"{\\\"error\\\":\\\"query is required\\\",\\\"status\\\":\\\"error\\\"}\", \"type\" => \"text\"}], messages: [], contents: nil, values: [], total: nil, hasMore: false, isError: true, structured_content: nil, metadata: %{}}"
+          }
+        ],
+        "latency_us": 2981,
+        "tests_passed": 3,
+        "tests_run": 3
+      },
+      "outcome_learning": {
+        "causal_ids_used": 3,
+        "details": [
+          {
+            "confidence_delta": 0.06,
+            "name": "success increases confidence",
+            "passed": true,
+            "processed": 3,
+            "status": "success",
+            "updated": 3
+          },
+          {
+            "confidence_delta": -0.087,
+            "name": "failure decreases confidence",
+            "passed": true,
+            "processed": 3,
+            "status": "failure",
+            "updated": 3
+          },
+          {
+            "confidence_delta": 0.0034,
+            "name": "partial_success with evidence",
+            "passed": true,
+            "processed": 3,
+            "status": "partial_success",
+            "updated": 3
+          },
+          {
+            "confidence_delta": -0.03778,
+            "name": "timeout handling",
+            "passed": true,
+            "processed": 3,
+            "status": "timeout",
+            "updated": 3
+          }
+        ],
+        "latency_us": 989494,
+        "tests_passed": 4,
+        "tests_run": 4
+      },
+      "performance": {
+        "total_us": 4055529
+      },
+      "timestamp": "2026-04-01T19:54:25.417609Z"
+    },
+    "retrieval": {
+      "benchmark": "OS-E001:retrieval",
+      "by_category": {
+        "conceptual": {
+          "count": 3,
+          "expansion_f1_gain": 0.0,
+          "flat_mean_f1": 0.6534,
+          "mean_f1": 0.6534,
+          "mean_latency_us": 2498050.6667,
+          "mean_precision": 0.6,
+          "mean_recall": 0.7222
+        },
+        "cross_domain": {
+          "count": 4,
+          "expansion_f1_gain": 0.0,
+          "flat_mean_f1": 0.6158,
+          "mean_f1": 0.6158,
+          "mean_latency_us": 2134552.5,
+          "mean_precision": 0.65,
+          "mean_recall": 0.75
+        },
+        "needle": {
+          "count": 3,
+          "expansion_f1_gain": 0.0,
+          "flat_mean_f1": 0.6181,
+          "mean_f1": 0.6181,
+          "mean_latency_us": 2508949.0,
+          "mean_precision": 0.6,
+          "mean_recall": 0.8333
+        },
+        "single_domain": {
+          "count": 3,
+          "expansion_f1_gain": 0.0,
+          "flat_mean_f1": 0.7983,
+          "mean_f1": 0.7983,
+          "mean_latency_us": 2543140.0,
+          "mean_precision": 0.7,
+          "mean_recall": 1.0
+        }
+      },
+      "overall": {
+        "kappa_triggered_count": 0,
+        "mean_f1": 0.6671,
+        "mean_latency_us": 2399125,
+        "mean_precision": 0.6385,
+        "mean_recall": 0.8205,
+        "p95_latency_us": 3377965
+      },
+      "queries": [
+        {
+          "category": "single_domain",
+          "expansion_delta": {
+            "domain_gain": 0,
+            "f1_gain": 0.0,
+            "precision_gain": 0.0,
+            "recall_gain": 0.0
+          },
+          "expected_domains": [
+            "graphonomous"
+          ],
+          "flat_baseline": {
+            "domains_returned": [
+              "graphonomous",
+              "unknown",
+              "bendscript",
+              "opensentience"
+            ],
+            "f1": 0.8235,
+            "latency_us": 907343,
+            "precision": 0.7,
+            "recall": 1.0,
+            "result_count": 10,
+            "unique_domain_count": 4
+          },
+          "graph_expanded": {
+            "domains_returned": [
+              "graphonomous",
+              "unknown",
+              "bendscript",
+              "opensentience"
+            ],
+            "expanded_count": 0,
+            "f1": 0.8235,
+            "latency_us": 901588,
+            "precision": 0.7,
+            "recall": 1.0,
+            "result_count": 10,
+            "seed_count": 10,
+            "top_3_scores": [
+              0.31493443889637585,
+              0.30813159577956123,
+              0.28948305996619855
+            ],
+            "topology_max_kappa": 0,
+            "topology_routing": "fast",
+            "unique_domain_count": 4
+          },
+          "id": "SD-1",
+          "query": "How does the knowledge graph store nodes and edges in SQLite?"
+        },
+        {
+          "category": "single_domain",
+          "expansion_delta": {
+            "domain_gain": 0,
+            "f1_gain": 0.0,
+            "precision_gain": 0.0,
+            "recall_gain": 0.0
+          },
+          "expected_domains": [
+            "webhost"
+          ],
+          "flat_baseline": {
+            "domains_returned": [
+              "webhost"
+            ],
+            "f1": 1.0,
+            "latency_us": 979493,
+            "precision": 1.0,
+            "recall": 1.0,
+            "result_count": 10,
+            "unique_domain_count": 1
+          },
+          "graph_expanded": {
+            "domains_returned": [
+              "webhost"
+            ],
+            "expanded_count": 0,
+            "f1": 1.0,
+            "latency_us": 3361758,
+            "precision": 1.0,
+            "recall": 1.0,
+            "result_count": 10,
+            "seed_count": 10,
+            "top_3_scores": [
+              0.3440977815162707,
+              0.33539066060588557,
+              0.33509870690654053
+            ],
+            "topology_max_kappa": 0,
+            "topology_routing": "fast",
+            "unique_domain_count": 1
+          },
+          "id": "SD-2",
+          "query": "What are the WebHost.Systems API contracts for runtime deployment?"
+        },
+        {
+          "category": "single_domain",
+          "expansion_delta": {
+            "domain_gain": 0,
+            "f1_gain": 0.0,
+            "precision_gain": 0.0,
+            "recall_gain": 0.0
+          },
+          "expected_domains": [
+            "fleetprompt"
+          ],
+          "flat_baseline": {
+            "domains_returned": [
+              "agentromatic",
+              "agentelic",
+              "fleetprompt"
+            ],
+            "f1": 0.5714,
+            "latency_us": 3451647,
+            "precision": 0.4,
+            "recall": 1.0,
+            "result_count": 10,
+            "unique_domain_count": 3
+          },
+          "graph_expanded": {
+            "domains_returned": [
+              "agentromatic",
+              "agentelic",
+              "fleetprompt"
+            ],
+            "expanded_count": 0,
+            "f1": 0.5714,
+            "latency_us": 3366074,
+            "precision": 0.4,
+            "recall": 1.0,
+            "result_count": 10,
+            "seed_count": 10,
+            "top_3_scores": [
+              0.27115910122323084,
+              0.2703835582489916,
+              0.2551486020851601
+            ],
+            "topology_max_kappa": 0,
+            "topology_routing": "fast",
+            "unique_domain_count": 3
+          },
+          "id": "SD-3",
+          "query": "How does the agent marketplace handle bidding and reputation?"
+        },
+        {
+          "category": "cross_domain",
+          "expansion_delta": {
+            "domain_gain": 0,
+            "f1_gain": 0.0,
+            "precision_gain": 0.0,
+            "recall_gain": 0.0
+          },
+          "expected_domains": [
+            "opensentience",
+            "graphonomous",
+            "delegatic"
+          ],
+          "flat_baseline": {
+            "domains_returned": [
+              "ampersand",
+              "opensentience"
+            ],
+            "f1": 0.4516,
+            "latency_us": 3192830,
+            "precision": 0.7,
+            "recall": 0.3333,
+            "result_count": 10,
+            "unique_domain_count": 2
+          },
+          "graph_expanded": {
+            "domains_returned": [
+              "ampersand",
+              "opensentience"
+            ],
+            "expanded_count": 0,
+            "f1": 0.4516,
+            "latency_us": 863207,
+            "precision": 0.7,
+            "recall": 0.3333,
+            "result_count": 10,
+            "seed_count": 10,
+            "top_3_scores": [
+              0.29535201394640515,
+              0.2619374307888747,
+              0.25048684218258327
+            ],
+            "topology_max_kappa": 0,
+            "topology_routing": "fast",
+            "unique_domain_count": 2
+          },
+          "id": "CD-1",
+          "query": "How does governance interact with memory and learning?"
+        },
+        {
+          "category": "cross_domain",
+          "expansion_delta": {
+            "domain_gain": 0,
+            "f1_gain": 0.0,
+            "precision_gain": 0.0,
+            "recall_gain": 0.0
+          },
+          "expected_domains": [
+            "opensentience",
+            "ampersand",
+            "agentromatic"
+          ],
+          "flat_baseline": {
+            "domains_returned": [
+              "agentromatic",
+              "ampersand"
+            ],
+            "f1": 0.8,
+            "latency_us": 889974,
+            "precision": 1.0,
+            "recall": 0.6667,
+            "result_count": 10,
+            "unique_domain_count": 2
+          },
+          "graph_expanded": {
+            "domains_returned": [
+              "agentromatic",
+              "ampersand"
+            ],
+            "expanded_count": 0,
+            "f1": 0.8,
+            "latency_us": 3377965,
+            "precision": 1.0,
+            "recall": 0.6667,
+            "result_count": 10,
+            "seed_count": 10,
+            "top_3_scores": [
+              0.3884464747544121,
+              0.3768033416842446,
+              0.370333985282473
+            ],
+            "topology_max_kappa": 0,
+            "topology_routing": "fast",
+            "unique_domain_count": 2
+          },
+          "id": "CD-2",
+          "query": "What protocols does the [&] ecosystem define for agent coordination?"
+        },
+        {
+          "category": "cross_domain",
+          "expansion_delta": {
+            "domain_gain": 0,
+            "f1_gain": 0.0,
+            "precision_gain": 0.0,
+            "recall_gain": 0.0
+          },
+          "expected_domains": [
+            "geofleetic",
+            "ticktickclock"
+          ],
+          "flat_baseline": {
+            "domains_returned": [
+              "ampersand",
+              "opensentience",
+              "geofleetic",
+              "ticktickclock"
+            ],
+            "f1": 0.4615,
+            "latency_us": 3655752,
+            "precision": 0.3,
+            "recall": 1.0,
+            "result_count": 10,
+            "unique_domain_count": 4
+          },
+          "graph_expanded": {
+            "domains_returned": [
+              "ampersand",
+              "opensentience",
+              "geofleetic",
+              "ticktickclock"
+            ],
+            "expanded_count": 0,
+            "f1": 0.4615,
+            "latency_us": 3373842,
+            "precision": 0.3,
+            "recall": 1.0,
+            "result_count": 10,
+            "seed_count": 10,
+            "top_3_scores": [
+              0.2521499281734888,
+              0.24036891636521354,
+              0.23227916740010177
+            ],
+            "topology_max_kappa": 0,
+            "topology_routing": "fast",
+            "unique_domain_count": 4
+          },
+          "id": "CD-3",
+          "query": "How do spatial and temporal intelligence relate to each other?"
+        },
+        {
+          "category": "cross_domain",
+          "expansion_delta": {
+            "domain_gain": 0,
+            "f1_gain": 0.0,
+            "precision_gain": 0.0,
+            "recall_gain": 0.0
+          },
+          "expected_domains": [
+            "webhost",
+            "opensentience",
+            "delegatic"
+          ],
+          "flat_baseline": {
+            "domains_returned": [
+              "webhost",
+              "ampersand",
+              "specprompt",
+              "fleetprompt",
+              "delegatic",
+              "opensentience"
+            ],
+            "f1": 0.75,
+            "latency_us": 3255945,
+            "precision": 0.6,
+            "recall": 1.0,
+            "result_count": 10,
+            "unique_domain_count": 6
+          },
+          "graph_expanded": {
+            "domains_returned": [
+              "webhost",
+              "ampersand",
+              "specprompt",
+              "fleetprompt",
+              "delegatic",
+              "opensentience"
+            ],
+            "expanded_count": 0,
+            "f1": 0.75,
+            "latency_us": 923196,
+            "precision": 0.6,
+            "recall": 1.0,
+            "result_count": 10,
+            "seed_count": 10,
+            "top_3_scores": [
+              0.3062340272373192,
+              0.2974615724741869,
+              0.29693631249336944
+            ],
+            "topology_max_kappa": 0,
+            "topology_routing": "fast",
+            "unique_domain_count": 6
+          },
+          "id": "CD-4",
+          "query": "What security and compliance requirements exist across the ecosystem?"
+        },
+        {
+          "category": "conceptual",
+          "expansion_delta": {
+            "domain_gain": 0,
+            "f1_gain": 0.0,
+            "precision_gain": 0.0,
+            "recall_gain": 0.0
+          },
+          "expected_domains": [
+            "graphonomous",
+            "ampersand",
+            "agentromatic"
+          ],
+          "flat_baseline": {
+            "domains_returned": [
+              "deliberatic",
+              "graphonomous",
+              "ampersand",
+              "delegatic"
+            ],
+            "f1": 0.5714,
+            "latency_us": 868864,
+            "precision": 0.5,
+            "recall": 0.6667,
+            "result_count": 10,
+            "unique_domain_count": 4
+          },
+          "graph_expanded": {
+            "domains_returned": [
+              "deliberatic",
+              "graphonomous",
+              "ampersand",
+              "delegatic"
+            ],
+            "expanded_count": 0,
+            "f1": 0.5714,
+            "latency_us": 3467343,
+            "precision": 0.5,
+            "recall": 0.6667,
+            "result_count": 10,
+            "seed_count": 10,
+            "top_3_scores": [
+              0.26768473560233075,
+              0.2552860897750184,
+              0.24338534307900822
+            ],
+            "topology_max_kappa": 0,
+            "topology_routing": "fast",
+            "unique_domain_count": 4
+          },
+          "id": "CQ-1",
+          "query": "What is the relationship between cyclicity and deliberation depth?"
+        },
+        {
+          "category": "conceptual",
+          "expansion_delta": {
+            "domain_gain": 0,
+            "f1_gain": 0.0,
+            "precision_gain": 0.0,
+            "recall_gain": 0.0
+          },
+          "expected_domains": [
+            "graphonomous"
+          ],
+          "flat_baseline": {
+            "domains_returned": [
+              "graphonomous",
+              "bendscript"
+            ],
+            "f1": 0.8889,
+            "latency_us": 3446896,
+            "precision": 0.8,
+            "recall": 1.0,
+            "result_count": 10,
+            "unique_domain_count": 2
+          },
+          "graph_expanded": {
+            "domains_returned": [
+              "graphonomous",
+              "bendscript"
+            ],
+            "expanded_count": 0,
+            "f1": 0.8889,
+            "latency_us": 3181767,
+            "precision": 0.8,
+            "recall": 1.0,
+            "result_count": 10,
+            "seed_count": 10,
+            "top_3_scores": [
+              0.17983664415154696,
+              0.1556175902079154,
+              0.1431867561894608
+            ],
+            "topology_max_kappa": 0,
+            "topology_routing": "fast",
+            "unique_domain_count": 2
+          },
+          "id": "CQ-2",
+          "query": "How does confidence decay over time and why does it matter?"
+        },
+        {
+          "category": "conceptual",
+          "expansion_delta": {
+            "domain_gain": 0,
+            "f1_gain": 0.0,
+            "precision_gain": 0.0,
+            "recall_gain": 0.0
+          },
+          "expected_domains": [
+            "ampersand",
+            "specprompt"
+          ],
+          "flat_baseline": {
+            "domains_returned": [
+              "ampersand",
+              "bendscript",
+              "webhost",
+              "opensentience"
+            ],
+            "f1": 0.5,
+            "latency_us": 3208090,
+            "precision": 0.5,
+            "recall": 0.5,
+            "result_count": 10,
+            "unique_domain_count": 4
+          },
+          "graph_expanded": {
+            "domains_returned": [
+              "ampersand",
+              "bendscript",
+              "webhost",
+              "opensentience"
+            ],
+            "expanded_count": 0,
+            "f1": 0.5,
+            "latency_us": 845042,
+            "precision": 0.5,
+            "recall": 0.5,
+            "result_count": 10,
+            "seed_count": 10,
+            "top_3_scores": [
+              0.1786798964172551,
+              0.17768262905896165,
+              0.17668242308209112
+            ],
+            "topology_max_kappa": 0,
+            "topology_routing": "fast",
+            "unique_domain_count": 4
+          },
+          "id": "CQ-3",
+          "query": "What does 'the symbol is the system' mean in practice?"
+        },
+        {
+          "category": "needle",
+          "expansion_delta": {
+            "domain_gain": 0,
+            "f1_gain": 0.0,
+            "precision_gain": 0.0,
+            "recall_gain": 0.0
+          },
+          "expected_domains": [
+            "graphonomous"
+          ],
+          "flat_baseline": {
+            "domains_returned": [
+              "graphonomous",
+              "unknown",
+              "bendscript",
+              "ampersand",
+              "opensentience"
+            ],
+            "f1": 0.75,
+            "latency_us": 891079,
+            "precision": 0.6,
+            "recall": 1.0,
+            "result_count": 10,
+            "unique_domain_count": 5
+          },
+          "graph_expanded": {
+            "domains_returned": [
+              "graphonomous",
+              "unknown",
+              "bendscript",
+              "ampersand",
+              "opensentience"
+            ],
+            "expanded_count": 0,
+            "f1": 0.75,
+            "latency_us": 3309391,
+            "precision": 0.6,
+            "recall": 1.0,
+            "result_count": 10,
+            "seed_count": 10,
+            "top_3_scores": [
+              0.2681590976010311,
+              0.24587756138471206,
+              0.23873045454775393
+            ],
+            "topology_max_kappa": 0,
+            "topology_routing": "fast",
+            "unique_domain_count": 5
+          },
+          "id": "NH-1",
+          "query": "What is the default prune threshold for the consolidator?"
+        },
+        {
+          "category": "needle",
+          "expansion_delta": {
+            "domain_gain": 0,
+            "f1_gain": 0.0,
+            "precision_gain": 0.0,
+            "recall_gain": 0.0
+          },
+          "expected_domains": [
+            "opensentience"
+          ],
+          "flat_baseline": {
+            "domains_returned": [
+              "ampersand",
+              "ticktickclock",
+              "opensentience",
+              "graphonomous"
+            ],
+            "f1": 0.4615,
+            "latency_us": 3483124,
+            "precision": 0.3,
+            "recall": 1.0,
+            "result_count": 10,
+            "unique_domain_count": 4
+          },
+          "graph_expanded": {
+            "domains_returned": [
+              "ampersand",
+              "ticktickclock",
+              "opensentience",
+              "graphonomous"
+            ],
+            "expanded_count": 0,
+            "f1": 0.4615,
+            "latency_us": 3235007,
+            "precision": 0.3,
+            "recall": 1.0,
+            "result_count": 10,
+            "seed_count": 10,
+            "top_3_scores": [
+              0.280666113877766,
+              0.26787324421410436,
+              0.24807352929778803
+            ],
+            "topology_max_kappa": 0,
+            "topology_routing": "fast",
+            "unique_domain_count": 4
+          },
+          "id": "NH-2",
+          "query": "What OTP pattern does the lifecycle manager use?"
+        },
+        {
+          "category": "needle",
+          "expansion_delta": {
+            "domain_gain": 0,
+            "f1_gain": 0.0,
+            "precision_gain": 0.0,
+            "recall_gain": 0.0
+          },
+          "expected_domains": [
+            "webhost",
+            "bendscript"
+          ],
+          "flat_baseline": {
+            "domains_returned": [
+              "bendscript",
+              "opensentience"
+            ],
+            "f1": 0.6429,
+            "latency_us": 3249702,
+            "precision": 0.9,
+            "recall": 0.5,
+            "result_count": 10,
+            "unique_domain_count": 2
+          },
+          "graph_expanded": {
+            "domains_returned": [
+              "bendscript",
+              "opensentience"
+            ],
+            "expanded_count": 0,
+            "f1": 0.6429,
+            "latency_us": 982449,
+            "precision": 0.9,
+            "recall": 0.5,
+            "result_count": 10,
+            "seed_count": 10,
+            "top_3_scores": [
+              0.30643173717286454,
+              0.2883997196790756,
+              0.2703317827821229
+            ],
+            "topology_max_kappa": 0,
+            "topology_routing": "fast",
+            "unique_domain_count": 2
+          },
+          "id": "NH-3",
+          "query": "What is the migration number range for BendScript's kag schema?"
+        }
+      ],
+      "query_count": 13,
+      "timestamp": "2026-04-01T19:54:05.463596Z"
+    },
+    "topology": {
+      "benchmark": "OS-E001:topology",
+      "edge_impact": {
+        "details": [
+          {
+            "details": {
+              "creates_new_scc": false,
+              "description": "This edge has no κ impact on the analyzed topology.",
+              "kappa_after": 0,
+              "kappa_before": 0,
+              "kappa_delta": 0
+            },
+            "name": "no-cycle edge prediction",
+            "passed": true
+          },
+          {
+            "details": {
+              "creates_new_scc": true,
+              "description": "This edge creates a feedback loop and increases deliberation pressure.",
+              "kappa_after": 1,
+              "kappa_before": 0,
+              "kappa_delta": 1
+            },
+            "name": "cycle-creating edge prediction",
+            "passed": true
+          }
+        ],
+        "latency_us": 202172,
+        "tests_passed": 2,
+        "tests_run": 2
+      },
+      "full_graph_analysis": {
+        "dag_node_count": 18153,
+        "edge_count": 9,
+        "latency_us": 94970,
+        "max_kappa": 1,
+        "node_count": 18155,
+        "routing": "deliberate",
+        "scc_count": 1,
+        "sccs": [
+          {
+            "kappa": 1,
+            "routing": "deliberate",
+            "size": 2
+          }
+        ]
+      },
+      "retrieval_topology": {
+        "all_have_topology": true,
+        "details": [
+          {
+            "has_topology": true,
+            "max_kappa": 0,
+            "query": "How does κ routing work and what triggers deliberation?",
+            "result_count": 10,
+            "routing": "fast",
+            "scc_count": 0
+          },
+          {
+            "has_topology": true,
+            "max_kappa": 0,
+            "query": "What is the relationship between the protocol spec and Graphonomous implementation?",
+            "result_count": 10,
+            "routing": "fast",
+            "scc_count": 0
+          },
+          {
+            "has_topology": true,
+            "max_kappa": 0,
+            "query": "How does governance interact with agent memory?",
+            "result_count": 10,
+            "routing": "fast",
+            "scc_count": 0
+          }
+        ],
+        "latency_us": 5365481,
+        "queries_tested": 3
+      },
+      "synthetic_cycles": {
+        "details": [
+          {
+            "dag_nodes": 0,
+            "max_kappa": 1,
+            "name": "3-node cycle",
+            "passed": true,
+            "routing": "deliberate",
+            "scc_count": 1
+          },
+          {
+            "dag_nodes": 3,
+            "max_kappa": 0,
+            "name": "DAG only (no cycles)",
+            "passed": true,
+            "routing": "fast",
+            "scc_count": 0
+          },
+          {
+            "dag_nodes": 1,
+            "max_kappa": 1,
+            "name": "mixed cycle + DAG",
+            "passed": true,
+            "routing": "deliberate",
+            "scc_count": 1
+          },
+          {
+            "dag_nodes": 0,
+            "max_kappa": 1,
+            "name": "self-referential spec pattern",
+            "passed": true,
+            "routing": "deliberate",
+            "scc_count": 1
+          }
+        ],
+        "latency_us": 1213822,
+        "tests_passed": 4,
+        "tests_run": 4
+      },
+      "timestamp": "2026-04-01T19:54:17.314293Z"
+    }
+  },
+  "skill_coverage": {
+    "covered": [
+      "store_node",
+      "store_edge",
+      "retrieve_context",
+      "query_graph",
+      "topology_analyze",
+      "graph_traverse",
+      "graph_stats",
+      "retrieve_episodic",
+      "retrieve_procedural",
+      "coverage_query",
+      "learn_from_outcome",
+      "learn_from_feedback",
+      "learn_detect_novelty",
+      "learn_from_interaction",
+      "deliberate",
+      "manage_goal",
+      "review_goal",
+      "run_consolidation",
+      "attention_survey",
+      "attention_run_cycle"
+    ],
+    "coverage_pct": 100,
+    "total_mcp_tools": 20
+  },
+  "total_duration_human": "36.8 min",
+  "total_duration_us": 2210791254
+}

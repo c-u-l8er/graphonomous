@@ -1,0 +1,119 @@
+{
+  "timestamp": "2026-04-01T19:54:17.314293Z",
+  "benchmark": "OS-E001:topology",
+  "edge_impact": {
+    "details": [
+      {
+        "name": "no-cycle edge prediction",
+        "details": {
+          "description": "This edge has no κ impact on the analyzed topology.",
+          "creates_new_scc": false,
+          "kappa_after": 0,
+          "kappa_before": 0,
+          "kappa_delta": 0
+        },
+        "passed": true
+      },
+      {
+        "name": "cycle-creating edge prediction",
+        "details": {
+          "description": "This edge creates a feedback loop and increases deliberation pressure.",
+          "creates_new_scc": true,
+          "kappa_after": 1,
+          "kappa_before": 0,
+          "kappa_delta": 1
+        },
+        "passed": true
+      }
+    ],
+    "latency_us": 202172,
+    "tests_run": 2,
+    "tests_passed": 2
+  },
+  "full_graph_analysis": {
+    "node_count": 18155,
+    "sccs": [
+      {
+        "size": 2,
+        "kappa": 1,
+        "routing": "deliberate"
+      }
+    ],
+    "max_kappa": 1,
+    "routing": "deliberate",
+    "scc_count": 1,
+    "latency_us": 94970,
+    "edge_count": 9,
+    "dag_node_count": 18153
+  },
+  "retrieval_topology": {
+    "details": [
+      {
+        "query": "How does κ routing work and what triggers deliberation?",
+        "max_kappa": 0,
+        "routing": "fast",
+        "scc_count": 0,
+        "result_count": 10,
+        "has_topology": true
+      },
+      {
+        "query": "What is the relationship between the protocol spec and Graphonomous implementation?",
+        "max_kappa": 0,
+        "routing": "fast",
+        "scc_count": 0,
+        "result_count": 10,
+        "has_topology": true
+      },
+      {
+        "query": "How does governance interact with agent memory?",
+        "max_kappa": 0,
+        "routing": "fast",
+        "scc_count": 0,
+        "result_count": 10,
+        "has_topology": true
+      }
+    ],
+    "latency_us": 5365481,
+    "all_have_topology": true,
+    "queries_tested": 3
+  },
+  "synthetic_cycles": {
+    "details": [
+      {
+        "name": "3-node cycle",
+        "max_kappa": 1,
+        "routing": "deliberate",
+        "dag_nodes": 0,
+        "scc_count": 1,
+        "passed": true
+      },
+      {
+        "name": "DAG only (no cycles)",
+        "max_kappa": 0,
+        "routing": "fast",
+        "dag_nodes": 3,
+        "scc_count": 0,
+        "passed": true
+      },
+      {
+        "name": "mixed cycle + DAG",
+        "max_kappa": 1,
+        "routing": "deliberate",
+        "dag_nodes": 1,
+        "scc_count": 1,
+        "passed": true
+      },
+      {
+        "name": "self-referential spec pattern",
+        "max_kappa": 1,
+        "routing": "deliberate",
+        "dag_nodes": 0,
+        "scc_count": 1,
+        "passed": true
+      }
+    ],
+    "latency_us": 1213822,
+    "tests_run": 4,
+    "tests_passed": 4
+  }
+}

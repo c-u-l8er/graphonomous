@@ -35,8 +35,11 @@ defmodule Graphonomous.MixProject do
       # Local embeddings
       {:bumblebee, "~> 0.6"},
       {:nx, "~> 0.9"},
-      # EXLA is intentionally optional for now to avoid CUDA-linked NIF startup failures.
-      # Add it back when your runtime has a compatible CPU/CUDA setup.
+      # EXLA for fast GPU/CPU inference via XLA JIT compilation.
+      # Requires LD_LIBRARY_PATH=/opt/cuda/lib64 at runtime for CUDA support.
+      # If EXLA fails to load, embedder gracefully falls back to deterministic hashing.
+      # Set GRAPHONOMOUS_EMBEDDER_BACKEND=fallback to skip EXLA entirely.
+      {:exla, "~> 0.9", runtime: false},
 
       # Utilities
       {:jason, "~> 1.4"},

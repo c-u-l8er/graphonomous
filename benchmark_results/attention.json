@@ -1,0 +1,55 @@
+{
+  "timestamp": "2026-04-01T19:58:07.560426Z",
+  "cycle": {
+    "latency_us": 23540737,
+    "items_processed": 0
+  },
+  "benchmark": "OS-E001:attention",
+  "performance": {
+    "total_us": 51605933,
+    "cycle_latency_us": 23540737,
+    "survey_latency_us": 28065196
+  },
+  "survey": {
+    "items": [],
+    "latency_us": 28065196,
+    "items_returned": 0
+  },
+  "accuracy": {
+    "dispatch": {
+      "total": 0,
+      "matches": 0,
+      "accuracy_pct": 0
+    },
+    "prioritization": {
+      "description": "PARTIAL: priority ordering needs work",
+      "critical_in_top_half": false,
+      "ranking": []
+    }
+  },
+  "goals": {
+    "created": 5,
+    "linked": [
+      {
+        "goal_id": "goal_9fd65c4285c762f68c0efffd389ed795",
+        "linked_nodes": 13
+      },
+      {
+        "goal_id": "goal_9498ed2af530e253d598902334b7b775",
+        "linked_nodes": 10
+      },
+      {
+        "goal_id": "goal_d5526f6a19a9176e6bc74be80c91b583",
+        "linked_nodes": 10
+      },
+      {
+        "goal_id": "goal_b78cde8803bf5924a9c39c1ef486f7e8",
+        "linked_nodes": 10
+      },
+      {
+        "goal_id": "goal_b164280ce26c3c963cf4376904599920",
+        "linked_nodes": 10
+      }
+    ]
+  }
+}

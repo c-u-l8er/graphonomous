@@ -1,0 +1,165 @@
+{
+  "timestamp": "2026-04-01T19:56:55.597939Z",
+  "config": {
+    "merge_similarity": 0.95,
+    "prune_threshold": 0.1,
+    "decay_rate": 0.02,
+    "cycles_run": 5
+  },
+  "after": {
+    "avg_confidence": 0.5875343724085437,
+    "by_type": {
+      "episodic": 18157
+    },
+    "node_count": 18157,
+    "min_confidence": 0.532065859412416,
+    "max_confidence": 0.5875485179200001,
+    "confidence_stddev": 8.563994441974427e-4
+  },
+  "before": {
+    "avg_confidence": 0.6499843509388166,
+    "by_type": {
+      "episodic": 18157
+    },
+    "node_count": 18157,
+    "min_confidence": 0.5886200000000001,
+    "max_confidence": 0.65,
+    "confidence_stddev": 9.474275259838493e-4
+  },
+  "cycles": [
+    {
+      "cycle": 1,
+      "avg_confidence": 0.649919,
+      "node_count": 18157,
+      "min_confidence": 0.576848,
+      "latency_us": 3,
+      "max_confidence": 0.65,
+      "confidence_stddev": 0.001453,
+      "consolidator_cycle_count": 1
+    },
+    {
+      "cycle": 2,
+      "avg_confidence": 0.636948,
+      "node_count": 18157,
+      "min_confidence": 0.576848,
+      "latency_us": 1,
+      "max_confidence": 0.637,
+      "confidence_stddev": 0.001151,
+      "consolidator_cycle_count": 2
+    },
+    {
+      "cycle": 3,
+      "avg_confidence": 0.624214,
+      "node_count": 18157,
+      "min_confidence": 0.554004,
+      "latency_us": 1,
+      "max_confidence": 0.62426,
+      "confidence_stddev": 0.001247,
+      "consolidator_cycle_count": 3
+    },
+    {
+      "cycle": 4,
+      "avg_confidence": 0.61171,
+      "node_count": 18157,
+      "min_confidence": 0.554004,
+      "latency_us": 2,
+      "max_confidence": 0.611775,
+      "confidence_stddev": 0.001184,
+      "consolidator_cycle_count": 4
+    },
+    {
+      "cycle": 5,
+      "avg_confidence": 0.599505,
+      "node_count": 18157,
+      "min_confidence": 0.532066,
+      "latency_us": 2,
+      "max_confidence": 0.599539,
+      "confidence_stddev": 0.001144,
+      "consolidator_cycle_count": 5
+    }
+  ],
+  "benchmark": "OS-E001:consolidation",
+  "performance": {
+    "total_us": 9,
+    "mean_cycle_us": 2,
+    "throughput_nodes_per_cycle_per_sec": 1.8157e7
+  },
+  "decay_analysis": {
+    "confidence_trajectory": [
+      0.6499843509388166,
+      0.649919,
+      0.636948,
+      0.624214,
+      0.61171,
+      0.599505
+    ],
+    "decay_per_cycle": [
+      6.5e-5,
+      0.012971,
+      0.012734,
+      0.012504,
+      0.012205
+    ],
+    "mean_decay_per_cycle": 0.0100958,
+    "nodes_pruned": 0,
+    "survival_rate": 1.0,
+    "total_confidence_loss": 0.06245
+  },
+  "survival_analysis": {
+    "results": [
+      {
+        "survived": true,
+        "initial_confidence": 0.05,
+        "decay_total": 0.0,
+        "final_confidence": 0.05
+      },
+      {
+        "survived": true,
+        "initial_confidence": 0.1,
+        "decay_total": 0.0,
+        "final_confidence": 0.1
+      },
+      {
+        "survived": true,
+        "initial_confidence": 0.15,
+        "decay_total": 0.0,
+        "final_confidence": 0.15
+      },
+      {
+        "survived": true,
+        "initial_confidence": 0.3,
+        "decay_total": 0.0,
+        "final_confidence": 0.3
+      },
+      {
+        "survived": true,
+        "initial_confidence": 0.5,
+        "decay_total": 0.0,
+        "final_confidence": 0.5
+      },
+      {
+        "survived": true,
+        "initial_confidence": 0.7,
+        "decay_total": 0.0,
+        "final_confidence": 0.7
+      },
+      {
+        "survived": true,
+        "initial_confidence": 0.9,
+        "decay_total": 0.0,
+        "final_confidence": 0.9
+      }
+    ],
+    "latency_us": 487806,
+    "survival_threshold": 0.05,
+    "test_confidences": [
+      0.05,
+      0.1,
+      0.15,
+      0.3,
+      0.5,
+      0.7,
+      0.9
+    ]
+  }
+}

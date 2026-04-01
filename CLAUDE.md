@@ -175,7 +175,10 @@ Before ending a productive session:
   - `docs/spec/README.md`
   - `../AmpersandBoxDesign/prompts/GRAPHONOMOUS_PROMPT.md`
 - Keep vendored MCP dependency approach in `vendor/anubis_mcp`
-- Do **not** add EXLA
+- EXLA is now included for fast neural embeddings (~87ms vs 20s on BinaryBackend)
+  - Requires `LD_LIBRARY_PATH=/opt/cuda/lib64` at runtime (see `.envrc`)
+  - If EXLA fails to load, embedder gracefully falls back to deterministic hashing
+  - Set `GRAPHONOMOUS_EMBEDDER_BACKEND=fallback` to skip EXLA entirely
 - Keep raw SQL + parameterized writes model
 - Keep version synchronization across:
   - `mix.exs`
@@ -187,10 +190,14 @@ Before ending a productive session:
 ## 14) Build and Run (Reference)
 
 ```sh
+source .envrc  # sets LD_LIBRARY_PATH for CUDA/EXLA
 mix deps.get
 mix compile --warnings-as-errors
 mix format --check-formatted
 mix test
+# Neural embeddings (default, requires EXLA):
+mix run --no-halt -- --db ~/.graphonomous/knowledge.db
+# Fallback mode (no EXLA needed):
 mix run --no-halt -- --db ~/.graphonomous/knowledge.db --embedder-backend fallback
 ```
 

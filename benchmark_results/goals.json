@@ -1,0 +1,64 @@
+{
+  "timestamp": "2026-04-01T19:54:43.748895Z",
+  "benchmark": "OS-E001:goals",
+  "performance": {
+    "total_us": 14749581
+  },
+  "coverage_query": {
+    "details": [
+      {
+        "name": "high-coverage task (well-documented topic)",
+        "passed": true
+      },
+      {
+        "name": "low-coverage task (undocumented topic)",
+        "passed": true
+      },
+      {
+        "name": "cross-domain coverage query",
+        "passed": true
+      }
+    ],
+    "latency_us": 7824416,
+    "tests_run": 3,
+    "tests_passed": 3
+  },
+  "goal_review": {
+    "details": [
+      {
+        "name": "review goal with linked knowledge → act/learn decision",
+        "passed": true
+      },
+      {
+        "name": "review goal with no knowledge → learn/escalate",
+        "passed": true
+      }
+    ],
+    "latency_us": 3381110,
+    "tests_run": 2,
+    "tests_passed": 2
+  },
+  "lifecycle": {
+    "details": [
+      {
+        "name": "full lifecycle: proposed → active → completed",
+        "passed": true
+      },
+      {
+        "name": "goal with linked knowledge nodes",
+        "passed": true
+      },
+      {
+        "name": "goal abandonment",
+        "passed": true
+      },
+      {
+        "name": "list and filter goals",
+        "passed": true
+      }
+    ],
+    "latency_us": 3544055,
+    "tests_run": 4,
+    "tests_passed": 4
+  }
+}

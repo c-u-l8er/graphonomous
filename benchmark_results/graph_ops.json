@@ -1,0 +1,107 @@
+{
+  "timestamp": "2026-04-01T19:55:01.897056Z",
+  "benchmark": "OS-E001:graph_ops",
+  "performance": {
+    "total_us": 14631079
+  },
+  "deliberation": {
+    "details": [
+      {
+        "name": "deliberate on κ>0 region",
+        "passed": false
+      },
+      {
+        "name": "topology confirms κ>0 for cycle",
+        "passed": true
+      }
+    ],
+    "topology": {
+      "max_kappa": 1,
+      "routing": "deliberate",
+      "scc_count": 1
+    },
+    "latency_us": 327077,
+    "tests_run": 2,
+    "tests_passed": 1
+  },
+  "query_graph": {
+    "details": [
+      {
+        "name": "list_nodes via query_graph",
+        "passed": true
+      },
+      {
+        "name": "get_node via query_graph",
+        "passed": true
+      },
+      {
+        "name": "get_edges via query_graph",
+        "passed": true
+      },
+      {
+        "name": "similarity_search via query_graph",
+        "passed": true
+      }
+    ],
+    "latency_us": 1419176,
+    "tests_run": 4,
+    "tests_passed": 4
+  },
+  "graph_stats": {
+    "response": "%Anubis.Server.Response{type: :tool, content: [%{\"text\" => \"{\\\"status\\\":\\\"ok\\\",\\\"avg_confidence\\\":0.65,\\\"node_count\\\":18157,\\\"min_confidence\\\":0.5886200000000001,\\\"edge_count\\\":15,\\\"max_confidence\\\":0.65,\\\"orphan_node_count\\\":18138,\\\"relationship_distribution\\\":{\\\"derived_from\\\":5,\\\"related\\\":9,\\\"supports\\\":1},\\\"source_distribution\\\":{\\\"unknown\\\":18157},\\\"timescale_distribution\\\":{\\\"medium\\\":18157},\\\"type_distribution\\\":{\\\"episodic\\\":18157}}\", \"type\" => \"text\"}], messages: [], contents: nil, values: [], total: nil, hasMore: false, isError: false, structured_content: nil, metadata: %{}}",
+    "latency_us": 1527668,
+    "passed": true
+  },
+  "coverage_query": {
+    "details": [
+      {
+        "name": "coverage_query on well-documented task",
+        "passed": true
+      },
+      {
+        "name": "coverage_query on undocumented task",
+        "passed": true
+      }
+    ],
+    "latency_us": 6901132,
+    "tests_run": 2,
+    "tests_passed": 2
+  },
+  "graph_traverse": {
+    "details": [
+      {
+        "name": "BFS traverse depth=1 (MCP tool)",
+        "passed": true
+      },
+      {
+        "name": "BFS traverse depth=2 (MCP tool)",
+        "passed": true
+      }
+    ],
+    "latency_us": 194627,
+    "tests_run": 2,
+    "tests_passed": 2
+  },
+  "retrieve_episodic": {
+    "details": [
+      {
+        "name": "retrieve_episodic via MCP tool",
+        "passed": true
+      }
+    ],
+    "latency_us": 649033,
+    "tests_run": 1,
+    "tests_passed": 1
+  },
+  "retrieve_procedural": {
+    "details": [
+      {
+        "name": "retrieve_procedural via MCP tool",
+        "passed": true
+      }
+    ],
+    "latency_us": 3612366,
+    "tests_run": 1,
+    "tests_passed": 1
+  }
+}

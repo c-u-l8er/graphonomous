@@ -290,13 +290,26 @@ defmodule Graphonomous.Embedder do
   defp load_bumblebee_serving(model_id) do
     with {:ok, model_info} <- Bumblebee.load_model({:hf, model_id}),
          {:ok, tokenizer} <- Bumblebee.load_tokenizer({:hf, model_id}) do
+      # Use EXLA compiler when available for fast inference (CPU or GPU).
+      # Falls back to default Nx backend (BinaryBackend) if EXLA is not loaded.
+      compile_opts =
+        if Code.ensure_loaded?(EXLA) do
+          Logger.info("Graphonomous.Embedder using EXLA backend for fast inference")
+          [compiler: EXLA]
+        else
+          Logger.info("Graphonomous.Embedder using default Nx backend (no EXLA)")
+          []
+        end
+
       serving =
         Bumblebee.Text.TextEmbedding.text_embedding(
           model_info,
           tokenizer,
           output_pool: :mean_pooling,
           output_attribute: :hidden_state,
-          embedding_processor: :l2_norm
+          embedding_processor: :l2_norm,
+          compile: [batch_size: 1, sequence_length: 512],
+          defn_options: compile_opts
         )
 
       {:ok, serving}
