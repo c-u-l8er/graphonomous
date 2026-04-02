@@ -317,15 +317,17 @@ Execute one survey + triage + dispatch cycle.
 BFS walk from a starting node with depth and relationship filters.
 
 ### Required
-- `start_node_id` (string)
+- `node_id` (string) — starting node ID
 
 ### Optional
-- `max_depth` (integer, default 3)
-- `relationship_types` (comma-separated string, e.g. `"causal,supports"`)
-- `include_content` (bool, default true)
+- `depth` (integer, default 2, max 5)
+- `relationships` (JSON array or comma-separated string, e.g. `"[\"supports\",\"causes\"]"`)
+- `limit` (integer, default 50) — max total nodes to return
 
 ### Returns
-Subgraph with visited nodes, edges, depth map, and traversal metadata.
+- `root_id`, `depth`, `node_count`, `edge_count`
+- `nodes` — serialized node list (no embeddings)
+- `edges` — serialized edge list
 
 ---
 
@@ -333,14 +335,18 @@ Subgraph with visited nodes, edges, depth map, and traversal metadata.
 
 Aggregate graph statistics and health indicators.
 
-### No required inputs
+### Optional
+- `include_distributions` (bool, default true)
 
 ### Returns
 - `node_count`, `edge_count`
-- `type_distribution` (node types)
-- `edge_type_distribution`
-- Confidence statistics (mean, min, max, std_dev)
-- `orphan_count` (nodes with no edges)
+- `avg_confidence`, `min_confidence`, `max_confidence`
+- When `include_distributions` is true:
+  - `type_distribution` (node types)
+  - `timescale_distribution`
+  - `source_distribution`
+  - `relationship_distribution` (edge types)
+  - `orphan_node_count` (nodes with no edges)
 
 ---
 
@@ -349,15 +355,19 @@ Aggregate graph statistics and health indicators.
 Standalone epistemic coverage assessment without goal binding.
 
 ### Required
-- `query` (string)
+- `task_description` (string) — natural-language description of the task
 
 ### Optional
-- `limit` (integer)
-- `expansion_hops` (integer)
-- `min_confidence` (float)
+- `critical_topics` (JSON array or comma-separated string) — topics that must be covered
+- `min_confidence` (float, default 0.3) — minimum confidence threshold for relevance
+- `top_k` (integer, default 10) — max retrieval results to evaluate
 
 ### Returns
-Coverage score, decision (`act`/`learn`/`escalate`), relevant nodes, and confidence stats.
+- `coverage_score`, `uncertainty_score`, `risk_score`, `decision_confidence`
+- `recommendation` (`act`/`learn`/`escalate`)
+- `knowledge_gaps` — critical topics not found in relevant nodes
+- `rationale` — evaluation reasoning
+- `relevant_nodes` — nodes passing min_confidence filter
 
 ---
 
@@ -366,12 +376,12 @@ Coverage score, decision (`act`/`learn`/`escalate`), relevant nodes, and confide
 Retrieve episodic (event/observation) nodes filtered by time range.
 
 ### Optional
-- `since` (ISO 8601 datetime)
-- `until` (ISO 8601 datetime)
+- `since` (ISO 8601 datetime) — only return episodes after this time
 - `limit` (integer, default 20)
 
 ### Returns
-Episodic nodes sorted by recency.
+- `count`, `since`
+- `episodes` — serialized episodic nodes sorted by recency
 
 ---
 
@@ -380,14 +390,15 @@ Episodic nodes sorted by recency.
 Semantic search scoped to procedural (how-to) nodes.
 
 ### Required
-- `query` (string)
+- `task` (string) — natural-language task description
 
 ### Optional
 - `limit` (integer, default 10)
-- `min_confidence` (float)
 
 ### Returns
-Procedural nodes with extracted steps from content.
+- `task`, `count`
+- `procedures` — ranked procedural nodes with similarity scores
+- `steps` — extracted numbered/bulleted steps from content (up to 20)
 
 ---
 
@@ -397,16 +408,16 @@ Process explicit feedback (positive/negative/correction) on a node.
 
 ### Required
 - `node_id` (string)
-- `feedback_type` (`positive` | `negative` | `correction`)
+- `feedback` (`positive` | `negative` | `correction`)
 
 ### Optional
-- `correction` (string — required when `feedback_type` is `correction`)
-- `source` (string)
+- `correction` (string — required when `feedback` is `correction`)
+- `reason` (string) — reason for the feedback
 
 ### Behavior
-- `positive` → `learn_from_outcome` with status `success`
-- `negative` → `learn_from_outcome` with status `failure`
-- `correction` → directly updates node content via `update_node`
+- `positive` → `learn_from_outcome` with status `success` (increases confidence)
+- `negative` → `learn_from_outcome` with status `failure` (decreases confidence)
+- `correction` → directly updates node content and resets confidence to 0.6
 
 ---
 
@@ -418,11 +429,14 @@ Check whether a query represents novel knowledge not yet in the graph.
 - `query` (string)
 
 ### Optional
-- `threshold` (float, default 0.35)
+- `threshold` (float, default 0.35, range 0.0–1.0) — similarity below this is novel
+- `limit` (integer, default 5) — max nearest nodes to return
 
 ### Returns
 - `is_novel` (bool)
 - `novelty_score` (float, 0.0–1.0)
+- `max_similarity` (float)
+- `threshold` (float)
 - `nearest_nodes` with similarity scores
 
 ---
@@ -436,15 +450,20 @@ Full learning pipeline for a user-model interaction.
 - `model_response` (string)
 
 ### Optional
-- `context` (JSON string)
-- `novelty_threshold` (float, default 0.35)
+- `context` (JSON string) — session context (e.g. agent_id, session_id)
+- `extract_claims` (bool, default true) — whether to extract semantic claims
 
 ### Pipeline
-1. Novelty check on user message
+1. Novelty check on user message (threshold 0.4)
 2. Store episodic node for the interaction
-3. Extract semantic claims from response sentences
+3. Extract semantic claims from response sentences (up to 5)
 4. Create `derived_from` edges to episodic node
 5. Link to nearest existing nodes
+
+### Returns
+- `is_novel`, `novelty_score`
+- `learned_count`, `learned_node_ids`
+- `edges_created`, `episodic_node_id`, `claim_count`
 
 ---
 

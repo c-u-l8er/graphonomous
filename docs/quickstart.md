@@ -36,8 +36,8 @@ cd ProjectAmp2/graphonomous
 mix deps.get
 mix compile --warnings-as-errors
 mix test
-MIX_ENV=prod mix escript.build
-./graphonomous --db ~/.graphonomous/knowledge.db --embedder-backend fallback
+MIX_ENV=prod mix release --overwrite
+_build/prod/rel/graphonomous/bin/graphonomous eval "Graphonomous.CLI.main(System.argv())" -- --db ~/.graphonomous/knowledge.db --embedder-backend fallback
 ```
 
 ---
@@ -63,6 +63,21 @@ Example shape:
 ```
 
 If you do not install globally, use `npx` as the command and pass the package in args.
+
+### Claude Code
+
+Add to your project's `.mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "graphonomous": {
+      "command": "npx",
+      "args": ["-y", "graphonomous", "--db", "./.graphonomous/knowledge.db", "--embedder-backend", "fallback"]
+    }
+  }
+}
+```
 
 ---
 

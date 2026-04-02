@@ -2,14 +2,14 @@
 
 Continual learning engine for AI agents, implemented as an Elixir OTP application with a durable SQLite-backed knowledge graph, confidence-updating learning loop, GoalGraph orchestration, κ-aware topology routing, and MCP tools/resources.
 
-**Phase 2 complete:** Full spec implementation — 21 MCP tools, 5 MCP resources, Orchestrator for stability-plasticity monitoring, and streamable HTTP transport alongside stdio. κ-aware routing works end-to-end on live MCP calls. The system detects circular dependencies via Tarjan's SCC algorithm, computes the κ invariant, and routes inference depth automatically — `κ = 0` triggers fast retrieval, `κ > 0` triggers deliberation with fault-line decomposition.
+**v0.2.0** — Full spec compliance: 6 node types, 16 edge types, 7-stage consolidation pipeline, 22 MCP tools, 5 MCP resources. κ-aware topology routing works end-to-end — `κ = 0` triggers fast retrieval, `κ > 0` triggers deliberation with fault-line decomposition. 240 tests, 0 failures.
 
 > **TL;DR**
-> - Use Graphonomous as an MCP server over stdio or HTTP.
-> - Easiest onboarding is npm/npx.
-> - κ-aware topology routing ships out of the box — no configuration needed.
-> - 21 tools covering knowledge CRUD, retrieval, learning, goals, consolidation, and attention.
-> - OpenSentience is optional; you can start immediately with built-in MCP tools.
+> - Install: `npm i -g graphonomous` or `npx -y graphonomous`
+> - Use as an MCP server over stdio or HTTP
+> - κ-aware topology routing ships out of the box — no configuration needed
+> - 22 tools covering knowledge CRUD, retrieval, learning, goals, consolidation, and attention
+> - Works with Claude Code, Zed, and any MCP-compatible client
 
 ---
 
@@ -150,6 +150,34 @@ After saving:
 2. Confirm server is active.
 3. Ask explicitly for Graphonomous tool usage (for example: “use `graphonomous` to retrieve context for …”).
 
+### 3b) Claude Code setup
+
+Add to your project's `.mcp.json`:
+
+```json
+{
+  “mcpServers”: {
+    “graphonomous”: {
+      “command”: “npx”,
+      “args”: [“-y”, “graphonomous”, “--db”, “./.graphonomous/knowledge.db”, “--embedder-backend”, “fallback”]
+    }
+  }
+}
+```
+
+Or if installed globally:
+
+```json
+{
+  “mcpServers”: {
+    “graphonomous”: {
+      “command”: “graphonomous”,
+      “args”: [“--db”, “./.graphonomous/knowledge.db”, “--embedder-backend”, “fallback”]
+    }
+  }
+}
+```
+
 ### 4) Zed timeout troubleshooting
 
 If Zed shows `context server request timeout`:
@@ -190,17 +218,17 @@ npm i -g graphonomous
 
 ---
 
-### 5) MCP tools (21 total)
+### 5) MCP tools (22 total)
 
 **Knowledge graph write:**
-- `store_node`, `store_edge`
+- `store_node`, `store_edge`, `delete_node`, `manage_edge`
 
 **Knowledge graph read/query:**
 - `retrieve_context` — κ-aware ranked retrieval with topology annotations
 - `query_graph` — operation-based graph inspection
 - `topology_analyze` — SCC/κ analysis with routing recommendation
 - `graph_traverse` — BFS walk with depth/relationship filters
-- `graph_stats` — aggregate counts, distributions, confidence stats
+- `graph_stats` — aggregate counts, distributions, confidence stats, orphan detection
 
 **Specialized retrieval:**
 - `retrieve_episodic` — time-range filtered episodic nodes
@@ -340,7 +368,7 @@ cd ProjectAmp2/graphonomous/npm
 npm pack
 mkdir -p /tmp/graphonomous-npm-smoke && cd /tmp/graphonomous-npm-smoke
 npm init -y
-npm i /home/travis/ProjectAmp2/graphonomous/npm/graphonomous-0.1.12.tgz
+npm i /home/travis/ProjectAmp2/graphonomous/npm/graphonomous-0.2.0.tgz
 npx graphonomous --help
 ```
 
@@ -410,4 +438,4 @@ Primary module: `Graphonomous`
 
 ## License
 
-Internal project (no public license declared in this repository yet).
+Apache-2.0

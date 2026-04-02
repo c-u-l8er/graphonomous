@@ -110,6 +110,21 @@ If you prefer not to install globally:
 }
 ```
 
+## Claude Code configuration
+
+Add to your project's `.mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "graphonomous": {
+      "command": "npx",
+      "args": ["-y", "graphonomous", "--db", "./.graphonomous/knowledge.db", "--embedder-backend", "fallback"]
+    }
+  }
+}
+```
+
 ---
 
 ## Release asset override instructions

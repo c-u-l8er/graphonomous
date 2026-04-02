@@ -29,25 +29,30 @@ It gives agents durable, evolving memory and better decision quality over time b
 
 ## What are the core node types?
 
-Use node types intentionally:
+Use node types intentionally (6 types):
 
 - `semantic` — facts, architecture, definitions
 - `procedural` — workflows and how-to steps
 - `episodic` — events and observations
+- `temporal` — time-indexed observations, monitoring events
+- `outcome` — empirical results of actions (grounding)
+- `goal` — durable intent, objectives, targets
 
 ---
 
 ## What are the core edge types?
 
-Common edge types include:
+16 edge types (including 2 legacy aliases):
 
-- `causal`
-- `supports`
-- `contradicts`
-- `related`
-- `derived_from`
+- `causes`, `resolves` — causal attribution
+- `supports`, `contradicts` — evidential
+- `related_to`, `similar_to` — topical affinity
+- `part_of`, `follows`, `supersedes`, `depends_on` — structural
+- `temporal_before`, `temporal_after`, `co_occurs` — temporal ordering
+- `derived_from` — provenance
+- Legacy aliases: `causal`, `related` (backward-compatible)
 
-Edges should be added only when they improve retrieval quality or provenance clarity.
+Default edge weight is 0.3. Edges should be added only when they improve retrieval quality or provenance clarity.
 
 ---
 
@@ -118,7 +123,15 @@ If topology is simple, routing is `fast`. If cyclic complexity is higher, routin
 
 ## What does consolidation do?
 
-Consolidation is periodic memory maintenance (for example confidence decay/pruning in current runtime behavior) to keep the graph healthy over time.
+Consolidation is a 7-stage periodic memory maintenance pipeline:
+
+1. Confidence decay
+2. Prune weak nodes
+3. Prune weak edges
+4. Strengthen co-activated edges
+5. Merge similar nodes
+6. Promote timescale (fast → medium → slow → glacial)
+7. Generate abstractions from episodic clusters
 
 Use `run_consolidation` to trigger/inspect cycles manually when needed.
 

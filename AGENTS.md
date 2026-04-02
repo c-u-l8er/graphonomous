@@ -63,6 +63,9 @@ Do not start domain-heavy reasoning from scratch when prior memory likely exists
   - `semantic` = facts/architecture
   - `procedural` = how-to/workflow
   - `episodic` = observed events/outcomes
+  - `temporal` = time-indexed observations
+  - `outcome` = empirical results
+  - `goal` = durable intent/objectives
 - Include `source` whenever possible.
 - Set realistic confidence based on evidence quality.
 - Add edges only when they improve retrieval quality and provenance.
@@ -172,7 +175,7 @@ Before ending a productive session:
   - `docs/spec/README.md`
   - `../AmpersandBoxDesign/prompts/GRAPHONOMOUS_PROMPT.md`
 - Keep vendored MCP dependency approach intact.
-- Do not reintroduce EXLA dependency.
+- EXLA is included (runtime: false) for optional GPU-accelerated embeddings.
 - Preserve raw SQL + parameterized-write model.
 - Keep version sync requirements across Elixir/npm/tagging workflows.
 
