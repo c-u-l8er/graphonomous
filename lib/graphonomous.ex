@@ -7,6 +7,7 @@ defmodule Graphonomous do
   """
 
   alias Graphonomous.{
+    Attention,
     Consolidator,
     Coverage,
     Deliberator,
@@ -35,10 +36,14 @@ defmodule Graphonomous do
   into `value` for ergonomic MCP usage.
   """
   def store_node(attrs) when is_map(attrs) do
-    attrs
-    |> normalize_node_attrs()
-    |> Graph.store_node()
-    |> unwrap_ok()
+    result =
+      attrs
+      |> normalize_node_attrs()
+      |> Graph.store_node()
+      |> unwrap_ok()
+
+    Attention.notify_graph_mutation()
+    result
   end
 
   @doc """
@@ -127,8 +132,12 @@ defmodule Graphonomous do
       |> Map.put(:source_id, source_id)
       |> Map.put(:target_id, target_id)
 
-    Graph.create_edge(attrs)
-    |> unwrap_ok()
+    result =
+      Graph.create_edge(attrs)
+      |> unwrap_ok()
+
+    Attention.notify_graph_mutation()
+    result
   end
 
   @doc """
@@ -137,16 +146,24 @@ defmodule Graphonomous do
   def update_node(node_id, attrs) when is_binary(node_id) and is_map(attrs) do
     normalized = normalize_node_attrs(attrs)
 
-    Graph.update_node(node_id, normalized)
-    |> unwrap_ok()
+    result =
+      Graph.update_node(node_id, normalized)
+      |> unwrap_ok()
+
+    Attention.notify_graph_mutation()
+    result
   end
 
   @doc """
   Delete a node by ID.
   """
   def delete_node(node_id) when is_binary(node_id) do
-    Graph.delete_node(node_id)
-    |> unwrap_ok()
+    result =
+      Graph.delete_node(node_id)
+      |> unwrap_ok()
+
+    Attention.notify_graph_mutation()
+    result
   end
 
   @doc """

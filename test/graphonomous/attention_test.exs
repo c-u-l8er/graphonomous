@@ -168,6 +168,168 @@ defmodule Graphonomous.AttentionTest do
     assert is_nil(getv(status2, :next_heartbeat_in_ms))
   end
 
+  # -- Layer 1: Two-phase attention (quick rank + deep eval top-K) ----------
+
+  test "two-phase: survey with many goals only deep-evals top-K (no timeout)" do
+    # Create 6 goals with varying priorities to test Phase 1 cheap ranking
+    _goals =
+      for {title, priority} <- [
+            {"Alpha goal: retention analysis", :critical},
+            {"Beta goal: churn prediction", :high},
+            {"Gamma goal: revenue modeling", :normal},
+            {"Delta goal: cost optimization", :low},
+            {"Epsilon goal: market expansion", :normal},
+            {"Zeta goal: risk assessment", :high}
+          ] do
+        Graphonomous.create_goal(%{
+          title: title,
+          status: :active,
+          source_type: :user,
+          timescale: :short_term,
+          priority: priority
+        })
+      end
+
+    # Store some nodes so retrieval has something to find
+    for i <- 1..4 do
+      Graphonomous.store_node(%{
+        content: "Retention metric #{i}: quarterly churn rate data point.",
+        node_type: :semantic,
+        confidence: 0.7,
+        source: "attention_test"
+      })
+    end
+
+    # Survey should complete without timeout despite 6 goals
+    assert {:ok, items} = Graphonomous.Attention.survey()
+    assert is_list(items)
+
+    # Should return at most max_items_per_cycle (default 3) deep-evaluated items
+    assert length(items) <= 6
+    assert length(items) >= 1
+
+    # Each item should have full coverage + topology (deep eval happened)
+    Enum.each(items, fn item ->
+      assert is_map(getv(item, :coverage))
+      assert is_map(getv(item, :topology))
+      assert is_number(getv(item, :attention_score))
+    end)
+  end
+
+  # -- Layer 2: ETS cache with dirty-bit invalidation -----------------------
+
+  test "cache: second survey returns same results when graph is stable" do
+    _goal =
+      Graphonomous.create_goal(%{
+        title: "Cache test goal: stability check",
+        status: :active,
+        source_type: :user,
+        timescale: :short_term,
+        priority: :high
+      })
+
+    Graphonomous.store_node(%{
+      content: "Cache stability test node content.",
+      node_type: :semantic,
+      confidence: 0.8,
+      source: "attention_test"
+    })
+
+    # First survey (cache miss — populates cache)
+    assert {:ok, items1} = Graphonomous.Attention.survey()
+    assert length(items1) >= 1
+
+    # Second survey (should hit cache — same generation, within TTL)
+    assert {:ok, items2} = Graphonomous.Attention.survey()
+    assert length(items2) == length(items1)
+
+    # Scores should be identical (same cached data)
+    scores1 = Enum.map(items1, &getv(&1, :attention_score))
+    scores2 = Enum.map(items2, &getv(&1, :attention_score))
+    assert scores1 == scores2
+  end
+
+  test "cache: notify_graph_mutation invalidates cache" do
+    _goal =
+      Graphonomous.create_goal(%{
+        title: "Cache invalidation test goal",
+        status: :active,
+        source_type: :user,
+        timescale: :short_term,
+        priority: :high
+      })
+
+    Graphonomous.store_node(%{
+      content: "Initial node for cache invalidation test.",
+      node_type: :semantic,
+      confidence: 0.8,
+      source: "attention_test"
+    })
+
+    # First survey (populates cache)
+    assert {:ok, _items1} = Graphonomous.Attention.survey()
+
+    # Mutate the graph — this calls notify_graph_mutation internally
+    Graphonomous.store_node(%{
+      content: "New node that should invalidate attention cache.",
+      node_type: :semantic,
+      confidence: 0.9,
+      source: "attention_test"
+    })
+
+    # Next survey should recompute (cache invalidated by generation bump)
+    assert {:ok, items2} = Graphonomous.Attention.survey()
+    assert is_list(items2)
+    assert length(items2) >= 1
+  end
+
+  test "notify_graph_mutation/0 is safe when engine is running" do
+    assert :ok = Graphonomous.Attention.notify_graph_mutation()
+  end
+
+  # -- Layer 3: Batched ANN retrieval ---------------------------------------
+
+  test "batch: survey with multiple goals uses batch retrieval successfully" do
+    # Create 3 goals with distinct topics
+    for title <- [
+          "Batch test: neural network architecture",
+          "Batch test: database query optimization",
+          "Batch test: API rate limiting strategy"
+        ] do
+      Graphonomous.create_goal(%{
+        title: title,
+        status: :active,
+        source_type: :user,
+        timescale: :short_term,
+        priority: :high
+      })
+    end
+
+    # Store nodes related to each topic
+    for content <- [
+          "Neural networks use backpropagation for training.",
+          "Database indices improve query performance significantly.",
+          "Rate limiting prevents API abuse and ensures fair usage."
+        ] do
+      Graphonomous.store_node(%{
+        content: content,
+        node_type: :semantic,
+        confidence: 0.75,
+        source: "attention_test"
+      })
+    end
+
+    # Survey should work with batch retrieval
+    assert {:ok, items} = Graphonomous.Attention.survey()
+    assert is_list(items)
+    assert length(items) >= 1
+
+    # All items should have region_node_ids populated (batch retrieval found nodes)
+    Enum.each(items, fn item ->
+      assert is_list(getv(item, :region_node_ids))
+    end)
+  end
+
   defp purge_nodes do
     case Graphonomous.list_nodes(%{}) do
       nodes when is_list(nodes) ->

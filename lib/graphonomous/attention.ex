@@ -52,6 +52,8 @@ defmodule Graphonomous.Attention do
   @default_heartbeat_ms 300_000
   @default_autonomy :observe
   @default_escalation_cooldown_ms 300_000
+  @cache_table :graphonomous_attention_cache
+  @cache_ttl_ms 30_000
 
   @default_budget %{
     max_items_per_cycle: 3,
@@ -112,6 +114,24 @@ defmodule Graphonomous.Attention do
   @spec status() :: map()
   def status do
     GenServer.call(__MODULE__, :status)
+  end
+
+  @doc """
+  Notify the attention engine that the graph has been mutated.
+
+  Bumps the cache generation counter so the next survey will recompute
+  instead of returning stale cached results. This is a non-blocking cast.
+
+  Called automatically by the Graphonomous facade on store_node, store_edge,
+  delete_node, and via telemetry handlers on learn_from_outcome and consolidation.
+  """
+  @spec notify_graph_mutation() :: :ok
+  def notify_graph_mutation do
+    if GenServer.whereis(__MODULE__) do
+      GenServer.cast(__MODULE__, :graph_mutated)
+    end
+
+    :ok
   end
 
   @doc """
@@ -183,6 +203,10 @@ defmodule Graphonomous.Attention do
       |> Keyword.get(:propose_enabled, Map.get(tier_attention, :propose_enabled, false))
       |> to_bool(false)
 
+    # ETS cache for amortized O(1) survey on stable graphs
+    init_cache_table()
+    attach_mutation_telemetry()
+
     state = %{
       active: enabled and trigger_mode == :heartbeat and heartbeat_ms != :disabled,
       autonomy_level: autonomy_level,
@@ -196,7 +220,8 @@ defmodule Graphonomous.Attention do
       last_cycle_result: nil,
       last_attention_items: [],
       escalation_cooldown_ms: escalation_cooldown_ms,
-      last_escalated_at: %{}
+      last_escalated_at: %{},
+      cache_generation: 0
     }
 
     {:ok, maybe_schedule_heartbeat(state)}
@@ -221,7 +246,7 @@ defmodule Graphonomous.Attention do
   end
 
   def handle_call(:survey, _from, state) do
-    items = build_attention_map()
+    {items, state} = cached_or_fresh_survey(state)
     {:reply, {:ok, items}, %{state | last_attention_items: items}}
   end
 
@@ -293,6 +318,12 @@ defmodule Graphonomous.Attention do
 
     {response, new_state} = reply
     {:reply, response, new_state}
+  end
+
+  @impl true
+  def handle_cast(:graph_mutated, state) do
+    new_gen = state.cache_generation + 1
+    {:noreply, %{state | cache_generation: new_gen}}
   end
 
   @impl true
@@ -376,45 +407,34 @@ defmodule Graphonomous.Attention do
     |> Enum.take(3)
   end
 
+  # Two-phase attention: Phase 1 ranks all goals cheaply from metadata,
+  # Phase 2 does expensive retrieval/coverage/topology only for top-K.
+  # Layer 3: batch ANN — embed all K queries in one call, rank against shared node list.
   defp survey_goals do
+    max_deep = get_max_items_per_cycle()
+
     case GoalGraph.list_goals(%{status: :active, include_abandoned: false, limit: 10_000}) do
       {:ok, goals} when is_list(goals) ->
-        Enum.map(goals, fn goal ->
-          node_ids = goal_region_nodes(goal)
-          retrieval_rows = retrieval_rows_for_goal(goal)
+        # Phase 1: cheap rank from goal metadata only (no retrieval calls)
+        ranked =
+          goals
+          |> Enum.map(&quick_rank_goal/1)
+          |> Enum.sort_by(fn {_goal, score} -> score end, :desc)
 
-          coverage =
-            Coverage.recommend(
-              %{
-                retrieved_nodes: retrieval_rows,
-                outcomes: recent_outcomes(node_ids),
-                contradictions: 0,
-                graph_support: length(node_ids),
-                known_unknowns: infer_known_unknowns(retrieval_rows),
-                goal_criticality: priority_to_criticality(Map.get(goal, :priority))
-              },
-              []
-            )
-            |> enrich_coverage_gaps(goal, retrieval_rows)
+        top_k = Enum.take(ranked, max(max_deep, 3))
 
-          topology =
-            if length(node_ids) > 1 do
-              edges =
-                case Store.list_edges_between(node_ids) do
-                  {:ok, list} when is_list(list) -> list
-                  _ -> []
-                end
+        # Layer 3: batch embed + single node list fetch for all K goals
+        titles = Enum.map(top_k, fn {goal, _} -> Map.get(goal, :title, "") end)
+        batch_results = batch_retrieve_similar(titles, 25)
 
-              node_ids
-              |> Topology.build_adjacency(edges)
-              |> Topology.analyze()
-            else
-              %{max_kappa: 0, scc_count: 0, routing: :fast, sccs: [], dag_nodes: node_ids}
-            end
+        # Hoist shared outcome data once (not per-goal)
+        all_outcomes = shared_list_outcomes(100)
 
-          surprise = compute_surprise(goal, node_ids)
-
-          build_attention_item(goal, node_ids, coverage, topology, surprise)
+        # Phase 2: deep eval only for top-K goals, using pre-batched retrieval
+        Enum.map(top_k, fn {goal, _cheap_score} ->
+          title = Map.get(goal, :title, "")
+          retrieval_rows_raw = Map.get(batch_results, title, [])
+          deep_eval_goal(goal, all_outcomes, retrieval_rows_raw)
         end)
 
       _ ->
@@ -422,37 +442,187 @@ defmodule Graphonomous.Attention do
     end
   end
 
-  defp goal_region_nodes(goal) do
+  # Phase 1: score a goal from metadata alone — O(1), no retrieval
+  defp quick_rank_goal(goal) do
+    priority_score = priority_weight_from_goal(goal)
+    linked_count = goal |> Map.get(:linked_node_ids, []) |> length()
+    linked_bonus = min(linked_count / 20.0, 0.3)
+
+    staleness =
+      case Map.get(goal, :updated_at) do
+        %DateTime{} = dt ->
+          hours_ago = DateTime.diff(DateTime.utc_now(), dt, :second) / 3600.0
+          clamp01(hours_ago / 168.0)
+
+        _ ->
+          0.5
+      end
+
+    deadline = deadline_proximity_from_goal(goal)
+
+    cheap_score = priority_score * 0.4 + staleness * 0.25 + deadline * 0.25 + linked_bonus * 0.1
+    {goal, clamp01(cheap_score)}
+  end
+
+  defp priority_weight_from_goal(goal) do
+    case Map.get(goal, :priority, :normal) do
+      :critical -> 1.0
+      :high -> 0.9
+      :normal -> 0.6
+      :low -> 0.3
+      _ -> 0.6
+    end
+  end
+
+  defp deadline_proximity_from_goal(goal) do
+    case Map.get(goal, :due_at) do
+      %DateTime{} = due_at ->
+        ms_left = DateTime.diff(due_at, DateTime.utc_now(), :millisecond)
+        days_left = ms_left / 86_400_000.0
+
+        cond do
+          days_left <= 0.0 -> 1.0
+          days_left >= 7.0 -> 0.0
+          true -> clamp01(1.0 - days_left / 7.0)
+        end
+
+      _ ->
+        0.5
+    end
+  end
+
+  # Phase 2: full coverage + topology for a single goal using pre-batched retrieval
+  defp deep_eval_goal(goal, all_outcomes, retrieval_rows_raw) do
+    retrieved_ids =
+      retrieval_rows_raw
+      |> Enum.map(fn row -> map_get(row, :node_id) end)
+      |> Enum.filter(&is_binary/1)
+
     linked =
       goal
       |> Map.get(:linked_node_ids, [])
       |> normalize_string_list()
 
-    retrieved_ids =
-      goal
-      |> Map.get(:title, "")
-      |> safe_retrieve_context(limit: 20)
-      |> Map.get(:results, [])
-      |> Enum.map(fn row -> map_get(row, :node_id) end)
-      |> Enum.filter(&is_binary/1)
+    node_ids = Enum.uniq(linked ++ retrieved_ids)
 
-    Enum.uniq(linked ++ retrieved_ids)
+    retrieval_rows =
+      Enum.map(retrieval_rows_raw, fn row ->
+        %{
+          node_id: map_get(row, :node_id),
+          content: map_get(row, :content),
+          score: to_float(map_get(row, :score)),
+          confidence: to_float(map_get(row, :confidence)),
+          similarity: to_float(map_get(row, :similarity))
+        }
+      end)
+
+    # Use pre-fetched outcomes instead of per-goal Store.list_outcomes
+    node_set = MapSet.new(node_ids)
+
+    goal_outcomes =
+      Enum.filter(all_outcomes, fn o ->
+        o
+        |> map_get(:causal_node_ids, [])
+        |> normalize_string_list()
+        |> Enum.any?(&MapSet.member?(node_set, &1))
+      end)
+
+    coverage =
+      Coverage.recommend(
+        %{
+          retrieved_nodes: retrieval_rows,
+          outcomes: goal_outcomes,
+          contradictions: 0,
+          graph_support: length(node_ids),
+          known_unknowns: infer_known_unknowns(retrieval_rows),
+          goal_criticality: priority_to_criticality(Map.get(goal, :priority))
+        },
+        []
+      )
+      |> enrich_coverage_gaps(goal, retrieval_rows)
+
+    topology =
+      if length(node_ids) > 1 do
+        edges =
+          case Store.list_edges_between(node_ids) do
+            {:ok, list} when is_list(list) -> list
+            _ -> []
+          end
+
+        node_ids
+        |> Topology.build_adjacency(edges)
+        |> Topology.analyze()
+      else
+        %{max_kappa: 0, scc_count: 0, routing: :fast, sccs: [], dag_nodes: node_ids}
+      end
+
+    surprise = compute_surprise_from_outcomes(all_outcomes, node_ids)
+
+    build_attention_item(goal, node_ids, coverage, topology, surprise)
   end
 
-  defp retrieval_rows_for_goal(goal) do
-    query = Map.get(goal, :title, "")
+  defp get_max_items_per_cycle do
+    case GenServer.whereis(__MODULE__) do
+      nil -> @default_budget.max_items_per_cycle
+      _pid -> @default_budget.max_items_per_cycle
+    end
+  end
 
-    safe_retrieve_context(query, limit: 25)
-    |> Map.get(:results, [])
-    |> Enum.map(fn row ->
-      %{
-        node_id: map_get(row, :node_id),
-        content: map_get(row, :content),
-        score: to_float(map_get(row, :score)),
-        confidence: to_float(map_get(row, :confidence)),
-        similarity: to_float(map_get(row, :similarity))
-      }
-    end)
+  # Layer 3: Batch ANN retrieval — one embed_many call + one node list fetch
+  # for all K goal titles. Returns %{title => [retrieval_row, ...]}
+  defp batch_retrieve_similar(titles, limit) do
+    alias Graphonomous.{Embedder, Graph}
+
+    # Filter out empty titles
+    valid_titles = Enum.filter(titles, &(is_binary(&1) and String.trim(&1) != ""))
+
+    if valid_titles == [] do
+      Map.new(titles, fn t -> {t, []} end)
+    else
+      with {:ok, query_vecs} <- Embedder.embed_many(valid_titles),
+           {:ok, all_nodes} <- Store.list_nodes(%{}) do
+        # Build {title, query_vec} pairs
+        pairs = Enum.zip(valid_titles, query_vecs)
+
+        # Rank each query vector against the shared node list
+        Map.new(pairs, fn {title, query_vec} ->
+          ranked =
+            all_nodes
+            |> Enum.map(fn node ->
+              node_vec = Graph.decode_embedding_blob(node.embedding)
+              similarity = Graph.cosine_similarity(query_vec, node_vec)
+              score = similarity * clamp01(to_float(node.confidence))
+
+              %{
+                node_id: node.id,
+                content: node.content,
+                node_type: node.node_type,
+                confidence: node.confidence,
+                similarity: similarity,
+                score: score
+              }
+            end)
+            |> Enum.sort_by(& &1.score, :desc)
+            |> Enum.take(limit)
+
+          {title, ranked}
+        end)
+      else
+        _ ->
+          # Fallback: return empty results for all titles
+          Map.new(titles, fn t -> {t, []} end)
+      end
+    end
+  rescue
+    _ -> Map.new(titles, fn t -> {t, []} end)
+  end
+
+  # Fetch outcomes once, share across all goal evaluations
+  defp shared_list_outcomes(limit) do
+    case Store.list_outcomes(limit) do
+      {:ok, outcomes} when is_list(outcomes) -> outcomes
+      _ -> []
+    end
   end
 
   defp triage(attention_items) do
@@ -956,57 +1126,35 @@ defmodule Graphonomous.Attention do
     end
   end
 
-  defp compute_surprise(_goal, node_ids) do
-    case Store.list_outcomes(100) do
-      {:ok, outcomes} when is_list(outcomes) ->
-        node_set = MapSet.new(node_ids)
+  # Compute surprise from pre-fetched outcomes (no per-goal DB call)
+  defp compute_surprise_from_outcomes(all_outcomes, node_ids) do
+    node_set = MapSet.new(node_ids)
 
-        related =
-          Enum.filter(outcomes, fn outcome ->
-            outcome
-            |> map_get(:causal_node_ids, [])
-            |> normalize_string_list()
-            |> Enum.any?(&MapSet.member?(node_set, &1))
-          end)
+    related =
+      Enum.filter(all_outcomes, fn outcome ->
+        outcome
+        |> map_get(:causal_node_ids, [])
+        |> normalize_string_list()
+        |> Enum.any?(&MapSet.member?(node_set, &1))
+      end)
 
-        if related == [] do
-          0.0
-        else
-          related
-          |> Enum.map(fn o ->
-            status = map_get(o, :status, :partial_success)
-            conf = to_float(map_get(o, :confidence, 0.5))
+    if related == [] do
+      0.0
+    else
+      related
+      |> Enum.map(fn o ->
+        status = map_get(o, :status, :partial_success)
+        conf = to_float(map_get(o, :confidence, 0.5))
 
-            case status do
-              :failure -> 0.9 * conf
-              :timeout -> 0.8 * conf
-              :partial_success -> 0.5 * conf
-              _ -> 0.2 * conf
-            end
-          end)
-          |> avg_or(0.0)
-          |> clamp01()
+        case status do
+          :failure -> 0.9 * conf
+          :timeout -> 0.8 * conf
+          :partial_success -> 0.5 * conf
+          _ -> 0.2 * conf
         end
-
-      _ ->
-        0.0
-    end
-  end
-
-  defp recent_outcomes(node_ids) do
-    case Store.list_outcomes(50) do
-      {:ok, outcomes} when is_list(outcomes) ->
-        node_set = MapSet.new(node_ids)
-
-        Enum.filter(outcomes, fn o ->
-          o
-          |> map_get(:causal_node_ids, [])
-          |> normalize_string_list()
-          |> Enum.any?(&MapSet.member?(node_set, &1))
-        end)
-
-      _ ->
-        []
+      end)
+      |> avg_or(0.0)
+      |> clamp01()
     end
   end
 
@@ -1425,4 +1573,75 @@ defmodule Graphonomous.Attention do
 
   defp serialize_key(k) when is_atom(k), do: Atom.to_string(k)
   defp serialize_key(k), do: k
+
+  # -- ETS Cache ---------------------------------------------------------------
+
+  defp init_cache_table do
+    if :ets.whereis(@cache_table) == :undefined do
+      :ets.new(@cache_table, [:named_table, :set, :public, read_concurrency: true])
+    end
+
+    :ok
+  end
+
+  defp attach_mutation_telemetry do
+    handler_id = "graphonomous_attention_cache_invalidation"
+
+    # Detach first in case of process restart to avoid duplicate handler error
+    _ = :telemetry.detach(handler_id)
+
+    :telemetry.attach_many(
+      handler_id,
+      [
+        [:graphonomous, :outcome, :processed],
+        [:graphonomous, :consolidator, :complete],
+        [:graphonomous, :consolidator, :stage_complete]
+      ],
+      fn _event, _measurements, _metadata, _config ->
+        notify_graph_mutation()
+      end,
+      nil
+    )
+  end
+
+  # Returns {items, updated_state} — either from cache or fresh computation
+  defp cached_or_fresh_survey(state) do
+    case read_survey_cache(state.cache_generation) do
+      {:hit, items} ->
+        {items, state}
+
+      :miss ->
+        items = build_attention_map()
+        write_survey_cache(state.cache_generation, items)
+        {items, state}
+    end
+  end
+
+  defp read_survey_cache(current_generation) do
+    case :ets.lookup(@cache_table, :survey_cache) do
+      [{:survey_cache, gen, items, cached_at}]
+      when gen == current_generation ->
+        age_ms = System.monotonic_time(:millisecond) - cached_at
+
+        if age_ms <= @cache_ttl_ms do
+          {:hit, items}
+        else
+          :miss
+        end
+
+      _ ->
+        :miss
+    end
+  rescue
+    ArgumentError -> :miss
+  end
+
+  defp write_survey_cache(generation, items) do
+    :ets.insert(
+      @cache_table,
+      {:survey_cache, generation, items, System.monotonic_time(:millisecond)}
+    )
+  rescue
+    ArgumentError -> :ok
+  end
 end
