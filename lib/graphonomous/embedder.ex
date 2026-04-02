@@ -19,6 +19,7 @@ defmodule Graphonomous.Embedder do
   @default_model_id "sentence-transformers/all-MiniLM-L6-v2"
   @default_dimension 384
   @default_timeout 15_000
+  @default_batch_size 8
 
   @type backend :: :bumblebee | :fallback | :warming
   @type embedding :: [float()]
@@ -64,6 +65,16 @@ defmodule Graphonomous.Embedder do
     with {:ok, vector} <- embed(text, opts) do
       {:ok, to_f32_binary(vector)}
     end
+  end
+
+  @doc """
+  Returns little-endian float32 binary embeddings for multiple texts.
+  Uses true batch inference when the Bumblebee backend is active.
+  """
+  @spec embed_many_binary([String.t()], keyword()) :: {:ok, [binary()]} | {:error, term()}
+  def embed_many_binary(texts, opts \\ []) when is_list(texts) do
+    timeout = Keyword.get(opts, :timeout, @default_timeout * length(texts))
+    GenServer.call(__MODULE__, {:embed_many_binary, texts}, timeout)
   end
 
   @doc """
@@ -160,13 +171,21 @@ defmodule Graphonomous.Embedder do
 
   def handle_call({:embed_many, texts}, _from, state) do
     texts = Enum.filter(texts, &is_binary/1)
-
-    result =
-      texts
-      |> Enum.map(&embed_with_state(&1, state))
-      |> collect_ok()
-
+    result = batch_embed_with_state(texts, state)
     {:reply, result, state}
+  end
+
+  def handle_call({:embed_many_binary, texts}, _from, state) do
+    texts = Enum.filter(texts, &is_binary/1)
+
+    case batch_embed_with_state(texts, state) do
+      {:ok, vectors} ->
+        binaries = Enum.map(vectors, &to_f32_binary/1)
+        {:reply, {:ok, binaries}, state}
+
+      {:error, _} = err ->
+        {:reply, err, state}
+    end
   end
 
   @impl true
@@ -209,6 +228,31 @@ defmodule Graphonomous.Embedder do
 
   ## Internal embedding
 
+  defp batch_embed_with_state([], _state), do: {:ok, []}
+
+  defp batch_embed_with_state(texts, %{backend: :bumblebee} = state) do
+    # Process in chunks matching the serving batch_size for true GPU batching
+    batch_size = @default_batch_size
+
+    results =
+      texts
+      |> Enum.chunk_every(batch_size)
+      |> Enum.flat_map(fn chunk ->
+        case run_bumblebee_batch(chunk, state.serving, state.dimension) do
+          {:ok, vectors} -> Enum.map(vectors, &{:ok, &1})
+          {:error, _} -> Enum.map(chunk, &{:ok, fallback_embed(&1, state.dimension)})
+        end
+      end)
+
+    collect_ok(results)
+  end
+
+  defp batch_embed_with_state(texts, state) do
+    texts
+    |> Enum.map(&embed_with_state(&1, state))
+    |> collect_ok()
+  end
+
   defp embed_with_state(text, %{backend: :bumblebee} = state) do
     case run_bumblebee(text, state.serving, state.dimension) do
       {:ok, vector} ->
@@ -244,6 +288,63 @@ defmodule Graphonomous.Embedder do
       e -> {:error, {:exception, e, __STACKTRACE__}}
     catch
       kind, reason -> {:error, {kind, reason}}
+    end
+  end
+
+  defp run_bumblebee_batch(texts, serving, dimension) when is_list(texts) do
+    try do
+      # Bumblebee's Nx.Serving accepts a list of strings for batched inference.
+      # With batch_size > 1, the serving processes multiple texts in one GPU pass.
+      results = Nx.Serving.run(serving, texts)
+
+      vectors =
+        case results do
+          %{embedding: tensor} ->
+            # Batched result — tensor shape is {n, dim}
+            unbatch_tensor(tensor, dimension)
+
+          list when is_list(list) ->
+            Enum.map(list, fn result ->
+              {:ok, tensor} = extract_embedding_tensor(result)
+              {:ok, vec} = tensor_to_vector({:ok, tensor})
+              {:ok, normalized} = ensure_dimension({:ok, vec}, dimension)
+              normalized
+            end)
+        end
+
+      {:ok, vectors}
+    rescue
+      _ ->
+        # Fall back to sequential processing on batch failure
+        sequential_fallback(texts, serving, dimension)
+    catch
+      _, _ ->
+        sequential_fallback(texts, serving, dimension)
+    end
+  end
+
+  defp sequential_fallback(texts, serving, dimension) do
+    results = Enum.map(texts, &run_bumblebee(&1, serving, dimension))
+
+    case Enum.find(results, &match?({:error, _}, &1)) do
+      nil -> {:ok, Enum.map(results, fn {:ok, v} -> v end)}
+      err -> err
+    end
+  end
+
+  defp unbatch_tensor(tensor, dimension) do
+    n = Nx.axis_size(tensor, 0)
+
+    for i <- 0..(n - 1) do
+      vec =
+        tensor
+        |> Nx.slice_along_axis(i, 1, axis: 0)
+        |> Nx.flatten()
+        |> Nx.to_flat_list()
+        |> Enum.map(&to_float/1)
+
+      {:ok, normalized} = ensure_dimension({:ok, vec}, dimension)
+      normalized
     end
   end
 
@@ -308,7 +409,7 @@ defmodule Graphonomous.Embedder do
           output_pool: :mean_pooling,
           output_attribute: :hidden_state,
           embedding_processor: :l2_norm,
-          compile: [batch_size: 1, sequence_length: 512],
+          compile: [batch_size: @default_batch_size, sequence_length: 512],
           defn_options: compile_opts
         )
 

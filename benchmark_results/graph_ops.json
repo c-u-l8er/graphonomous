@@ -1,14 +1,14 @@
 {
-  "timestamp": "2026-04-01T19:55:01.897056Z",
+  "timestamp": "2026-04-01T22:54:09.924471Z",
   "benchmark": "OS-E001:graph_ops",
   "performance": {
-    "total_us": 14631079
+    "total_us": 230437257
   },
   "deliberation": {
     "details": [
       {
         "name": "deliberate on κ>0 region",
-        "passed": false
+        "passed": true
       },
       {
         "name": "topology confirms κ>0 for cycle",
@@ -20,9 +20,9 @@
       "routing": "deliberate",
       "scc_count": 1
     },
-    "latency_us": 327077,
+    "latency_us": 400555,
     "tests_run": 2,
-    "tests_passed": 1
+    "tests_passed": 2
   },
   "query_graph": {
     "details": [
@@ -43,13 +43,13 @@
         "passed": true
       }
     ],
-    "latency_us": 1419176,
+    "latency_us": 2379624,
     "tests_run": 4,
     "tests_passed": 4
   },
   "graph_stats": {
-    "response": "%Anubis.Server.Response{type: :tool, content: [%{\"text\" => \"{\\\"status\\\":\\\"ok\\\",\\\"avg_confidence\\\":0.65,\\\"node_count\\\":18157,\\\"min_confidence\\\":0.5886200000000001,\\\"edge_count\\\":15,\\\"max_confidence\\\":0.65,\\\"orphan_node_count\\\":18138,\\\"relationship_distribution\\\":{\\\"derived_from\\\":5,\\\"related\\\":9,\\\"supports\\\":1},\\\"source_distribution\\\":{\\\"unknown\\\":18157},\\\"timescale_distribution\\\":{\\\"medium\\\":18157},\\\"type_distribution\\\":{\\\"episodic\\\":18157}}\", \"type\" => \"text\"}], messages: [], contents: nil, values: [], total: nil, hasMore: false, isError: false, structured_content: nil, metadata: %{}}",
-    "latency_us": 1527668,
+    "response": "%Anubis.Server.Response{type: :tool, content: [%{\"text\" => \"{\\\"status\\\":\\\"ok\\\",\\\"avg_confidence\\\":0.65,\\\"node_count\\\":27111,\\\"min_confidence\\\":0.5,\\\"edge_count\\\":12094,\\\"max_confidence\\\":0.65,\\\"orphan_node_count\\\":21812,\\\"relationship_distribution\\\":{\\\"derived_from\\\":10106,\\\"related\\\":1987,\\\"supports\\\":1},\\\"source_distribution\\\":{\\\"unknown\\\":27111},\\\"timescale_distribution\\\":{\\\"medium\\\":27111},\\\"type_distribution\\\":{\\\"episodic\\\":27110,\\\"semantic\\\":1}}\", \"type\" => \"text\"}], messages: [], contents: nil, values: [], total: nil, hasMore: false, isError: false, structured_content: nil, metadata: %{}}",
+    "latency_us": 220805972,
     "passed": true
   },
   "coverage_query": {
@@ -63,7 +63,7 @@
         "passed": true
       }
     ],
-    "latency_us": 6901132,
+    "latency_us": 3681120,
     "tests_run": 2,
     "tests_passed": 2
   },
@@ -78,7 +78,7 @@
         "passed": true
       }
     ],
-    "latency_us": 194627,
+    "latency_us": 312729,
     "tests_run": 2,
     "tests_passed": 2
   },
@@ -89,7 +89,7 @@
         "passed": true
       }
     ],
-    "latency_us": 649033,
+    "latency_us": 867152,
     "tests_run": 1,
     "tests_passed": 1
   },
@@ -100,7 +100,7 @@
         "passed": true
       }
     ],
-    "latency_us": 3612366,
+    "latency_us": 1990105,
     "tests_run": 1,
     "tests_passed": 1
   }

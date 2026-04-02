@@ -73,6 +73,16 @@ defmodule Graphonomous.FilesystemTraversal do
   """
   @spec scan_directory(String.t(), opts()) :: {:ok, scan_result()} | {:error, term()}
   def scan_directory(root_path, opts \\ []) when is_binary(root_path) and is_list(opts) do
+    batch_size = Keyword.get(opts, :batch_size, 1)
+
+    if batch_size > 1 do
+      scan_directory_batched(root_path, opts, batch_size)
+    else
+      scan_directory_sequential(root_path, opts)
+    end
+  end
+
+  defp scan_directory_sequential(root_path, opts) do
     started_ms = System.monotonic_time(:millisecond)
 
     with {:ok, cfg} <- build_config(root_path, opts),
@@ -88,6 +98,72 @@ defmodule Graphonomous.FilesystemTraversal do
             {:error, reason} ->
               {ok_acc, err_acc + 1, [%{path: path, reason: inspect(reason)} | errs_acc]}
           end
+        end)
+
+      duration_ms = max(System.monotonic_time(:millisecond) - started_ms, 0)
+
+      {:ok,
+       %{
+         root_path: cfg.root_path,
+         files_discovered: length(files),
+         files_ingested: ok_count,
+         files_failed: err_count,
+         duration_ms: duration_ms,
+         errors: Enum.reverse(errors)
+       }}
+    end
+  end
+
+  defp scan_directory_batched(root_path, opts, batch_size) do
+    started_ms = System.monotonic_time(:millisecond)
+
+    with {:ok, cfg} <- build_config(root_path, opts),
+         {:ok, files} <- list_files(cfg) do
+      {ok_count, err_count, errors} =
+        files
+        |> Enum.chunk_every(batch_size)
+        |> Enum.reduce({0, 0, []}, fn chunk, {ok_acc, err_acc, errs_acc} ->
+          # Build payloads for the whole chunk
+          payloads =
+            Enum.map(chunk, fn path ->
+              event = build_event(:added, cfg.root_path, path, safe_stat(path))
+
+              build_default_payload(
+                event,
+                cfg.max_file_size_bytes,
+                cfg.max_read_bytes
+              )
+            end)
+
+          # Batch-embed all contents at once
+          texts = Enum.map(payloads, &Map.get(&1, :content, ""))
+
+          embeddings =
+            case Graphonomous.Embedder.embed_many_binary(texts) do
+              {:ok, binaries} -> binaries
+              {:error, _} -> List.duplicate(nil, length(texts))
+            end
+
+          # Store nodes with pre-computed embeddings
+          Enum.zip([chunk, payloads, embeddings])
+          |> Enum.reduce({ok_acc, err_acc, errs_acc}, fn {path, payload, embedding},
+                                                         {ok2, err2, errs2} ->
+            payload = Map.put(payload, :embedding, embedding)
+
+            case Graphonomous.store_node(payload) do
+              %{id: _} ->
+                {ok2 + 1, err2, errs2}
+
+              {:ok, %{id: _}} ->
+                {ok2 + 1, err2, errs2}
+
+              {:error, reason} ->
+                {ok2, err2 + 1, [%{path: path, reason: inspect(reason)} | errs2]}
+
+              _ ->
+                {ok2 + 1, err2, errs2}
+            end
+          end)
         end)
 
       duration_ms = max(System.monotonic_time(:millisecond) - started_ms, 0)

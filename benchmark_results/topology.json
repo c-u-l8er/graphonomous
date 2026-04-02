@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-04-01T19:54:17.314293Z",
+  "timestamp": "2026-04-01T22:49:40.505404Z",
   "benchmark": "OS-E001:topology",
   "edge_impact": {
     "details": [
@@ -26,25 +26,105 @@
         "passed": true
       }
     ],
-    "latency_us": 202172,
+    "latency_us": 256086,
     "tests_run": 2,
     "tests_passed": 2
   },
   "full_graph_analysis": {
-    "node_count": 18155,
+    "node_count": 27108,
     "sccs": [
+      {
+        "size": 12,
+        "kappa": 1,
+        "routing": "deliberate"
+      },
+      {
+        "size": 12,
+        "kappa": 1,
+        "routing": "deliberate"
+      },
+      {
+        "size": 2,
+        "kappa": 1,
+        "routing": "deliberate"
+      },
+      {
+        "size": 27,
+        "kappa": 27,
+        "routing": "deliberate"
+      },
+      {
+        "size": 10,
+        "kappa": 1,
+        "routing": "deliberate"
+      },
+      {
+        "size": 2,
+        "kappa": 1,
+        "routing": "deliberate"
+      },
+      {
+        "size": 4,
+        "kappa": 1,
+        "routing": "deliberate"
+      },
+      {
+        "size": 3,
+        "kappa": 1,
+        "routing": "deliberate"
+      },
+      {
+        "size": 2,
+        "kappa": 1,
+        "routing": "deliberate"
+      },
+      {
+        "size": 2,
+        "kappa": 1,
+        "routing": "deliberate"
+      },
+      {
+        "size": 6,
+        "kappa": 1,
+        "routing": "deliberate"
+      },
+      {
+        "size": 2,
+        "kappa": 1,
+        "routing": "deliberate"
+      },
+      {
+        "size": 2,
+        "kappa": 1,
+        "routing": "deliberate"
+      },
+      {
+        "size": 2,
+        "kappa": 1,
+        "routing": "deliberate"
+      },
+      {
+        "size": 2,
+        "kappa": 1,
+        "routing": "deliberate"
+      },
+      {
+        "size": 2,
+        "kappa": 1,
+        "routing": "deliberate"
+      },
       {
         "size": 2,
         "kappa": 1,
         "routing": "deliberate"
       }
     ],
-    "max_kappa": 1,
+    "max_kappa": 27,
     "routing": "deliberate",
-    "scc_count": 1,
-    "latency_us": 94970,
-    "edge_count": 9,
-    "dag_node_count": 18153
+    "scc_count": 17,
+    "latency_us": 172089,
+    "edge_count": 12086,
+    "dag_node_count": 27014
   },
   "retrieval_topology": {
     "details": [
@@ -53,15 +133,15 @@
         "max_kappa": 0,
         "routing": "fast",
         "scc_count": 0,
-        "result_count": 10,
+        "result_count": 15,
         "has_topology": true
       },
       {
         "query": "What is the relationship between the protocol spec and Graphonomous implementation?",
-        "max_kappa": 0,
-        "routing": "fast",
-        "scc_count": 0,
-        "result_count": 10,
+        "max_kappa": 1,
+        "routing": "deliberate",
+        "scc_count": 1,
+        "result_count": 15,
         "has_topology": true
       },
       {
@@ -69,11 +149,11 @@
         "max_kappa": 0,
         "routing": "fast",
         "scc_count": 0,
-        "result_count": 10,
+        "result_count": 11,
         "has_topology": true
       }
     ],
-    "latency_us": 5365481,
+    "latency_us": 8752078,
     "all_have_topology": true,
     "queries_tested": 3
   },
@@ -112,7 +192,7 @@
         "passed": true
       }
     ],
-    "latency_us": 1213822,
+    "latency_us": 1573618,
     "tests_run": 4,
     "tests_passed": 4
   }

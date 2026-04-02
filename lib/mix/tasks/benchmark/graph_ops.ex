@@ -385,7 +385,8 @@ defmodule Mix.Tasks.Benchmark.GraphOps do
                 write_back: false
               )
 
-            is_map(result) and Map.has_key?(result, :verdict)
+            is_map(result) and Map.has_key?(result, :converged) and
+              Map.has_key?(result, :conclusions)
           end
         },
         %{

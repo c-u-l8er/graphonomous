@@ -1,8 +1,8 @@
 {
-  "timestamp": "2026-04-01T19:54:25.417609Z",
+  "timestamp": "2026-04-01T22:49:51.371431Z",
   "benchmark": "OS-E001:learning",
   "performance": {
-    "total_us": 4055529
+    "total_us": 6421510
   },
   "feedback_learning": {
     "details": [
@@ -28,7 +28,7 @@
         "confidence_before": 0.591
       }
     ],
-    "latency_us": 112801,
+    "latency_us": 122752,
     "tests_run": 3,
     "tests_passed": 3
   },
@@ -36,21 +36,21 @@
     "details": [
       {
         "name": "learn from user interaction",
-        "response": "%Anubis.Server.Response{type: :tool, content: [%{\"text\" => \"{\\\"status\\\":\\\"ok\\\",\\\"edges_created\\\":3,\\\"is_novel\\\":false,\\\"novelty_score\\\":0.4391,\\\"claim_count\\\":0,\\\"episodic_node_id\\\":\\\"node_e7a2957f259577ae6a03f99e5b9a788c\\\",\\\"learned_count\\\":1,\\\"learned_node_ids\\\":[\\\"node_e7a2957f259577ae6a03f99e5b9a788c\\\"]}\", \"type\" => \"text\"}], messages: [], contents: nil, values: [], total: nil, hasMore: false, isError: false, structured_content: nil, metadata: %{}}",
+        "response": "%Anubis.Server.Response{type: :tool, content: [%{\"text\" => \"{\\\"status\\\":\\\"ok\\\",\\\"edges_created\\\":3,\\\"is_novel\\\":false,\\\"novelty_score\\\":0.5234,\\\"claim_count\\\":0,\\\"episodic_node_id\\\":\\\"node_103dceb518b4394835e80a37ffb2a899\\\",\\\"learned_count\\\":1,\\\"learned_node_ids\\\":[\\\"node_103dceb518b4394835e80a37ffb2a899\\\"]}\", \"type\" => \"text\"}], messages: [], contents: nil, values: [], total: nil, hasMore: false, isError: false, structured_content: nil, metadata: %{}}",
         "passed": true
       },
       {
         "name": "learn from assistant response",
-        "response": "%Anubis.Server.Response{type: :tool, content: [%{\"text\" => \"{\\\"status\\\":\\\"ok\\\",\\\"edges_created\\\":3,\\\"is_novel\\\":false,\\\"novelty_score\\\":0.5731,\\\"claim_count\\\":0,\\\"episodic_node_id\\\":\\\"node_25d113b672c21b7f3279abb6daa33bb9\\\",\\\"learned_count\\\":1,\\\"learned_node_ids\\\":[\\\"node_25d113b672c21b7f3279abb6daa33bb9\\\"]}\", \"type\" => \"text\"}], messages: [], contents: nil, values: [], total: nil, hasMore: false, isError: false, structured_content: nil, metadata: %{}}",
+        "response": "%Anubis.Server.Response{type: :tool, content: [%{\"text\" => \"{\\\"status\\\":\\\"ok\\\",\\\"edges_created\\\":4,\\\"is_novel\\\":true,\\\"novelty_score\\\":0.902,\\\"claim_count\\\":1,\\\"episodic_node_id\\\":\\\"node_c36adf2037fed5835343206e3cc4b8fe\\\",\\\"learned_count\\\":2,\\\"learned_node_ids\\\":[\\\"node_c36adf2037fed5835343206e3cc4b8fe\\\",\\\"node_8ea36734ee312fd7d0918380e35fb206\\\"]}\", \"type\" => \"text\"}], messages: [], contents: nil, values: [], total: nil, hasMore: false, isError: false, structured_content: nil, metadata: %{}}",
         "passed": true
       }
     ],
-    "latency_us": 2950253,
+    "latency_us": 4745541,
     "tests_run": 2,
     "tests_passed": 2,
-    "net_nodes_created": 2,
-    "nodes_after": 18157,
-    "nodes_before": 18155
+    "net_nodes_created": 3,
+    "nodes_after": 27111,
+    "nodes_before": 27108
   },
   "novelty_detection": {
     "details": [
@@ -70,7 +70,7 @@
         "passed": true
       }
     ],
-    "latency_us": 2981,
+    "latency_us": 1923,
     "tests_run": 3,
     "tests_passed": 3
   },
@@ -109,7 +109,7 @@
         "confidence_delta": -0.03778
       }
     ],
-    "latency_us": 989494,
+    "latency_us": 1551294,
     "tests_run": 4,
     "tests_passed": 4,
     "causal_ids_used": 3

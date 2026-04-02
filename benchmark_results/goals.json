@@ -1,8 +1,8 @@
 {
-  "timestamp": "2026-04-01T19:54:43.748895Z",
+  "timestamp": "2026-04-01T22:50:15.562492Z",
   "benchmark": "OS-E001:goals",
   "performance": {
-    "total_us": 14749581
+    "total_us": 20239240
   },
   "coverage_query": {
     "details": [
@@ -19,7 +19,7 @@
         "passed": true
       }
     ],
-    "latency_us": 7824416,
+    "latency_us": 12622035,
     "tests_run": 3,
     "tests_passed": 3
   },
@@ -34,7 +34,7 @@
         "passed": true
       }
     ],
-    "latency_us": 3381110,
+    "latency_us": 2110509,
     "tests_run": 2,
     "tests_passed": 2
   },
@@ -57,7 +57,7 @@
         "passed": true
       }
     ],
-    "latency_us": 3544055,
+    "latency_us": 5506696,
     "tests_run": 4,
     "tests_passed": 4
   }

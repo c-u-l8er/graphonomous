@@ -89,6 +89,7 @@ defmodule Graphonomous.Retriever do
           expanded
           |> Map.values()
           |> Enum.sort_by(& &1.score, :desc)
+          |> maybe_diversify_domains(cfg)
           |> Enum.take(cfg.final_limit)
 
         topology = analyze_topology(ranked)
@@ -271,6 +272,66 @@ defmodule Graphonomous.Retriever do
           true ->
             entries
         end
+    end
+  end
+
+  ## Domain-aware re-ranking
+  #
+  # When multiple results come from the same domain, slightly demote duplicates
+  # to promote cross-domain diversity. This improves precision on cross-domain
+  # queries without hurting single-domain recall (which is already perfect).
+
+  defp maybe_diversify_domains(results, cfg) do
+    diversity = Map.get(cfg, :domain_diversity, true)
+
+    if diversity and length(results) > 3 do
+      diversify_domains(results)
+    else
+      results
+    end
+  end
+
+  defp diversify_domains(results) do
+    # Score penalty for domain concentration: each additional result from the
+    # same domain gets a small score reduction, pushing diverse results up.
+    decay_factor = 0.95
+
+    {reranked, _seen} =
+      results
+      |> Enum.reduce({[], %{}}, fn entry, {acc, domain_counts} ->
+        domain = domain_from_entry(entry)
+        count = Map.get(domain_counts, domain, 0)
+
+        # Apply diminishing returns for repeated domains
+        adjusted_score = entry.score * :math.pow(decay_factor, count)
+        adjusted_entry = %{entry | score: adjusted_score}
+
+        {[adjusted_entry | acc], Map.put(domain_counts, domain, count + 1)}
+      end)
+
+    reranked
+    |> Enum.reverse()
+    |> Enum.sort_by(& &1.score, :desc)
+  end
+
+  defp domain_from_entry(entry) do
+    # Extract domain from node metadata (filesystem traversal nodes have relative_path)
+    node_id = Map.get(entry, :node_id)
+
+    case node_id && Graphonomous.get_node(node_id) do
+      %{metadata: meta} when is_map(meta) ->
+        path = Map.get(meta, "relative_path", "") |> to_string()
+        extract_domain_from_path(path)
+
+      _ ->
+        "unknown"
+    end
+  end
+
+  defp extract_domain_from_path(path) do
+    case String.split(path, "/", parts: 2) do
+      [domain | _] when domain != "" -> domain
+      _ -> "unknown"
     end
   end
 

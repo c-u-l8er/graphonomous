@@ -1,18 +1,18 @@
 {
-  "timestamp": "2026-04-01T19:58:07.560426Z",
+  "timestamp": "2026-04-01T22:59:12.825576Z",
   "cycle": {
-    "latency_us": 23540737,
+    "latency_us": 54700924,
     "items_processed": 0
   },
   "benchmark": "OS-E001:attention",
   "performance": {
-    "total_us": 51605933,
-    "cycle_latency_us": 23540737,
-    "survey_latency_us": 28065196
+    "total_us": 105805961,
+    "cycle_latency_us": 54700924,
+    "survey_latency_us": 51105037
   },
   "survey": {
     "items": [],
-    "latency_us": 28065196,
+    "latency_us": 51105037,
     "items_returned": 0
   },
   "accuracy": {
@@ -31,24 +31,24 @@
     "created": 5,
     "linked": [
       {
-        "goal_id": "goal_9fd65c4285c762f68c0efffd389ed795",
-        "linked_nodes": 13
+        "goal_id": "goal_49e94cbdecf3ea63a6a16be3cd5e40d0",
+        "linked_nodes": 17
       },
       {
-        "goal_id": "goal_9498ed2af530e253d598902334b7b775",
-        "linked_nodes": 10
+        "goal_id": "goal_26df70b57b0d474ce1089fbf30713d85",
+        "linked_nodes": 20
       },
       {
-        "goal_id": "goal_d5526f6a19a9176e6bc74be80c91b583",
-        "linked_nodes": 10
+        "goal_id": "goal_7b355273e8a418907a2d02b8c4e33615",
+        "linked_nodes": 20
       },
       {
-        "goal_id": "goal_b78cde8803bf5924a9c39c1ef486f7e8",
-        "linked_nodes": 10
+        "goal_id": "goal_e450d14b521d8262a74863b5ba218d85",
+        "linked_nodes": 15
       },
       {
-        "goal_id": "goal_b164280ce26c3c963cf4376904599920",
-        "linked_nodes": 10
+        "goal_id": "goal_b003d2f018801e6fe0197290ada48aa6",
+        "linked_nodes": 20
       }
     ]
   }

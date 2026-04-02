@@ -115,6 +115,58 @@ defmodule Mix.Tasks.Benchmark.Attention do
         %{goal_id: goal.id, linked_nodes: length(node_ids)}
       end)
 
+    # Phase 2.5: Pre-seed outcome histories so attention engine has signal to prioritize
+    Mix.shell().info("Pre-seeding outcome histories for attention signal...")
+
+    Enum.each(created_goals, fn goal ->
+      # Get linked node IDs as causal context
+      retrieval =
+        Graphonomous.retrieve_context(goal.description,
+          limit: 3,
+          expansion_hops: 0
+        )
+
+      causal_ids = retrieval |> Map.get(:results, []) |> Enum.map(& &1.node_id) |> Enum.take(3)
+
+      if causal_ids != [] do
+        # Seed different outcome patterns based on priority to test prioritization
+        case goal.priority do
+          :critical ->
+            # Critical goals get a failure outcome (should surface urgently)
+            Graphonomous.learn_from_outcome(%{
+              status: :failure,
+              causal_node_ids: causal_ids,
+              evidence: %{
+                "reason" => "benchmark pre-seed: critical goal not yet implemented",
+                "goal_id" => goal.id
+              }
+            })
+
+          :high ->
+            # High priority gets partial success (needs attention)
+            Graphonomous.learn_from_outcome(%{
+              status: :partial_success,
+              causal_node_ids: causal_ids,
+              evidence: %{
+                "reason" => "benchmark pre-seed: high priority partially done",
+                "goal_id" => goal.id
+              }
+            })
+
+          _ ->
+            # Medium/low get success (should rank lower)
+            Graphonomous.learn_from_outcome(%{
+              status: :success,
+              causal_node_ids: causal_ids,
+              evidence: %{
+                "reason" => "benchmark pre-seed: medium priority progressing",
+                "goal_id" => goal.id
+              }
+            })
+        end
+      end
+    end)
+
     # Phase 3: Run attention survey
     Mix.shell().info("Running attention survey...")
 

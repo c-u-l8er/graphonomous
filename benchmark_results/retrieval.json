@@ -1,124 +1,144 @@
 {
-  "timestamp": "2026-04-01T19:54:05.463596Z",
+  "timestamp": "2026-04-01T22:42:29.532711Z",
   "benchmark": "OS-E001:retrieval",
   "by_category": {
     "single_domain": {
       "count": 3,
-      "mean_f1": 0.7983,
-      "mean_latency_us": 2543140.0,
-      "mean_precision": 0.7,
-      "mean_recall": 1.0,
-      "expansion_f1_gain": 0.0,
-      "flat_mean_f1": 0.7983
+      "mean_f1": 0.6232,
+      "mean_latency_us": 2853684.0,
+      "mean_precision": 0.5897,
+      "mean_recall": 0.6667,
+      "expansion_f1_gain": 0.0153,
+      "flat_mean_f1": 0.6078
     },
     "cross_domain": {
       "count": 4,
-      "mean_f1": 0.6158,
-      "mean_latency_us": 2134552.5,
-      "mean_precision": 0.65,
-      "mean_recall": 0.75,
-      "expansion_f1_gain": 0.0,
-      "flat_mean_f1": 0.6158
+      "mean_f1": 0.3422,
+      "mean_latency_us": 4404693.5,
+      "mean_precision": 0.3198,
+      "mean_recall": 0.4167,
+      "expansion_f1_gain": -0.0157,
+      "flat_mean_f1": 0.3579
     },
     "conceptual": {
       "count": 3,
-      "mean_f1": 0.6534,
-      "mean_latency_us": 2498050.6667,
-      "mean_precision": 0.6,
-      "mean_recall": 0.7222,
-      "expansion_f1_gain": 0.0,
-      "flat_mean_f1": 0.6534
+      "mean_f1": 0.3562,
+      "mean_latency_us": 4166055.0,
+      "mean_precision": 0.2606,
+      "mean_recall": 0.6111,
+      "expansion_f1_gain": 0.0635,
+      "flat_mean_f1": 0.2927
     },
     "needle": {
       "count": 3,
-      "mean_f1": 0.6181,
-      "mean_latency_us": 2508949.0,
-      "mean_precision": 0.6,
-      "mean_recall": 0.8333,
-      "expansion_f1_gain": 0.0,
-      "flat_mean_f1": 0.6181
+      "mean_f1": 0.3634,
+      "mean_latency_us": 1830854.3333,
+      "mean_precision": 0.3256,
+      "mean_recall": 0.6667,
+      "expansion_f1_gain": 0.0476,
+      "flat_mean_f1": 0.3158
     }
+  },
+  "flat_baseline": {
+    "mean_f1": 0.3908,
+    "mean_latency_us": 4113151,
+    "mean_precision": 0.3692,
+    "mean_recall": 0.4744
+  },
+  "graph_vs_flat": {
+    "f1_delta": 0.0244,
+    "precision_delta": 0.0005,
+    "recall_delta": 0.1026
   },
   "overall": {
     "kappa_triggered_count": 0,
-    "mean_f1": 0.6671,
-    "mean_latency_us": 2399125,
-    "mean_precision": 0.6385,
-    "mean_recall": 0.8205,
-    "p95_latency_us": 3377965
+    "mean_f1": 0.4152,
+    "mean_latency_us": 3397735,
+    "mean_precision": 0.3698,
+    "mean_recall": 0.5769,
+    "p95_latency_us": 5425026
   },
   "queries": [
     {
       "id": "SD-1",
       "category": "single_domain",
       "query": "How does the knowledge graph store nodes and edges in SQLite?",
-      "graph_expanded": {
+      "flat_baseline": {
         "precision": 0.7,
-        "expanded_count": 0,
-        "seed_count": 10,
         "f1": 0.8235,
-        "topology_max_kappa": 0,
-        "latency_us": 901588,
+        "latency_us": 1714561,
         "recall": 1.0,
         "domains_returned": [
           "graphonomous",
-          "unknown",
           "bendscript",
-          "opensentience"
+          "ampersand"
         ],
         "result_count": 10,
+        "unique_domain_count": 3
+      },
+      "graph_expanded": {
+        "precision": 0.7692,
+        "expanded_count": 3,
+        "seed_count": 10,
+        "f1": 0.8696,
+        "topology_max_kappa": 0,
+        "latency_us": 1538407,
+        "recall": 1.0,
+        "domains_returned": [
+          "graphonomous",
+          "bendscript",
+          "ampersand"
+        ],
+        "result_count": 13,
         "top_3_scores": [
-          0.31493443889637585,
-          0.30813159577956123,
-          0.28948305996619855
+          0.10275900414114822,
+          0.08978199314482642,
+          0.08957907120033595
         ],
         "topology_routing": "fast",
-        "unique_domain_count": 4
+        "unique_domain_count": 3
       },
       "expected_domains": [
         "graphonomous"
       ],
       "expansion_delta": {
         "domain_gain": 0,
-        "f1_gain": 0.0,
-        "precision_gain": 0.0,
+        "f1_gain": 0.046,
+        "precision_gain": 0.0692,
         "recall_gain": 0.0
-      },
-      "flat_baseline": {
-        "precision": 0.7,
-        "f1": 0.8235,
-        "latency_us": 907343,
-        "recall": 1.0,
-        "domains_returned": [
-          "graphonomous",
-          "unknown",
-          "bendscript",
-          "opensentience"
-        ],
-        "result_count": 10,
-        "unique_domain_count": 4
       }
     },
     {
       "id": "SD-2",
       "category": "single_domain",
       "query": "What are the WebHost.Systems API contracts for runtime deployment?",
-      "graph_expanded": {
+      "flat_baseline": {
         "precision": 1.0,
-        "expanded_count": 0,
-        "seed_count": 10,
         "f1": 1.0,
-        "topology_max_kappa": 0,
-        "latency_us": 3361758,
+        "latency_us": 5326378,
         "recall": 1.0,
         "domains_returned": [
           "webhost"
         ],
         "result_count": 10,
+        "unique_domain_count": 1
+      },
+      "graph_expanded": {
+        "precision": 1.0,
+        "expanded_count": 3,
+        "seed_count": 10,
+        "f1": 1.0,
+        "topology_max_kappa": 0,
+        "latency_us": 5428989,
+        "recall": 1.0,
+        "domains_returned": [
+          "webhost"
+        ],
+        "result_count": 13,
         "top_3_scores": [
-          0.3440977815162707,
-          0.33539066060588557,
-          0.33509870690654053
+          0.19010373081008425,
+          0.17968647353189332,
+          0.16874229285678566
         ],
         "topology_routing": "fast",
         "unique_domain_count": 1
@@ -131,92 +151,98 @@
         "f1_gain": 0.0,
         "precision_gain": 0.0,
         "recall_gain": 0.0
-      },
-      "flat_baseline": {
-        "precision": 1.0,
-        "f1": 1.0,
-        "latency_us": 979493,
-        "recall": 1.0,
-        "domains_returned": [
-          "webhost"
-        ],
-        "result_count": 10,
-        "unique_domain_count": 1
       }
     },
     {
       "id": "SD-3",
       "category": "single_domain",
       "query": "How does the agent marketplace handle bidding and reputation?",
-      "graph_expanded": {
-        "precision": 0.4,
-        "expanded_count": 0,
-        "seed_count": 10,
-        "f1": 0.5714,
-        "topology_max_kappa": 0,
-        "latency_us": 3366074,
-        "recall": 1.0,
+      "flat_baseline": {
+        "precision": 0.0,
+        "f1": 0.0,
+        "latency_us": 5207969,
+        "recall": 0.0,
         "domains_returned": [
-          "agentromatic",
-          "agentelic",
-          "fleetprompt"
+          "ampersand",
+          "graphonomous",
+          "opensentience",
+          "webhost"
         ],
         "result_count": 10,
+        "unique_domain_count": 4
+      },
+      "graph_expanded": {
+        "precision": 0.0,
+        "expanded_count": 8,
+        "seed_count": 10,
+        "f1": 0.0,
+        "topology_max_kappa": 0,
+        "latency_us": 1593656,
+        "recall": 0.0,
+        "domains_returned": [
+          "ampersand",
+          "graphonomous",
+          "opensentience",
+          "webhost",
+          "agentromatic"
+        ],
+        "result_count": 18,
         "top_3_scores": [
-          0.27115910122323084,
-          0.2703835582489916,
-          0.2551486020851601
+          0.11667436065800257,
+          0.10429348034863092,
+          0.0980652988373204
         ],
         "topology_routing": "fast",
-        "unique_domain_count": 3
+        "unique_domain_count": 5
       },
       "expected_domains": [
         "fleetprompt"
       ],
       "expansion_delta": {
-        "domain_gain": 0,
+        "domain_gain": 1,
         "f1_gain": 0.0,
         "precision_gain": 0.0,
         "recall_gain": 0.0
-      },
-      "flat_baseline": {
-        "precision": 0.4,
-        "f1": 0.5714,
-        "latency_us": 3451647,
-        "recall": 1.0,
-        "domains_returned": [
-          "agentromatic",
-          "agentelic",
-          "fleetprompt"
-        ],
-        "result_count": 10,
-        "unique_domain_count": 3
       }
     },
     {
       "id": "CD-1",
       "category": "cross_domain",
       "query": "How does governance interact with memory and learning?",
-      "graph_expanded": {
-        "precision": 0.7,
-        "expanded_count": 0,
-        "seed_count": 10,
-        "f1": 0.4516,
-        "topology_max_kappa": 0,
-        "latency_us": 863207,
-        "recall": 0.3333,
+      "flat_baseline": {
+        "precision": 0.0,
+        "f1": 0.0,
+        "latency_us": 1687427,
+        "recall": 0.0,
         "domains_returned": [
           "ampersand",
-          "opensentience"
+          "bendscript",
+          "webhost"
         ],
         "result_count": 10,
+        "unique_domain_count": 3
+      },
+      "graph_expanded": {
+        "precision": 0.0,
+        "expanded_count": 3,
+        "seed_count": 10,
+        "f1": 0.0,
+        "topology_max_kappa": 0,
+        "latency_us": 5324672,
+        "recall": 0.0,
+        "domains_returned": [
+          "ampersand",
+          "bendscript",
+          "webhost"
+        ],
+        "result_count": 13,
         "top_3_scores": [
-          0.29535201394640515,
-          0.2619374307888747,
-          0.25048684218258327
+          0.08353674671064039,
+          0.07513847957531179,
+          0.0713815555965462
         ],
         "topology_routing": "fast",
-        "unique_domain_count": 2
+        "unique_domain_count": 3
       },
       "expected_domains": [
         "opensentience",
@@ -228,44 +254,51 @@
         "f1_gain": 0.0,
         "precision_gain": 0.0,
         "recall_gain": 0.0
-      },
-      "flat_baseline": {
-        "precision": 0.7,
-        "f1": 0.4516,
-        "latency_us": 3192830,
-        "recall": 0.3333,
-        "domains_returned": [
-          "ampersand",
-          "opensentience"
-        ],
-        "result_count": 10,
-        "unique_domain_count": 2
       }
     },
     {
       "id": "CD-2",
       "category": "cross_domain",
       "query": "What protocols does the [&] ecosystem define for agent coordination?",
-      "graph_expanded": {
-        "precision": 1.0,
-        "expanded_count": 0,
-        "seed_count": 10,
-        "f1": 0.8,
-        "topology_max_kappa": 0,
-        "latency_us": 3377965,
+      "flat_baseline": {
+        "precision": 0.6,
+        "f1": 0.6316,
+        "latency_us": 1658411,
         "recall": 0.6667,
         "domains_returned": [
-          "agentromatic",
-          "ampersand"
+          "ampersand",
+          "opensentience",
+          "webhost"
         ],
         "result_count": 10,
+        "unique_domain_count": 3
+      },
+      "graph_expanded": {
+        "precision": 0.4667,
+        "expanded_count": 5,
+        "seed_count": 10,
+        "f1": 0.6364,
+        "topology_max_kappa": 0,
+        "latency_us": 5288498,
+        "recall": 1.0,
+        "domains_returned": [
+          "ampersand",
+          "opensentience",
+          "webhost",
+          "delegatic",
+          "agentromatic",
+          "fleetprompt",
+          "agentelic",
+          "graphonomous"
+        ],
+        "result_count": 15,
         "top_3_scores": [
-          0.3884464747544121,
-          0.3768033416842446,
-          0.370333985282473
+          0.13920705499296776,
+          0.1258012882313602,
+          0.11611153020344712
         ],
         "topology_routing": "fast",
-        "unique_domain_count": 2
+        "unique_domain_count": 8
       },
       "expected_domains": [
         "opensentience",
@@ -273,47 +306,48 @@
         "agentromatic"
       ],
       "expansion_delta": {
-        "domain_gain": 0,
-        "f1_gain": 0.0,
-        "precision_gain": 0.0,
-        "recall_gain": 0.0
-      },
-      "flat_baseline": {
-        "precision": 1.0,
-        "f1": 0.8,
-        "latency_us": 889974,
-        "recall": 0.6667,
-        "domains_returned": [
-          "agentromatic",
-          "ampersand"
-        ],
-        "result_count": 10,
-        "unique_domain_count": 2
+        "domain_gain": 5,
+        "f1_gain": 0.0048,
+        "precision_gain": -0.1333,
+        "recall_gain": 0.3333
       }
     },
     {
       "id": "CD-3",
       "category": "cross_domain",
       "query": "How do spatial and temporal intelligence relate to each other?",
-      "graph_expanded": {
-        "precision": 0.3,
-        "expanded_count": 0,
-        "seed_count": 10,
-        "f1": 0.4615,
-        "topology_max_kappa": 0,
-        "latency_us": 3373842,
-        "recall": 1.0,
+      "flat_baseline": {
+        "precision": 0.0,
+        "f1": 0.0,
+        "latency_us": 5338896,
+        "recall": 0.0,
         "domains_returned": [
           "ampersand",
-          "opensentience",
-          "geofleetic",
-          "ticktickclock"
+          "graphonomous",
+          "bendscript"
         ],
         "result_count": 10,
+        "unique_domain_count": 3
+      },
+      "graph_expanded": {
+        "precision": 0.0,
+        "expanded_count": 5,
+        "seed_count": 10,
+        "f1": 0.0,
+        "topology_max_kappa": 0,
+        "latency_us": 5425026,
+        "recall": 0.0,
+        "domains_returned": [
+          "ampersand",
+          "graphonomous",
+          "bendscript",
+          "webhost"
+        ],
+        "result_count": 15,
         "top_3_scores": [
-          0.2521499281734888,
-          0.24036891636521354,
-          0.23227916740010177
+          0.1159882264587738,
+          0.1051934195138674,
+          0.10380013550029903
         ],
         "topology_routing": "fast",
         "unique_domain_count": 4
@@ -323,54 +357,51 @@
         "ticktickclock"
       ],
       "expansion_delta": {
-        "domain_gain": 0,
+        "domain_gain": 1,
         "f1_gain": 0.0,
         "precision_gain": 0.0,
         "recall_gain": 0.0
-      },
-      "flat_baseline": {
-        "precision": 0.3,
-        "f1": 0.4615,
-        "latency_us": 3655752,
-        "recall": 1.0,
-        "domains_returned": [
-          "ampersand",
-          "opensentience",
-          "geofleetic",
-          "ticktickclock"
-        ],
-        "result_count": 10,
-        "unique_domain_count": 4
       }
     },
     {
       "id": "CD-4",
       "category": "cross_domain",
       "query": "What security and compliance requirements exist across the ecosystem?",
-      "graph_expanded": {
-        "precision": 0.6,
-        "expanded_count": 0,
-        "seed_count": 10,
-        "f1": 0.75,
-        "topology_max_kappa": 0,
-        "latency_us": 923196,
-        "recall": 1.0,
+      "flat_baseline": {
+        "precision": 1.0,
+        "f1": 0.8,
+        "latency_us": 5194517,
+        "recall": 0.6667,
         "domains_returned": [
           "webhost",
-          "ampersand",
-          "specprompt",
-          "fleetprompt",
-          "delegatic",
-          "opensentience"
+          "delegatic"
         ],
         "result_count": 10,
+        "unique_domain_count": 2
+      },
+      "graph_expanded": {
+        "precision": 0.8125,
+        "expanded_count": 6,
+        "seed_count": 10,
+        "f1": 0.7324,
+        "topology_max_kappa": 0,
+        "latency_us": 1580578,
+        "recall": 0.6667,
+        "domains_returned": [
+          "webhost",
+          "delegatic",
+          "specprompt",
+          "agentelic",
+          "graphonomous"
+        ],
+        "result_count": 16,
         "top_3_scores": [
-          0.3062340272373192,
-          0.2974615724741869,
-          0.29693631249336944
+          0.13309550364359965,
+          0.12644072846141965,
+          0.12333270225088512
         ],
         "topology_routing": "fast",
-        "unique_domain_count": 6
+        "unique_domain_count": 5
       },
       "expected_domains": [
         "webhost",
@@ -378,54 +409,48 @@
         "delegatic"
       ],
       "expansion_delta": {
-        "domain_gain": 0,
-        "f1_gain": 0.0,
-        "precision_gain": 0.0,
+        "domain_gain": 3,
+        "f1_gain": -0.0676,
+        "precision_gain": -0.1875,
         "recall_gain": 0.0
-      },
-      "flat_baseline": {
-        "precision": 0.6,
-        "f1": 0.75,
-        "latency_us": 3255945,
-        "recall": 1.0,
-        "domains_returned": [
-          "webhost",
-          "ampersand",
-          "specprompt",
-          "fleetprompt",
-          "delegatic",
-          "opensentience"
-        ],
-        "result_count": 10,
-        "unique_domain_count": 6
       }
     },
     {
       "id": "CQ-1",
       "category": "conceptual",
       "query": "What is the relationship between cyclicity and deliberation depth?",
-      "graph_expanded": {
-        "precision": 0.5,
-        "expanded_count": 0,
-        "seed_count": 10,
-        "f1": 0.5714,
-        "topology_max_kappa": 0,
-        "latency_us": 3467343,
-        "recall": 0.6667,
+      "flat_baseline": {
+        "precision": 0.2,
+        "f1": 0.25,
+        "latency_us": 1448437,
+        "recall": 0.3333,
         "domains_returned": [
-          "deliberatic",
-          "graphonomous",
           "ampersand",
-          "delegatic"
+          "webhost"
         ],
         "result_count": 10,
+        "unique_domain_count": 2
+      },
+      "graph_expanded": {
+        "precision": 0.1818,
+        "expanded_count": 1,
+        "seed_count": 10,
+        "f1": 0.2353,
+        "topology_max_kappa": 0,
+        "latency_us": 5357298,
+        "recall": 0.3333,
+        "domains_returned": [
+          "ampersand",
+          "webhost"
+        ],
+        "result_count": 11,
         "top_3_scores": [
-          0.26768473560233075,
-          0.2552860897750184,
-          0.24338534307900822
+          0.07577684863118457,
+          0.06777400305137192,
+          0.06435147838516342
         ],
         "topology_routing": "fast",
-        "unique_domain_count": 4
+        "unique_domain_count": 2
       },
       "expected_domains": [
         "graphonomous",
@@ -434,98 +459,98 @@
       ],
       "expansion_delta": {
         "domain_gain": 0,
-        "f1_gain": 0.0,
-        "precision_gain": 0.0,
+        "f1_gain": -0.0147,
+        "precision_gain": -0.0182,
         "recall_gain": 0.0
-      },
-      "flat_baseline": {
-        "precision": 0.5,
-        "f1": 0.5714,
-        "latency_us": 868864,
-        "recall": 0.6667,
-        "domains_returned": [
-          "deliberatic",
-          "graphonomous",
-          "ampersand",
-          "delegatic"
-        ],
-        "result_count": 10,
-        "unique_domain_count": 4
       }
     },
     {
       "id": "CQ-2",
       "category": "conceptual",
       "query": "How does confidence decay over time and why does it matter?",
-      "graph_expanded": {
-        "precision": 0.8,
-        "expanded_count": 0,
-        "seed_count": 10,
-        "f1": 0.8889,
-        "topology_max_kappa": 0,
-        "latency_us": 3181767,
+      "flat_baseline": {
+        "precision": 0.3,
+        "f1": 0.4615,
+        "latency_us": 5195041,
         "recall": 1.0,
         "domains_returned": [
+          "opensentience",
           "graphonomous",
-          "bendscript"
+          "bendscript",
+          "webhost"
         ],
         "result_count": 10,
+        "unique_domain_count": 4
+      },
+      "graph_expanded": {
+        "precision": 0.5,
+        "expanded_count": 6,
+        "seed_count": 10,
+        "f1": 0.6667,
+        "topology_max_kappa": 0,
+        "latency_us": 5356215,
+        "recall": 1.0,
+        "domains_returned": [
+          "opensentience",
+          "graphonomous",
+          "bendscript",
+          "webhost"
+        ],
+        "result_count": 16,
         "top_3_scores": [
-          0.17983664415154696,
-          0.1556175902079154,
-          0.1431867561894608
+          0.0835840171288775,
+          0.08091958216742318,
+          0.08005145101662793
         ],
         "topology_routing": "fast",
-        "unique_domain_count": 2
+        "unique_domain_count": 4
       },
       "expected_domains": [
         "graphonomous"
       ],
       "expansion_delta": {
         "domain_gain": 0,
-        "f1_gain": 0.0,
-        "precision_gain": 0.0,
+        "f1_gain": 0.2051,
+        "precision_gain": 0.2,
         "recall_gain": 0.0
-      },
-      "flat_baseline": {
-        "precision": 0.8,
-        "f1": 0.8889,
-        "latency_us": 3446896,
-        "recall": 1.0,
-        "domains_returned": [
-          "graphonomous",
-          "bendscript"
-        ],
-        "result_count": 10,
-        "unique_domain_count": 2
       }
     },
     {
       "id": "CQ-3",
       "category": "conceptual",
       "query": "What does 'the symbol is the system' mean in practice?",
-      "graph_expanded": {
-        "precision": 0.5,
-        "expanded_count": 0,
-        "seed_count": 10,
-        "f1": 0.5,
-        "topology_max_kappa": 0,
-        "latency_us": 845042,
+      "flat_baseline": {
+        "precision": 0.1,
+        "f1": 0.1667,
+        "latency_us": 5175596,
         "recall": 0.5,
         "domains_returned": [
           "ampersand",
-          "bendscript",
-          "webhost",
-          "opensentience"
+          "webhost"
+        ],
+        "result_count": 10,
+        "unique_domain_count": 2
+      },
+      "graph_expanded": {
+        "precision": 0.1,
+        "expanded_count": 0,
+        "seed_count": 10,
+        "f1": 0.1667,
+        "topology_max_kappa": 0,
+        "latency_us": 1784652,
+        "recall": 0.5,
+        "domains_returned": [
+          "ampersand",
+          "webhost"
         ],
         "result_count": 10,
         "top_3_scores": [
-          0.1786798964172551,
-          0.17768262905896165,
-          0.17668242308209112
+          0.09692084631225312,
+          0.08716331988424315,
+          0.08065586954603322
         ],
         "topology_routing": "fast",
-        "unique_domain_count": 4
+        "unique_domain_count": 2
       },
       "expected_domains": [
         "ampersand",
@@ -536,98 +561,98 @@
         "f1_gain": 0.0,
         "precision_gain": 0.0,
         "recall_gain": 0.0
-      },
-      "flat_baseline": {
-        "precision": 0.5,
-        "f1": 0.5,
-        "latency_us": 3208090,
-        "recall": 0.5,
-        "domains_returned": [
-          "ampersand",
-          "bendscript",
-          "webhost",
-          "opensentience"
-        ],
-        "result_count": 10,
-        "unique_domain_count": 4
       }
     },
     {
       "id": "NH-1",
       "category": "needle",
       "query": "What is the default prune threshold for the consolidator?",
-      "graph_expanded": {
-        "precision": 0.6,
-        "expanded_count": 0,
-        "seed_count": 10,
-        "f1": 0.75,
-        "topology_max_kappa": 0,
-        "latency_us": 3309391,
-        "recall": 1.0,
+      "flat_baseline": {
+        "precision": 0.0,
+        "f1": 0.0,
+        "latency_us": 5166117,
+        "recall": 0.0,
         "domains_returned": [
-          "graphonomous",
-          "unknown",
-          "bendscript",
           "ampersand",
-          "opensentience"
+          "webhost",
+          "opensentience",
+          "bendscript"
         ],
         "result_count": 10,
+        "unique_domain_count": 4
+      },
+      "graph_expanded": {
+        "precision": 0.0769,
+        "expanded_count": 3,
+        "seed_count": 10,
+        "f1": 0.1429,
+        "topology_max_kappa": 0,
+        "latency_us": 1842067,
+        "recall": 1.0,
+        "domains_returned": [
+          "ampersand",
+          "webhost",
+          "opensentience",
+          "bendscript",
+          "agentromatic",
+          "graphonomous"
+        ],
+        "result_count": 13,
         "top_3_scores": [
-          0.2681590976010311,
-          0.24587756138471206,
-          0.23873045454775393
+          0.08694447370644115,
+          0.06816541147876282,
+          0.06475714090482468
         ],
         "topology_routing": "fast",
-        "unique_domain_count": 5
+        "unique_domain_count": 6
       },
       "expected_domains": [
         "graphonomous"
       ],
       "expansion_delta": {
-        "domain_gain": 0,
-        "f1_gain": 0.0,
-        "precision_gain": 0.0,
-        "recall_gain": 0.0
-      },
-      "flat_baseline": {
-        "precision": 0.6,
-        "f1": 0.75,
-        "latency_us": 891079,
-        "recall": 1.0,
-        "domains_returned": [
-          "graphonomous",
-          "unknown",
-          "bendscript",
-          "ampersand",
-          "opensentience"
-        ],
-        "result_count": 10,
-        "unique_domain_count": 5
+        "domain_gain": 2,
+        "f1_gain": 0.1429,
+        "precision_gain": 0.0769,
+        "recall_gain": 1.0
       }
     },
     {
       "id": "NH-2",
       "category": "needle",
       "query": "What OTP pattern does the lifecycle manager use?",
-      "graph_expanded": {
-        "precision": 0.3,
-        "expanded_count": 0,
-        "seed_count": 10,
-        "f1": 0.4615,
-        "topology_max_kappa": 0,
-        "latency_us": 3235007,
-        "recall": 1.0,
+      "flat_baseline": {
+        "precision": 0.0,
+        "f1": 0.0,
+        "latency_us": 5168803,
+        "recall": 0.0,
         "domains_returned": [
           "ampersand",
-          "ticktickclock",
-          "opensentience",
-          "graphonomous"
+          "graphonomous",
+          "bendscript",
+          "webhost"
         ],
         "result_count": 10,
+        "unique_domain_count": 4
+      },
+      "graph_expanded": {
+        "precision": 0.0,
+        "expanded_count": 5,
+        "seed_count": 10,
+        "f1": 0.0,
+        "topology_max_kappa": 0,
+        "latency_us": 1823861,
+        "recall": 0.0,
+        "domains_returned": [
+          "ampersand",
+          "graphonomous",
+          "bendscript",
+          "webhost"
+        ],
+        "result_count": 15,
         "top_3_scores": [
-          0.280666113877766,
-          0.26787324421410436,
-          0.24807352929778803
+          0.09110489852810097,
+          0.06129380188768151,
+          0.05699401569513074
         ],
         "topology_routing": "fast",
         "unique_domain_count": 4
@@ -640,46 +665,46 @@
         "f1_gain": 0.0,
         "precision_gain": 0.0,
         "recall_gain": 0.0
-      },
-      "flat_baseline": {
-        "precision": 0.3,
-        "f1": 0.4615,
-        "latency_us": 3483124,
-        "recall": 1.0,
-        "domains_returned": [
-          "ampersand",
-          "ticktickclock",
-          "opensentience",
-          "graphonomous"
-        ],
-        "result_count": 10,
-        "unique_domain_count": 4
       }
     },
     {
       "id": "NH-3",
       "category": "needle",
       "query": "What is the migration number range for BendScript's kag schema?",
+      "flat_baseline": {
+        "precision": 0.9,
+        "f1": 0.9474,
+        "latency_us": 5188815,
+        "recall": 1.0,
+        "domains_returned": [
+          "bendscript",
+          "ampersand",
+          "webhost"
+        ],
+        "result_count": 10,
+        "unique_domain_count": 3
+      },
       "graph_expanded": {
         "precision": 0.9,
         "expanded_count": 0,
         "seed_count": 10,
-        "f1": 0.6429,
+        "f1": 0.9474,
         "topology_max_kappa": 0,
-        "latency_us": 982449,
-        "recall": 0.5,
+        "latency_us": 1826635,
+        "recall": 1.0,
         "domains_returned": [
           "bendscript",
-          "opensentience"
+          "ampersand",
+          "webhost"
         ],
         "result_count": 10,
         "top_3_scores": [
-          0.30643173717286454,
-          0.2883997196790756,
-          0.2703317827821229
+          0.05494658157052123,
+          0.05407637277189346,
+          0.05362966695811386
         ],
         "topology_routing": "fast",
-        "unique_domain_count": 2
+        "unique_domain_count": 3
       },
       "expected_domains": [
         "webhost",
@@ -690,18 +715,6 @@
         "f1_gain": 0.0,
         "precision_gain": 0.0,
         "recall_gain": 0.0
-      },
-      "flat_baseline": {
-        "precision": 0.9,
-        "f1": 0.6429,
-        "latency_us": 3249702,
-        "recall": 0.5,
-        "domains_returned": [
-          "bendscript",
-          "opensentience"
-        ],
-        "result_count": 10,
-        "unique_domain_count": 2
       }
     }
   ],

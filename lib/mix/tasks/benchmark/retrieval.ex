@@ -229,6 +229,12 @@ defmodule Mix.Tasks.Benchmark.Retrieval do
     all_recalls = Enum.map(query_results, & &1.graph_expanded.recall)
     all_latencies = Enum.map(query_results, & &1.graph_expanded.latency_us)
 
+    # Flat baseline aggregate stats
+    flat_precisions = Enum.map(query_results, & &1.flat_baseline.precision)
+    flat_recalls = Enum.map(query_results, & &1.flat_baseline.recall)
+    flat_f1s = Enum.map(query_results, & &1.flat_baseline.f1)
+    flat_latencies = Enum.map(query_results, & &1.flat_baseline.latency_us)
+
     results = %{
       benchmark: "OS-E001:retrieval",
       timestamp: DateTime.utc_now() |> DateTime.to_iso8601(),
@@ -242,6 +248,21 @@ defmodule Mix.Tasks.Benchmark.Retrieval do
         kappa_triggered_count:
           Enum.count(query_results, fn q -> q.graph_expanded.topology_max_kappa > 0 end)
       },
+      flat_baseline: %{
+        mean_precision: Float.round(safe_mean(flat_precisions), 4),
+        mean_recall: Float.round(safe_mean(flat_recalls), 4),
+        mean_f1: Float.round(safe_mean(flat_f1s), 4),
+        mean_latency_us: round(safe_mean(flat_latencies))
+      },
+      graph_vs_flat: %{
+        f1_delta:
+          Float.round(
+            safe_mean(Enum.map(query_results, & &1.graph_expanded.f1)) - safe_mean(flat_f1s),
+            4
+          ),
+        precision_delta: Float.round(safe_mean(all_precisions) - safe_mean(flat_precisions), 4),
+        recall_delta: Float.round(safe_mean(all_recalls) - safe_mean(flat_recalls), 4)
+      },
       by_category: by_category,
       queries: query_results
     }
@@ -251,13 +272,27 @@ defmodule Mix.Tasks.Benchmark.Retrieval do
     Mix.shell().info("""
 
     === Retrieval Benchmark Complete ===
-    Queries:    #{results.query_count}
-    Precision:  #{results.overall.mean_precision}
-    Recall:     #{results.overall.mean_recall}
-    F1:         #{results.overall.mean_f1}
-    Mean lat:   #{div(results.overall.mean_latency_us, 1000)} ms
-    κ triggers: #{results.overall.kappa_triggered_count}
-    Output:     #{path}
+    Queries:      #{results.query_count}
+
+    Graph-expanded retrieval:
+      Precision:  #{results.overall.mean_precision}
+      Recall:     #{results.overall.mean_recall}
+      F1:         #{results.overall.mean_f1}
+      Mean lat:   #{div(results.overall.mean_latency_us, 1000)} ms
+
+    Flat baseline (no graph expansion):
+      Precision:  #{results.flat_baseline.mean_precision}
+      Recall:     #{results.flat_baseline.mean_recall}
+      F1:         #{results.flat_baseline.mean_f1}
+      Mean lat:   #{div(results.flat_baseline.mean_latency_us, 1000)} ms
+
+    Graph vs Flat delta:
+      F1:         #{results.graph_vs_flat.f1_delta}
+      Precision:  #{results.graph_vs_flat.precision_delta}
+      Recall:     #{results.graph_vs_flat.recall_delta}
+
+    κ triggers:   #{results.overall.kappa_triggered_count}
+    Output:       #{path}
     """)
   end
 
@@ -296,20 +331,47 @@ defmodule Mix.Tasks.Benchmark.Retrieval do
           not String.starts_with?(path, "graphonomous.com/") ->
         "graphonomous"
 
-      String.starts_with?(path, "WebHost.Systems/") -> "webhost"
-      String.starts_with?(path, "AmpersandBoxDesign/") -> "ampersand"
-      String.starts_with?(path, "bendscript.com/") -> "bendscript"
-      String.starts_with?(path, "opensentience.org/") -> "opensentience"
-      String.starts_with?(path, "agentromatic.com/") -> "agentromatic"
-      String.starts_with?(path, "agentelic.com/") -> "agentelic"
-      String.starts_with?(path, "delegatic.com/") -> "delegatic"
-      String.starts_with?(path, "deliberatic.com/") -> "deliberatic"
-      String.starts_with?(path, "fleetprompt.com/") -> "fleetprompt"
-      String.starts_with?(path, "geofleetic.com/") -> "geofleetic"
-      String.starts_with?(path, "ticktickclock.com/") -> "ticktickclock"
-      String.starts_with?(path, "specprompt.com/") -> "specprompt"
-      String.starts_with?(path, "graphonomous.com/") -> "graphonomous.com"
-      true -> nil
+      String.starts_with?(path, "WebHost.Systems/") ->
+        "webhost"
+
+      String.starts_with?(path, "AmpersandBoxDesign/") ->
+        "ampersand"
+
+      String.starts_with?(path, "bendscript.com/") ->
+        "bendscript"
+
+      String.starts_with?(path, "opensentience.org/") ->
+        "opensentience"
+
+      String.starts_with?(path, "agentromatic.com/") ->
+        "agentromatic"
+
+      String.starts_with?(path, "agentelic.com/") ->
+        "agentelic"
+
+      String.starts_with?(path, "delegatic.com/") ->
+        "delegatic"
+
+      String.starts_with?(path, "deliberatic.com/") ->
+        "deliberatic"
+
+      String.starts_with?(path, "fleetprompt.com/") ->
+        "fleetprompt"
+
+      String.starts_with?(path, "geofleetic.com/") ->
+        "geofleetic"
+
+      String.starts_with?(path, "ticktickclock.com/") ->
+        "ticktickclock"
+
+      String.starts_with?(path, "specprompt.com/") ->
+        "specprompt"
+
+      String.starts_with?(path, "graphonomous.com/") ->
+        "graphonomous.com"
+
+      true ->
+        nil
     end
   end
 

@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-04-01T19:56:55.597939Z",
+  "timestamp": "2026-04-01T22:56:40.401766Z",
   "config": {
     "merge_similarity": 0.95,
     "prune_threshold": 0.1,
@@ -7,100 +7,102 @@
     "cycles_run": 5
   },
   "after": {
-    "avg_confidence": 0.5875343724085437,
+    "avg_confidence": 0.587534043051211,
     "by_type": {
-      "episodic": 18157
+      "semantic": 1,
+      "episodic": 27110
     },
-    "node_count": 18157,
-    "min_confidence": 0.532065859412416,
+    "node_count": 27111,
+    "min_confidence": 0.4519603983999999,
     "max_confidence": 0.5875485179200001,
-    "confidence_stddev": 8.563994441974427e-4
+    "confidence_stddev": 0.0010813060399129338
   },
   "before": {
-    "avg_confidence": 0.6499843509388166,
+    "avg_confidence": 0.649983986573579,
     "by_type": {
-      "episodic": 18157
+      "semantic": 1,
+      "episodic": 27110
     },
-    "node_count": 18157,
-    "min_confidence": 0.5886200000000001,
+    "node_count": 27111,
+    "min_confidence": 0.5,
     "max_confidence": 0.65,
-    "confidence_stddev": 9.474275259838493e-4
+    "confidence_stddev": 0.001196239807449989
   },
   "cycles": [
     {
       "cycle": 1,
-      "avg_confidence": 0.649919,
-      "node_count": 18157,
-      "min_confidence": 0.576848,
+      "avg_confidence": 0.649984,
+      "node_count": 27111,
+      "min_confidence": 0.5,
       "latency_us": 3,
       "max_confidence": 0.65,
-      "confidence_stddev": 0.001453,
+      "confidence_stddev": 0.001196,
       "consolidator_cycle_count": 1
     },
     {
       "cycle": 2,
-      "avg_confidence": 0.636948,
-      "node_count": 18157,
-      "min_confidence": 0.576848,
-      "latency_us": 1,
+      "avg_confidence": 0.636984,
+      "node_count": 27111,
+      "min_confidence": 0.49,
+      "latency_us": 2,
       "max_confidence": 0.637,
-      "confidence_stddev": 0.001151,
+      "confidence_stddev": 0.001172,
       "consolidator_cycle_count": 2
     },
     {
       "cycle": 3,
-      "avg_confidence": 0.624214,
-      "node_count": 18157,
-      "min_confidence": 0.554004,
-      "latency_us": 1,
+      "avg_confidence": 0.624245,
+      "node_count": 27111,
+      "min_confidence": 0.4802,
+      "latency_us": 3,
       "max_confidence": 0.62426,
-      "confidence_stddev": 0.001247,
+      "confidence_stddev": 0.001149,
       "consolidator_cycle_count": 3
     },
     {
       "cycle": 4,
-      "avg_confidence": 0.61171,
-      "node_count": 18157,
-      "min_confidence": 0.554004,
+      "avg_confidence": 0.61176,
+      "node_count": 27111,
+      "min_confidence": 0.470596,
       "latency_us": 2,
       "max_confidence": 0.611775,
-      "confidence_stddev": 0.001184,
+      "confidence_stddev": 0.001126,
       "consolidator_cycle_count": 4
     },
     {
       "cycle": 5,
-      "avg_confidence": 0.599505,
-      "node_count": 18157,
-      "min_confidence": 0.532066,
+      "avg_confidence": 0.599525,
+      "node_count": 27111,
+      "min_confidence": 0.461184,
       "latency_us": 2,
       "max_confidence": 0.599539,
-      "confidence_stddev": 0.001144,
+      "confidence_stddev": 0.001103,
       "consolidator_cycle_count": 5
     }
   ],
   "benchmark": "OS-E001:consolidation",
   "performance": {
-    "total_us": 9,
+    "total_us": 12,
     "mean_cycle_us": 2,
-    "throughput_nodes_per_cycle_per_sec": 1.8157e7
+    "throughput_nodes_per_cycle_per_sec": 2.7111e7
   },
   "decay_analysis": {
     "confidence_trajectory": [
-      0.6499843509388166,
-      0.649919,
-      0.636948,
-      0.624214,
-      0.61171,
-      0.599505
+      0.649983986573579,
+      0.649984,
+      0.636984,
+      0.624245,
+      0.61176,
+      0.599525
     ],
     "decay_per_cycle": [
-      6.5e-5,
-      0.012971,
-      0.012734,
-      0.012504,
-      0.012205
+      -0.0,
+      0.013,
+      0.012739,
+      0.012485,
+      0.012235
     ],
-    "mean_decay_per_cycle": 0.0100958,
+    "mean_decay_per_cycle": 0.010091799999999998,
     "nodes_pruned": 0,
     "survival_rate": 1.0,
     "total_confidence_loss": 0.06245
@@ -150,7 +152,7 @@
         "final_confidence": 0.9
       }
     ],
-    "latency_us": 487806,
+    "latency_us": 441924,
     "survival_threshold": 0.05,
     "test_confidences": [
       0.05,

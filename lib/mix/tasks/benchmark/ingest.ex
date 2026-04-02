@@ -54,7 +54,8 @@ defmodule Mix.Tasks.Benchmark.Ingest do
           extensions: extensions,
           respect_gitignore: false,
           max_file_size_bytes: 1_000_000,
-          max_read_bytes: 16_384
+          max_read_bytes: 16_384,
+          batch_size: 8
         )
       end)
 
@@ -106,6 +107,17 @@ defmodule Mix.Tasks.Benchmark.Ingest do
         Mix.shell().info("Creating cross-domain edges...")
         {edge_us, edge_count} = Helpers.timed(fn -> create_cross_domain_edges(nodes) end)
 
+        # Phase 4: Extract automated edges from imports, references, and cross-project mentions
+        Mix.shell().info("Extracting automated edges from file content...")
+
+        {auto_edge_us, auto_edge_count} =
+          Helpers.timed(fn ->
+            Graphonomous.EdgeExtractor.create_extracted_edges(nodes)
+          end)
+
+        Mix.shell().info("  Automated edges created: #{auto_edge_count}")
+        edge_count = edge_count + auto_edge_count
+
         results = %{
           benchmark: "OS-E001:ingest",
           method: "scan_directory",
@@ -122,6 +134,8 @@ defmodule Mix.Tasks.Benchmark.Ingest do
           performance: %{
             total_scan_us: scan_us,
             edge_creation_us: edge_us,
+            auto_edge_extraction_us: auto_edge_us,
+            auto_edges_created: auto_edge_count,
             throughput_files_per_sec:
               result.files_ingested / max(result.duration_ms / 1000, 0.001)
           },
