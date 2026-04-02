@@ -8,7 +8,7 @@ defmodule Graphonomous.MCPToolsTest do
 
   use ExUnit.Case, async: false
 
-  alias Graphonomous.{Graph, Store}
+  alias Graphonomous.Graph
 
   setup do
     {:ok, nodes} = Graph.list_nodes(%{})

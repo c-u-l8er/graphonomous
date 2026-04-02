@@ -135,9 +135,9 @@ defmodule Graphonomous do
   Update a node.
   """
   def update_node(node_id, attrs) when is_binary(node_id) and is_map(attrs) do
-    attrs
-    |> normalize_node_attrs()
-    |> Graph.update_node(node_id)
+    normalized = normalize_node_attrs(attrs)
+
+    Graph.update_node(node_id, normalized)
     |> unwrap_ok()
   end
 
