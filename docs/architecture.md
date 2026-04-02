@@ -55,18 +55,23 @@ Graphonomous uses a directed knowledge graph with confidence-bearing nodes and w
 - **semantic**: facts, architecture truths, definitions
 - **procedural**: workflows and operating instructions
 - **episodic**: observed events and session outcomes
+- **temporal**: time-indexed observations, monitoring events
+- **outcome**: empirical results of actions (grounding)
+- **goal**: durable intent, objectives, targets
 
 ### Edge Types
 
-Common relationship types include:
+Relationship types include:
 
-- `causal`
-- `supports`
-- `contradicts`
-- `related`
-- `derived_from`
+- `causes`, `resolves` — causal attribution
+- `supports`, `contradicts` — evidential
+- `related_to`, `similar_to` — topical affinity
+- `part_of`, `follows`, `supersedes`, `depends_on` — structural
+- `temporal_before`, `temporal_after`, `co_occurs` — temporal ordering
+- `derived_from` — provenance
+- Legacy aliases: `causal`, `related` (backward-compatible)
 
-Each edge carries a weight (`0.0..1.0`) and helps retrieval quality and provenance traceability.
+Each edge carries a weight (`0.0..1.0`, default 0.3), optional `co_activation_count`, and `decay_rate`.
 
 ---
 
@@ -167,9 +172,13 @@ Attention continuously ranks work across goals using urgency, coverage gaps, and
 
 `Consolidator` runs periodic maintenance to protect graph quality over time:
 
-- confidence decay
-- low-confidence pruning
-- cycle telemetry
+1. Confidence decay
+2. Prune weak nodes
+3. Prune weak edges
+4. Strengthen co-activated edges
+5. Merge similar nodes
+6. Promote timescale (fast → medium → slow → glacial)
+7. Generate abstractions from episodic clusters
 
 This prevents unbounded memory drift and keeps retrieval quality stable.
 

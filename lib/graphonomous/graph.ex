@@ -81,6 +81,21 @@ defmodule Graphonomous.Graph do
     GenServer.call(__MODULE__, {:get_edges_for_node, node_id})
   end
 
+  @spec list_all_edges() :: {:ok, [map()]} | {:error, term()}
+  def list_all_edges do
+    Store.list_all_edges()
+  end
+
+  @spec update_edge(edge_id(), map()) :: {:ok, map()} | {:error, term()}
+  def update_edge(edge_id, attrs) when is_binary(edge_id) and is_map(attrs) do
+    Store.update_edge(edge_id, attrs)
+  end
+
+  @spec delete_edge(edge_id()) :: :ok | {:error, term()}
+  def delete_edge(edge_id) when is_binary(edge_id) do
+    Store.delete_edge(edge_id)
+  end
+
   @spec query(map()) :: {:ok, term()} | {:error, term()}
   def query(params \\ %{}) when is_map(params) do
     operation =
@@ -315,13 +330,14 @@ defmodule Graphonomous.Graph do
     {:ok, ranked}
   end
 
-  defp decode_embedding_blob(nil), do: []
+  @doc "Decode a binary blob of little-endian f32 floats into a list."
+  def decode_embedding_blob(nil), do: []
 
-  defp decode_embedding_blob(blob) when is_binary(blob) do
+  def decode_embedding_blob(blob) when is_binary(blob) do
     decode_f32_le(blob, [])
   end
 
-  defp decode_embedding_blob(_), do: []
+  def decode_embedding_blob(_), do: []
 
   defp decode_f32_le(<<>>, acc), do: Enum.reverse(acc)
 
@@ -330,10 +346,11 @@ defmodule Graphonomous.Graph do
 
   defp decode_f32_le(_partial, acc), do: Enum.reverse(acc)
 
-  defp cosine_similarity([], _), do: 0.0
-  defp cosine_similarity(_, []), do: 0.0
+  @doc "Cosine similarity between two float lists. Returns 0.0 for empty/zero vectors."
+  def cosine_similarity([], _), do: 0.0
+  def cosine_similarity(_, []), do: 0.0
 
-  defp cosine_similarity(a, b) when is_list(a) and is_list(b) do
+  def cosine_similarity(a, b) when is_list(a) and is_list(b) do
     n = min(length(a), length(b))
 
     if n == 0 do
@@ -410,7 +427,7 @@ defmodule Graphonomous.Graph do
   defp normalize_edge_attrs(attrs) do
     attrs
     |> Map.update(:edge_type, :related, &normalize_edge_type/1)
-    |> Map.update(:weight, 0.5, &clamp(to_float(&1), 0.0, 1.0))
+    |> Map.update(:weight, 0.3, &clamp(to_float(&1), 0.0, 1.0))
     |> Map.update(:metadata, %{}, &normalize_metadata/1)
   end
 
@@ -432,28 +449,62 @@ defmodule Graphonomous.Graph do
 
   defp normalize_operation(_), do: :list_nodes
 
-  defp normalize_node_type(type) when type in [:episodic, :semantic, :procedural], do: type
+  @valid_node_types [:episodic, :semantic, :procedural, :temporal, :outcome, :goal]
+
+  defp normalize_node_type(type) when type in @valid_node_types, do: type
 
   defp normalize_node_type(type) when is_binary(type) do
     case String.downcase(String.trim(type)) do
       "episodic" -> :episodic
       "procedural" -> :procedural
+      "temporal" -> :temporal
+      "outcome" -> :outcome
+      "goal" -> :goal
       _ -> :semantic
     end
   end
 
   defp normalize_node_type(_), do: :semantic
 
-  defp normalize_edge_type(type)
-       when type in [:causal, :related, :contradicts, :supports, :derived_from],
-       do: type
+  @valid_edge_types [
+    :causal,
+    :causes,
+    :resolves,
+    :related,
+    :related_to,
+    :part_of,
+    :follows,
+    :contradicts,
+    :supersedes,
+    :depends_on,
+    :similar_to,
+    :supports,
+    :derived_from,
+    :temporal_before,
+    :temporal_after,
+    :co_occurs
+  ]
+
+  defp normalize_edge_type(type) when type in @valid_edge_types, do: type
 
   defp normalize_edge_type(type) when is_binary(type) do
     case String.downcase(String.trim(type)) do
       "causal" -> :causal
+      "causes" -> :causes
+      "resolves" -> :resolves
+      "related" -> :related
+      "related_to" -> :related_to
+      "part_of" -> :part_of
+      "follows" -> :follows
       "contradicts" -> :contradicts
+      "supersedes" -> :supersedes
+      "depends_on" -> :depends_on
+      "similar_to" -> :similar_to
       "supports" -> :supports
       "derived_from" -> :derived_from
+      "temporal_before" -> :temporal_before
+      "temporal_after" -> :temporal_after
+      "co_occurs" -> :co_occurs
       _ -> :related
     end
   end

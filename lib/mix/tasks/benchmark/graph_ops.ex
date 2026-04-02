@@ -50,6 +50,9 @@ defmodule Mix.Tasks.Benchmark.GraphOps do
     Mix.shell().info("Phase 7: deliberate (κ-driven)...")
     {deliberate_us, deliberate_results} = run_deliberation_test()
 
+    Mix.shell().info("Phase 8: new node types & fields (v0.2.0 spec)...")
+    {spec_us, spec_results} = run_spec_compliance_tests()
+
     results = %{
       benchmark: "OS-E001:graph_ops",
       timestamp: DateTime.utc_now() |> DateTime.to_iso8601(),
@@ -60,10 +63,11 @@ defmodule Mix.Tasks.Benchmark.GraphOps do
       retrieve_procedural: Map.merge(procedural_results, %{latency_us: procedural_us}),
       coverage_query: Map.merge(coverage_results, %{latency_us: coverage_us}),
       deliberation: Map.merge(deliberate_results, %{latency_us: deliberate_us}),
+      spec_compliance: Map.merge(spec_results, %{latency_us: spec_us}),
       performance: %{
         total_us:
           query_us + traverse_us + stats_us + episodic_us + procedural_us + coverage_us +
-            deliberate_us
+            deliberate_us + spec_us
       }
     }
 
@@ -79,6 +83,7 @@ defmodule Mix.Tasks.Benchmark.GraphOps do
     retrieve_procedural: #{procedural_results.tests_run} tests (#{procedural_results.tests_passed} passed)
     coverage_query:      #{coverage_results.tests_run} tests (#{coverage_results.tests_passed} passed)
     deliberation:        #{deliberate_results.tests_run} tests (#{deliberate_results.tests_passed} passed)
+    spec_compliance:     #{spec_results.tests_run} tests (#{spec_results.tests_passed} passed)
     Output:              #{path}
     """)
   end
@@ -407,6 +412,173 @@ defmodule Mix.Tasks.Benchmark.GraphOps do
           scc_count: topology.scc_count
         }
       })
+    end)
+  end
+
+  defp run_spec_compliance_tests do
+    Helpers.timed(fn ->
+      # Test new node types: temporal, outcome, goal
+      temporal =
+        Graphonomous.store_node(%{
+          content: "CPU spike observed at 14:00 UTC during deploy",
+          node_type: "temporal",
+          confidence: 0.8,
+          source: "benchmark:spec_compliance"
+        })
+
+      outcome =
+        Graphonomous.store_node(%{
+          content: "Retrieval F1=0.667 on portfolio corpus (OS-E001)",
+          node_type: "outcome",
+          confidence: 0.95,
+          source: "benchmark:spec_compliance"
+        })
+
+      goal =
+        Graphonomous.store_node(%{
+          content: "Achieve F1 > 0.8 on LongMemEval",
+          node_type: "goal",
+          confidence: 0.5,
+          source: "benchmark:spec_compliance"
+        })
+
+      # Test new node fields
+      field_node =
+        Graphonomous.store_node(%{
+          content: "Node with all v0.2.0 fields",
+          node_type: "semantic",
+          confidence: 0.7,
+          source: "benchmark:spec_compliance",
+          metadata: %{
+            "causal_parent_ids" => [temporal.id, outcome.id],
+            "creation_source" => "manual",
+            "timescale" => "fast",
+            "decay_rate" => 0.05
+          }
+        })
+
+      # Test new edge types
+      _causes_edge =
+        Graphonomous.link_nodes(temporal.id, outcome.id, %{
+          edge_type: "causes",
+          weight: 0.8
+        })
+
+      _resolves_edge =
+        Graphonomous.link_nodes(outcome.id, goal.id, %{
+          edge_type: "resolves",
+          weight: 0.6
+        })
+
+      _temporal_edge =
+        Graphonomous.link_nodes(temporal.id, goal.id, %{
+          edge_type: "temporal_before",
+          weight: 0.7
+        })
+
+      tests = [
+        %{
+          name: "temporal node type round-trips",
+          run: fn ->
+            fetched = Graphonomous.get_node(temporal.id)
+            is_map(fetched) and fetched.node_type == :temporal
+          end
+        },
+        %{
+          name: "outcome node type round-trips",
+          run: fn ->
+            fetched = Graphonomous.get_node(outcome.id)
+            is_map(fetched) and fetched.node_type == :outcome
+          end
+        },
+        %{
+          name: "goal node type round-trips",
+          run: fn ->
+            fetched = Graphonomous.get_node(goal.id)
+            is_map(fetched) and fetched.node_type == :goal
+          end
+        },
+        %{
+          name: "list_nodes filters by temporal type",
+          run: fn ->
+            nodes = Graphonomous.list_nodes(%{node_type: :temporal})
+            is_list(nodes) and Enum.any?(nodes, &(&1.id == temporal.id))
+          end
+        },
+        %{
+          name: "list_nodes filters by outcome type",
+          run: fn ->
+            nodes = Graphonomous.list_nodes(%{node_type: :outcome})
+            is_list(nodes) and Enum.any?(nodes, &(&1.id == outcome.id))
+          end
+        },
+        %{
+          name: "list_nodes filters by goal type",
+          run: fn ->
+            nodes = Graphonomous.list_nodes(%{node_type: :goal})
+            is_list(nodes) and Enum.any?(nodes, &(&1.id == goal.id))
+          end
+        },
+        %{
+          name: "causes edge type round-trips",
+          run: fn ->
+            edges =
+              Graphonomous.query_graph(%{operation: "get_edges", node_id: temporal.id})
+
+            is_list(edges) and Enum.any?(edges, &(&1.edge_type == :causes))
+          end
+        },
+        %{
+          name: "resolves edge type round-trips",
+          run: fn ->
+            edges =
+              Graphonomous.query_graph(%{operation: "get_edges", node_id: outcome.id})
+
+            is_list(edges) and Enum.any?(edges, &(&1.edge_type == :resolves))
+          end
+        },
+        %{
+          name: "temporal_before edge type round-trips",
+          run: fn ->
+            edges =
+              Graphonomous.query_graph(%{operation: "get_edges", node_id: temporal.id})
+
+            is_list(edges) and Enum.any?(edges, &(&1.edge_type == :temporal_before))
+          end
+        },
+        %{
+          name: "spec default: edge weight defaults to 0.3",
+          run: fn ->
+            edge =
+              Graphonomous.link_nodes(goal.id, field_node.id, %{edge_type: "related"})
+
+            is_map(edge) and abs(edge.weight - 0.3) < 0.01
+          end
+        },
+        %{
+          name: "spec default: node timescale defaults to :medium",
+          run: fn ->
+            fetched = Graphonomous.get_node(temporal.id)
+            is_map(fetched) and fetched.timescale == :medium
+          end
+        },
+        %{
+          name: "spec default: creation_source defaults to :inference",
+          run: fn ->
+            fetched = Graphonomous.get_node(temporal.id)
+            is_map(fetched) and fetched.creation_source == :inference
+          end
+        }
+      ]
+
+      test_results = run_tests(tests)
+
+      # Cleanup
+      Enum.each([temporal.id, outcome.id, goal.id, field_node.id], fn id ->
+        Graphonomous.delete_node(id)
+      end)
+
+      test_results
     end)
   end
 

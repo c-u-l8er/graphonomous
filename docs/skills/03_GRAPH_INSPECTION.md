@@ -37,7 +37,7 @@ you chose. Think of it as four read-only tools behind one name.
 | Param | Type | Default | Description |
 |-------|------|---------|-------------|
 | `operation` | string | — | `"list_nodes"` |
-| `node_type` | string | all types | Filter: `"episodic"`, `"semantic"`, or `"procedural"` |
+| `node_type` | string | all types | Filter: `"episodic"`, `"semantic"`, `"procedural"`, `"temporal"`, `"outcome"`, or `"goal"` |
 | `min_confidence` | number | 0.0 | Only return nodes with confidence ≥ this value |
 | `limit` | number | all | Maximum number of nodes to return |
 

@@ -51,8 +51,8 @@ defmodule Graphonomous.MCP.Resources.RecentNodes do
   end
 
   defp node_recency(node) do
-    # Prefer access_recency, fall back to updated_at, then created_at
-    parse_datetime(Map.get(node, :access_recency)) ||
+    # Prefer last_accessed_at, fall back to updated_at, then created_at
+    parse_datetime(Map.get(node, :last_accessed_at)) ||
       parse_datetime(Map.get(node, :updated_at)) ||
       parse_datetime(Map.get(node, :created_at)) ||
       ~U[1970-01-01 00:00:00Z]

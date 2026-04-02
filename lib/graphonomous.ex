@@ -17,7 +17,7 @@ defmodule Graphonomous do
     Retriever
   }
 
-  @allowed_node_types [:episodic, :semantic, :procedural]
+  @allowed_node_types [:episodic, :semantic, :procedural, :temporal, :outcome, :goal]
   @allowed_statuses [:success, :partial_success, :failure, :timeout]
 
   @doc """
@@ -388,6 +388,9 @@ defmodule Graphonomous do
       "episodic" -> :episodic
       "semantic" -> :semantic
       "procedural" -> :procedural
+      "temporal" -> :temporal
+      "outcome" -> :outcome
+      "goal" -> :goal
       _ -> :semantic
     end
   end

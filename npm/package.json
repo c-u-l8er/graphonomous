@@ -1,11 +1,11 @@
 {
   "name": "graphonomous",
-  "version": "0.1.12",
-  "description": "npm wrapper for the Graphonomous MCP server CLI",
+  "version": "0.2.0",
+  "description": "Continual learning MCP server for AI agents — topology-aware knowledge graph with kappa-routing, 22 tools, and neural embeddings",
   "private": false,
-  "license": "UNLICENSED",
-  "author": "Ampersandbox",
-  "homepage": "https://github.com/c-u-l8er/graphonomous#readme",
+  "license": "Apache-2.0",
+  "author": "Ampersand Box Design <travis@ampersandboxdesign.com> (https://ampersandboxdesign.com)",
+  "homepage": "https://graphonomous.com",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/c-u-l8er/graphonomous.git"
@@ -29,12 +29,21 @@
   },
   "keywords": [
     "mcp",
+    "mcp-server",
     "model-context-protocol",
     "graphonomous",
     "ai",
     "agent",
+    "agent-memory",
+    "knowledge-graph",
+    "continual-learning",
+    "topology",
+    "kappa-routing",
     "elixir",
-    "cli"
+    "cli",
+    "claude",
+    "cursor",
+    "zed"
   ],
   "engines": {
     "node": ">=18"

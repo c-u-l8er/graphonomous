@@ -11,7 +11,9 @@ defmodule Graphonomous.MCP.StoreNode do
       description: "Natural-language knowledge to store"
     )
 
-    field(:node_type, :string, description: "Node type: episodic, semantic, or procedural")
+    field(:node_type, :string,
+      description: "Node type: episodic, semantic, procedural, temporal, outcome, or goal"
+    )
 
     field(:confidence, :number, description: "Confidence score from 0.0 to 1.0")
 
@@ -79,6 +81,9 @@ defmodule Graphonomous.MCP.StoreNode do
     case String.downcase(String.trim(type)) do
       "episodic" -> "episodic"
       "procedural" -> "procedural"
+      "temporal" -> "temporal"
+      "outcome" -> "outcome"
+      "goal" -> "goal"
       _ -> "semantic"
     end
   end

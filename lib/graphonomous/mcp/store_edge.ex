@@ -18,10 +18,10 @@ defmodule Graphonomous.MCP.StoreEdge do
 
     field(:edge_type, :string,
       description:
-        "Edge type: causal, related, contradicts, supports, or derived_from (default: causal)"
+        "Edge type: causal, causes, resolves, related, related_to, part_of, follows, contradicts, supersedes, depends_on, similar_to, supports, derived_from, temporal_before, temporal_after, co_occurs (default: causal)"
     )
 
-    field(:weight, :number, description: "Edge weight from 0.0 to 1.0 (default: 0.5)")
+    field(:weight, :number, description: "Edge weight from 0.0 to 1.0 (default: 0.3)")
 
     field(:metadata, :string, description: "Optional JSON object with extra edge metadata")
   end
@@ -33,7 +33,7 @@ defmodule Graphonomous.MCP.StoreEdge do
 
     attrs = %{
       edge_type: normalize_edge_type(get_param(params, :edge_type, "causal")),
-      weight: normalize_weight(get_param(params, :weight, 0.5)),
+      weight: normalize_weight(get_param(params, :weight, 0.3)),
       metadata: normalize_metadata(get_param(params, :metadata, %{}))
     }
 
@@ -87,10 +87,21 @@ defmodule Graphonomous.MCP.StoreEdge do
   defp normalize_edge_type(type) when is_binary(type) do
     case String.downcase(String.trim(type)) do
       "causal" -> "causal"
+      "causes" -> "causes"
+      "resolves" -> "resolves"
+      "related" -> "related"
+      "related_to" -> "related_to"
+      "part_of" -> "part_of"
+      "follows" -> "follows"
       "contradicts" -> "contradicts"
+      "supersedes" -> "supersedes"
+      "depends_on" -> "depends_on"
+      "similar_to" -> "similar_to"
       "supports" -> "supports"
       "derived_from" -> "derived_from"
-      "related" -> "related"
+      "temporal_before" -> "temporal_before"
+      "temporal_after" -> "temporal_after"
+      "co_occurs" -> "co_occurs"
       _ -> "causal"
     end
   end
@@ -103,11 +114,11 @@ defmodule Graphonomous.MCP.StoreEdge do
   defp normalize_weight(value) when is_binary(value) do
     case Float.parse(value) do
       {parsed, _} -> normalize_weight(parsed)
-      :error -> 0.5
+      :error -> 0.3
     end
   end
 
-  defp normalize_weight(_), do: 0.5
+  defp normalize_weight(_), do: 0.3
 
   defp normalize_metadata(nil), do: %{}
   defp normalize_metadata(value) when is_map(value), do: value

@@ -3,11 +3,11 @@
     "otp_release": "28",
     "elixir_version": "1.19.4",
     "engine": "Graphonomous",
-    "embedder": "auto",
+    "embedder": "fallback",
     "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
-    "engine_version": "0.1.12"
+    "engine_version": "0.2.0"
   },
-  "timestamp": "2026-04-01T22:59:12.833923Z",
+  "timestamp": "2026-04-02T06:19:47.935666Z",
   "version": "2.0.0",
   "benchmark": "OS-E001:combined",
   "corpus": {
@@ -16,12 +16,12 @@
     "method": "scan_directory"
   },
   "graph_final": {
-    "avg_confidence": 0.5875,
+    "avg_confidence": 0.6118,
     "by_type": {
       "semantic": 1,
-      "episodic": 27110
+      "episodic": 18021
     },
-    "node_count": 27111
+    "node_count": 18022
   },
   "phases": {
     "attention": {
@@ -40,67 +40,67 @@
       "benchmark": "OS-E001:attention",
       "cycle": {
         "items_processed": 0,
-        "latency_us": 54700924
+        "latency_us": 120000942
       },
       "goals": {
         "created": 5,
         "linked": [
           {
-            "goal_id": "goal_49e94cbdecf3ea63a6a16be3cd5e40d0",
-            "linked_nodes": 17
+            "goal_id": "goal_671c963f044432e73550efe19ec95143",
+            "linked_nodes": 19
           },
           {
-            "goal_id": "goal_26df70b57b0d474ce1089fbf30713d85",
+            "goal_id": "goal_c42ba16a9ed64a1ef70d4b89914e0edc",
             "linked_nodes": 20
           },
           {
-            "goal_id": "goal_7b355273e8a418907a2d02b8c4e33615",
+            "goal_id": "goal_4beffb5ab20a5f0eb8d1ff004af3259f",
             "linked_nodes": 20
           },
           {
-            "goal_id": "goal_e450d14b521d8262a74863b5ba218d85",
-            "linked_nodes": 15
+            "goal_id": "goal_d3817c88430cc23188711d55368d6a25",
+            "linked_nodes": 20
           },
           {
-            "goal_id": "goal_b003d2f018801e6fe0197290ada48aa6",
+            "goal_id": "goal_0799aa59db204d6cc64e37ba298308e4",
             "linked_nodes": 20
           }
         ]
       },
       "performance": {
-        "cycle_latency_us": 54700924,
-        "survey_latency_us": 51105037,
-        "total_us": 105805961
+        "cycle_latency_us": 120000942,
+        "survey_latency_us": 120000805,
+        "total_us": 240001747
       },
       "survey": {
         "items": [],
         "items_returned": 0,
-        "latency_us": 51105037
+        "latency_us": 120000805
       },
-      "timestamp": "2026-04-01T22:59:12.825576Z"
+      "timestamp": "2026-04-02T06:19:47.684704Z"
     },
     "consolidation": {
       "after": {
-        "avg_confidence": 0.587534043051211,
+        "avg_confidence": 0.6117540830908405,
         "by_type": {
-          "episodic": 27110,
+          "episodic": 18021,
           "semantic": 1
         },
-        "confidence_stddev": 0.0010813060399129338,
-        "max_confidence": 0.5875485179200001,
-        "min_confidence": 0.4519603983999999,
-        "node_count": 27111
+        "confidence_stddev": 0.0017452324591610646,
+        "max_confidence": 0.6537838720000001,
+        "min_confidence": 0.4785429376000001,
+        "node_count": 18022
       },
       "before": {
-        "avg_confidence": 0.649983986573579,
+        "avg_confidence": 0.6242286954305839,
         "by_type": {
-          "episodic": 27110,
+          "episodic": 18039,
           "semantic": 1
         },
-        "confidence_stddev": 0.001196239807449989,
-        "max_confidence": 0.65,
-        "min_confidence": 0.5,
-        "node_count": 27111
+        "confidence_stddev": 0.0019016123630422172,
+        "max_confidence": 0.6671264000000001,
+        "min_confidence": 0.4883091200000001,
+        "node_count": 18040
       },
       "benchmark": "OS-E001:consolidation",
       "config": {
@@ -111,84 +111,103 @@
       },
       "cycles": [
         {
-          "avg_confidence": 0.649984,
-          "confidence_stddev": 0.001196,
-          "consolidator_cycle_count": 1,
+          "avg_confidence": 0.62422,
+          "confidence_stddev": 0.00185,
+          "consolidator_cycle_count": 0,
           "cycle": 1,
           "latency_us": 3,
-          "max_confidence": 0.65,
-          "min_confidence": 0.5,
-          "node_count": 27111
+          "max_confidence": 0.653784,
+          "min_confidence": 0.488309,
+          "node_count": 18040
         },
         {
-          "avg_confidence": 0.636984,
-          "confidence_stddev": 0.001172,
-          "consolidator_cycle_count": 2,
+          "avg_confidence": 0.611754,
+          "confidence_stddev": 0.001745,
+          "consolidator_cycle_count": 0,
           "cycle": 2,
           "latency_us": 2,
-          "max_confidence": 0.637,
-          "min_confidence": 0.49,
-          "node_count": 27111
+          "max_confidence": 0.653784,
+          "min_confidence": 0.478543,
+          "node_count": 18031
         },
         {
-          "avg_confidence": 0.624245,
-          "confidence_stddev": 0.001149,
-          "consolidator_cycle_count": 3,
+          "avg_confidence": 0.611754,
+          "confidence_stddev": 0.001745,
+          "consolidator_cycle_count": 0,
           "cycle": 3,
           "latency_us": 3,
-          "max_confidence": 0.62426,
-          "min_confidence": 0.4802,
-          "node_count": 27111
+          "max_confidence": 0.653784,
+          "min_confidence": 0.478543,
+          "node_count": 18027
         },
         {
-          "avg_confidence": 0.61176,
-          "confidence_stddev": 0.001126,
-          "consolidator_cycle_count": 4,
+          "avg_confidence": 0.611754,
+          "confidence_stddev": 0.001745,
+          "consolidator_cycle_count": 0,
           "cycle": 4,
-          "latency_us": 2,
-          "max_confidence": 0.611775,
-          "min_confidence": 0.470596,
-          "node_count": 27111
+          "latency_us": 3,
+          "max_confidence": 0.653784,
+          "min_confidence": 0.478543,
+          "node_count": 18027
         },
         {
-          "avg_confidence": 0.599525,
-          "confidence_stddev": 0.001103,
-          "consolidator_cycle_count": 5,
+          "avg_confidence": 0.611754,
+          "confidence_stddev": 0.001745,
+          "consolidator_cycle_count": 0,
           "cycle": 5,
-          "latency_us": 2,
-          "max_confidence": 0.599539,
-          "min_confidence": 0.461184,
-          "node_count": 27111
+          "latency_us": 10,
+          "max_confidence": 0.653784,
+          "min_confidence": 0.478543,
+          "node_count": 18027
         }
       ],
       "decay_analysis": {
         "confidence_trajectory": [
-          0.649983986573579,
-          0.649984,
-          0.636984,
-          0.624245,
-          0.61176,
-          0.599525
+          0.6242286954305839,
+          0.62422,
+          0.611754,
+          0.611754,
+          0.611754,
+          0.611754
         ],
         "decay_per_cycle": [
-          -0.0,
-          0.013,
-          0.012739,
-          0.012485,
-          0.012235
+          9.0e-6,
+          0.012466,
+          0.0,
+          0.0,
+          0.0
         ],
-        "mean_decay_per_cycle": 0.010091799999999998,
-        "nodes_pruned": 0,
-        "survival_rate": 1.0,
-        "total_confidence_loss": 0.06245
+        "mean_decay_per_cycle": 0.002495,
+        "nodes_pruned": 18,
+        "survival_rate": 0.999,
+        "total_confidence_loss": 0.012475
+      },
+      "new_stages": {
+        "co_activation": {
+          "initial_weight": 0.5,
+          "note": "weight may increase if co_activation_count > 0",
+          "post_consolidation_weight": 0.5
+        },
+        "edge_pruning": {
+          "expected": "pruned (weight 0.05 < threshold)",
+          "survived_3_cycles": true,
+          "weak_edge_weight": 0.05
+        },
+        "latency_us": 708976,
+        "timescale_promotion": {
+          "access_count": 15,
+          "after": "medium",
+          "before": "medium",
+          "promoted": false
+        }
       },
       "performance": {
-        "mean_cycle_us": 2,
-        "throughput_nodes_per_cycle_per_sec": 2.7111e7,
-        "total_us": 12
+        "mean_cycle_us": 4,
+        "throughput_nodes_per_cycle_per_sec": 1.804e7,
+        "total_us": 21
       },
       "survival_analysis": {
-        "latency_us": 441924,
+        "latency_us": 212434,
         "results": [
           {
             "decay_total": 0.0,
@@ -244,7 +263,7 @@
           0.9
         ]
       },
-      "timestamp": "2026-04-01T22:56:40.401766Z"
+      "timestamp": "2026-04-02T06:14:58.936439Z"
     },
     "goals": {
       "benchmark": "OS-E001:goals",
@@ -263,7 +282,7 @@
             "passed": true
           }
         ],
-        "latency_us": 12622035,
+        "latency_us": 10075136,
         "tests_passed": 3,
         "tests_run": 3
       },
@@ -278,7 +297,7 @@
             "passed": true
           }
         ],
-        "latency_us": 2110509,
+        "latency_us": 3022113,
         "tests_passed": 2,
         "tests_run": 2
       },
@@ -301,14 +320,14 @@
             "passed": true
           }
         ],
-        "latency_us": 5506696,
+        "latency_us": 4368430,
         "tests_passed": 4,
         "tests_run": 4
       },
       "performance": {
-        "total_us": 20239240
+        "total_us": 17465679
       },
-      "timestamp": "2026-04-01T22:50:15.562492Z"
+      "timestamp": "2026-04-02T05:50:55.433655Z"
     },
     "graph_ops": {
       "benchmark": "OS-E001:graph_ops",
@@ -323,7 +342,7 @@
             "passed": true
           }
         ],
-        "latency_us": 3681120,
+        "latency_us": 3224943,
         "tests_passed": 2,
         "tests_run": 2
       },
@@ -338,7 +357,7 @@
             "passed": true
           }
         ],
-        "latency_us": 400555,
+        "latency_us": 204325,
         "tests_passed": 2,
         "tests_run": 2,
         "topology": {
@@ -348,9 +367,9 @@
         }
       },
       "graph_stats": {
-        "latency_us": 220805972,
+        "latency_us": 1277969333,
         "passed": true,
-        "response": "%Anubis.Server.Response{type: :tool, content: [%{\"text\" => \"{\\\"status\\\":\\\"ok\\\",\\\"avg_confidence\\\":0.65,\\\"node_count\\\":27111,\\\"min_confidence\\\":0.5,\\\"edge_count\\\":12094,\\\"max_confidence\\\":0.65,\\\"orphan_node_count\\\":21812,\\\"relationship_distribution\\\":{\\\"derived_from\\\":10106,\\\"related\\\":1987,\\\"supports\\\":1},\\\"source_distribution\\\":{\\\"unknown\\\":27111},\\\"timescale_distribution\\\":{\\\"medium\\\":27111},\\\"type_distribution\\\":{\\\"episodic\\\":27110,\\\"semantic\\\":1}}\", \"type\" => \"text\"}], messages: [], contents: nil, values: [], total: nil, hasMore: false, isError: false, structured_content: nil, metadata: %{}}"
+        "response": "%Anubis.Server.Response{type: :tool, content: [%{\"text\" => \"{\\\"status\\\":\\\"ok\\\",\\\"avg_confidence\\\":0.637,\\\"node_count\\\":18153,\\\"min_confidence\\\":0.5271800000000001,\\\"edge_count\\\":12891,\\\"max_confidence\\\":0.6596000000000001,\\\"orphan_node_count\\\":12280,\\\"relationship_distribution\\\":{\\\"derived_from\\\":10701,\\\"related\\\":2189,\\\"supports\\\":1},\\\"source_distribution\\\":{\\\"consolidation\\\":17,\\\"inference\\\":18136},\\\"timescale_distribution\\\":{\\\"medium\\\":18153},\\\"type_distribution\\\":{\\\"episodic\\\":18152,\\\"semantic\\\":1}}\", \"type\" => \"text\"}], messages: [], contents: nil, values: [], total: nil, hasMore: false, isError: false, structured_content: nil, metadata: %{}}"
       },
       "graph_traverse": {
         "details": [
@@ -363,12 +382,12 @@
             "passed": true
           }
         ],
-        "latency_us": 312729,
+        "latency_us": 378577,
         "tests_passed": 2,
         "tests_run": 2
       },
       "performance": {
-        "total_us": 230437257
+        "total_us": 1285753614
       },
       "query_graph": {
         "details": [
@@ -389,7 +408,7 @@
             "passed": true
           }
         ],
-        "latency_us": 2379624,
+        "latency_us": 1463185,
         "tests_passed": 4,
         "tests_run": 4
       },
@@ -400,7 +419,7 @@
             "passed": true
           }
         ],
-        "latency_us": 867152,
+        "latency_us": 557157,
         "tests_passed": 1,
         "tests_run": 1
       },
@@ -411,11 +430,66 @@
             "passed": true
           }
         ],
-        "latency_us": 1990105,
+        "latency_us": 1481447,
         "tests_passed": 1,
         "tests_run": 1
       },
-      "timestamp": "2026-04-01T22:54:09.924471Z"
+      "spec_compliance": {
+        "details": [
+          {
+            "name": "temporal node type round-trips",
+            "passed": true
+          },
+          {
+            "name": "outcome node type round-trips",
+            "passed": true
+          },
+          {
+            "name": "goal node type round-trips",
+            "passed": true
+          },
+          {
+            "name": "list_nodes filters by temporal type",
+            "passed": true
+          },
+          {
+            "name": "list_nodes filters by outcome type",
+            "passed": true
+          },
+          {
+            "name": "list_nodes filters by goal type",
+            "passed": true
+          },
+          {
+            "name": "causes edge type round-trips",
+            "passed": true
+          },
+          {
+            "name": "resolves edge type round-trips",
+            "passed": true
+          },
+          {
+            "name": "temporal_before edge type round-trips",
+            "passed": true
+          },
+          {
+            "name": "spec default: edge weight defaults to 0.3",
+            "passed": true
+          },
+          {
+            "name": "spec default: node timescale defaults to :medium",
+            "passed": true
+          },
+          {
+            "name": "spec default: creation_source defaults to :inference",
+            "passed": true
+          }
+        ],
+        "latency_us": 474647,
+        "tests_passed": 12,
+        "tests_run": 12
+      },
+      "timestamp": "2026-04-02T06:12:22.070924Z"
     },
     "ingest": {
       "benchmark": "OS-E001:ingest",
@@ -435,49 +509,49 @@
       ],
       "graph": {
         "by_source": {
-          "filesystem_traversal": 18156
+          "filesystem_traversal": 18165
         },
         "by_type": {
-          "episodic": 18156
+          "episodic": 18165
         },
         "confidence": {
           "max": 0.65,
           "mean": 0.6499999999997847,
           "min": 0.65
         },
-        "edges_created": 12850,
+        "edges_created": 12880,
         "extension_distribution": {
           ".css": 28,
-          ".ex": 1078,
-          ".exs": 190,
+          ".ex": 1080,
+          ".exs": 192,
           ".html": 74,
           ".js": 10015,
-          ".json": 1062,
-          ".md": 1501,
+          ".json": 1063,
+          ".md": 1504,
           ".toml": 6,
-          ".ts": 4166,
+          ".ts": 4167,
           ".tsx": 32,
           ".yml": 4
         },
-        "node_count": 18156
+        "node_count": 18165
       },
       "method": "scan_directory",
       "performance": {
-        "auto_edge_extraction_us": 13062682,
-        "auto_edges_created": 12841,
-        "edge_creation_us": 19834,
-        "throughput_files_per_sec": 7.429212567301153,
-        "total_scan_us": 2443874935
+        "auto_edge_extraction_us": 18316968,
+        "auto_edges_created": 12871,
+        "edge_creation_us": 32343,
+        "throughput_files_per_sec": 412.47530597879154,
+        "total_scan_us": 44041466
       },
       "scan": {
-        "error_count": 1,
-        "files_discovered": 18157,
-        "files_failed": 1,
-        "files_ingested": 18156,
+        "error_count": 0,
+        "files_discovered": 18165,
+        "files_failed": 0,
+        "files_ingested": 18165,
         "root_path": "/home/travis/ProjectAmp2",
-        "scan_duration_ms": 2443866
+        "scan_duration_ms": 44039
       },
-      "timestamp": "2026-04-01T22:40:47.440553Z"
+      "timestamp": "2026-04-02T05:26:36.443236Z"
     },
     "learning": {
       "benchmark": "OS-E001:learning",
@@ -505,7 +579,7 @@
             "passed": true
           }
         ],
-        "latency_us": 122752,
+        "latency_us": 10788,
         "tests_passed": 3,
         "tests_run": 3
       },
@@ -514,18 +588,18 @@
           {
             "name": "learn from user interaction",
             "passed": true,
-            "response": "%Anubis.Server.Response{type: :tool, content: [%{\"text\" => \"{\\\"status\\\":\\\"ok\\\",\\\"edges_created\\\":3,\\\"is_novel\\\":false,\\\"novelty_score\\\":0.5234,\\\"claim_count\\\":0,\\\"episodic_node_id\\\":\\\"node_103dceb518b4394835e80a37ffb2a899\\\",\\\"learned_count\\\":1,\\\"learned_node_ids\\\":[\\\"node_103dceb518b4394835e80a37ffb2a899\\\"]}\", \"type\" => \"text\"}], messages: [], contents: nil, values: [], total: nil, hasMore: false, isError: false, structured_content: nil, metadata: %{}}"
+            "response": "%Anubis.Server.Response{type: :tool, content: [%{\"text\" => \"{\\\"status\\\":\\\"ok\\\",\\\"edges_created\\\":3,\\\"is_novel\\\":false,\\\"novelty_score\\\":0.3014,\\\"claim_count\\\":0,\\\"episodic_node_id\\\":\\\"node_8297e171e9a6da6019cf5bebed3ba2e8\\\",\\\"learned_count\\\":1,\\\"learned_node_ids\\\":[\\\"node_8297e171e9a6da6019cf5bebed3ba2e8\\\"]}\", \"type\" => \"text\"}], messages: [], contents: nil, values: [], total: nil, hasMore: false, isError: false, structured_content: nil, metadata: %{}}"
           },
           {
             "name": "learn from assistant response",
             "passed": true,
-            "response": "%Anubis.Server.Response{type: :tool, content: [%{\"text\" => \"{\\\"status\\\":\\\"ok\\\",\\\"edges_created\\\":4,\\\"is_novel\\\":true,\\\"novelty_score\\\":0.902,\\\"claim_count\\\":1,\\\"episodic_node_id\\\":\\\"node_c36adf2037fed5835343206e3cc4b8fe\\\",\\\"learned_count\\\":2,\\\"learned_node_ids\\\":[\\\"node_c36adf2037fed5835343206e3cc4b8fe\\\",\\\"node_8ea36734ee312fd7d0918380e35fb206\\\"]}\", \"type\" => \"text\"}], messages: [], contents: nil, values: [], total: nil, hasMore: false, isError: false, structured_content: nil, metadata: %{}}"
+            "response": "%Anubis.Server.Response{type: :tool, content: [%{\"text\" => \"{\\\"status\\\":\\\"ok\\\",\\\"edges_created\\\":3,\\\"is_novel\\\":false,\\\"novelty_score\\\":0.4545,\\\"claim_count\\\":0,\\\"episodic_node_id\\\":\\\"node_d420dc037ee31b70684a03af409c28f6\\\",\\\"learned_count\\\":1,\\\"learned_node_ids\\\":[\\\"node_d420dc037ee31b70684a03af409c28f6\\\"]}\", \"type\" => \"text\"}], messages: [], contents: nil, values: [], total: nil, hasMore: false, isError: false, structured_content: nil, metadata: %{}}"
           }
         ],
-        "latency_us": 4745541,
-        "net_nodes_created": 3,
-        "nodes_after": 27111,
-        "nodes_before": 27108,
+        "latency_us": 2510051,
+        "net_nodes_created": 2,
+        "nodes_after": 18153,
+        "nodes_before": 18151,
         "tests_passed": 2,
         "tests_run": 2
       },
@@ -547,7 +621,7 @@
             "response": "%Anubis.Server.Response{type: :tool, content: [%{\"text\" => \"{\\\"error\\\":\\\"query is required\\\",\\\"status\\\":\\\"error\\\"}\", \"type\" => \"text\"}], messages: [], contents: nil, values: [], total: nil, hasMore: false, isError: true, structured_content: nil, metadata: %{}}"
           }
         ],
-        "latency_us": 1923,
+        "latency_us": 1317,
         "tests_passed": 3,
         "tests_run": 3
       },
@@ -555,7 +629,7 @@
         "causal_ids_used": 3,
         "details": [
           {
-            "confidence_delta": 0.06,
+            "confidence_delta": 0.09,
             "name": "success increases confidence",
             "passed": true,
             "processed": 3,
@@ -563,7 +637,7 @@
             "updated": 3
           },
           {
-            "confidence_delta": -0.087,
+            "confidence_delta": -0.063,
             "name": "failure decreases confidence",
             "passed": true,
             "processed": 3,
@@ -571,7 +645,7 @@
             "updated": 3
           },
           {
-            "confidence_delta": 0.0034,
+            "confidence_delta": 0.0226,
             "name": "partial_success with evidence",
             "passed": true,
             "processed": 3,
@@ -579,7 +653,7 @@
             "updated": 3
           },
           {
-            "confidence_delta": -0.03778,
+            "confidence_delta": -0.02242,
             "name": "timeout handling",
             "passed": true,
             "processed": 3,
@@ -587,81 +661,81 @@
             "updated": 3
           }
         ],
-        "latency_us": 1551294,
+        "latency_us": 1670638,
         "tests_passed": 4,
         "tests_run": 4
       },
       "performance": {
-        "total_us": 6421510
+        "total_us": 4192794
       },
-      "timestamp": "2026-04-01T22:49:51.371431Z"
+      "timestamp": "2026-04-02T05:50:37.053896Z"
     },
     "retrieval": {
       "benchmark": "OS-E001:retrieval",
       "by_category": {
         "conceptual": {
           "count": 3,
-          "expansion_f1_gain": 0.0635,
+          "expansion_f1_gain": 0.1066,
           "flat_mean_f1": 0.2927,
-          "mean_f1": 0.3562,
-          "mean_latency_us": 4166055.0,
-          "mean_precision": 0.2606,
+          "mean_f1": 0.3993,
+          "mean_latency_us": 4280704.3333,
+          "mean_precision": 0.3269,
           "mean_recall": 0.6111
         },
         "cross_domain": {
           "count": 4,
-          "expansion_f1_gain": -0.0157,
-          "flat_mean_f1": 0.3579,
-          "mean_f1": 0.3422,
-          "mean_latency_us": 4404693.5,
-          "mean_precision": 0.3198,
-          "mean_recall": 0.4167
+          "expansion_f1_gain": 0.0117,
+          "flat_mean_f1": 0.3799,
+          "mean_f1": 0.3916,
+          "mean_latency_us": 3615978.0,
+          "mean_precision": 0.3125,
+          "mean_recall": 0.5834
         },
         "needle": {
           "count": 3,
-          "expansion_f1_gain": 0.0476,
+          "expansion_f1_gain": 0.005,
           "flat_mean_f1": 0.3158,
-          "mean_f1": 0.3634,
-          "mean_latency_us": 1830854.3333,
-          "mean_precision": 0.3256,
+          "mean_f1": 0.3208,
+          "mean_latency_us": 4243985.6667,
+          "mean_precision": 0.2685,
           "mean_recall": 0.6667
         },
         "single_domain": {
           "count": 3,
-          "expansion_f1_gain": 0.0153,
-          "flat_mean_f1": 0.6078,
-          "mean_f1": 0.6232,
-          "mean_latency_us": 2853684.0,
-          "mean_precision": 0.5897,
+          "expansion_f1_gain": -0.0514,
+          "flat_mean_f1": 0.6296,
+          "mean_f1": 0.5782,
+          "mean_latency_us": 4036068.0,
+          "mean_precision": 0.5194,
           "mean_recall": 0.6667
         }
       },
       "flat_baseline": {
-        "mean_f1": 0.3908,
-        "mean_latency_us": 4113151,
+        "mean_f1": 0.4026,
+        "mean_latency_us": 3097939,
         "mean_precision": 0.3692,
-        "mean_recall": 0.4744
+        "mean_recall": 0.5
       },
       "graph_vs_flat": {
-        "f1_delta": 0.0244,
-        "precision_delta": 0.0005,
-        "recall_delta": 0.1026
+        "f1_delta": 0.0175,
+        "precision_delta": -0.0158,
+        "recall_delta": 0.1282
       },
       "overall": {
         "kappa_triggered_count": 0,
-        "mean_f1": 0.4152,
-        "mean_latency_us": 3397735,
-        "mean_precision": 0.3698,
-        "mean_recall": 0.5769,
-        "p95_latency_us": 5425026
+        "mean_f1": 0.4201,
+        "mean_latency_us": 4011245,
+        "mean_precision": 0.3534,
+        "mean_recall": 0.6282,
+        "p95_latency_us": 5413528
       },
       "queries": [
         {
           "category": "single_domain",
           "expansion_delta": {
-            "domain_gain": 0,
-            "f1_gain": 0.046,
-            "precision_gain": 0.0692,
+            "domain_gain": 1,
+            "f1_gain": -0.1197,
+            "precision_gain": -0.175,
             "recall_gain": 0.0
           },
           "expected_domains": [
@@ -673,9 +747,9 @@
               "bendscript",
               "ampersand"
             ],
-            "f1": 0.8235,
-            "latency_us": 1714561,
-            "precision": 0.7,
+            "f1": 0.8889,
+            "latency_us": 1051667,
+            "precision": 0.8,
             "recall": 1.0,
             "result_count": 10,
             "unique_domain_count": 3
@@ -684,14 +758,15 @@
             "domains_returned": [
               "graphonomous",
               "bendscript",
-              "ampersand"
+              "ampersand",
+              "specprompt"
             ],
-            "expanded_count": 3,
-            "f1": 0.8696,
-            "latency_us": 1538407,
-            "precision": 0.7692,
+            "expanded_count": 6,
+            "f1": 0.7692,
+            "latency_us": 1916600,
+            "precision": 0.625,
             "recall": 1.0,
-            "result_count": 13,
+            "result_count": 16,
             "seed_count": 10,
             "top_3_scores": [
               0.10275900414114822,
@@ -700,7 +775,7 @@
             ],
             "topology_max_kappa": 0,
             "topology_routing": "fast",
-            "unique_domain_count": 3
+            "unique_domain_count": 4
           },
           "id": "SD-1",
           "query": "How does the knowledge graph store nodes and edges in SQLite?"
@@ -708,9 +783,9 @@
         {
           "category": "single_domain",
           "expansion_delta": {
-            "domain_gain": 0,
-            "f1_gain": 0.0,
-            "precision_gain": 0.0,
+            "domain_gain": 1,
+            "f1_gain": -0.0345,
+            "precision_gain": -0.0667,
             "recall_gain": 0.0
           },
           "expected_domains": [
@@ -721,7 +796,7 @@
               "webhost"
             ],
             "f1": 1.0,
-            "latency_us": 5326378,
+            "latency_us": 1116529,
             "precision": 1.0,
             "recall": 1.0,
             "result_count": 10,
@@ -729,14 +804,15 @@
           },
           "graph_expanded": {
             "domains_returned": [
-              "webhost"
+              "webhost",
+              "agentelic"
             ],
-            "expanded_count": 3,
-            "f1": 1.0,
-            "latency_us": 5428989,
-            "precision": 1.0,
+            "expanded_count": 5,
+            "f1": 0.9655,
+            "latency_us": 5040925,
+            "precision": 0.9333,
             "recall": 1.0,
-            "result_count": 13,
+            "result_count": 15,
             "seed_count": 10,
             "top_3_scores": [
               0.19010373081008425,
@@ -745,7 +821,7 @@
             ],
             "topology_max_kappa": 0,
             "topology_routing": "fast",
-            "unique_domain_count": 1
+            "unique_domain_count": 2
           },
           "id": "SD-2",
           "query": "What are the WebHost.Systems API contracts for runtime deployment?"
@@ -769,7 +845,7 @@
               "webhost"
             ],
             "f1": 0.0,
-            "latency_us": 5207969,
+            "latency_us": 4145510,
             "precision": 0.0,
             "recall": 0.0,
             "result_count": 10,
@@ -781,14 +857,14 @@
               "graphonomous",
               "opensentience",
               "webhost",
-              "agentromatic"
+              "specprompt"
             ],
-            "expanded_count": 8,
+            "expanded_count": 16,
             "f1": 0.0,
-            "latency_us": 1593656,
+            "latency_us": 5150679,
             "precision": 0.0,
             "recall": 0.0,
-            "result_count": 18,
+            "result_count": 20,
             "seed_count": 10,
             "top_3_scores": [
               0.11667436065800257,
@@ -805,10 +881,10 @@
         {
           "category": "cross_domain",
           "expansion_delta": {
-            "domain_gain": 0,
-            "f1_gain": 0.0,
-            "precision_gain": 0.0,
-            "recall_gain": 0.0
+            "domain_gain": 3,
+            "f1_gain": 0.0911,
+            "precision_gain": 0.05,
+            "recall_gain": 0.3333
           },
           "expected_domains": [
             "opensentience",
@@ -819,36 +895,41 @@
             "domains_returned": [
               "ampersand",
               "bendscript",
-              "webhost"
+              "webhost",
+              "opensentience"
             ],
-            "f1": 0.0,
-            "latency_us": 1687427,
-            "precision": 0.0,
-            "recall": 0.0,
+            "f1": 0.1538,
+            "latency_us": 4292674,
+            "precision": 0.1,
+            "recall": 0.3333,
             "result_count": 10,
-            "unique_domain_count": 3
+            "unique_domain_count": 4
           },
           "graph_expanded": {
             "domains_returned": [
               "ampersand",
               "bendscript",
-              "webhost"
+              "webhost",
+              "opensentience",
+              "delegatic",
+              "specprompt",
+              "fleetprompt"
             ],
-            "expanded_count": 3,
-            "f1": 0.0,
-            "latency_us": 5324672,
-            "precision": 0.0,
-            "recall": 0.0,
-            "result_count": 13,
+            "expanded_count": 10,
+            "f1": 0.2449,
+            "latency_us": 1791234,
+            "precision": 0.15,
+            "recall": 0.6667,
+            "result_count": 20,
             "seed_count": 10,
             "top_3_scores": [
               0.08353674671064039,
               0.07513847957531179,
-              0.0713815555965462
+              0.06318319767343397
             ],
             "topology_max_kappa": 0,
             "topology_routing": "fast",
-            "unique_domain_count": 3
+            "unique_domain_count": 7
           },
           "id": "CD-1",
           "query": "How does governance interact with memory and learning?"
@@ -857,8 +938,8 @@
           "category": "cross_domain",
           "expansion_delta": {
             "domain_gain": 5,
-            "f1_gain": 0.0048,
-            "precision_gain": -0.1333,
+            "f1_gain": 0.0671,
+            "precision_gain": -0.1,
             "recall_gain": 0.3333
           },
           "expected_domains": [
@@ -872,9 +953,9 @@
               "opensentience",
               "webhost"
             ],
-            "f1": 0.6316,
-            "latency_us": 1658411,
-            "precision": 0.6,
+            "f1": 0.6829,
+            "latency_us": 1262840,
+            "precision": 0.7,
             "recall": 0.6667,
             "result_count": 10,
             "unique_domain_count": 3
@@ -884,18 +965,18 @@
               "ampersand",
               "opensentience",
               "webhost",
-              "delegatic",
+              "unknown",
+              "specprompt",
               "agentromatic",
-              "fleetprompt",
-              "agentelic",
+              "bendscript",
               "graphonomous"
             ],
-            "expanded_count": 5,
-            "f1": 0.6364,
-            "latency_us": 5288498,
-            "precision": 0.4667,
+            "expanded_count": 13,
+            "f1": 0.75,
+            "latency_us": 5229148,
+            "precision": 0.6,
             "recall": 1.0,
-            "result_count": 15,
+            "result_count": 20,
             "seed_count": 10,
             "top_3_scores": [
               0.13920705499296776,
@@ -928,7 +1009,7 @@
               "bendscript"
             ],
             "f1": 0.0,
-            "latency_us": 5338896,
+            "latency_us": 4194975,
             "precision": 0.0,
             "recall": 0.0,
             "result_count": 10,
@@ -941,12 +1022,12 @@
               "bendscript",
               "webhost"
             ],
-            "expanded_count": 5,
+            "expanded_count": 9,
             "f1": 0.0,
-            "latency_us": 5425026,
+            "latency_us": 5504741,
             "precision": 0.0,
             "recall": 0.0,
-            "result_count": 15,
+            "result_count": 19,
             "seed_count": 10,
             "top_3_scores": [
               0.1159882264587738,
@@ -963,9 +1044,9 @@
         {
           "category": "cross_domain",
           "expansion_delta": {
-            "domain_gain": 3,
-            "f1_gain": -0.0676,
-            "precision_gain": -0.1875,
+            "domain_gain": 2,
+            "f1_gain": -0.1115,
+            "precision_gain": -0.2,
             "recall_gain": 0.0
           },
           "expected_domains": [
@@ -976,38 +1057,43 @@
           "flat_baseline": {
             "domains_returned": [
               "webhost",
-              "delegatic"
+              "delegatic",
+              "fleetprompt",
+              "specprompt",
+              "graphonomous.com"
             ],
-            "f1": 0.8,
-            "latency_us": 5194517,
-            "precision": 1.0,
+            "f1": 0.6829,
+            "latency_us": 4239488,
+            "precision": 0.7,
             "recall": 0.6667,
             "result_count": 10,
-            "unique_domain_count": 2
+            "unique_domain_count": 5
           },
           "graph_expanded": {
             "domains_returned": [
               "webhost",
               "delegatic",
+              "fleetprompt",
               "specprompt",
+              "graphonomous.com",
               "agentelic",
               "graphonomous"
             ],
-            "expanded_count": 6,
-            "f1": 0.7324,
-            "latency_us": 1580578,
-            "precision": 0.8125,
+            "expanded_count": 11,
+            "f1": 0.5714,
+            "latency_us": 1938789,
+            "precision": 0.5,
             "recall": 0.6667,
-            "result_count": 16,
+            "result_count": 20,
             "seed_count": 10,
             "top_3_scores": [
               0.13309550364359965,
-              0.12644072846141965,
-              0.12333270225088512
+              0.12333270225088512,
+              0.11963481355883336
             ],
             "topology_max_kappa": 0,
             "topology_routing": "fast",
-            "unique_domain_count": 5
+            "unique_domain_count": 7
           },
           "id": "CD-4",
           "query": "What security and compliance requirements exist across the ecosystem?"
@@ -1016,8 +1102,8 @@
           "category": "conceptual",
           "expansion_delta": {
             "domain_gain": 0,
-            "f1_gain": -0.0147,
-            "precision_gain": -0.0182,
+            "f1_gain": 0.1136,
+            "precision_gain": 0.2,
             "recall_gain": 0.0
           },
           "expected_domains": [
@@ -1031,7 +1117,7 @@
               "webhost"
             ],
             "f1": 0.25,
-            "latency_us": 1448437,
+            "latency_us": 1299593,
             "precision": 0.2,
             "recall": 0.3333,
             "result_count": 10,
@@ -1042,12 +1128,12 @@
               "ampersand",
               "webhost"
             ],
-            "expanded_count": 1,
-            "f1": 0.2353,
-            "latency_us": 5357298,
-            "precision": 0.1818,
+            "expanded_count": 5,
+            "f1": 0.3636,
+            "latency_us": 5413528,
+            "precision": 0.4,
             "recall": 0.3333,
-            "result_count": 11,
+            "result_count": 15,
             "seed_count": 10,
             "top_3_scores": [
               0.07577684863118457,
@@ -1064,9 +1150,9 @@
         {
           "category": "conceptual",
           "expansion_delta": {
-            "domain_gain": 0,
-            "f1_gain": 0.2051,
-            "precision_gain": 0.2,
+            "domain_gain": 1,
+            "f1_gain": 0.057,
+            "precision_gain": 0.05,
             "recall_gain": 0.0
           },
           "expected_domains": [
@@ -1075,12 +1161,12 @@
           "flat_baseline": {
             "domains_returned": [
               "opensentience",
-              "graphonomous",
               "bendscript",
+              "graphonomous",
               "webhost"
             ],
             "f1": 0.4615,
-            "latency_us": 5195041,
+            "latency_us": 4423563,
             "precision": 0.3,
             "recall": 1.0,
             "result_count": 10,
@@ -1089,25 +1175,26 @@
           "graph_expanded": {
             "domains_returned": [
               "opensentience",
-              "graphonomous",
               "bendscript",
-              "webhost"
+              "graphonomous",
+              "webhost",
+              "ampersand"
             ],
-            "expanded_count": 6,
-            "f1": 0.6667,
-            "latency_us": 5356215,
-            "precision": 0.5,
+            "expanded_count": 12,
+            "f1": 0.5185,
+            "latency_us": 5287471,
+            "precision": 0.35,
             "recall": 1.0,
-            "result_count": 16,
+            "result_count": 20,
             "seed_count": 10,
             "top_3_scores": [
               0.0835840171288775,
-              0.08091958216742318,
-              0.08005145101662793
+              0.08005145101662793,
+              0.07408969268585966
             ],
             "topology_max_kappa": 0,
             "topology_routing": "fast",
-            "unique_domain_count": 4
+            "unique_domain_count": 5
           },
           "id": "CQ-2",
           "query": "How does confidence decay over time and why does it matter?"
@@ -1116,8 +1203,8 @@
           "category": "conceptual",
           "expansion_delta": {
             "domain_gain": 0,
-            "f1_gain": 0.0,
-            "precision_gain": 0.0,
+            "f1_gain": 0.1491,
+            "precision_gain": 0.1308,
             "recall_gain": 0.0
           },
           "expected_domains": [
@@ -1127,26 +1214,28 @@
           "flat_baseline": {
             "domains_returned": [
               "ampersand",
-              "webhost"
+              "webhost",
+              "graphonomous"
             ],
             "f1": 0.1667,
-            "latency_us": 5175596,
+            "latency_us": 4208529,
             "precision": 0.1,
             "recall": 0.5,
             "result_count": 10,
-            "unique_domain_count": 2
+            "unique_domain_count": 3
           },
           "graph_expanded": {
             "domains_returned": [
               "ampersand",
-              "webhost"
+              "webhost",
+              "graphonomous"
             ],
-            "expanded_count": 0,
-            "f1": 0.1667,
-            "latency_us": 1784652,
-            "precision": 0.1,
+            "expanded_count": 3,
+            "f1": 0.3158,
+            "latency_us": 2141114,
+            "precision": 0.2308,
             "recall": 0.5,
-            "result_count": 10,
+            "result_count": 13,
             "seed_count": 10,
             "top_3_scores": [
               0.09692084631225312,
@@ -1155,7 +1244,7 @@
             ],
             "topology_max_kappa": 0,
             "topology_routing": "fast",
-            "unique_domain_count": 2
+            "unique_domain_count": 3
           },
           "id": "CQ-3",
           "query": "What does 'the symbol is the system' mean in practice?"
@@ -1163,9 +1252,9 @@
         {
           "category": "needle",
           "expansion_delta": {
-            "domain_gain": 2,
-            "f1_gain": 0.1429,
-            "precision_gain": 0.0769,
+            "domain_gain": 3,
+            "f1_gain": 0.1053,
+            "precision_gain": 0.0556,
             "recall_gain": 1.0
           },
           "expected_domains": [
@@ -1179,7 +1268,7 @@
               "bendscript"
             ],
             "f1": 0.0,
-            "latency_us": 5166117,
+            "latency_us": 1252618,
             "precision": 0.0,
             "recall": 0.0,
             "result_count": 10,
@@ -1192,23 +1281,24 @@
               "opensentience",
               "bendscript",
               "agentromatic",
-              "graphonomous"
+              "graphonomous",
+              "agentelic"
             ],
-            "expanded_count": 3,
-            "f1": 0.1429,
-            "latency_us": 1842067,
-            "precision": 0.0769,
+            "expanded_count": 8,
+            "f1": 0.1053,
+            "latency_us": 5179547,
+            "precision": 0.0556,
             "recall": 1.0,
-            "result_count": 13,
+            "result_count": 18,
             "seed_count": 10,
             "top_3_scores": [
               0.08694447370644115,
               0.06816541147876282,
-              0.06475714090482468
+              0.05819679343613705
             ],
             "topology_max_kappa": 0,
             "topology_routing": "fast",
-            "unique_domain_count": 6
+            "unique_domain_count": 7
           },
           "id": "NH-1",
           "query": "What is the default prune threshold for the consolidator?"
@@ -1232,7 +1322,7 @@
               "webhost"
             ],
             "f1": 0.0,
-            "latency_us": 5168803,
+            "latency_us": 4406783,
             "precision": 0.0,
             "recall": 0.0,
             "result_count": 10,
@@ -1245,12 +1335,12 @@
               "bendscript",
               "webhost"
             ],
-            "expanded_count": 5,
+            "expanded_count": 10,
             "f1": 0.0,
-            "latency_us": 1823861,
+            "latency_us": 5379778,
             "precision": 0.0,
             "recall": 0.0,
-            "result_count": 15,
+            "result_count": 20,
             "seed_count": 10,
             "top_3_scores": [
               0.09110489852810097,
@@ -1268,8 +1358,8 @@
           "category": "needle",
           "expansion_delta": {
             "domain_gain": 0,
-            "f1_gain": 0.0,
-            "precision_gain": 0.0,
+            "f1_gain": -0.0902,
+            "precision_gain": -0.15,
             "recall_gain": 0.0
           },
           "expected_domains": [
@@ -1283,7 +1373,7 @@
               "webhost"
             ],
             "f1": 0.9474,
-            "latency_us": 5188815,
+            "latency_us": 4378432,
             "precision": 0.9,
             "recall": 1.0,
             "result_count": 10,
@@ -1295,12 +1385,12 @@
               "ampersand",
               "webhost"
             ],
-            "expanded_count": 0,
-            "f1": 0.9474,
-            "latency_us": 1826635,
-            "precision": 0.9,
+            "expanded_count": 2,
+            "f1": 0.8571,
+            "latency_us": 2172632,
+            "precision": 0.75,
             "recall": 1.0,
-            "result_count": 10,
+            "result_count": 12,
             "seed_count": 10,
             "top_3_scores": [
               0.05494658157052123,
@@ -1316,7 +1406,7 @@
         }
       ],
       "query_count": 13,
-      "timestamp": "2026-04-01T22:42:29.532711Z"
+      "timestamp": "2026-04-02T05:28:10.360132Z"
     },
     "topology": {
       "benchmark": "OS-E001:topology",
@@ -1345,19 +1435,24 @@
             "passed": true
           }
         ],
-        "latency_us": 256086,
+        "latency_us": 143285,
         "tests_passed": 2,
         "tests_run": 2
       },
       "full_graph_analysis": {
-        "dag_node_count": 27014,
-        "edge_count": 12086,
-        "latency_us": 172089,
+        "dag_node_count": 18057,
+        "edge_count": 12879,
+        "latency_us": 423484,
         "max_kappa": 27,
-        "node_count": 27108,
+        "node_count": 18165,
         "routing": "deliberate",
-        "scc_count": 17,
+        "scc_count": 22,
         "sccs": [
+          {
+            "kappa": 1,
+            "routing": "deliberate",
+            "size": 6
+          },
           {
             "kappa": 1,
             "routing": "deliberate",
@@ -1366,12 +1461,17 @@
           {
             "kappa": 1,
             "routing": "deliberate",
-            "size": 12
+            "size": 15
           },
           {
             "kappa": 1,
             "routing": "deliberate",
             "size": 2
+          },
+          {
+            "kappa": 1,
+            "routing": "deliberate",
+            "size": 10
           },
           {
             "kappa": 27,
@@ -1381,7 +1481,12 @@
           {
             "kappa": 1,
             "routing": "deliberate",
-            "size": 10
+            "size": 2
+          },
+          {
+            "kappa": 1,
+            "routing": "deliberate",
+            "size": 2
           },
           {
             "kappa": 1,
@@ -1396,6 +1501,16 @@
           {
             "kappa": 1,
             "routing": "deliberate",
+            "size": 2
+          },
+          {
+            "kappa": 1,
+            "routing": "deliberate",
+            "size": 2
+          },
+          {
+            "kappa": 1,
+            "routing": "deliberate",
             "size": 3
           },
           {
@@ -1406,12 +1521,12 @@
           {
             "kappa": 1,
             "routing": "deliberate",
-            "size": 2
+            "size": 3
           },
           {
             "kappa": 1,
             "routing": "deliberate",
-            "size": 6
+            "size": 2
           },
           {
             "kappa": 1,
@@ -1452,7 +1567,7 @@
             "has_topology": true,
             "max_kappa": 0,
             "query": "How does κ routing work and what triggers deliberation?",
-            "result_count": 15,
+            "result_count": 20,
             "routing": "fast",
             "scc_count": 0
           },
@@ -1460,7 +1575,7 @@
             "has_topology": true,
             "max_kappa": 1,
             "query": "What is the relationship between the protocol spec and Graphonomous implementation?",
-            "result_count": 15,
+            "result_count": 19,
             "routing": "deliberate",
             "scc_count": 1
           },
@@ -1468,12 +1583,12 @@
             "has_topology": true,
             "max_kappa": 0,
             "query": "How does governance interact with agent memory?",
-            "result_count": 11,
+            "result_count": 20,
             "routing": "fast",
             "scc_count": 0
           }
         ],
-        "latency_us": 8752078,
+        "latency_us": 7482658,
         "queries_tested": 3
       },
       "synthetic_cycles": {
@@ -1511,11 +1626,11 @@
             "scc_count": 1
           }
         ],
-        "latency_us": 1573618,
+        "latency_us": 889645,
         "tests_passed": 4,
         "tests_run": 4
       },
-      "timestamp": "2026-04-01T22:49:40.505404Z"
+      "timestamp": "2026-04-02T05:50:31.581070Z"
     }
   },
   "skill_coverage": {
@@ -1544,6 +1659,6 @@
     "coverage_pct": 100,
     "total_mcp_tools": 20
   },
-  "total_duration_human": "59.8 min",
-  "total_duration_us": 3585113361
+  "total_duration_human": "54.6 min",
+  "total_duration_us": 3275623411
 }

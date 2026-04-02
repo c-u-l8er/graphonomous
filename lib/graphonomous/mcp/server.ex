@@ -8,7 +8,7 @@ defmodule Graphonomous.MCP.Server do
 
   use Anubis.Server,
     name: "graphonomous",
-    version: "0.1.0",
+    version: "0.2.0",
     capabilities: [:tools, :resources]
 
   # MCP tool components
@@ -32,6 +32,8 @@ defmodule Graphonomous.MCP.Server do
   component(Graphonomous.MCP.LearnFromFeedback)
   component(Graphonomous.MCP.LearnDetectNovelty)
   component(Graphonomous.MCP.LearnFromInteraction)
+  component(Graphonomous.MCP.ManageEdge)
+  component(Graphonomous.MCP.DeleteNode)
 
   # MCP resource components
   component(Graphonomous.MCP.Resources.HealthSnapshot)

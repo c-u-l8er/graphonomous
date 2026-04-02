@@ -91,6 +91,9 @@ After retrieval, the agent reasons and executes work. New durable knowledge shou
 - `semantic`: facts/architecture
 - `procedural`: how-to/workflows
 - `episodic`: observed events or session outcomes
+- `temporal`: time-indexed observations, monitoring events
+- `outcome`: empirical results of actions (grounding)
+- `goal`: durable intent, objectives, targets
 
 ### Good storage discipline
 
@@ -166,11 +169,15 @@ Attention combines urgency, coverage state, and topology complexity to prioritiz
 
 Consolidation keeps memory quality healthy over time.
 
-Current runtime behavior includes:
+The 7-stage pipeline includes:
 
-- confidence decay
-- low-confidence pruning
-- cycle telemetry/stat snapshots
+1. Confidence decay
+2. Prune weak nodes
+3. Prune weak edges
+4. Strengthen co-activated edges
+5. Merge similar nodes
+6. Promote timescale (fast → medium → slow → glacial)
+7. Generate abstractions from episodic clusters
 
 Operationally, run consolidation:
 

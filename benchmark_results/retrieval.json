@@ -1,62 +1,62 @@
 {
-  "timestamp": "2026-04-01T22:42:29.532711Z",
+  "timestamp": "2026-04-02T15:20:05.807571Z",
   "benchmark": "OS-E001:retrieval",
   "by_category": {
     "single_domain": {
       "count": 3,
-      "mean_f1": 0.6232,
-      "mean_latency_us": 2853684.0,
-      "mean_precision": 0.5897,
-      "mean_recall": 0.6667,
-      "expansion_f1_gain": 0.0153,
-      "flat_mean_f1": 0.6078
+      "mean_f1": 0.6503,
+      "mean_latency_us": 4715372.6667,
+      "mean_precision": 0.575,
+      "mean_recall": 1.0,
+      "expansion_f1_gain": 0.0207,
+      "flat_mean_f1": 0.6296
     },
     "cross_domain": {
       "count": 4,
-      "mean_f1": 0.3422,
-      "mean_latency_us": 4404693.5,
-      "mean_precision": 0.3198,
-      "mean_recall": 0.4167,
-      "expansion_f1_gain": -0.0157,
-      "flat_mean_f1": 0.3579
+      "mean_f1": 0.3887,
+      "mean_latency_us": 4458942.5,
+      "mean_precision": 0.3,
+      "mean_recall": 0.5834,
+      "expansion_f1_gain": 0.0087,
+      "flat_mean_f1": 0.3799
     },
     "conceptual": {
       "count": 3,
-      "mean_f1": 0.3562,
-      "mean_latency_us": 4166055.0,
-      "mean_precision": 0.2606,
+      "mean_f1": 0.3803,
+      "mean_latency_us": 4866648.6667,
+      "mean_precision": 0.3103,
       "mean_recall": 0.6111,
-      "expansion_f1_gain": 0.0635,
+      "expansion_f1_gain": 0.0876,
       "flat_mean_f1": 0.2927
     },
     "needle": {
       "count": 3,
-      "mean_f1": 0.3634,
-      "mean_latency_us": 1830854.3333,
-      "mean_precision": 0.3256,
+      "mean_f1": 0.3208,
+      "mean_latency_us": 4822778.6667,
+      "mean_precision": 0.2685,
       "mean_recall": 0.6667,
-      "expansion_f1_gain": 0.0476,
+      "expansion_f1_gain": 0.005,
       "flat_mean_f1": 0.3158
     }
   },
   "flat_baseline": {
-    "mean_f1": 0.3908,
-    "mean_latency_us": 4113151,
+    "mean_f1": 0.4026,
+    "mean_latency_us": 3191421,
     "mean_precision": 0.3692,
-    "mean_recall": 0.4744
+    "mean_recall": 0.5
   },
   "graph_vs_flat": {
-    "f1_delta": 0.0244,
-    "precision_delta": 0.0005,
-    "recall_delta": 0.1026
+    "f1_delta": 0.0288,
+    "precision_delta": -0.0107,
+    "recall_delta": 0.2051
   },
   "overall": {
     "kappa_triggered_count": 0,
-    "mean_f1": 0.4152,
-    "mean_latency_us": 3397735,
-    "mean_precision": 0.3698,
-    "mean_recall": 0.5769,
-    "p95_latency_us": 5425026
+    "mean_f1": 0.4315,
+    "mean_latency_us": 4696167,
+    "mean_precision": 0.3586,
+    "mean_recall": 0.7051,
+    "p95_latency_us": 6009235
   },
   "queries": [
     {
@@ -64,9 +64,9 @@
       "category": "single_domain",
       "query": "How does the knowledge graph store nodes and edges in SQLite?",
       "flat_baseline": {
-        "precision": 0.7,
-        "f1": 0.8235,
-        "latency_us": 1714561,
+        "precision": 0.8,
+        "f1": 0.8889,
+        "latency_us": 1349126,
         "recall": 1.0,
         "domains_returned": [
           "graphonomous",
@@ -77,34 +77,36 @@
         "unique_domain_count": 3
       },
       "graph_expanded": {
-        "precision": 0.7692,
-        "expanded_count": 3,
+        "precision": 0.625,
+        "expanded_count": 6,
         "seed_count": 10,
-        "f1": 0.8696,
+        "f1": 0.7692,
         "topology_max_kappa": 0,
-        "latency_us": 1538407,
+        "latency_us": 2599597,
         "recall": 1.0,
         "domains_returned": [
           "graphonomous",
           "bendscript",
-          "ampersand"
+          "ampersand",
+          "fleetprompt",
+          "opensentience"
         ],
-        "result_count": 13,
+        "result_count": 16,
         "top_3_scores": [
           0.10275900414114822,
           0.08978199314482642,
           0.08957907120033595
         ],
         "topology_routing": "fast",
-        "unique_domain_count": 3
+        "unique_domain_count": 5
       },
       "expected_domains": [
         "graphonomous"
       ],
       "expansion_delta": {
-        "domain_gain": 0,
-        "f1_gain": 0.046,
-        "precision_gain": 0.0692,
+        "domain_gain": 2,
+        "f1_gain": -0.1197,
+        "precision_gain": -0.175,
         "recall_gain": 0.0
       }
     },
@@ -115,7 +117,7 @@
       "flat_baseline": {
         "precision": 1.0,
         "f1": 1.0,
-        "latency_us": 5326378,
+        "latency_us": 1362498,
         "recall": 1.0,
         "domains_returned": [
           "webhost"
@@ -125,16 +127,16 @@
       },
       "graph_expanded": {
         "precision": 1.0,
-        "expanded_count": 3,
+        "expanded_count": 5,
         "seed_count": 10,
         "f1": 1.0,
         "topology_max_kappa": 0,
-        "latency_us": 5428989,
+        "latency_us": 5844876,
         "recall": 1.0,
         "domains_returned": [
           "webhost"
         ],
-        "result_count": 13,
+        "result_count": 15,
         "top_3_scores": [
           0.19010373081008425,
           0.17968647353189332,
@@ -160,7 +162,7 @@
       "flat_baseline": {
         "precision": 0.0,
         "f1": 0.0,
-        "latency_us": 5207969,
+        "latency_us": 4365555,
         "recall": 0.0,
         "domains_returned": [
           "ampersand",
@@ -172,21 +174,21 @@
         "unique_domain_count": 4
       },
       "graph_expanded": {
-        "precision": 0.0,
-        "expanded_count": 8,
+        "precision": 0.1,
+        "expanded_count": 15,
         "seed_count": 10,
-        "f1": 0.0,
+        "f1": 0.1818,
         "topology_max_kappa": 0,
-        "latency_us": 1593656,
-        "recall": 0.0,
+        "latency_us": 5701645,
+        "recall": 1.0,
         "domains_returned": [
           "ampersand",
           "graphonomous",
           "opensentience",
           "webhost",
-          "agentromatic"
+          "fleetprompt"
         ],
-        "result_count": 18,
+        "result_count": 20,
         "top_3_scores": [
           0.11667436065800257,
           0.10429348034863092,
@@ -200,9 +202,9 @@
       ],
       "expansion_delta": {
         "domain_gain": 1,
-        "f1_gain": 0.0,
-        "precision_gain": 0.0,
-        "recall_gain": 0.0
+        "f1_gain": 0.1818,
+        "precision_gain": 0.1,
+        "recall_gain": 1.0
       }
     },
     {
@@ -210,39 +212,43 @@
       "category": "cross_domain",
       "query": "How does governance interact with memory and learning?",
       "flat_baseline": {
-        "precision": 0.0,
-        "f1": 0.0,
-        "latency_us": 1687427,
-        "recall": 0.0,
+        "precision": 0.1,
+        "f1": 0.1538,
+        "latency_us": 4298193,
+        "recall": 0.3333,
         "domains_returned": [
           "ampersand",
           "bendscript",
-          "webhost"
+          "webhost",
+          "opensentience"
         ],
         "result_count": 10,
-        "unique_domain_count": 3
+        "unique_domain_count": 4
       },
       "graph_expanded": {
-        "precision": 0.0,
-        "expanded_count": 3,
+        "precision": 0.2,
+        "expanded_count": 10,
         "seed_count": 10,
-        "f1": 0.0,
+        "f1": 0.3077,
         "topology_max_kappa": 0,
-        "latency_us": 5324672,
-        "recall": 0.0,
+        "latency_us": 2931076,
+        "recall": 0.6667,
         "domains_returned": [
           "ampersand",
           "bendscript",
-          "webhost"
+          "webhost",
+          "opensentience",
+          "delegatic",
+          "fleetprompt"
         ],
-        "result_count": 13,
+        "result_count": 20,
         "top_3_scores": [
           0.08353674671064039,
           0.07513847957531179,
-          0.0713815555965462
+          0.06318319767343397
         ],
         "topology_routing": "fast",
-        "unique_domain_count": 3
+        "unique_domain_count": 6
       },
       "expected_domains": [
         "opensentience",
@@ -250,10 +256,10 @@
         "delegatic"
       ],
       "expansion_delta": {
-        "domain_gain": 0,
-        "f1_gain": 0.0,
-        "precision_gain": 0.0,
-        "recall_gain": 0.0
+        "domain_gain": 2,
+        "f1_gain": 0.1538,
+        "precision_gain": 0.1,
+        "recall_gain": 0.3333
       }
     },
     {
@@ -261,9 +267,9 @@
       "category": "cross_domain",
       "query": "What protocols does the [&] ecosystem define for agent coordination?",
       "flat_baseline": {
-        "precision": 0.6,
-        "f1": 0.6316,
-        "latency_us": 1658411,
+        "precision": 0.7,
+        "f1": 0.6829,
+        "latency_us": 1376827,
         "recall": 0.6667,
         "domains_returned": [
           "ampersand",
@@ -274,24 +280,24 @@
         "unique_domain_count": 3
       },
       "graph_expanded": {
-        "precision": 0.4667,
-        "expanded_count": 5,
+        "precision": 0.55,
+        "expanded_count": 14,
         "seed_count": 10,
-        "f1": 0.6364,
+        "f1": 0.7097,
         "topology_max_kappa": 0,
-        "latency_us": 5288498,
+        "latency_us": 5926610,
         "recall": 1.0,
         "domains_returned": [
           "ampersand",
           "opensentience",
           "webhost",
-          "delegatic",
-          "agentromatic",
+          "unknown",
           "fleetprompt",
           "agentelic",
-          "graphonomous"
+          "agentromatic",
+          "geofleetic"
         ],
-        "result_count": 15,
+        "result_count": 20,
         "top_3_scores": [
           0.13920705499296776,
           0.1258012882313602,
@@ -307,8 +313,8 @@
       ],
       "expansion_delta": {
         "domain_gain": 5,
-        "f1_gain": 0.0048,
-        "precision_gain": -0.1333,
+        "f1_gain": 0.0268,
+        "precision_gain": -0.15,
         "recall_gain": 0.3333
       }
     },
@@ -319,7 +325,7 @@
       "flat_baseline": {
         "precision": 0.0,
         "f1": 0.0,
-        "latency_us": 5338896,
+        "latency_us": 4467679,
         "recall": 0.0,
         "domains_returned": [
           "ampersand",
@@ -331,11 +337,11 @@
       },
       "graph_expanded": {
         "precision": 0.0,
-        "expanded_count": 5,
+        "expanded_count": 9,
         "seed_count": 10,
         "f1": 0.0,
         "topology_max_kappa": 0,
-        "latency_us": 5425026,
+        "latency_us": 6009235,
         "recall": 0.0,
         "domains_returned": [
           "ampersand",
@@ -343,7 +349,7 @@
           "bendscript",
           "webhost"
         ],
-        "result_count": 15,
+        "result_count": 19,
         "top_3_scores": [
           0.1159882264587738,
           0.1051934195138674,
@@ -368,40 +374,45 @@
       "category": "cross_domain",
       "query": "What security and compliance requirements exist across the ecosystem?",
       "flat_baseline": {
-        "precision": 1.0,
-        "f1": 0.8,
-        "latency_us": 5194517,
-        "recall": 0.6667,
-        "domains_returned": [
-          "webhost",
-          "delegatic"
-        ],
-        "result_count": 10,
-        "unique_domain_count": 2
-      },
-      "graph_expanded": {
-        "precision": 0.8125,
-        "expanded_count": 6,
-        "seed_count": 10,
-        "f1": 0.7324,
-        "topology_max_kappa": 0,
-        "latency_us": 1580578,
+        "precision": 0.7,
+        "f1": 0.6829,
+        "latency_us": 4423184,
         "recall": 0.6667,
         "domains_returned": [
           "webhost",
           "delegatic",
+          "fleetprompt",
           "specprompt",
+          "graphonomous.com"
+        ],
+        "result_count": 10,
+        "unique_domain_count": 5
+      },
+      "graph_expanded": {
+        "precision": 0.45,
+        "expanded_count": 11,
+        "seed_count": 10,
+        "f1": 0.5373,
+        "topology_max_kappa": 0,
+        "latency_us": 2968849,
+        "recall": 0.6667,
+        "domains_returned": [
+          "webhost",
+          "delegatic",
+          "fleetprompt",
+          "specprompt",
+          "graphonomous.com",
           "agentelic",
           "graphonomous"
         ],
-        "result_count": 16,
+        "result_count": 20,
         "top_3_scores": [
           0.13309550364359965,
-          0.12644072846141965,
-          0.12333270225088512
+          0.12333270225088512,
+          0.11963481355883336
         ],
         "topology_routing": "fast",
-        "unique_domain_count": 5
+        "unique_domain_count": 7
       },
       "expected_domains": [
         "webhost",
@@ -409,9 +420,9 @@
         "delegatic"
       ],
       "expansion_delta": {
-        "domain_gain": 3,
-        "f1_gain": -0.0676,
-        "precision_gain": -0.1875,
+        "domain_gain": 2,
+        "f1_gain": -0.1456,
+        "precision_gain": -0.25,
         "recall_gain": 0.0
       }
     },
@@ -422,7 +433,7 @@
       "flat_baseline": {
         "precision": 0.2,
         "f1": 0.25,
-        "latency_us": 1448437,
+        "latency_us": 1315510,
         "recall": 0.3333,
         "domains_returned": [
           "ampersand",
@@ -432,18 +443,18 @@
         "unique_domain_count": 2
       },
       "graph_expanded": {
-        "precision": 0.1818,
-        "expanded_count": 1,
+        "precision": 0.4,
+        "expanded_count": 5,
         "seed_count": 10,
-        "f1": 0.2353,
+        "f1": 0.3636,
         "topology_max_kappa": 0,
-        "latency_us": 5357298,
+        "latency_us": 5931339,
         "recall": 0.3333,
         "domains_returned": [
           "ampersand",
           "webhost"
         ],
-        "result_count": 11,
+        "result_count": 15,
         "top_3_scores": [
           0.07577684863118457,
           0.06777400305137192,
@@ -459,8 +470,8 @@
       ],
       "expansion_delta": {
         "domain_gain": 0,
-        "f1_gain": -0.0147,
-        "precision_gain": -0.0182,
+        "f1_gain": 0.1136,
+        "precision_gain": 0.2,
         "recall_gain": 0.0
       }
     },
@@ -471,47 +482,48 @@
       "flat_baseline": {
         "precision": 0.3,
         "f1": 0.4615,
-        "latency_us": 5195041,
+        "latency_us": 4279894,
         "recall": 1.0,
         "domains_returned": [
           "opensentience",
-          "graphonomous",
           "bendscript",
+          "graphonomous",
           "webhost"
         ],
         "result_count": 10,
         "unique_domain_count": 4
       },
       "graph_expanded": {
-        "precision": 0.5,
-        "expanded_count": 6,
+        "precision": 0.3,
+        "expanded_count": 12,
         "seed_count": 10,
-        "f1": 0.6667,
+        "f1": 0.4615,
         "topology_max_kappa": 0,
-        "latency_us": 5356215,
+        "latency_us": 5893082,
         "recall": 1.0,
         "domains_returned": [
           "opensentience",
-          "graphonomous",
           "bendscript",
-          "webhost"
+          "graphonomous",
+          "webhost",
+          "ampersand"
         ],
-        "result_count": 16,
+        "result_count": 20,
         "top_3_scores": [
           0.0835840171288775,
-          0.08091958216742318,
-          0.08005145101662793
+          0.08005145101662793,
+          0.07833094173592835
         ],
         "topology_routing": "fast",
-        "unique_domain_count": 4
+        "unique_domain_count": 5
       },
       "expected_domains": [
         "graphonomous"
       ],
       "expansion_delta": {
-        "domain_gain": 0,
-        "f1_gain": 0.2051,
-        "precision_gain": 0.2,
+        "domain_gain": 1,
+        "f1_gain": 0.0,
+        "precision_gain": 0.0,
         "recall_gain": 0.0
       }
     },
@@ -522,35 +534,37 @@
       "flat_baseline": {
         "precision": 0.1,
         "f1": 0.1667,
-        "latency_us": 5175596,
+        "latency_us": 4480310,
         "recall": 0.5,
         "domains_returned": [
           "ampersand",
-          "webhost"
+          "webhost",
+          "graphonomous"
         ],
         "result_count": 10,
-        "unique_domain_count": 2
+        "unique_domain_count": 3
       },
       "graph_expanded": {
-        "precision": 0.1,
-        "expanded_count": 0,
+        "precision": 0.2308,
+        "expanded_count": 3,
         "seed_count": 10,
-        "f1": 0.1667,
+        "f1": 0.3158,
         "topology_max_kappa": 0,
-        "latency_us": 1784652,
+        "latency_us": 2775525,
         "recall": 0.5,
         "domains_returned": [
           "ampersand",
-          "webhost"
+          "webhost",
+          "graphonomous"
         ],
-        "result_count": 10,
+        "result_count": 13,
         "top_3_scores": [
           0.09692084631225312,
           0.08716331988424315,
           0.08065586954603322
         ],
         "topology_routing": "fast",
-        "unique_domain_count": 2
+        "unique_domain_count": 3
       },
       "expected_domains": [
         "ampersand",
@@ -558,8 +572,8 @@
       ],
       "expansion_delta": {
         "domain_gain": 0,
-        "f1_gain": 0.0,
-        "precision_gain": 0.0,
+        "f1_gain": 0.1491,
+        "precision_gain": 0.1308,
         "recall_gain": 0.0
       }
     },
@@ -570,7 +584,7 @@
       "flat_baseline": {
         "precision": 0.0,
         "f1": 0.0,
-        "latency_us": 5166117,
+        "latency_us": 1266595,
         "recall": 0.0,
         "domains_returned": [
           "ampersand",
@@ -582,26 +596,26 @@
         "unique_domain_count": 4
       },
       "graph_expanded": {
-        "precision": 0.0769,
-        "expanded_count": 3,
+        "precision": 0.0556,
+        "expanded_count": 8,
         "seed_count": 10,
-        "f1": 0.1429,
+        "f1": 0.1053,
         "topology_max_kappa": 0,
-        "latency_us": 1842067,
+        "latency_us": 6037138,
         "recall": 1.0,
         "domains_returned": [
           "ampersand",
           "webhost",
           "opensentience",
           "bendscript",
-          "agentromatic",
-          "graphonomous"
+          "graphonomous",
+          "agentromatic"
         ],
-        "result_count": 13,
+        "result_count": 18,
         "top_3_scores": [
           0.08694447370644115,
           0.06816541147876282,
-          0.06475714090482468
+          0.05819679343613705
         ],
         "topology_routing": "fast",
         "unique_domain_count": 6
@@ -611,8 +625,8 @@
       ],
       "expansion_delta": {
         "domain_gain": 2,
-        "f1_gain": 0.1429,
-        "precision_gain": 0.0769,
+        "f1_gain": 0.1053,
+        "precision_gain": 0.0556,
         "recall_gain": 1.0
       }
     },
@@ -623,7 +637,7 @@
       "flat_baseline": {
         "precision": 0.0,
         "f1": 0.0,
-        "latency_us": 5168803,
+        "latency_us": 4244605,
         "recall": 0.0,
         "domains_returned": [
           "ampersand",
@@ -636,11 +650,11 @@
       },
       "graph_expanded": {
         "precision": 0.0,
-        "expanded_count": 5,
+        "expanded_count": 10,
         "seed_count": 10,
         "f1": 0.0,
         "topology_max_kappa": 0,
-        "latency_us": 1823861,
+        "latency_us": 5602092,
         "recall": 0.0,
         "domains_returned": [
           "ampersand",
@@ -648,7 +662,7 @@
           "bendscript",
           "webhost"
         ],
-        "result_count": 15,
+        "result_count": 20,
         "top_3_scores": [
           0.09110489852810097,
           0.06129380188768151,
@@ -674,7 +688,7 @@
       "flat_baseline": {
         "precision": 0.9,
         "f1": 0.9474,
-        "latency_us": 5188815,
+        "latency_us": 4258492,
         "recall": 1.0,
         "domains_returned": [
           "bendscript",
@@ -685,19 +699,19 @@
         "unique_domain_count": 3
       },
       "graph_expanded": {
-        "precision": 0.9,
-        "expanded_count": 0,
+        "precision": 0.75,
+        "expanded_count": 2,
         "seed_count": 10,
-        "f1": 0.9474,
+        "f1": 0.8571,
         "topology_max_kappa": 0,
-        "latency_us": 1826635,
+        "latency_us": 2829106,
         "recall": 1.0,
         "domains_returned": [
           "bendscript",
           "ampersand",
           "webhost"
         ],
-        "result_count": 10,
+        "result_count": 12,
         "top_3_scores": [
           0.05494658157052123,
           0.05407637277189346,
@@ -712,8 +726,8 @@
       ],
       "expansion_delta": {
         "domain_gain": 0,
-        "f1_gain": 0.0,
-        "precision_gain": 0.0,
+        "f1_gain": -0.0902,
+        "precision_gain": -0.15,
         "recall_gain": 0.0
       }
     }

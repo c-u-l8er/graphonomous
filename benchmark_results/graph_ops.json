@@ -1,8 +1,8 @@
 {
-  "timestamp": "2026-04-01T22:54:09.924471Z",
+  "timestamp": "2026-04-02T06:12:22.070924Z",
   "benchmark": "OS-E001:graph_ops",
   "performance": {
-    "total_us": 230437257
+    "total_us": 1285753614
   },
   "deliberation": {
     "details": [
@@ -20,7 +20,7 @@
       "routing": "deliberate",
       "scc_count": 1
     },
-    "latency_us": 400555,
+    "latency_us": 204325,
     "tests_run": 2,
     "tests_passed": 2
   },
@@ -43,13 +43,13 @@
         "passed": true
       }
     ],
-    "latency_us": 2379624,
+    "latency_us": 1463185,
     "tests_run": 4,
     "tests_passed": 4
   },
   "graph_stats": {
-    "response": "%Anubis.Server.Response{type: :tool, content: [%{\"text\" => \"{\\\"status\\\":\\\"ok\\\",\\\"avg_confidence\\\":0.65,\\\"node_count\\\":27111,\\\"min_confidence\\\":0.5,\\\"edge_count\\\":12094,\\\"max_confidence\\\":0.65,\\\"orphan_node_count\\\":21812,\\\"relationship_distribution\\\":{\\\"derived_from\\\":10106,\\\"related\\\":1987,\\\"supports\\\":1},\\\"source_distribution\\\":{\\\"unknown\\\":27111},\\\"timescale_distribution\\\":{\\\"medium\\\":27111},\\\"type_distribution\\\":{\\\"episodic\\\":27110,\\\"semantic\\\":1}}\", \"type\" => \"text\"}], messages: [], contents: nil, values: [], total: nil, hasMore: false, isError: false, structured_content: nil, metadata: %{}}",
-    "latency_us": 220805972,
+    "response": "%Anubis.Server.Response{type: :tool, content: [%{\"text\" => \"{\\\"status\\\":\\\"ok\\\",\\\"avg_confidence\\\":0.637,\\\"node_count\\\":18153,\\\"min_confidence\\\":0.5271800000000001,\\\"edge_count\\\":12891,\\\"max_confidence\\\":0.6596000000000001,\\\"orphan_node_count\\\":12280,\\\"relationship_distribution\\\":{\\\"derived_from\\\":10701,\\\"related\\\":2189,\\\"supports\\\":1},\\\"source_distribution\\\":{\\\"consolidation\\\":17,\\\"inference\\\":18136},\\\"timescale_distribution\\\":{\\\"medium\\\":18153},\\\"type_distribution\\\":{\\\"episodic\\\":18152,\\\"semantic\\\":1}}\", \"type\" => \"text\"}], messages: [], contents: nil, values: [], total: nil, hasMore: false, isError: false, structured_content: nil, metadata: %{}}",
+    "latency_us": 1277969333,
     "passed": true
   },
   "coverage_query": {
@@ -63,7 +63,7 @@
         "passed": true
       }
     ],
-    "latency_us": 3681120,
+    "latency_us": 3224943,
     "tests_run": 2,
     "tests_passed": 2
   },
@@ -78,7 +78,7 @@
         "passed": true
       }
     ],
-    "latency_us": 312729,
+    "latency_us": 378577,
     "tests_run": 2,
     "tests_passed": 2
   },
@@ -89,7 +89,7 @@
         "passed": true
       }
     ],
-    "latency_us": 867152,
+    "latency_us": 557157,
     "tests_run": 1,
     "tests_passed": 1
   },
@@ -100,8 +100,63 @@
         "passed": true
       }
     ],
-    "latency_us": 1990105,
+    "latency_us": 1481447,
     "tests_run": 1,
     "tests_passed": 1
+  },
+  "spec_compliance": {
+    "details": [
+      {
+        "name": "temporal node type round-trips",
+        "passed": true
+      },
+      {
+        "name": "outcome node type round-trips",
+        "passed": true
+      },
+      {
+        "name": "goal node type round-trips",
+        "passed": true
+      },
+      {
+        "name": "list_nodes filters by temporal type",
+        "passed": true
+      },
+      {
+        "name": "list_nodes filters by outcome type",
+        "passed": true
+      },
+      {
+        "name": "list_nodes filters by goal type",
+        "passed": true
+      },
+      {
+        "name": "causes edge type round-trips",
+        "passed": true
+      },
+      {
+        "name": "resolves edge type round-trips",
+        "passed": true
+      },
+      {
+        "name": "temporal_before edge type round-trips",
+        "passed": true
+      },
+      {
+        "name": "spec default: edge weight defaults to 0.3",
+        "passed": true
+      },
+      {
+        "name": "spec default: node timescale defaults to :medium",
+        "passed": true
+      },
+      {
+        "name": "spec default: creation_source defaults to :inference",
+        "passed": true
+      }
+    ],
+    "latency_us": 474647,
+    "tests_run": 12,
+    "tests_passed": 12
   }
 }

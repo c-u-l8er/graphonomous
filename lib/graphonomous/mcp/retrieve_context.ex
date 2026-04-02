@@ -30,7 +30,9 @@ defmodule Graphonomous.MCP.RetrieveContext do
 
     field(:min_score, :number, description: "Optional minimum score threshold (0.0-1.0)")
 
-    field(:node_type, :string, description: "Optional filter: episodic, semantic, or procedural")
+    field(:node_type, :string,
+      description: "Optional filter: episodic, semantic, procedural, temporal, outcome, or goal"
+    )
   end
 
   @impl true
@@ -303,16 +305,19 @@ defmodule Graphonomous.MCP.RetrieveContext do
 
   defp to_float(v), do: to_float_or_nil(v) || 0.0
 
+  @valid_node_types [:episodic, :semantic, :procedural, :temporal, :outcome, :goal]
+
   defp normalize_node_type(nil), do: nil
-  defp normalize_node_type(:episodic), do: :episodic
-  defp normalize_node_type(:semantic), do: :semantic
-  defp normalize_node_type(:procedural), do: :procedural
+  defp normalize_node_type(type) when type in @valid_node_types, do: type
 
   defp normalize_node_type(v) when is_binary(v) do
     case String.downcase(String.trim(v)) do
       "episodic" -> :episodic
       "semantic" -> :semantic
       "procedural" -> :procedural
+      "temporal" -> :temporal
+      "outcome" -> :outcome
+      "goal" -> :goal
       _ -> nil
     end
   end

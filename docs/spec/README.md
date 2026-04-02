@@ -1,8 +1,8 @@
 # Graphonomous — Continual Learning Engine
-## Technical Specification v0.1
+## Technical Specification v0.2
 
-**Date:** February 20, 2026  
-**Status:** Draft  
+**Date:** April 2, 2026
+**Status:** Release Candidate  
 **Author:** [&] Ampersand Box Design  
 **License:** MIT (open core)
 
@@ -264,10 +264,10 @@ Graphonomous exposes itself as a single MCP server via `hermes_mcp`. All operati
 defmodule Graphonomous.MCP.Server do
   use Anubis.Server,
     name: "graphonomous",
-    version: "0.1.0",
+    version: "0.2.0",
     capabilities: [:tools, :resources]
 
-  # 21 tool components + 5 resource components registered via component/1
+  # 22 tool components + 5 resource components registered via component/1
 end
 ```
 
@@ -279,6 +279,8 @@ end
 |------|------------|------------|
 | `store_node` | Store an atomic knowledge node | `content`, `node_type?`, `confidence?`, `source?`, `metadata?` |
 | `store_edge` | Create a directed relationship | `source_id`, `target_id`, `edge_type?`, `weight?` |
+| `delete_node` | Remove a node and its connected edges | `node_id` |
+| `manage_edge` | Edge lifecycle: list, update, delete | `operation`, `edge_id?`, `node_id?`, `weight?`, `co_activation_count?` |
 
 #### Knowledge Graph Read/Query
 

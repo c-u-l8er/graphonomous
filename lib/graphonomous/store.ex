@@ -65,6 +65,15 @@ defmodule Graphonomous.Store do
   def list_edges_between(node_ids) when is_list(node_ids),
     do: GenServer.call(__MODULE__, {:list_edges_between, node_ids})
 
+  def list_all_edges,
+    do: GenServer.call(__MODULE__, :list_all_edges)
+
+  def update_edge(edge_id, attrs) when is_binary(edge_id) and is_map(attrs),
+    do: GenServer.call(__MODULE__, {:update_edge, edge_id, attrs}, @write_timeout_ms)
+
+  def delete_edge(edge_id) when is_binary(edge_id),
+    do: GenServer.call(__MODULE__, {:delete_edge, edge_id}, @write_timeout_ms)
+
   def insert_outcome(attrs) when is_map(attrs),
     do: GenServer.call(__MODULE__, {:insert_outcome, attrs}, @write_timeout_ms)
 
@@ -265,6 +274,55 @@ defmodule Graphonomous.Store do
     {:reply, {:ok, edges}, state}
   end
 
+  def handle_call(:list_all_edges, _from, state) do
+    edges =
+      @edges_table
+      |> :ets.tab2list()
+      |> Enum.map(fn {_id, edge} -> edge end)
+
+    {:reply, {:ok, edges}, state}
+  end
+
+  def handle_call({:update_edge, edge_id, attrs}, _from, state) do
+    case :ets.lookup(@edges_table, edge_id) do
+      [{^edge_id, %Edge{} = existing}] ->
+        now = DateTime.utc_now()
+
+        updated = %Edge{
+          existing
+          | weight: normalize_probability(map_get(attrs, :weight, existing.weight)),
+            metadata: normalize_map(map_get(attrs, :metadata, existing.metadata)),
+            co_activation_count:
+              normalize_integer(
+                map_get(attrs, :co_activation_count, existing.co_activation_count),
+                existing.co_activation_count
+              ),
+            decay_rate:
+              normalize_optional_probability(map_get(attrs, :decay_rate, existing.decay_rate)),
+            last_activated_at: now
+        }
+
+        with :ok <- persist_edge(state.conn, updated) do
+          true = :ets.insert(@edges_table, {updated.id, updated})
+          {:reply, {:ok, updated}, state}
+        else
+          {:error, reason} -> {:reply, {:error, reason}, state}
+        end
+
+      _ ->
+        {:reply, {:error, :not_found}, state}
+    end
+  end
+
+  def handle_call({:delete_edge, edge_id}, _from, state) do
+    :ets.delete(@edges_table, edge_id)
+
+    case execute_prepared(state.conn, "DELETE FROM edges WHERE id = ?;", [edge_id]) do
+      :ok -> {:reply, :ok, state}
+      {:error, reason} -> {:reply, {:error, reason}, state}
+    end
+  end
+
   def handle_call({:insert_outcome, attrs}, _from, state) do
     outcome = build_outcome(attrs)
 
@@ -421,12 +479,16 @@ defmodule Graphonomous.Store do
 
     with {:ok, node_rows} <-
            select_all(conn, """
-           SELECT id, content, node_type, confidence, embedding, metadata, source, access_count, created_at, updated_at, last_accessed_at
+           SELECT id, content, node_type, confidence, embedding, metadata, source, access_count,
+                  causal_parent_ids, creation_source, timescale, decay_rate,
+                  created_at, updated_at, last_accessed_at
            FROM nodes;
            """),
          {:ok, edge_rows} <-
            select_all(conn, """
-           SELECT id, source_id, target_id, edge_type, weight, metadata, created_at, last_activated_at
+           SELECT id, source_id, target_id, edge_type, weight, metadata,
+                  co_activation_count, decay_rate,
+                  created_at, last_activated_at
            FROM edges;
            """),
          {:ok, outcome_rows} <-
@@ -463,6 +525,10 @@ defmodule Graphonomous.Store do
          metadata,
          source,
          access_count,
+         causal_parent_ids,
+         creation_source,
+         timescale,
+         decay_rate,
          created_at,
          updated_at,
          last_accessed_at
@@ -478,6 +544,10 @@ defmodule Graphonomous.Store do
       metadata: normalize_db_json_map(metadata),
       source: source,
       access_count: normalize_integer(access_count, 0),
+      causal_parent_ids: normalize_db_json_list(causal_parent_ids),
+      creation_source: normalize_creation_source(creation_source),
+      timescale: normalize_timescale(timescale),
+      decay_rate: normalize_optional_probability(decay_rate),
       created_at: normalize_datetime(created_at, now),
       updated_at: normalize_datetime(updated_at, now),
       last_accessed_at: normalize_datetime(last_accessed_at, now)
@@ -493,6 +563,8 @@ defmodule Graphonomous.Store do
          edge_type,
          weight,
          metadata,
+         co_activation_count,
+         decay_rate,
          created_at,
          last_activated_at
        ]) do
@@ -505,6 +577,8 @@ defmodule Graphonomous.Store do
       edge_type: normalize_edge_type(edge_type),
       weight: normalize_probability(weight),
       metadata: normalize_db_json_map(metadata),
+      co_activation_count: normalize_integer(co_activation_count, 0),
+      decay_rate: normalize_optional_probability(decay_rate),
       created_at: normalize_datetime(created_at, now),
       last_activated_at: normalize_datetime(last_activated_at, now)
     }
@@ -746,6 +820,18 @@ defmodule Graphonomous.Store do
          "ALTER TABLE outcomes ADD COLUMN decision_trace_id TEXT;",
          "ALTER TABLE outcomes ADD COLUMN action_linkage TEXT DEFAULT '{}';",
          "ALTER TABLE outcomes ADD COLUMN grounding TEXT DEFAULT '{}';"
+       ]},
+      {"2026_04_02_node_spec_fields",
+       [
+         "ALTER TABLE nodes ADD COLUMN causal_parent_ids TEXT DEFAULT '[]';",
+         "ALTER TABLE nodes ADD COLUMN creation_source TEXT DEFAULT 'manual';",
+         "ALTER TABLE nodes ADD COLUMN timescale TEXT DEFAULT 'fast';",
+         "ALTER TABLE nodes ADD COLUMN decay_rate REAL;"
+       ]},
+      {"2026_04_02_edge_spec_fields",
+       [
+         "ALTER TABLE edges ADD COLUMN co_activation_count INTEGER DEFAULT 0;",
+         "ALTER TABLE edges ADD COLUMN decay_rate REAL;"
        ]}
     ]
   end
@@ -827,8 +913,10 @@ defmodule Graphonomous.Store do
       conn,
       """
       INSERT OR REPLACE INTO nodes
-      (id, content, node_type, confidence, embedding, metadata, source, access_count, created_at, updated_at, last_accessed_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+      (id, content, node_type, confidence, embedding, metadata, source, access_count,
+       causal_parent_ids, creation_source, timescale, decay_rate,
+       created_at, updated_at, last_accessed_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
       """,
       [
         node.id,
@@ -839,6 +927,10 @@ defmodule Graphonomous.Store do
         json_encode(node.metadata),
         node.source,
         normalize_integer(node.access_count, 0),
+        json_encode(node.causal_parent_ids || []),
+        to_string(node.creation_source || :manual),
+        to_string(node.timescale || :fast),
+        node.decay_rate,
         iso8601(node.created_at),
         iso8601(node.updated_at),
         iso8601(node.last_accessed_at)
@@ -851,8 +943,10 @@ defmodule Graphonomous.Store do
       conn,
       """
       INSERT OR REPLACE INTO edges
-      (id, source_id, target_id, edge_type, weight, metadata, created_at, last_activated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+      (id, source_id, target_id, edge_type, weight, metadata,
+       co_activation_count, decay_rate,
+       created_at, last_activated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
       """,
       [
         edge.id,
@@ -861,6 +955,8 @@ defmodule Graphonomous.Store do
         to_string(edge.edge_type),
         normalize_probability(edge.weight),
         json_encode(edge.metadata),
+        normalize_integer(edge.co_activation_count, 0),
+        edge.decay_rate,
         iso8601(edge.created_at),
         iso8601(edge.last_activated_at)
       ]
@@ -942,6 +1038,10 @@ defmodule Graphonomous.Store do
       metadata: normalize_map(map_get(attrs, :metadata, %{})),
       source: map_get(attrs, :source, nil),
       access_count: normalize_integer(map_get(attrs, :access_count, 0), 0),
+      causal_parent_ids: normalize_string_list(map_get(attrs, :causal_parent_ids, [])),
+      creation_source: normalize_creation_source(map_get(attrs, :creation_source, :inference)),
+      timescale: normalize_timescale(map_get(attrs, :timescale, :medium)),
+      decay_rate: normalize_optional_probability(map_get(attrs, :decay_rate, nil)),
       created_at: map_get(attrs, :created_at, now) |> normalize_datetime(now),
       updated_at: map_get(attrs, :updated_at, now) |> normalize_datetime(now),
       last_accessed_at: map_get(attrs, :last_accessed_at, now) |> normalize_datetime(now)
@@ -961,6 +1061,12 @@ defmodule Graphonomous.Store do
         source: map_get(attrs, :source, node.source),
         access_count:
           normalize_integer(map_get(attrs, :access_count, node.access_count), node.access_count),
+        causal_parent_ids:
+          normalize_string_list(map_get(attrs, :causal_parent_ids, node.causal_parent_ids)),
+        creation_source:
+          normalize_creation_source(map_get(attrs, :creation_source, node.creation_source)),
+        timescale: normalize_timescale(map_get(attrs, :timescale, node.timescale)),
+        decay_rate: normalize_optional_probability(map_get(attrs, :decay_rate, node.decay_rate)),
         updated_at: now
     }
   end
@@ -973,8 +1079,10 @@ defmodule Graphonomous.Store do
       source_id: map_get(attrs, :source_id),
       target_id: map_get(attrs, :target_id),
       edge_type: normalize_edge_type(map_get(attrs, :edge_type, :related)),
-      weight: normalize_probability(map_get(attrs, :weight, 0.5)),
+      weight: normalize_probability(map_get(attrs, :weight, 0.3)),
       metadata: normalize_map(map_get(attrs, :metadata, %{})),
+      co_activation_count: normalize_integer(map_get(attrs, :co_activation_count, 0), 0),
+      decay_rate: normalize_optional_probability(map_get(attrs, :decay_rate, nil)),
       created_at: map_get(attrs, :created_at, now) |> normalize_datetime(now),
       last_activated_at: map_get(attrs, :last_activated_at, now) |> normalize_datetime(now)
     }
@@ -1094,32 +1202,116 @@ defmodule Graphonomous.Store do
     end
   end
 
-  defp normalize_node_type(type) when type in [:episodic, :semantic, :procedural], do: type
+  @valid_node_types [:episodic, :semantic, :procedural, :temporal, :outcome, :goal]
+  @valid_edge_types [
+    :causal,
+    :causes,
+    :resolves,
+    :related,
+    :related_to,
+    :part_of,
+    :follows,
+    :contradicts,
+    :supersedes,
+    :depends_on,
+    :similar_to,
+    :supports,
+    :derived_from,
+    :temporal_before,
+    :temporal_after,
+    :co_occurs
+  ]
+
+  defp normalize_node_type(type) when type in @valid_node_types, do: type
 
   defp normalize_node_type(type) when is_binary(type) do
     case String.downcase(String.trim(type)) do
       "episodic" -> :episodic
       "procedural" -> :procedural
+      "temporal" -> :temporal
+      "outcome" -> :outcome
+      "goal" -> :goal
       _ -> :semantic
     end
   end
 
   defp normalize_node_type(_), do: :semantic
 
-  defp normalize_edge_type(type)
-       when type in [:causal, :related, :contradicts, :supports, :derived_from], do: type
+  defp normalize_edge_type(type) when type in @valid_edge_types, do: type
 
   defp normalize_edge_type(type) when is_binary(type) do
     case String.downcase(String.trim(type)) do
       "causal" -> :causal
+      "causes" -> :causes
+      "resolves" -> :resolves
+      "related" -> :related
+      "related_to" -> :related_to
+      "part_of" -> :part_of
+      "follows" -> :follows
       "contradicts" -> :contradicts
+      "supersedes" -> :supersedes
+      "depends_on" -> :depends_on
+      "similar_to" -> :similar_to
       "supports" -> :supports
       "derived_from" -> :derived_from
+      "temporal_before" -> :temporal_before
+      "temporal_after" -> :temporal_after
+      "co_occurs" -> :co_occurs
       _ -> :related
     end
   end
 
   defp normalize_edge_type(_), do: :related
+
+  @valid_creation_sources [:manual, :inference, :consolidation, :federation]
+
+  defp normalize_creation_source(s) when s in @valid_creation_sources, do: s
+
+  defp normalize_creation_source(s) when is_binary(s) do
+    case String.downcase(String.trim(s)) do
+      "inference" -> :inference
+      "consolidation" -> :consolidation
+      "federation" -> :federation
+      "manual" -> :manual
+      _ -> :inference
+    end
+  end
+
+  defp normalize_creation_source(_), do: :inference
+
+  @valid_timescales [:fast, :medium, :slow, :glacial]
+
+  defp normalize_timescale(t) when t in @valid_timescales, do: t
+
+  defp normalize_timescale(t) when is_binary(t) do
+    case String.downcase(String.trim(t)) do
+      "medium" -> :medium
+      "slow" -> :slow
+      "fast" -> :fast
+      "glacial" -> :glacial
+      _ -> :medium
+    end
+  end
+
+  defp normalize_timescale(_), do: :medium
+
+  defp normalize_optional_probability(nil), do: nil
+
+  defp normalize_optional_probability(v) when is_float(v) do
+    v |> max(0.0) |> min(1.0)
+  end
+
+  defp normalize_optional_probability(v) when is_integer(v),
+    do: normalize_optional_probability(v * 1.0)
+
+  defp normalize_optional_probability(v) when is_binary(v) do
+    case Float.parse(v) do
+      {f, _} -> normalize_optional_probability(f)
+      :error -> nil
+    end
+  end
+
+  defp normalize_optional_probability(_), do: nil
 
   defp normalize_status(status) when status in [:success, :partial_success, :failure, :timeout],
     do: status

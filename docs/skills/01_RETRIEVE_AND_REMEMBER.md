@@ -34,7 +34,7 @@ If you do nothing else with Graphonomous, do this.
 | `expansion_hops` | | number | 1 | How many edge-hops to expand from seed results |
 | `neighbors_per_node` | | number | 5 | Max neighbors expanded per seed node |
 | `min_score` | | number | — | Minimum relevance score threshold (0.0–1.0) |
-| `node_type` | | string | — | Filter: `episodic`, `semantic`, or `procedural` |
+| `node_type` | | string | — | Filter: `episodic`, `semantic`, `procedural`, `temporal`, `outcome`, or `goal` |
 
 ### Example Calls
 
@@ -142,7 +142,7 @@ The response includes several important fields:
 | Param | Required | Type | Default | Description |
 |-------|----------|------|---------|-------------|
 | `content` | ✅ | string | — | The knowledge to store (natural language) |
-| `node_type` | | string | `"semantic"` | `episodic`, `semantic`, or `procedural` |
+| `node_type` | | string | `"semantic"` | `episodic`, `semantic`, `procedural`, `temporal`, `outcome`, or `goal` |
 | `confidence` | | number | 0.5 | How sure you are (0.0–1.0) |
 | `source` | | string | — | Where this knowledge came from |
 | `metadata` | | string (JSON) | `{}` | Extra structured data as a JSON object string |
@@ -273,8 +273,8 @@ that enriches the node beyond free-text content:
 |-------|----------|------|---------|-------------|
 | `source_id` | ✅ | string | — | Source node ID (edge goes FROM this node) |
 | `target_id` | ✅ | string | — | Target node ID (edge goes TO this node) |
-| `edge_type` | | string | `"causal"` | `causal`, `related`, `contradicts`, `supports`, `derived_from` |
-| `weight` | | number | 0.5 | Edge strength / importance (0.0–1.0) |
+| `edge_type` | | string | `"causal"` | `causes`, `resolves`, `related_to`, `part_of`, `follows`, `contradicts`, `supersedes`, `depends_on`, `similar_to`, `supports`, `derived_from`, `temporal_before`, `temporal_after`, `co_occurs` (also accepts legacy: `causal`, `related`) |
+| `weight` | | number | 0.3 | Edge strength / importance (0.0–1.0) |
 | `metadata` | | string (JSON) | `{}` | Extra structured data |
 
 ### Choosing the Right Edge Type

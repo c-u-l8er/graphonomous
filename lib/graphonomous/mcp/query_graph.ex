@@ -22,7 +22,8 @@ defmodule Graphonomous.MCP.QueryGraph do
     field(:node_id, :string, description: "Required for get_node/get_edges")
 
     field(:node_type, :string,
-      description: "Optional filter for list_nodes (episodic|semantic|procedural)"
+      description:
+        "Optional filter for list_nodes (episodic|semantic|procedural|temporal|outcome|goal)"
     )
 
     field(:min_confidence, :number, description: "Optional filter for list_nodes (0.0-1.0)")

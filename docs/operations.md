@@ -247,7 +247,7 @@ Response:
 
 1. Inspect low-confidence node concentration.
 2. Run consolidation.
-3. Add missing high-quality semantic/procedural nodes.
+3. Add missing high-quality nodes (semantic, procedural, temporal, outcome, or goal as appropriate).
 4. Use coverage review to identify knowledge gaps.
 5. Avoid forcing action when routing says `learn` or `escalate`.
 

@@ -86,6 +86,10 @@ defmodule Mix.Tasks.Benchmark.Consolidation do
     Mix.shell().info("Running survival analysis...")
     {survival_us, survival_results} = run_survival_analysis()
 
+    # Test: new consolidation stages (edge pruning, co-activation, timescale promotion)
+    Mix.shell().info("Running new stage analysis (v0.2.0 stages 3-6)...")
+    {stage_us, stage_results} = run_new_stage_analysis()
+
     results = %{
       benchmark: "OS-E001:consolidation",
       timestamp: DateTime.utc_now() |> DateTime.to_iso8601(),
@@ -112,6 +116,7 @@ defmodule Mix.Tasks.Benchmark.Consolidation do
           )
       },
       survival_analysis: Map.merge(survival_results, %{latency_us: survival_us}),
+      new_stages: Map.merge(stage_results, %{latency_us: stage_us}),
       performance: %{
         total_us: Enum.sum(Enum.map(cycle_results, & &1.latency_us)),
         mean_cycle_us: safe_mean(Enum.map(cycle_results, & &1.latency_us)) |> round(),
@@ -226,6 +231,116 @@ defmodule Mix.Tasks.Benchmark.Consolidation do
             nil -> nil
             s -> s.initial_confidence
           end)
+      }
+    end)
+  end
+
+  defp run_new_stage_analysis do
+    Helpers.timed(fn ->
+      # Stage 3: Edge pruning — create a weak edge and verify consolidation removes it
+      n1 =
+        Graphonomous.store_node(%{
+          content: "Stage test: edge prune source",
+          node_type: "semantic",
+          confidence: 0.8,
+          source: "benchmark:stage_test"
+        })
+
+      n2 =
+        Graphonomous.store_node(%{
+          content: "Stage test: edge prune target",
+          node_type: "semantic",
+          confidence: 0.8,
+          source: "benchmark:stage_test"
+        })
+
+      weak_edge =
+        Graphonomous.link_nodes(n1.id, n2.id, %{edge_type: "related", weight: 0.05})
+
+      # Stage 4: Co-activation — create edge with co_activation_count
+      n3 =
+        Graphonomous.store_node(%{
+          content: "Stage test: co-activation node A",
+          node_type: "semantic",
+          confidence: 0.7,
+          source: "benchmark:stage_test"
+        })
+
+      coact_edge =
+        Graphonomous.link_nodes(n1.id, n3.id, %{edge_type: "supports", weight: 0.5})
+
+      # Stage 6: Timescale promotion — create node with high access count
+      promo_node =
+        Graphonomous.store_node(%{
+          content: "Stage test: timescale promotion candidate",
+          node_type: "semantic",
+          confidence: 0.8,
+          source: "benchmark:stage_test"
+        })
+
+      # Simulate high access count by touching many times
+      for _ <- 1..15, do: Graphonomous.Graph.touch_node(promo_node.id)
+
+      before_timescale =
+        case Graphonomous.get_node(promo_node.id) do
+          %{timescale: ts} -> ts
+          _ -> nil
+        end
+
+      # Run 3 consolidation cycles
+      for _ <- 1..3, do: Graphonomous.run_consolidation_now()
+      Process.sleep(500)
+
+      # Check results
+      weak_edge_survived =
+        case Graphonomous.query_graph(%{operation: "get_edges", node_id: n1.id}) do
+          edges when is_list(edges) ->
+            Enum.any?(edges, fn e -> is_map(weak_edge) and e.id == weak_edge.id end)
+
+          _ ->
+            false
+        end
+
+      coact_edge_weight =
+        case Graphonomous.query_graph(%{operation: "get_edges", node_id: n1.id}) do
+          edges when is_list(edges) ->
+            case Enum.find(edges, fn e -> is_map(coact_edge) and e.id == coact_edge.id end) do
+              %{weight: w} -> w
+              _ -> nil
+            end
+
+          _ ->
+            nil
+        end
+
+      after_timescale =
+        case Graphonomous.get_node(promo_node.id) do
+          %{timescale: ts} -> ts
+          _ -> nil
+        end
+
+      # Cleanup
+      Enum.each([n1.id, n2.id, n3.id, promo_node.id], fn id ->
+        Graphonomous.delete_node(id)
+      end)
+
+      %{
+        edge_pruning: %{
+          weak_edge_weight: if(is_map(weak_edge), do: weak_edge.weight, else: nil),
+          survived_3_cycles: weak_edge_survived,
+          expected: "pruned (weight 0.05 < threshold)"
+        },
+        co_activation: %{
+          initial_weight: if(is_map(coact_edge), do: coact_edge.weight, else: nil),
+          post_consolidation_weight: coact_edge_weight,
+          note: "weight may increase if co_activation_count > 0"
+        },
+        timescale_promotion: %{
+          before: before_timescale,
+          after: after_timescale,
+          access_count: 15,
+          promoted: before_timescale != after_timescale
+        }
       }
     end)
   end

@@ -1,8 +1,8 @@
 {
-  "timestamp": "2026-04-01T22:49:51.371431Z",
+  "timestamp": "2026-04-02T05:50:37.053896Z",
   "benchmark": "OS-E001:learning",
   "performance": {
-    "total_us": 6421510
+    "total_us": 4192794
   },
   "feedback_learning": {
     "details": [
@@ -28,7 +28,7 @@
         "confidence_before": 0.591
       }
     ],
-    "latency_us": 122752,
+    "latency_us": 10788,
     "tests_run": 3,
     "tests_passed": 3
   },
@@ -36,21 +36,21 @@
     "details": [
       {
         "name": "learn from user interaction",
-        "response": "%Anubis.Server.Response{type: :tool, content: [%{\"text\" => \"{\\\"status\\\":\\\"ok\\\",\\\"edges_created\\\":3,\\\"is_novel\\\":false,\\\"novelty_score\\\":0.5234,\\\"claim_count\\\":0,\\\"episodic_node_id\\\":\\\"node_103dceb518b4394835e80a37ffb2a899\\\",\\\"learned_count\\\":1,\\\"learned_node_ids\\\":[\\\"node_103dceb518b4394835e80a37ffb2a899\\\"]}\", \"type\" => \"text\"}], messages: [], contents: nil, values: [], total: nil, hasMore: false, isError: false, structured_content: nil, metadata: %{}}",
+        "response": "%Anubis.Server.Response{type: :tool, content: [%{\"text\" => \"{\\\"status\\\":\\\"ok\\\",\\\"edges_created\\\":3,\\\"is_novel\\\":false,\\\"novelty_score\\\":0.3014,\\\"claim_count\\\":0,\\\"episodic_node_id\\\":\\\"node_8297e171e9a6da6019cf5bebed3ba2e8\\\",\\\"learned_count\\\":1,\\\"learned_node_ids\\\":[\\\"node_8297e171e9a6da6019cf5bebed3ba2e8\\\"]}\", \"type\" => \"text\"}], messages: [], contents: nil, values: [], total: nil, hasMore: false, isError: false, structured_content: nil, metadata: %{}}",
         "passed": true
       },
       {
         "name": "learn from assistant response",
-        "response": "%Anubis.Server.Response{type: :tool, content: [%{\"text\" => \"{\\\"status\\\":\\\"ok\\\",\\\"edges_created\\\":4,\\\"is_novel\\\":true,\\\"novelty_score\\\":0.902,\\\"claim_count\\\":1,\\\"episodic_node_id\\\":\\\"node_c36adf2037fed5835343206e3cc4b8fe\\\",\\\"learned_count\\\":2,\\\"learned_node_ids\\\":[\\\"node_c36adf2037fed5835343206e3cc4b8fe\\\",\\\"node_8ea36734ee312fd7d0918380e35fb206\\\"]}\", \"type\" => \"text\"}], messages: [], contents: nil, values: [], total: nil, hasMore: false, isError: false, structured_content: nil, metadata: %{}}",
+        "response": "%Anubis.Server.Response{type: :tool, content: [%{\"text\" => \"{\\\"status\\\":\\\"ok\\\",\\\"edges_created\\\":3,\\\"is_novel\\\":false,\\\"novelty_score\\\":0.4545,\\\"claim_count\\\":0,\\\"episodic_node_id\\\":\\\"node_d420dc037ee31b70684a03af409c28f6\\\",\\\"learned_count\\\":1,\\\"learned_node_ids\\\":[\\\"node_d420dc037ee31b70684a03af409c28f6\\\"]}\", \"type\" => \"text\"}], messages: [], contents: nil, values: [], total: nil, hasMore: false, isError: false, structured_content: nil, metadata: %{}}",
         "passed": true
       }
     ],
-    "latency_us": 4745541,
+    "latency_us": 2510051,
     "tests_run": 2,
     "tests_passed": 2,
-    "net_nodes_created": 3,
-    "nodes_after": 27111,
-    "nodes_before": 27108
+    "net_nodes_created": 2,
+    "nodes_after": 18153,
+    "nodes_before": 18151
   },
   "novelty_detection": {
     "details": [
@@ -70,7 +70,7 @@
         "passed": true
       }
     ],
-    "latency_us": 1923,
+    "latency_us": 1317,
     "tests_run": 3,
     "tests_passed": 3
   },
@@ -82,7 +82,7 @@
         "updated": 3,
         "processed": 3,
         "passed": true,
-        "confidence_delta": 0.06
+        "confidence_delta": 0.09
       },
       {
         "name": "failure decreases confidence",
@@ -90,7 +90,7 @@
         "updated": 3,
         "processed": 3,
         "passed": true,
-        "confidence_delta": -0.087
+        "confidence_delta": -0.063
       },
       {
         "name": "partial_success with evidence",
@@ -98,7 +98,7 @@
         "updated": 3,
         "processed": 3,
         "passed": true,
-        "confidence_delta": 0.0034
+        "confidence_delta": 0.0226
       },
       {
         "name": "timeout handling",
@@ -106,10 +106,10 @@
         "updated": 3,
         "processed": 3,
         "passed": true,
-        "confidence_delta": -0.03778
+        "confidence_delta": -0.02242
       }
     ],
-    "latency_us": 1551294,
+    "latency_us": 1670638,
     "tests_run": 4,
     "tests_passed": 4,
     "causal_ids_used": 3

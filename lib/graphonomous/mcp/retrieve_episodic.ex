@@ -64,7 +64,7 @@ defmodule Graphonomous.MCP.RetrieveEpisodic do
   defp node_timestamp(node) do
     raw =
       Map.get(node, :created_at) ||
-        Map.get(node, :access_recency) ||
+        Map.get(node, :last_accessed_at) ||
         Map.get(node, :updated_at)
 
     parse_datetime(raw)

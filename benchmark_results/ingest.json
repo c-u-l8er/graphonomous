@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-04-01T22:40:47.440553Z",
+  "timestamp": "2026-04-02T15:18:21.640447Z",
   "extensions": [
     ".ex",
     ".exs",
@@ -15,48 +15,48 @@
     ".yaml"
   ],
   "scan": {
-    "files_discovered": 18157,
-    "files_ingested": 18156,
-    "files_failed": 1,
+    "files_discovered": 18165,
+    "files_ingested": 18165,
+    "files_failed": 0,
     "root_path": "/home/travis/ProjectAmp2",
-    "error_count": 1,
-    "scan_duration_ms": 2443866
+    "error_count": 0,
+    "scan_duration_ms": 44169
   },
   "method": "scan_directory",
   "benchmark": "OS-E001:ingest",
   "graph": {
     "by_type": {
-      "episodic": 18156
+      "episodic": 18165
     },
-    "node_count": 18156,
+    "node_count": 18165,
     "confidence": {
       "max": 0.65,
       "min": 0.65,
       "mean": 0.6499999999997847
     },
     "by_source": {
-      "filesystem_traversal": 18156
+      "filesystem_traversal": 18165
     },
-    "edges_created": 12850,
+    "edges_created": 12880,
     "extension_distribution": {
       ".css": 28,
-      ".ex": 1078,
-      ".exs": 190,
+      ".ex": 1080,
+      ".exs": 192,
       ".html": 74,
       ".js": 10015,
-      ".json": 1062,
-      ".md": 1501,
+      ".json": 1063,
+      ".md": 1504,
       ".toml": 6,
-      ".ts": 4166,
+      ".ts": 4167,
       ".tsx": 32,
       ".yml": 4
     }
   },
   "performance": {
-    "auto_edge_extraction_us": 13062682,
-    "auto_edges_created": 12841,
-    "edge_creation_us": 19834,
-    "throughput_files_per_sec": 7.429212567301153,
-    "total_scan_us": 2443874935
+    "auto_edge_extraction_us": 18081941,
+    "auto_edges_created": 12871,
+    "edge_creation_us": 33264,
+    "throughput_files_per_sec": 411.26129185627934,
+    "total_scan_us": 44171967
   }
 }
