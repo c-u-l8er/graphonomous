@@ -1,0 +1,212 @@
+{
+  "version": "0.3.0",
+  "date": "2026-04-03",
+  "benchmark": "GraphMemBench Phase 3",
+  "categories": [
+    {
+      "category": "11. Causal Metadata",
+      "failed": 0,
+      "details": [
+        {
+          "name": "C8: Causal edge creation during learn_from_outcome",
+          "result": "pass"
+        },
+        {
+          "name": "C7: Zero-strength causal edges flagged for review",
+          "result": "pass"
+        },
+        {
+          "name": "C6: causal_strength survives consolidation",
+          "result": "pass"
+        },
+        {
+          "name": "C5: Multiple causal parents with different strengths",
+          "result": "pass"
+        },
+        {
+          "name": "C4: Causal subgraph extraction",
+          "result": "pass"
+        },
+        {
+          "name": "C3: confounders stored in edge metadata",
+          "result": "pass"
+        },
+        {
+          "name": "C2: causal_strength decreases on failure",
+          "result": "pass"
+        },
+        {
+          "name": "C1: causal_strength updates on outcome success",
+          "result": "pass"
+        }
+      ],
+      "skipped": 0,
+      "passed": 8
+    },
+    {
+      "category": "12. End-to-End Workflows",
+      "failed": 0,
+      "details": [
+        {
+          "name": "E8: Full v0.3 pipeline: all capabilities, 100 nodes, latency",
+          "result": "pass"
+        },
+        {
+          "name": "E7: Attention-driven exploration: survey → gaps → learn → verify",
+          "result": "pass"
+        },
+        {
+          "name": "E6: Memory lifecycle: ingest → learn → forget → no data leak",
+          "result": "pass"
+        },
+        {
+          "name": "E5: Contradiction resolution: 3-way → consolidation → winner",
+          "result": "pass"
+        },
+        {
+          "name": "E4: Goal lifecycle: create → learn → act → complete",
+          "result": "pass"
+        },
+        {
+          "name": "E3: Skill accumulation: 5 procedures → retrieve by precondition",
+          "result": "pass"
+        },
+        {
+          "name": "E2: Knowledge evolution: changing facts → revision chain",
+          "result": "pass"
+        },
+        {
+          "name": "E1: Cold start: empty graph → ingest 50 → retrieve → verify",
+          "result": "pass"
+        }
+      ],
+      "skipped": 0,
+      "passed": 8
+    },
+    {
+      "category": "13. Regression Guards",
+      "failed": 0,
+      "details": [
+        {
+          "name": "R8: MCP tool response format backward-compatible",
+          "result": "pass"
+        },
+        {
+          "name": "R7: Embedding quality unaffected",
+          "result": "pass"
+        },
+        {
+          "name": "R6: kappa=0 fast path latency not degraded",
+          "result": "pass"
+        },
+        {
+          "name": "R5: Goal lifecycle integrity (4/4)",
+          "result": "pass"
+        },
+        {
+          "name": "R4: Learning loop integrity (4/4 outcome tests)",
+          "result": "pass"
+        },
+        {
+          "name": "R3: Topology accuracy preserved (SCC detection)",
+          "result": "pass"
+        },
+        {
+          "name": "R2: Consolidation throughput preserved",
+          "result": "pass"
+        },
+        {
+          "name": "R1: Retrieval quality preserved (F1 baseline)",
+          "result": "pass"
+        }
+      ],
+      "skipped": 0,
+      "passed": 8
+    },
+    {
+      "category": "14. Competitor Adapter Stubs",
+      "failed": 0,
+      "details": [
+        {
+          "name": "A8: Adapter accuracy measurement framework",
+          "result": "pass"
+        },
+        {
+          "name": "A7: Adapter latency measurement framework",
+          "result": "pass"
+        },
+        {
+          "name": "A6: Cross-adapter result format compatibility",
+          "result": "pass"
+        },
+        {
+          "name": "A5: Adapter interface contract validation",
+          "result": "pass"
+        },
+        {
+          "name": "A4: Hindsight adapter stub returns not_implemented",
+          "result": "pass"
+        },
+        {
+          "name": "A3: Zep adapter stub returns not_implemented",
+          "result": "pass"
+        },
+        {
+          "name": "A2: Mem0 adapter stub returns not_implemented",
+          "result": "pass"
+        },
+        {
+          "name": "A1: Baseline adapter stub returns not_implemented",
+          "result": "pass"
+        }
+      ],
+      "skipped": 0,
+      "passed": 8
+    },
+    {
+      "category": "15. GraphMemBench Reporting",
+      "failed": 0,
+      "details": [
+        {
+          "name": "R8: Deliberation accuracy measurement",
+          "result": "pass"
+        },
+        {
+          "name": "R7: kappa distribution histogram data",
+          "result": "pass"
+        },
+        {
+          "name": "R6: Confidence calibration measurement",
+          "result": "pass"
+        },
+        {
+          "name": "R5: Comparison table generation",
+          "result": "pass"
+        },
+        {
+          "name": "R4: Latency percentile reporting",
+          "result": "pass"
+        },
+        {
+          "name": "R3: Category-level accuracy breakdown",
+          "result": "pass"
+        },
+        {
+          "name": "R2: Learning curve plotting data",
+          "result": "pass"
+        },
+        {
+          "name": "R1: JSON output format validation",
+          "result": "pass"
+        }
+      ],
+      "skipped": 0,
+      "passed": 8
+    }
+  ],
+  "total_failed": 0,
+  "total_passed": 40,
+  "duration_ms": 13688,
+  "total_scenarios": 40,
+  "total_skipped": 0
+}

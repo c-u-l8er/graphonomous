@@ -59,6 +59,9 @@ defmodule Graphonomous.Store do
   def upsert_edge(attrs) when is_map(attrs),
     do: GenServer.call(__MODULE__, {:upsert_edge, attrs}, @write_timeout_ms)
 
+  def get_edge(edge_id) when is_binary(edge_id),
+    do: GenServer.call(__MODULE__, {:get_edge, edge_id})
+
   def list_edges_for_node(node_id) when is_binary(node_id),
     do: GenServer.call(__MODULE__, {:list_edges_for_node, node_id})
 
@@ -262,6 +265,13 @@ defmodule Graphonomous.Store do
       {:reply, {:ok, edge}, state}
     else
       {:error, reason} -> {:reply, {:error, reason}, state}
+    end
+  end
+
+  def handle_call({:get_edge, edge_id}, _from, state) do
+    case :ets.lookup(@edges_table, edge_id) do
+      [{^edge_id, %Edge{} = edge}] -> {:reply, {:ok, edge}, state}
+      _ -> {:reply, {:error, :not_found}, state}
     end
   end
 

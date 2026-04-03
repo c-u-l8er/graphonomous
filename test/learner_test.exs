@@ -136,6 +136,116 @@ defmodule Graphonomous.LearnerTest do
     end
   end
 
+  describe "P3: causal edge metadata updates" do
+    test "success outcome strengthens causal edge" do
+      node_a = create_node(0.5)
+      node_b = create_node(0.5)
+
+      # Create a causal edge between the nodes
+      {:ok, edge} =
+        Graphonomous.Graph.create_edge(node_a.id, node_b.id, %{
+          edge_type: :causal,
+          weight: 0.7,
+          metadata: %{"causal_strength" => 0.5}
+        })
+
+      result =
+        Graphonomous.learn_from_outcome(%{
+          action_id: unique_action_id(),
+          status: "success",
+          confidence: 1.0,
+          causal_node_ids: [node_a.id, node_b.id],
+          evidence: %{source: "causal_test"}
+        })
+
+      assert result.causal_edges_updated == 1
+
+      # Verify edge metadata updated
+      {:ok, updated_edge} = Graphonomous.Store.get_edge(edge.id)
+      assert updated_edge.metadata["causal_strength"] == 0.6
+      assert is_list(updated_edge.metadata["intervention_history"])
+      assert length(updated_edge.metadata["intervention_history"]) == 1
+    end
+
+    test "failure outcome weakens causal edge" do
+      node_a = create_node(0.5)
+      node_b = create_node(0.5)
+
+      {:ok, edge} =
+        Graphonomous.Graph.create_edge(node_a.id, node_b.id, %{
+          edge_type: :causal,
+          weight: 0.7,
+          metadata: %{"causal_strength" => 0.5}
+        })
+
+      Graphonomous.learn_from_outcome(%{
+        action_id: unique_action_id(),
+        status: "failure",
+        confidence: 1.0,
+        causal_node_ids: [node_a.id, node_b.id]
+      })
+
+      {:ok, updated_edge} = Graphonomous.Store.get_edge(edge.id)
+      assert_in_delta updated_edge.metadata["causal_strength"], 0.35, 1.0e-9
+    end
+
+    test "causal_strength persists in edge metadata" do
+      node_a = create_node(0.6)
+      node_b = create_node(0.6)
+
+      {:ok, _edge} =
+        Graphonomous.Graph.create_edge(node_a.id, node_b.id, %{
+          edge_type: :causes,
+          weight: 0.7
+        })
+
+      # No initial causal_strength → defaults to 0.5
+      Graphonomous.learn_from_outcome(%{
+        action_id: unique_action_id(),
+        status: "success",
+        confidence: 0.9,
+        causal_node_ids: [node_a.id, node_b.id]
+      })
+
+      {:ok, edges} = Graphonomous.Store.list_edges_for_node(node_a.id)
+
+      causal_edges =
+        Enum.filter(edges, fn e -> e.edge_type in [:causal, :causes] end)
+
+      assert length(causal_edges) >= 1
+      causal_edge = hd(causal_edges)
+      assert is_float(causal_edge.metadata["causal_strength"])
+      assert causal_edge.metadata["causal_strength"] == 0.6
+    end
+
+    test "confounders field accepted and stored" do
+      node_a = create_node(0.5)
+      node_b = create_node(0.5)
+      node_c = create_node(0.5)
+
+      {:ok, edge} =
+        Graphonomous.Graph.create_edge(node_a.id, node_b.id, %{
+          edge_type: :causal,
+          weight: 0.7,
+          metadata: %{
+            "causal_strength" => 0.6,
+            "confounders" => [node_c.id]
+          }
+        })
+
+      Graphonomous.learn_from_outcome(%{
+        action_id: unique_action_id(),
+        status: "success",
+        confidence: 1.0,
+        causal_node_ids: [node_a.id, node_b.id]
+      })
+
+      {:ok, updated_edge} = Graphonomous.Store.get_edge(edge.id)
+      assert updated_edge.metadata["confounders"] == [node_c.id]
+      assert updated_edge.metadata["causal_strength"] == 0.7
+    end
+  end
+
   defp create_node(confidence) do
     node =
       Graphonomous.store_node(%{

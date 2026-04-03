@@ -1,5 +1,5 @@
 {
-  "version": "0.2.0",
+  "version": "0.3.0",
   "date": "2026-04-03",
   "benchmark": "GraphMemBench Phase 2",
   "categories": [
@@ -204,7 +204,7 @@
       "passed": 8
     }
   ],
-  "duration_ms": 30486,
+  "duration_ms": 30191,
   "total_failed": 0,
   "total_passed": 40,
   "total_scenarios": 40,

@@ -87,7 +87,8 @@ defmodule Graphonomous.Learner do
     outcome = normalize_outcome(attrs)
 
     with {:ok, _stored_outcome} <- Store.insert_outcome(outcome),
-         {:ok, updates} <- apply_feedback(outcome, state.learning_rate) do
+         {:ok, updates} <- apply_feedback(outcome, state.learning_rate),
+         causal_edge_updates <- update_causal_edges(outcome) do
       updated = Enum.count(updates, &(&1.result == :updated))
       skipped = Enum.count(updates, &(&1.result != :updated))
 
@@ -101,7 +102,8 @@ defmodule Graphonomous.Learner do
         processed: length(outcome.causal_node_ids),
         updated: updated,
         skipped: skipped,
-        updates: updates
+        updates: updates,
+        causal_edges_updated: length(causal_edge_updates)
       }
 
       :telemetry.execute(
@@ -132,6 +134,68 @@ defmodule Graphonomous.Learner do
       end)
 
     {:ok, updates}
+  end
+
+  ## P3: Causal edge metadata prep
+
+  defp update_causal_edges(outcome) do
+    node_ids = outcome.causal_node_ids
+
+    case Store.list_edges_between(node_ids) do
+      {:ok, edges} ->
+        edges
+        |> Enum.filter(&(&1.edge_type in [:causal, :causes]))
+        |> Enum.map(&update_causal_edge_strength(&1, outcome))
+
+      _ ->
+        []
+    end
+  end
+
+  defp update_causal_edge_strength(edge, outcome) do
+    edge_meta = if is_map(edge.metadata), do: edge.metadata, else: %{}
+    old_strength = parse_causal_strength(edge_meta)
+
+    new_strength =
+      case outcome.status do
+        :success -> min(1.0, old_strength + 0.1)
+        :partial_success -> old_strength
+        :failure -> max(0.0, old_strength - 0.15)
+        :timeout -> max(0.0, old_strength - 0.05)
+        _ -> old_strength
+      end
+
+    confounders = Map.get(edge_meta, "confounders", [])
+
+    intervention_entry = %{
+      "at" => DateTime.to_iso8601(outcome.observed_at),
+      "action" => outcome.action_id,
+      "status" => Atom.to_string(outcome.status),
+      "strength_delta" => new_strength - old_strength
+    }
+
+    intervention_history =
+      (Map.get(edge_meta, "intervention_history", []) ++ [intervention_entry])
+      |> Enum.take(-50)
+
+    updated_meta =
+      edge_meta
+      |> Map.put("causal_strength", new_strength)
+      |> Map.put("confounders", confounders)
+      |> Map.put("intervention_history", intervention_history)
+
+    case Store.update_edge(edge.id, %{metadata: updated_meta}) do
+      {:ok, _} -> %{edge_id: edge.id, old_strength: old_strength, new_strength: new_strength}
+      {:error, _} -> %{edge_id: edge.id, error: :update_failed}
+    end
+  end
+
+  defp parse_causal_strength(meta) do
+    case Map.get(meta, "causal_strength") do
+      v when is_float(v) -> clamp(v, 0.0, 1.0)
+      v when is_integer(v) -> clamp(v * 1.0, 0.0, 1.0)
+      _ -> 0.5
+    end
   end
 
   @q_learning_rate 0.3

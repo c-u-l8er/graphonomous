@@ -1,5 +1,5 @@
 # Graphonomous — Continual Learning Engine
-## Technical Specification v0.2
+## Technical Specification v0.3
 
 **Date:** April 2, 2026
 **Status:** Release Candidate  
@@ -861,6 +861,49 @@ end
 - 10+ community-contributed FleetPrompt CL skills
 - 3+ production deployments (industrial IoT, personal AI, enterprise)
 - Featured in at least 1 edge AI conference/publication
+
+---
+
+## 15. v0.3 Capabilities (Continual Learning)
+
+v0.3 delivers ten continual learning capabilities across four priority tiers, validated by GraphMemBench (120 scenarios, 15 categories).
+
+### 15.1 P0 — Foundation (Week 1-2)
+
+1. **Kappa activation** — Semantic back-references and expanded topology window enable κ>0 detection on >15% of benchmark queries.
+2. **Belief revision substrate** — Revision records, `:superseded_by` edges, confidence propagation, and pluggable hooks for AGM-style expand/revise/contract.
+3. **Conflict-aware consolidation (Stage 4.5)** — Pluggable conflict resolution with recency, confidence, and evidence-count strategies.
+
+### 15.2 P1 — Core CL (Week 3-4)
+
+4. **Two-phase retrieval** — Q-value utility scoring on nodes, utility reranking in Retriever, Q-value updates via `learn_from_outcome`, and decay in Consolidator Stage 1.
+5. **Budget-aware forgetting** — Hybrid pruning (LRU + priority-decay) with GDPR hard delete (UtU-style). Three new MCP tools: `forget_node`, `forget_by_policy`, `gdpr_erase`.
+6. **GraphMemBench Phase 1** — 40 scenarios across 5 categories validating P0+P1 capabilities.
+
+### 15.3 P2 — Advanced (Week 5)
+
+7. **Scoped uncertainty propagation** — Wilson score intervals on evidence-bearing nodes, new `Uncertainty` module with interval/propagate/frontier/entropy/information_gain functions, `epistemic_frontier` MCP tool.
+8. **Procedural metadata** — Structured skill metadata (preconditions/postconditions/parameters/domain) with precondition matching boost in `retrieve_procedural` and composition detection in Consolidator Stage 7.
+9. **Multi-agent schema prep** — `agent_id` column on nodes and edges (default: `"default"`), filter support. No behavioral changes.
+10. **GraphMemBench Phase 2** — 40 more scenarios (80 total) across categories 6-10.
+
+### 15.4 P3 — Causal + Benchmarking (Week 6+)
+
+11. **Causal edge metadata prep** — `causal_strength`, `confounders`, and `intervention_history` in edge metadata. Updated on outcome feedback via status-dependent strength adjustments.
+12. **GraphMemBench Phase 3** — Full 120-scenario suite with categories 11-15: Causal Metadata, End-to-End Workflows, Regression Guards, Competitor Adapter Stubs, Reporting.
+13. **Competitor adapter interface** — `GraphMemBench.Adapter` behaviour with `ingest/1`, `retrieve/2`, `forget/1`, `stats/0`. Graphonomous adapter wraps MCP tools; Baseline/Mem0/Zep/Hindsight adapters are stubs.
+
+### 15.5 Benchmark Summary
+
+| Metric | v0.2 | v0.3 |
+|--------|------|------|
+| MCP tools | 22 | 28 |
+| Unit tests | ~240 | ~305 |
+| GraphMemBench scenarios | — | 120 (15 categories) |
+| LongMemEval SHR | — | >90.4% |
+| κ activation rate | — | >15% of benchmark queries |
+| Forgetting (GDPR hard delete) | — | Yes |
+| Competitor adapters | — | 5 (1 live + 4 stubs) |
 
 ---
 
