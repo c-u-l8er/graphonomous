@@ -2,7 +2,7 @@ defmodule Mix.Tasks.Benchmark.Run do
   @moduledoc """
   OS-E001 Benchmark: Full Suite Runner
 
-  Orchestrates all 8 benchmark phases covering all 20 MCP tools:
+  Orchestrates all 9 benchmark phases covering all 20 MCP tools:
 
   1. Ingest (scan_directory) — FilesystemTraversal on full codebase
   2. Retrieval — cross-domain precision/recall/F1
@@ -13,6 +13,7 @@ defmodule Mix.Tasks.Benchmark.Run do
                  retrieve_episodic, retrieve_procedural, deliberate
   7. Consolidation — decay curves, survival analysis
   8. Attention — survey, dispatch, prioritization
+  9. LongMemEval — competitive memory benchmark (ICLR 2025)
 
   Usage:
       mix benchmark.run [--cycles 5]
@@ -54,36 +55,54 @@ defmodule Mix.Tasks.Benchmark.Run do
     total_start = System.monotonic_time(:microsecond)
 
     # Phase 1: Ingestion via scan_directory
-    Mix.shell().info("\n━━━ Phase 1/8: Corpus Ingestion (scan_directory) ━━━")
+    Mix.shell().info("\n━━━ Phase 1/9: Corpus Ingestion (scan_directory) ━━━")
     Mix.Tasks.Benchmark.Ingest.run(["--purge"])
 
     # Phase 2: Retrieval quality
-    Mix.shell().info("\n━━━ Phase 2/8: Retrieval Quality ━━━")
+    Mix.shell().info("\n━━━ Phase 2/9: Retrieval Quality ━━━")
     Mix.Tasks.Benchmark.Retrieval.run([])
 
     # Phase 3: Topology & κ detection
-    Mix.shell().info("\n━━━ Phase 3/8: Topology & κ Detection ━━━")
+    Mix.shell().info("\n━━━ Phase 3/9: Topology & κ Detection ━━━")
     Mix.Tasks.Benchmark.Topology.run([])
 
     # Phase 4: Learning loop
-    Mix.shell().info("\n━━━ Phase 4/8: Learning Loop ━━━")
+    Mix.shell().info("\n━━━ Phase 4/9: Learning Loop ━━━")
     Mix.Tasks.Benchmark.Learning.run([])
 
     # Phase 5: Goal lifecycle & coverage
-    Mix.shell().info("\n━━━ Phase 5/8: Goal Lifecycle & Coverage ━━━")
+    Mix.shell().info("\n━━━ Phase 5/9: Goal Lifecycle & Coverage ━━━")
     Mix.Tasks.Benchmark.Goals.run([])
 
     # Phase 6: Graph operations & specialized retrieval
-    Mix.shell().info("\n━━━ Phase 6/8: Graph Operations & Deliberation ━━━")
+    Mix.shell().info("\n━━━ Phase 6/9: Graph Operations & Deliberation ━━━")
     Mix.Tasks.Benchmark.GraphOps.run([])
 
     # Phase 7: Consolidation
-    Mix.shell().info("\n━━━ Phase 7/8: Consolidation ━━━")
+    Mix.shell().info("\n━━━ Phase 7/9: Consolidation ━━━")
     Mix.Tasks.Benchmark.Consolidation.run(["--cycles", "#{cycles}"])
 
     # Phase 8: Attention engine
-    Mix.shell().info("\n━━━ Phase 8/8: Attention Engine ━━━")
+    Mix.shell().info("\n━━━ Phase 8/9: Attention Engine ━━━")
     Mix.Tasks.Benchmark.Attention.run([])
+
+    # Phase 9: LongMemEval competitive benchmark
+    longmemeval_data =
+      Path.join([
+        Helpers.portfolio_root(),
+        "graphonomous",
+        "priv",
+        "longmemeval",
+        "longmemeval_oracle.json"
+      ])
+
+    if File.exists?(longmemeval_data) do
+      Mix.shell().info("\n━━━ Phase 9/9: LongMemEval Competitive Benchmark ━━━")
+      Mix.Tasks.Benchmark.Longmemeval.run(["--split", "oracle", "--purge"])
+    else
+      Mix.shell().info("\n━━━ Phase 9/9: LongMemEval — SKIPPED (data not downloaded) ━━━")
+      Mix.shell().info("  Run: cd graphonomous/priv/longmemeval && bash download.sh")
+    end
 
     total_us = System.monotonic_time(:microsecond) - total_start
 
@@ -163,7 +182,8 @@ defmodule Mix.Tasks.Benchmark.Run do
       "goals",
       "graph_ops",
       "consolidation",
-      "attention"
+      "attention",
+      "longmemeval"
     ]
 
     Enum.reduce(phases, %{}, fn phase, acc ->

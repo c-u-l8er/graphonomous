@@ -25,3 +25,6 @@ graphonomous-*.tar
 # Local SQLite artifacts under priv/
 priv/*.db
 priv/*.db-*
+
+# LongMemEval benchmark data (downloaded from HuggingFace, ~280MB)
+priv/longmemeval/*.json
