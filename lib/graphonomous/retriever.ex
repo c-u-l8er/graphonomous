@@ -53,7 +53,7 @@ defmodule Graphonomous.Retriever do
   """
   @spec retrieve(String.t(), retrieve_opts()) :: {:ok, retrieval_result()} | {:error, term()}
   def retrieve(query, opts \\ []) when is_binary(query) and is_list(opts) do
-    GenServer.call(__MODULE__, {:retrieve, query, opts}, 30_000)
+    GenServer.call(__MODULE__, {:retrieve, query, opts}, 120_000)
   end
 
   ## GenServer
@@ -90,9 +90,25 @@ defmodule Graphonomous.Retriever do
           |> Map.values()
           |> Enum.sort_by(& &1.score, :desc)
           |> maybe_diversify_domains(cfg)
+          |> maybe_diversify_sessions(cfg)
           |> Enum.take(cfg.final_limit)
 
         topology = analyze_topology(ranked)
+
+        # K2+K4: κ-guided adaptive expansion — if κ > 0, re-expand with
+        # deeper hops and gentler decay to follow cyclic knowledge paths
+        {ranked, topology} = maybe_kappa_expand(ranked, topology, cfg)
+
+        # K5: Boost nodes adjacent to fault-line edges (knowledge boundaries)
+        ranked = apply_fault_line_boost(ranked, topology)
+
+        # K7: Propagate confidence through SCC edges — high-confidence nodes
+        # boost low-confidence neighbors in the same SCC
+        ranked = propagate_scc_confidence(ranked, topology)
+
+        # K8: Query-time edge impact — detect high-scoring disconnected nodes
+        # that would change κ if linked; annotate for downstream reasoning
+        edge_impact_notes = detect_edge_impact_opportunities(ranked, topology)
 
         base_result = %{
           query: query,
@@ -105,6 +121,11 @@ defmodule Graphonomous.Retriever do
           },
           topology: topology
         }
+
+        base_result =
+          if edge_impact_notes != [],
+            do: Map.put(base_result, :edge_impact_notes, edge_impact_notes),
+            else: base_result
 
         {:ok, maybe_enrich_or_deliberate(base_result, query, call_opts)}
       end
@@ -163,6 +184,10 @@ defmodule Graphonomous.Retriever do
     {:ok, expanded}
   end
 
+  # Hard cap on expanded nodes to prevent BFS explosion on dense graphs
+  # (e.g., 21K+ cross-session entity edges at LongMemEval scale)
+  @max_expanded_nodes 500
+
   defp bfs_expand([], acc, _visited, _cfg), do: acc
 
   defp bfs_expand([item | rest], acc, visited, cfg) do
@@ -171,6 +196,9 @@ defmodule Graphonomous.Retriever do
     parent_score = item.parent_score
 
     cond do
+      map_size(acc) >= @max_expanded_nodes ->
+        acc
+
       hop > cfg.expansion_hops ->
         bfs_expand(rest, acc, visited, cfg)
 
@@ -335,26 +363,257 @@ defmodule Graphonomous.Retriever do
     end
   end
 
+  # S5: Session-aware diversity — penalize results clustering in one session
+  # to spread retrieval across sessions for multi-session questions.
+  defp maybe_diversify_sessions(results, _cfg) do
+    if length(results) > 3 do
+      {reranked, _} =
+        results
+        |> Enum.reduce({[], %{}}, fn entry, {acc, seen} ->
+          sid = session_id_for_entry(entry)
+          count = Map.get(seen, sid, 0)
+          penalty = :math.pow(0.90, count)
+          adjusted = %{entry | score: entry.score * penalty}
+          {[adjusted | acc], Map.put(seen, sid, count + 1)}
+        end)
+
+      reranked |> Enum.reverse() |> Enum.sort_by(& &1.score, :desc)
+    else
+      results
+    end
+  end
+
+  defp session_id_for_entry(entry) do
+    node_id = Map.get(entry, :node_id)
+
+    case node_id && Graphonomous.get_node(node_id) do
+      %{metadata: meta} when is_map(meta) -> Map.get(meta, "session_id", "unknown")
+      _ -> "unknown"
+    end
+  end
+
+  # K5: Fault-line-aware retrieval boosting — nodes at knowledge boundaries
+  # between SCCs are more likely to contain multi-hop answer evidence.
+  defp apply_fault_line_boost(ranked, topology) do
+    fault_nodes =
+      topology
+      |> Map.get(:sccs, [])
+      |> Enum.flat_map(fn scc ->
+        scc
+        |> Map.get(:fault_line_edges, [])
+        |> Enum.flat_map(fn
+          %{source: s, target: t} -> [s, t]
+          %{"source" => s, "target" => t} -> [s, t]
+          _ -> []
+        end)
+      end)
+      |> MapSet.new()
+
+    if MapSet.size(fault_nodes) == 0 do
+      ranked
+    else
+      ranked
+      |> Enum.map(fn entry ->
+        if MapSet.member?(fault_nodes, entry.node_id),
+          do: %{entry | score: entry.score * 1.15},
+          else: entry
+      end)
+      |> Enum.sort_by(& &1.score, :desc)
+    end
+  end
+
+  # K8: Query-time edge impact — check top disconnected result pairs to see if
+  # linking them would change κ. If so, they're semantically related but not yet
+  # connected in the graph → answer likely requires bridging them.
+  defp detect_edge_impact_opportunities(ranked, topology) do
+    dag_nodes = Map.get(topology, :dag_nodes, [])
+    # Only check DAG nodes (not already in SCCs) — top 5 pairs
+    top_dag =
+      ranked
+      |> Enum.filter(fn e -> e.node_id in dag_nodes end)
+      |> Enum.take(6)
+
+    if length(top_dag) < 2 do
+      []
+    else
+      adjacency = build_adjacency_from_topology(ranked, topology)
+
+      top_dag
+      |> pairs()
+      |> Enum.take(5)
+      |> Enum.flat_map(fn {a, b} ->
+        impact = Topology.preview_edge_impact(adjacency, a.node_id, b.node_id)
+        kappa_before = Map.get(impact, :kappa_before, 0)
+        kappa_after = Map.get(impact, :kappa_after, 0)
+
+        if kappa_after > kappa_before do
+          [
+            %{
+              source: a.node_id,
+              target: b.node_id,
+              kappa_delta: kappa_after - kappa_before,
+              note: "Linking these nodes would create a cycle — they may need bridge reasoning."
+            }
+          ]
+        else
+          []
+        end
+      end)
+    end
+  rescue
+    _ -> []
+  end
+
+  defp build_adjacency_from_topology(ranked, _topology) do
+    node_ids = Enum.map(ranked, & &1.node_id) |> Enum.filter(&is_binary/1) |> Enum.uniq()
+
+    edges =
+      node_ids
+      |> Enum.flat_map(fn id ->
+        case Store.list_edges_for_node(id) do
+          {:ok, list} -> list
+          _ -> []
+        end
+      end)
+      |> Enum.uniq_by(& &1.id)
+
+    neighbor_ids =
+      edges
+      |> Enum.flat_map(fn e -> [e.source_id, e.target_id] end)
+      |> Enum.filter(&is_binary/1)
+      |> Enum.uniq()
+
+    Topology.build_adjacency(Enum.uniq(node_ids ++ neighbor_ids), edges)
+  end
+
+  defp pairs(list) do
+    for {a, i} <- Enum.with_index(list),
+        {b, j} <- Enum.with_index(list),
+        i < j,
+        do: {a, b}
+  end
+
+  # K2+K4: After initial topology analysis, if κ > 0, re-expand from top
+  # results with deeper hops and gentler decay to follow cyclic paths.
+  defp maybe_kappa_expand(ranked, topology, cfg) do
+    max_kappa = Map.get(topology, :max_kappa, 0)
+
+    if max_kappa > 0 do
+      # K2: additional hops proportional to κ
+      effective_hops = min(max_kappa + 1, 3)
+      # K4: gentler decay for cyclic regions
+      effective_decay = min(cfg.hop_decay + max_kappa * 0.02, 0.95)
+
+      new_seeds =
+        ranked
+        |> Enum.take(10)
+        |> Enum.reduce(%{}, fn e, acc -> Map.put(acc, e.node_id, e) end)
+
+      expanded_cfg = %{
+        cfg
+        | expansion_hops: effective_hops,
+          hop_decay: effective_decay
+      }
+
+      {:ok, re_expanded} = expand_neighbors(new_seeds, expanded_cfg)
+
+      # Merge with originals, keeping best score per node
+      original_map = Enum.reduce(ranked, %{}, fn e, acc -> Map.put(acc, e.node_id, e) end)
+
+      merged =
+        Map.merge(original_map, re_expanded, fn _k, old, new ->
+          if new.score > old.score, do: new, else: old
+        end)
+
+      re_ranked =
+        merged
+        |> Map.values()
+        |> Enum.sort_by(& &1.score, :desc)
+        |> Enum.take(cfg.final_limit)
+
+      new_topology = analyze_topology(re_ranked)
+      {re_ranked, new_topology}
+    else
+      {ranked, topology}
+    end
+  end
+
+  # K7: Propagate confidence through SCC edges — high-confidence nodes in the
+  # same SCC boost low-confidence neighbors. Scale boost by 1/κ to be cautious
+  # in highly entangled regions.
+  defp propagate_scc_confidence(ranked, topology) do
+    sccs = Map.get(topology, :sccs, [])
+
+    if sccs == [] do
+      ranked
+    else
+      # For each SCC, find max confidence among its members in the ranked results
+      scc_boosts =
+        Enum.flat_map(sccs, fn scc ->
+          kappa = Map.get(scc, :kappa, Map.get(scc, "kappa", 0))
+          nodes = Map.get(scc, :nodes, Map.get(scc, "nodes", []))
+
+          max_conf =
+            ranked
+            |> Enum.filter(fn e -> e.node_id in nodes end)
+            |> Enum.map(& &1.confidence)
+            |> Enum.max(fn -> 0.5 end)
+
+          Enum.map(nodes, fn nid -> {nid, max_conf, max(kappa, 1)} end)
+        end)
+        |> Map.new(fn {nid, max_conf, kappa} -> {nid, {max_conf, kappa}} end)
+
+      ranked
+      |> Enum.map(fn entry ->
+        case Map.get(scc_boosts, entry.node_id) do
+          {max_conf, kappa} when max_conf > entry.confidence ->
+            boost = (max_conf - entry.confidence) * (1 / kappa) * 0.3
+            %{entry | score: entry.score * (1 + boost)}
+
+          _ ->
+            entry
+        end
+      end)
+      |> Enum.sort_by(& &1.score, :desc)
+    end
+  end
+
   defp analyze_topology(ranked_results) when is_list(ranked_results) do
-    node_ids =
+    retrieved_ids =
       ranked_results
       |> Enum.map(&Map.get(&1, :node_id))
       |> Enum.filter(&is_binary/1)
       |> Enum.uniq()
 
     adjacency =
-      case node_ids do
+      case retrieved_ids do
         [] ->
           %{}
 
         ids ->
-          edges =
-            case Store.list_edges_between(ids) do
-              {:ok, list} when is_list(list) -> list
-              _ -> []
-            end
+          # Expanded topology window: include 1-hop neighbors of retrieved nodes.
+          # This is the key fix for kappa=0 — previously only edges *between*
+          # retrieved nodes were considered, missing cycles that route through
+          # non-retrieved intermediaries.
+          all_edges =
+            ids
+            |> Enum.flat_map(fn id ->
+              case Store.list_edges_for_node(id) do
+                {:ok, edges} -> edges
+                _ -> []
+              end
+            end)
+            |> Enum.uniq_by(& &1.id)
 
-          Topology.build_adjacency(ids, edges)
+          neighbor_ids =
+            all_edges
+            |> Enum.flat_map(fn edge -> [edge.source_id, edge.target_id] end)
+            |> Enum.filter(&is_binary/1)
+            |> Enum.uniq()
+
+          expanded_ids = Enum.uniq(ids ++ neighbor_ids)
+
+          Topology.build_adjacency(expanded_ids, all_edges)
       end
 
     topology = Topology.analyze(adjacency)
@@ -369,16 +628,37 @@ defmodule Graphonomous.Retriever do
     max_kappa = result |> Map.get(:topology, %{}) |> Map.get(:max_kappa, 0)
     floor = tier_cfg |> Map.get(:kappa_deliberation_floor, 1) |> normalize_non_neg_int(1)
 
+    # K6: κ-bucketed answer strategies — route by κ profile:
+    #   κ=0 → fast path (direct answer from top results)
+    #   κ=1 → resolve contradictions first (knowledge update pattern)
+    #   κ≥2 → full multi-pass deliberation
     result =
       cond do
         max_kappa == 0 ->
+          # Fast path — no cycles, direct answer
           result
 
         max_kappa < floor ->
           enrich_with_topology_notes(result)
 
         Keyword.get(opts, :auto_deliberate, false) ->
-          deliberation_opts = [model_tier: tier, write_back: true]
+          # K6: Select deliberation strategy by κ bucket
+          deliberation_budget =
+            cond do
+              # κ=1: likely contradiction — single pass suffices
+              max_kappa == 1 ->
+                %{strategy: :single_pass, max_iterations: 1}
+
+              # κ≥2: full multi-pass deliberation
+              true ->
+                %{max_iterations: min(max_kappa + 1, 4)}
+            end
+
+          deliberation_opts = [
+            model_tier: tier,
+            write_back: true,
+            budget: deliberation_budget
+          ]
 
           started_at = System.monotonic_time(:millisecond)
 

@@ -11,6 +11,7 @@ defmodule Graphonomous.Types.Edge do
           | :follows
           | :contradicts
           | :supersedes
+          | :superseded_by
           | :depends_on
           | :similar_to
           | :supports

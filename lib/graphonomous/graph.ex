@@ -476,6 +476,7 @@ defmodule Graphonomous.Graph do
     :follows,
     :contradicts,
     :supersedes,
+    :superseded_by,
     :depends_on,
     :similar_to,
     :supports,
@@ -498,6 +499,7 @@ defmodule Graphonomous.Graph do
       "follows" -> :follows
       "contradicts" -> :contradicts
       "supersedes" -> :supersedes
+      "superseded_by" -> :superseded_by
       "depends_on" -> :depends_on
       "similar_to" -> :similar_to
       "supports" -> :supports

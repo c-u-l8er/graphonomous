@@ -26,6 +26,8 @@ defmodule Graphonomous.Types.Node do
           creation_source: creation_source(),
           timescale: timescale(),
           decay_rate: float() | nil,
+          revision_id: binary() | nil,
+          superseded_by: binary() | nil,
           created_at: DateTime.t() | nil,
           updated_at: DateTime.t() | nil,
           last_accessed_at: DateTime.t() | nil
@@ -37,6 +39,8 @@ defmodule Graphonomous.Types.Node do
     :embedding,
     :source,
     :decay_rate,
+    :revision_id,
+    :superseded_by,
     node_type: :semantic,
     confidence: 0.5,
     metadata: %{},

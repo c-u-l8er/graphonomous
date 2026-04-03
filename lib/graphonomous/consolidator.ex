@@ -27,7 +27,7 @@ defmodule Graphonomous.Consolidator do
 
   require Logger
 
-  alias Graphonomous.Graph
+  alias Graphonomous.{BeliefRevision, Graph}
 
   @default_interval_ms 300_000
   @default_decay_rate 0.02
@@ -157,7 +157,11 @@ defmodule Graphonomous.Consolidator do
     # Stage 4: strengthen coactivated edges
     strengthened = stage_strengthen_coactivated(edges, state.coactivation_boost)
 
+    # Stage 4.5: resolve conflicts — find contradicting pairs and attempt resolution
+    {resolved, unresolved_contradictions} = stage_resolve_conflicts()
+
     # Stage 5: merge similar nodes (reload nodes after pruning)
+    # Skip merging nodes that have :contradicts edges — route to BeliefRevision instead
     merged = stage_merge_similar_nodes(state.merge_similarity)
 
     # Stage 6: promote timescale
@@ -175,6 +179,8 @@ defmodule Graphonomous.Consolidator do
         pruned_nodes: pruned_nodes,
         pruned_edges: pruned_edges,
         strengthened: strengthened,
+        conflicts_resolved: resolved,
+        unresolved_contradictions: unresolved_contradictions,
         merged: merged,
         promoted: promoted,
         abstracted: abstracted,
@@ -193,7 +199,8 @@ defmodule Graphonomous.Consolidator do
     Logger.info(
       "Consolidator cycle=#{state.cycle_count + 1} " <>
         "decayed=#{decayed} pruned_nodes=#{pruned_nodes} pruned_edges=#{pruned_edges} " <>
-        "strengthened=#{strengthened} merged=#{merged} promoted=#{promoted} " <>
+        "strengthened=#{strengthened} conflicts_resolved=#{resolved} " <>
+        "unresolved=#{unresolved_contradictions} merged=#{merged} promoted=#{promoted} " <>
         "abstracted=#{abstracted} errors=#{node_errors + edge_errors} duration_ms=#{duration_ms}"
     )
 
@@ -339,6 +346,84 @@ defmodule Graphonomous.Consolidator do
     end)
   end
 
+  ## Stage 4.5: Resolve conflicts
+  #
+  # Find pairs of nodes connected by :contradicts edges and attempt resolution.
+  # Resolution strategies (in priority order):
+  #   1. Temporal — newer supersedes older
+  #   2. Evidence — more outcome references wins
+  #   3. External hook — registered resolver module
+  #   4. Escalate — leave :contradicts edges (activates κ)
+
+  defp stage_resolve_conflicts do
+    # Find all :contradicts edges
+    contradicts_edges =
+      case Graph.list_all_edges() do
+        {:ok, edges} ->
+          edges
+          |> Enum.filter(&(&1.edge_type == :contradicts))
+          |> Enum.uniq_by(fn e -> Enum.sort([e.source_id, e.target_id]) end)
+
+        _ ->
+          []
+      end
+
+    Enum.reduce(contradicts_edges, {0, 0}, fn edge, {resolved, unresolved} ->
+      case BeliefRevision.resolve_contradiction(edge.source_id, edge.target_id) do
+        {:ok, :keep_a} ->
+          _ = BeliefRevision.revise(edge.target_id, "Superseded by #{edge.source_id}",
+                rationale: "Conflict resolution: keep_a")
+          {resolved + 1, unresolved}
+
+        {:ok, :keep_b} ->
+          _ = BeliefRevision.revise(edge.source_id, "Superseded by #{edge.target_id}",
+                rationale: "Conflict resolution: keep_b")
+          {resolved + 1, unresolved}
+
+        {:ok, :keep_both} ->
+          # Both are valid — remove :contradicts edges
+          _ = remove_contradicts_edges(edge.source_id, edge.target_id)
+          {resolved + 1, unresolved}
+
+        {:ok, :unresolved} ->
+          # Leave :contradicts edges in place — this is the PRIMARY κ activation
+          # mechanism for organic knowledge. Unresolved conflicts guarantee κ>=1.
+          {resolved, unresolved + 1}
+
+        _ ->
+          {resolved, unresolved + 1}
+      end
+    end)
+  end
+
+  defp remove_contradicts_edges(node_a_id, node_b_id) do
+    case Graph.get_edges_for_node(node_a_id) do
+      {:ok, edges} ->
+        Enum.each(edges, fn edge ->
+          if edge.edge_type == :contradicts and
+               (edge.target_id == node_b_id or edge.source_id == node_b_id) do
+            Graph.delete_edge(edge.id)
+          end
+        end)
+
+      _ ->
+        :ok
+    end
+
+    case Graph.get_edges_for_node(node_b_id) do
+      {:ok, edges} ->
+        Enum.each(edges, fn edge ->
+          if edge.edge_type == :contradicts and
+               (edge.target_id == node_a_id or edge.source_id == node_a_id) do
+            Graph.delete_edge(edge.id)
+          end
+        end)
+
+      _ ->
+        :ok
+    end
+  end
+
   ## Stage 5: Merge similar nodes
   #
   # Find pairs of nodes with embedding cosine similarity > threshold.
@@ -410,10 +495,29 @@ defmodule Graphonomous.Consolidator do
       sim = Graph.cosine_similarity(vec_a, vec_b)
 
       if sim >= threshold do
-        {node_b, vec_b}
+        # Before merging, check if this pair has :contradicts edges.
+        # If so, route to BeliefRevision instead of merging.
+        if has_contradicts_edge?(node_a.id, node_b.id) do
+          find_merge_candidate(node_a, vec_a, rest, threshold, merged_ids)
+        else
+          {node_b, vec_b}
+        end
       else
         find_merge_candidate(node_a, vec_a, rest, threshold, merged_ids)
       end
+    end
+  end
+
+  defp has_contradicts_edge?(node_a_id, node_b_id) do
+    case Graph.get_edges_for_node(node_a_id) do
+      {:ok, edges} ->
+        Enum.any?(edges, fn edge ->
+          edge.edge_type == :contradicts and
+            (edge.target_id == node_b_id or edge.source_id == node_b_id)
+        end)
+
+      _ ->
+        false
     end
   end
 

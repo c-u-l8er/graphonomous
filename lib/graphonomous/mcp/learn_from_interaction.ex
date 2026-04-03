@@ -96,6 +96,16 @@ defmodule Graphonomous.MCP.LearnFromInteraction do
         0
       end
 
+    # Step 5: Check for contradictions on each claim node and create
+    # :contradicts edges (forms 2-node SCCs = κ=1)
+    contradiction_edges =
+      claim_nodes
+      |> Enum.map(&extract_node_id/1)
+      |> Enum.filter(&is_binary/1)
+      |> Enum.reduce(0, fn claim_id, acc ->
+        acc + detect_and_link_contradictions(claim_id)
+      end)
+
     learned_ids =
       ([episodic_id] ++ Enum.map(claim_nodes, &extract_node_id/1))
       |> Enum.filter(&is_binary/1)
@@ -106,9 +116,10 @@ defmodule Graphonomous.MCP.LearnFromInteraction do
        novelty_score: novelty.novelty_score,
        learned_count: length(learned_ids),
        learned_node_ids: learned_ids,
-       edges_created: edges_created + linking_edges,
+       edges_created: edges_created + linking_edges + contradiction_edges,
        episodic_node_id: episodic_id,
-       claim_count: length(claim_nodes)
+       claim_count: length(claim_nodes),
+       contradiction_edges: contradiction_edges
      }}
   end
 
@@ -215,6 +226,31 @@ defmodule Graphonomous.MCP.LearnFromInteraction do
         _ -> acc
       end
     end)
+  end
+
+  defp detect_and_link_contradictions(node_id) do
+    contradictions = Graphonomous.BeliefRevision.detect_contradictions_for_node(node_id)
+
+    Enum.reduce(contradictions, 0, fn %{node_id: contra_id}, acc ->
+      # Create bidirectional :contradicts edges
+      _ =
+        Graphonomous.link_nodes(node_id, contra_id, %{
+          edge_type: "contradicts",
+          weight: 0.8,
+          metadata: %{"source" => "learn_from_interaction", "automated" => true}
+        })
+
+      _ =
+        Graphonomous.link_nodes(contra_id, node_id, %{
+          edge_type: "contradicts",
+          weight: 0.8,
+          metadata: %{"source" => "learn_from_interaction", "automated" => true}
+        })
+
+      acc + 2
+    end)
+  rescue
+    _ -> 0
   end
 
   defp conversational?(text) do

@@ -34,6 +34,8 @@ defmodule Graphonomous.MCP.Server do
   component(Graphonomous.MCP.LearnFromInteraction)
   component(Graphonomous.MCP.ManageEdge)
   component(Graphonomous.MCP.DeleteNode)
+  component(Graphonomous.MCP.BeliefRevise)
+  component(Graphonomous.MCP.BeliefContradictions)
 
   # MCP resource components
   component(Graphonomous.MCP.Resources.HealthSnapshot)

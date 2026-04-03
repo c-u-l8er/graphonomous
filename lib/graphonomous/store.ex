@@ -95,6 +95,12 @@ defmodule Graphonomous.Store do
   def delete_goal(goal_id) when is_binary(goal_id),
     do: GenServer.call(__MODULE__, {:delete_goal, goal_id}, @write_timeout_ms)
 
+  def insert_revision(attrs) when is_map(attrs),
+    do: GenServer.call(__MODULE__, {:insert_revision, attrs}, @write_timeout_ms)
+
+  def list_revisions_for_node(node_id) when is_binary(node_id),
+    do: GenServer.call(__MODULE__, {:list_revisions_for_node, node_id})
+
   def rebuild_cache, do: GenServer.call(__MODULE__, :rebuild_cache, @write_timeout_ms)
 
   ## GenServer
@@ -464,6 +470,42 @@ defmodule Graphonomous.Store do
     end
   end
 
+  def handle_call({:insert_revision, attrs}, _from, state) do
+    revision = build_revision(attrs)
+
+    case persist_revision(state.conn, revision) do
+      :ok -> {:reply, {:ok, revision}, state}
+      {:error, reason} -> {:reply, {:error, reason}, state}
+    end
+  end
+
+  def handle_call({:list_revisions_for_node, node_id}, _from, state) do
+    case select_all(
+           state.conn,
+           "SELECT id, operation, trigger_node_id, affected_node_ids, rationale, agent_id, created_at FROM revisions WHERE trigger_node_id = ? ORDER BY created_at DESC;",
+           [node_id]
+         ) do
+      {:ok, rows} ->
+        revisions =
+          Enum.map(rows, fn [id, op, trigger, affected, rationale, agent_id, created_at] ->
+            %{
+              id: id,
+              operation: op,
+              trigger_node_id: trigger,
+              affected_node_ids: normalize_db_json_list(affected),
+              rationale: rationale,
+              agent_id: agent_id,
+              created_at: created_at
+            }
+          end)
+
+        {:reply, {:ok, revisions}, state}
+
+      {:error, reason} ->
+        {:reply, {:error, reason}, state}
+    end
+  end
+
   @impl true
   def terminate(_reason, %{conn: nil}), do: :ok
 
@@ -481,6 +523,7 @@ defmodule Graphonomous.Store do
            select_all(conn, """
            SELECT id, content, node_type, confidence, embedding, metadata, source, access_count,
                   causal_parent_ids, creation_source, timescale, decay_rate,
+                  revision_id, superseded_by,
                   created_at, updated_at, last_accessed_at
            FROM nodes;
            """),
@@ -529,6 +572,8 @@ defmodule Graphonomous.Store do
          creation_source,
          timescale,
          decay_rate,
+         revision_id,
+         superseded_by,
          created_at,
          updated_at,
          last_accessed_at
@@ -548,6 +593,8 @@ defmodule Graphonomous.Store do
       creation_source: normalize_creation_source(creation_source),
       timescale: normalize_timescale(timescale),
       decay_rate: normalize_optional_probability(decay_rate),
+      revision_id: revision_id,
+      superseded_by: superseded_by,
       created_at: normalize_datetime(created_at, now),
       updated_at: normalize_datetime(updated_at, now),
       last_accessed_at: normalize_datetime(last_accessed_at, now)
@@ -670,7 +717,12 @@ defmodule Graphonomous.Store do
   end
 
   defp select_all(conn, sql) when is_binary(sql) do
+    select_all(conn, sql, [])
+  end
+
+  defp select_all(conn, sql, params) when is_binary(sql) and is_list(params) do
     with {:ok, stmt} <- Sqlite3.prepare(conn, sql),
+         :ok <- maybe_bind(stmt, params),
          {:ok, rows} <- Sqlite3.fetch_all(conn, stmt) do
       _ = Sqlite3.release(conn, stmt)
       {:ok, rows}
@@ -678,6 +730,9 @@ defmodule Graphonomous.Store do
       {:error, reason} -> {:error, reason}
     end
   end
+
+  defp maybe_bind(_stmt, []), do: :ok
+  defp maybe_bind(stmt, params), do: Sqlite3.bind(stmt, params)
 
   defp execute_prepared(conn, sql, params) when is_binary(sql) and is_list(params) do
     with {:ok, stmt} <- Sqlite3.prepare(conn, sql),
@@ -832,6 +887,24 @@ defmodule Graphonomous.Store do
        [
          "ALTER TABLE edges ADD COLUMN co_activation_count INTEGER DEFAULT 0;",
          "ALTER TABLE edges ADD COLUMN decay_rate REAL;"
+       ]},
+      {"2026_04_03_belief_revision",
+       [
+         "ALTER TABLE nodes ADD COLUMN revision_id TEXT;",
+         "ALTER TABLE nodes ADD COLUMN superseded_by TEXT;",
+         """
+         CREATE TABLE IF NOT EXISTS revisions (
+           id TEXT PRIMARY KEY,
+           operation TEXT NOT NULL,
+           trigger_node_id TEXT NOT NULL,
+           affected_node_ids TEXT NOT NULL DEFAULT '[]',
+           rationale TEXT,
+           agent_id TEXT,
+           created_at TEXT NOT NULL
+         );
+         """,
+         "CREATE INDEX IF NOT EXISTS idx_revisions_trigger ON revisions(trigger_node_id);",
+         "CREATE INDEX IF NOT EXISTS idx_nodes_superseded ON nodes(superseded_by);"
        ]}
     ]
   end
@@ -915,8 +988,9 @@ defmodule Graphonomous.Store do
       INSERT OR REPLACE INTO nodes
       (id, content, node_type, confidence, embedding, metadata, source, access_count,
        causal_parent_ids, creation_source, timescale, decay_rate,
+       revision_id, superseded_by,
        created_at, updated_at, last_accessed_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
       """,
       [
         node.id,
@@ -931,6 +1005,8 @@ defmodule Graphonomous.Store do
         to_string(node.creation_source || :manual),
         to_string(node.timescale || :fast),
         node.decay_rate,
+        node.revision_id,
+        node.superseded_by,
         iso8601(node.created_at),
         iso8601(node.updated_at),
         iso8601(node.last_accessed_at)
@@ -1042,6 +1118,8 @@ defmodule Graphonomous.Store do
       creation_source: normalize_creation_source(map_get(attrs, :creation_source, :inference)),
       timescale: normalize_timescale(map_get(attrs, :timescale, :medium)),
       decay_rate: normalize_optional_probability(map_get(attrs, :decay_rate, nil)),
+      revision_id: map_get(attrs, :revision_id, nil),
+      superseded_by: map_get(attrs, :superseded_by, nil),
       created_at: map_get(attrs, :created_at, now) |> normalize_datetime(now),
       updated_at: map_get(attrs, :updated_at, now) |> normalize_datetime(now),
       last_accessed_at: map_get(attrs, :last_accessed_at, now) |> normalize_datetime(now)
@@ -1067,6 +1145,8 @@ defmodule Graphonomous.Store do
           normalize_creation_source(map_get(attrs, :creation_source, node.creation_source)),
         timescale: normalize_timescale(map_get(attrs, :timescale, node.timescale)),
         decay_rate: normalize_optional_probability(map_get(attrs, :decay_rate, node.decay_rate)),
+        revision_id: map_get(attrs, :revision_id, node.revision_id),
+        superseded_by: map_get(attrs, :superseded_by, node.superseded_by),
         updated_at: now
     }
   end
@@ -1109,6 +1189,46 @@ defmodule Graphonomous.Store do
       grounding: normalize_map(map_get(attrs, :grounding, %{})),
       observed_at: map_get(attrs, :observed_at, now) |> normalize_datetime(now)
     }
+  end
+
+  defp build_revision(attrs) do
+    now = DateTime.utc_now()
+
+    affected =
+      case map_get(attrs, :affected_node_ids, []) do
+        list when is_list(list) -> Enum.filter(list, &is_binary/1)
+        _ -> []
+      end
+
+    %{
+      id: map_get(attrs, :id, id("rev")),
+      operation: to_string(map_get(attrs, :operation, "expansion")),
+      trigger_node_id: map_get(attrs, :trigger_node_id, ""),
+      affected_node_ids: affected,
+      rationale: map_get(attrs, :rationale, nil),
+      agent_id: map_get(attrs, :agent_id, nil),
+      created_at: map_get(attrs, :created_at, now) |> normalize_datetime(now)
+    }
+  end
+
+  defp persist_revision(conn, rev) do
+    execute_prepared(
+      conn,
+      """
+      INSERT OR REPLACE INTO revisions
+      (id, operation, trigger_node_id, affected_node_ids, rationale, agent_id, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?);
+      """,
+      [
+        rev.id,
+        rev.operation,
+        rev.trigger_node_id,
+        json_encode(rev.affected_node_ids),
+        rev.rationale,
+        rev.agent_id,
+        iso8601(rev.created_at)
+      ]
+    )
   end
 
   ## Filters
@@ -1213,6 +1333,7 @@ defmodule Graphonomous.Store do
     :follows,
     :contradicts,
     :supersedes,
+    :superseded_by,
     :depends_on,
     :similar_to,
     :supports,
@@ -1250,6 +1371,7 @@ defmodule Graphonomous.Store do
       "follows" -> :follows
       "contradicts" -> :contradicts
       "supersedes" -> :supersedes
+      "superseded_by" -> :superseded_by
       "depends_on" -> :depends_on
       "similar_to" -> :similar_to
       "supports" -> :supports

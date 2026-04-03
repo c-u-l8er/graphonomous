@@ -9,6 +9,10 @@ defmodule Graphonomous.EdgeExtractor do
 
   require Logger
 
+  alias Graphonomous.Graph
+
+  @backref_similarity_threshold 0.75
+
   @type edge_candidate :: %{
           source_id: String.t(),
           target_pattern: String.t(),
@@ -52,16 +56,62 @@ defmodule Graphonomous.EdgeExtractor do
   """
   @spec create_extracted_edges([map()]) :: non_neg_integer()
   def create_extracted_edges(nodes) do
-    edges = extract_edges(nodes)
+    forward_edges = extract_edges(nodes)
 
-    Enum.reduce(edges, 0, fn {src_id, tgt_id, edge_type, weight}, count ->
-      case Graphonomous.link_nodes(src_id, tgt_id, %{
-             edge_type: Atom.to_string(edge_type),
-             weight: weight,
-             metadata: %{"source" => "edge_extractor", "automated" => true}
-           }) do
-        {:error, _} -> count
-        _ -> count + 1
+    forward_count =
+      Enum.reduce(forward_edges, 0, fn {src_id, tgt_id, edge_type, weight}, count ->
+        case Graphonomous.link_nodes(src_id, tgt_id, %{
+               edge_type: Atom.to_string(edge_type),
+               weight: weight,
+               metadata: %{"source" => "edge_extractor", "automated" => true}
+             }) do
+          {:error, _} -> count
+          _ -> count + 1
+        end
+      end)
+
+    # After forward edges, compute semantic back-references to create cycles
+    backref_count = extract_semantic_backrefs(forward_edges)
+
+    forward_count + backref_count
+  end
+
+  @doc """
+  After forward edge creation, compute cosine similarity between
+  target and source embeddings. If similarity > threshold, create a
+  reverse `:supports` edge. This enables cycle formation (κ > 0).
+  """
+  @spec extract_semantic_backrefs([{String.t(), String.t(), atom(), float()}]) ::
+          non_neg_integer()
+  def extract_semantic_backrefs(forward_edges) when is_list(forward_edges) do
+    forward_edges
+    |> Enum.uniq_by(fn {src, tgt, _, _} -> {src, tgt} end)
+    |> Enum.reduce(0, fn {src_id, tgt_id, _type, _weight}, count ->
+      with {:ok, src_node} <- Graph.get_node(src_id),
+           {:ok, tgt_node} <- Graph.get_node(tgt_id) do
+        src_vec = Graph.decode_embedding_blob(src_node.embedding)
+        tgt_vec = Graph.decode_embedding_blob(tgt_node.embedding)
+
+        similarity = Graph.cosine_similarity(tgt_vec, src_vec)
+
+        if similarity >= @backref_similarity_threshold do
+          case Graphonomous.link_nodes(tgt_id, src_id, %{
+                 edge_type: "supports",
+                 weight: Float.round(similarity * 0.6, 3),
+                 metadata: %{
+                   "source" => "edge_extractor_backref",
+                   "automated" => true,
+                   "similarity" => Float.round(similarity, 4)
+                 }
+               }) do
+            {:error, _} -> count
+            _ -> count + 1
+          end
+        else
+          count
+        end
+      else
+        _ -> count
       end
     end)
   end
