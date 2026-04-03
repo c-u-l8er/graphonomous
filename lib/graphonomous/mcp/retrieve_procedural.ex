@@ -4,6 +4,9 @@ defmodule Graphonomous.MCP.RetrieveProcedural do
 
   Performs semantic search scoped to procedural nodes, returning
   ranked results relevant to a given task description.
+
+  P2: Supports optional precondition matching — when `preconditions` is provided,
+  nodes whose skill metadata preconditions match get a score boost.
   """
 
   use Anubis.Server.Component, type: :tool
@@ -14,6 +17,10 @@ defmodule Graphonomous.MCP.RetrieveProcedural do
     field(:task, :string,
       required: true,
       description: "Natural-language description of the task to find procedures for"
+    )
+
+    field(:preconditions, :string,
+      description: "JSON array of required precondition strings (optional)"
     )
 
     field(:limit, :number, description: "Max procedures to return (default: 10)")
@@ -29,8 +36,9 @@ defmodule Graphonomous.MCP.RetrieveProcedural do
       {:reply, error_response("task is required"), frame}
     else
       limit = p(params, :limit, @default_limit) |> parse_pos_int(@default_limit)
+      preconditions = parse_preconditions(p(params, :preconditions))
 
-      case do_retrieve_procedural(task, limit) do
+      case do_retrieve_procedural(task, limit, preconditions) do
         {:ok, result} ->
           {:reply, ok_response(result), frame}
 
@@ -40,18 +48,16 @@ defmodule Graphonomous.MCP.RetrieveProcedural do
     end
   end
 
-  defp do_retrieve_procedural(task, limit) do
-    # Use retrieve_context with node_type filter for procedural
+  defp do_retrieve_procedural(task, limit, preconditions) do
     retrieval =
       Graphonomous.retrieve_context(task,
-        limit: limit,
+        limit: limit * 2,
         expansion_hops: 1,
         neighbors_per_node: 3
       )
 
     case retrieval do
       %{results: results} when is_list(results) ->
-        # Filter to procedural nodes only
         procedures =
           results
           |> Enum.filter(fn r ->
@@ -62,9 +68,9 @@ defmodule Graphonomous.MCP.RetrieveProcedural do
 
             node_type == "procedural"
           end)
+          |> maybe_boost_by_preconditions(preconditions)
           |> Enum.take(limit)
 
-        # Extract step-like content if possible
         steps =
           procedures
           |> Enum.flat_map(&extract_steps/1)
@@ -74,25 +80,76 @@ defmodule Graphonomous.MCP.RetrieveProcedural do
          %{
            task: task,
            count: length(procedures),
+           preconditions_filter: preconditions,
            procedures:
              Enum.map(procedures, fn r ->
+               skill_meta = get_skill_metadata(r)
+
                %{
                  node_id: Map.get(r, :node_id),
                  content: Map.get(r, :content),
                  confidence: Map.get(r, :confidence),
                  similarity: Map.get(r, :similarity),
-                 score: Map.get(r, :score)
+                 score: Map.get(r, :score),
+                 skill: skill_meta
                }
              end),
            steps: steps
          }}
 
       %{} ->
-        # Fallback: list all procedural nodes and rank by text match
         fallback_procedural(task, limit)
 
       {:error, _} = err ->
         err
+    end
+  end
+
+  # P2: Precondition matching boost
+  defp maybe_boost_by_preconditions(procedures, []), do: procedures
+
+  defp maybe_boost_by_preconditions(procedures, required_preconds) do
+    procedures
+    |> Enum.map(fn result ->
+      node_preconds = get_node_preconditions(result)
+      match_score = precondition_match_score(required_preconds, node_preconds)
+      score = Map.get(result, :score, 0.0) || 0.0
+      %{result | score: score * (1.0 + match_score)}
+    end)
+    |> Enum.sort_by(&Map.get(&1, :score, 0.0), :desc)
+  end
+
+  defp precondition_match_score([], _available), do: 0.0
+  defp precondition_match_score(_required, []), do: 0.0
+
+  defp precondition_match_score(required, available) do
+    matched = Enum.count(required, &(&1 in available))
+    matched / max(length(required), 1)
+  end
+
+  defp get_node_preconditions(result) do
+    node_id = Map.get(result, :node_id)
+
+    case node_id && Graphonomous.Store.get_node(node_id) do
+      {:ok, node} ->
+        meta = if is_map(node.metadata), do: node.metadata, else: %{}
+        get_in(meta, ["skill", "preconditions"]) || []
+
+      _ ->
+        []
+    end
+  end
+
+  defp get_skill_metadata(result) do
+    node_id = Map.get(result, :node_id)
+
+    case node_id && Graphonomous.Store.get_node(node_id) do
+      {:ok, node} ->
+        meta = if is_map(node.metadata), do: node.metadata, else: %{}
+        Map.get(meta, "skill")
+
+      _ ->
+        nil
     end
   end
 
@@ -113,6 +170,7 @@ defmodule Graphonomous.MCP.RetrieveProcedural do
          %{
            task: task,
            count: length(procedures),
+           preconditions_filter: [],
            procedures:
              Enum.map(procedures, fn n ->
                %{
@@ -120,7 +178,8 @@ defmodule Graphonomous.MCP.RetrieveProcedural do
                  content: Map.get(n, :content),
                  confidence: Map.get(n, :confidence),
                  similarity: nil,
-                 score: nil
+                 score: nil,
+                 skill: nil
                }
              end),
            steps: steps
@@ -142,7 +201,6 @@ defmodule Graphonomous.MCP.RetrieveProcedural do
   end
 
   defp extract_numbered_steps(content) do
-    # Match lines starting with digits, dashes, or bullet markers
     content
     |> String.split("\n")
     |> Enum.map(&String.trim/1)
@@ -151,6 +209,18 @@ defmodule Graphonomous.MCP.RetrieveProcedural do
         Regex.match?(~r/^[-*]\s+/, line)
     end)
   end
+
+  defp parse_preconditions(nil), do: []
+  defp parse_preconditions(value) when is_list(value), do: Enum.filter(value, &is_binary/1)
+
+  defp parse_preconditions(value) when is_binary(value) do
+    case Jason.decode(value) do
+      {:ok, list} when is_list(list) -> Enum.filter(list, &is_binary/1)
+      _ -> []
+    end
+  end
+
+  defp parse_preconditions(_), do: []
 
   defp ok_response(data) do
     payload = Map.put(data, :status, "ok")

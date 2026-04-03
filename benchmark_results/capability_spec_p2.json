@@ -1,0 +1,212 @@
+{
+  "version": "0.2.0",
+  "date": "2026-04-03",
+  "benchmark": "GraphMemBench Phase 2",
+  "categories": [
+    {
+      "category": "6. Uncertainty Propagation",
+      "failed": 0,
+      "details": [
+        {
+          "name": "U8: Attention survey includes high-info-gain nodes",
+          "result": "pass"
+        },
+        {
+          "name": "U7: Coverage uses entropy for evidence-bearing nodes",
+          "result": "pass"
+        },
+        {
+          "name": "U6: Information gain calculation",
+          "result": "pass"
+        },
+        {
+          "name": "U5: Frontier returns widest intervals",
+          "result": "pass"
+        },
+        {
+          "name": "U4: Propagation through derived_from edges",
+          "result": "pass"
+        },
+        {
+          "name": "U3: No-evidence returns :no_evidence",
+          "result": "pass"
+        },
+        {
+          "name": "U2: Interval narrows with more evidence",
+          "result": "pass"
+        },
+        {
+          "name": "U1: Wilson interval at evidence_count=1",
+          "result": "pass"
+        }
+      ],
+      "skipped": 0,
+      "passed": 8
+    },
+    {
+      "category": "7. Procedural Retrieval",
+      "failed": 0,
+      "details": [
+        {
+          "name": "P8: Composition candidate detection in Stage 7",
+          "result": "pass"
+        },
+        {
+          "name": "P7: Procedure auto-extraction from structured content",
+          "result": "pass"
+        },
+        {
+          "name": "P6: Domain-scoped retrieval",
+          "result": "pass"
+        },
+        {
+          "name": "P5: Multiple procedures with overlapping postconditions",
+          "result": "pass"
+        },
+        {
+          "name": "P4: Skill metadata persists through store/retrieve",
+          "result": "pass"
+        },
+        {
+          "name": "P3: No preconditions → existing behavior",
+          "result": "pass"
+        },
+        {
+          "name": "P2: Full match scores higher than partial",
+          "result": "pass"
+        },
+        {
+          "name": "P1: Precondition matching boosts relevant procedures",
+          "result": "pass"
+        }
+      ],
+      "skipped": 0,
+      "passed": 8
+    },
+    {
+      "category": "8. Multi-Agent Prep",
+      "failed": 0,
+      "details": [
+        {
+          "name": "A8: Forgetting respects agent_id scope",
+          "result": "pass"
+        },
+        {
+          "name": "A7: Topology analysis works across agents",
+          "result": "pass"
+        },
+        {
+          "name": "A6: Graph stats include node counts",
+          "result": "pass"
+        },
+        {
+          "name": "A5: Mixed agent_id nodes in same graph",
+          "result": "pass"
+        },
+        {
+          "name": "A4: Query by agent_id filters correctly",
+          "result": "pass"
+        },
+        {
+          "name": "A3: Default agent_id is 'default'",
+          "result": "pass"
+        },
+        {
+          "name": "A2: Edge with agent_id persists",
+          "result": "pass"
+        },
+        {
+          "name": "A1: Node with agent_id persists",
+          "result": "pass"
+        }
+      ],
+      "skipped": 0,
+      "passed": 8
+    },
+    {
+      "category": "9. Integration Scenarios",
+      "failed": 0,
+      "details": [
+        {
+          "name": "I8: Evidence count accumulation over multiple outcomes",
+          "result": "pass"
+        },
+        {
+          "name": "I7: Consolidation full pipeline on small graph",
+          "result": "pass"
+        },
+        {
+          "name": "I6: Attention survey with goals + uncertainty",
+          "result": "pass"
+        },
+        {
+          "name": "I5: Memory pressure → forgetting → kappa recomputation",
+          "result": "pass"
+        },
+        {
+          "name": "I4: Multi-turn conversation simulation (5 turns)",
+          "result": "pass"
+        },
+        {
+          "name": "I3: Procedural + belief revision: old version superseded",
+          "result": "pass"
+        },
+        {
+          "name": "I2: Uncertainty + forgetting: wide-interval first",
+          "result": "pass"
+        },
+        {
+          "name": "I1: Full loop: store → outcome → Q-value update → re-retrieve",
+          "result": "pass"
+        }
+      ],
+      "skipped": 0,
+      "passed": 8
+    },
+    {
+      "category": "10. Stress",
+      "failed": 0,
+      "details": [
+        {
+          "name": "S8: Consolidation throughput at 100+ nodes",
+          "result": "pass"
+        },
+        {
+          "name": "S7: 100-node ingestion + store cycle",
+          "result": "pass"
+        },
+        {
+          "name": "S6: Phase 2 full suite latency check",
+          "result": "pass"
+        },
+        {
+          "name": "S5: Uncertainty propagation through 5-hop chain",
+          "result": "pass"
+        },
+        {
+          "name": "S4: Q-value convergence after 10 outcome cycles",
+          "result": "pass"
+        },
+        {
+          "name": "S3: 10 concurrent conflict resolutions",
+          "result": "pass"
+        },
+        {
+          "name": "S2: 500-edge topology analysis latency",
+          "result": "pass"
+        },
+        {
+          "name": "S1: 100-node forgetting under budget pressure",
+          "result": "pass"
+        }
+      ],
+      "skipped": 0,
+      "passed": 8
+    }
+  ],
+  "duration_ms": 30486,
+  "total_failed": 0,
+  "total_passed": 40,
+  "total_scenarios": 40,
+  "total_skipped": 0
+}

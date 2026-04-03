@@ -29,6 +29,7 @@ defmodule Graphonomous.Types.Edge do
           metadata: map(),
           co_activation_count: non_neg_integer(),
           decay_rate: float() | nil,
+          agent_id: binary(),
           created_at: DateTime.t() | nil,
           last_activated_at: DateTime.t() | nil
         }
@@ -42,6 +43,7 @@ defmodule Graphonomous.Types.Edge do
     weight: 0.3,
     metadata: %{},
     co_activation_count: 0,
+    agent_id: "default",
     created_at: nil,
     last_activated_at: nil
   ]

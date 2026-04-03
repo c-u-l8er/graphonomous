@@ -541,14 +541,14 @@ defmodule Graphonomous.Store do
            SELECT id, content, node_type, confidence, embedding, metadata, source, access_count,
                   causal_parent_ids, creation_source, timescale, decay_rate,
                   revision_id, superseded_by,
-                  q_value, q_update_count, forgotten_at,
+                  q_value, q_update_count, evidence_count, agent_id, forgotten_at,
                   created_at, updated_at, last_accessed_at
            FROM nodes;
            """),
          {:ok, edge_rows} <-
            select_all(conn, """
            SELECT id, source_id, target_id, edge_type, weight, metadata,
-                  co_activation_count, decay_rate,
+                  co_activation_count, decay_rate, agent_id,
                   created_at, last_activated_at
            FROM edges;
            """),
@@ -594,6 +594,8 @@ defmodule Graphonomous.Store do
          superseded_by,
          q_value,
          q_update_count,
+         evidence_count,
+         agent_id,
          forgotten_at,
          created_at,
          updated_at,
@@ -618,6 +620,8 @@ defmodule Graphonomous.Store do
       superseded_by: superseded_by,
       q_value: normalize_probability(q_value || 0.5),
       q_update_count: normalize_integer(q_update_count, 0),
+      evidence_count: normalize_integer(evidence_count, 0),
+      agent_id: to_string(agent_id || "default"),
       forgotten_at: normalize_nullable_datetime(forgotten_at),
       created_at: normalize_datetime(created_at, now),
       updated_at: normalize_datetime(updated_at, now),
@@ -636,6 +640,7 @@ defmodule Graphonomous.Store do
          metadata,
          co_activation_count,
          decay_rate,
+         agent_id,
          created_at,
          last_activated_at
        ]) do
@@ -650,6 +655,7 @@ defmodule Graphonomous.Store do
       metadata: normalize_db_json_map(metadata),
       co_activation_count: normalize_integer(co_activation_count, 0),
       decay_rate: normalize_optional_probability(decay_rate),
+      agent_id: to_string(agent_id || "default"),
       created_at: normalize_datetime(created_at, now),
       last_activated_at: normalize_datetime(last_activated_at, now)
     }
@@ -946,6 +952,14 @@ defmodule Graphonomous.Store do
          """,
          "CREATE INDEX IF NOT EXISTS idx_nodes_forgotten ON nodes(forgotten_at);",
          "CREATE INDEX IF NOT EXISTS idx_nodes_q_value ON nodes(q_value);"
+       ]},
+      {"2026_04_03_p2_uncertainty_agent",
+       [
+         "ALTER TABLE nodes ADD COLUMN evidence_count INTEGER DEFAULT 0;",
+         "ALTER TABLE nodes ADD COLUMN agent_id TEXT DEFAULT 'default';",
+         "ALTER TABLE edges ADD COLUMN agent_id TEXT DEFAULT 'default';",
+         "CREATE INDEX IF NOT EXISTS idx_nodes_agent ON nodes(agent_id);",
+         "CREATE INDEX IF NOT EXISTS idx_edges_agent ON edges(agent_id);"
        ]}
     ]
   end
@@ -1049,9 +1063,9 @@ defmodule Graphonomous.Store do
       (id, content, node_type, confidence, embedding, metadata, source, access_count,
        causal_parent_ids, creation_source, timescale, decay_rate,
        revision_id, superseded_by,
-       q_value, q_update_count, forgotten_at,
+       q_value, q_update_count, evidence_count, agent_id, forgotten_at,
        created_at, updated_at, last_accessed_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
       """,
       [
         node.id,
@@ -1070,6 +1084,8 @@ defmodule Graphonomous.Store do
         node.superseded_by,
         normalize_probability(node.q_value || 0.5),
         normalize_integer(node.q_update_count || 0, 0),
+        normalize_integer(node.evidence_count || 0, 0),
+        node.agent_id || "default",
         nullable_iso8601(node.forgotten_at),
         iso8601(node.created_at),
         iso8601(node.updated_at),
@@ -1084,9 +1100,9 @@ defmodule Graphonomous.Store do
       """
       INSERT OR REPLACE INTO edges
       (id, source_id, target_id, edge_type, weight, metadata,
-       co_activation_count, decay_rate,
+       co_activation_count, decay_rate, agent_id,
        created_at, last_activated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
       """,
       [
         edge.id,
@@ -1097,6 +1113,7 @@ defmodule Graphonomous.Store do
         json_encode(edge.metadata),
         normalize_integer(edge.co_activation_count, 0),
         edge.decay_rate,
+        edge.agent_id || "default",
         iso8601(edge.created_at),
         iso8601(edge.last_activated_at)
       ]
@@ -1186,11 +1203,97 @@ defmodule Graphonomous.Store do
       superseded_by: map_get(attrs, :superseded_by, nil),
       q_value: normalize_probability(map_get(attrs, :q_value, 0.5)),
       q_update_count: normalize_integer(map_get(attrs, :q_update_count, 0), 0),
+      evidence_count: normalize_integer(map_get(attrs, :evidence_count, 0), 0),
+      agent_id: map_get(attrs, :agent_id, "default") || "default",
       forgotten_at: nil,
       created_at: map_get(attrs, :created_at, now) |> normalize_datetime(now),
       updated_at: map_get(attrs, :updated_at, now) |> normalize_datetime(now),
       last_accessed_at: map_get(attrs, :last_accessed_at, now) |> normalize_datetime(now)
     }
+    |> maybe_auto_extract_skill_metadata()
+  end
+
+  # P2: Auto-extract skill metadata for procedural nodes if content has structured indicators
+  defp maybe_auto_extract_skill_metadata(%Node{node_type: :procedural} = node) do
+    meta = if is_map(node.metadata), do: node.metadata, else: %{}
+
+    # Skip if skill metadata already exists
+    if Map.has_key?(meta, "skill") do
+      node
+    else
+      extracted = extract_skill_from_content(node.content || "")
+
+      if map_size(extracted) > 0 do
+        %Node{node | metadata: Map.put(meta, "skill", extracted)}
+      else
+        node
+      end
+    end
+  end
+
+  defp maybe_auto_extract_skill_metadata(node), do: node
+
+  defp extract_skill_from_content(content) do
+    lines = String.split(content, "\n") |> Enum.map(&String.trim/1)
+
+    preconditions = extract_section(lines, ~r/^(prerequisites?|preconditions?|requires?):?\s*/i)
+
+    postconditions =
+      extract_section(lines, ~r/^(results?|postconditions?|outputs?|produces?):?\s*/i)
+
+    domain = extract_domain(content)
+
+    skill = %{}
+
+    skill =
+      if preconditions != [],
+        do: Map.put(skill, "preconditions", preconditions),
+        else: skill
+
+    skill =
+      if postconditions != [],
+        do: Map.put(skill, "postconditions", postconditions),
+        else: skill
+
+    skill = if domain, do: Map.put(skill, "domain", domain), else: skill
+    skill
+  end
+
+  defp extract_section(lines, header_pattern) do
+    # Find the header line, then collect subsequent bullet/numbered lines
+    case Enum.find_index(lines, &Regex.match?(header_pattern, &1)) do
+      nil ->
+        []
+
+      idx ->
+        lines
+        |> Enum.drop(idx + 1)
+        |> Enum.take_while(fn line ->
+          Regex.match?(~r/^[-*]\s+/, line) or Regex.match?(~r/^\d+[\.\)]\s+/, line)
+        end)
+        |> Enum.map(fn line ->
+          line
+          |> String.replace(~r/^[-*\d\.\)]+\s+/, "")
+          |> String.trim()
+        end)
+        |> Enum.reject(&(&1 == ""))
+    end
+  end
+
+  defp extract_domain(content) do
+    lower = String.downcase(content)
+
+    domains = [
+      {"software_development", ~r/\b(code|programming|software|deploy|test|compile|build)\b/},
+      {"data_science", ~r/\b(data|model|training|dataset|feature|prediction)\b/},
+      {"devops", ~r/\b(docker|kubernetes|ci\/cd|pipeline|infrastructure)\b/},
+      {"database", ~r/\b(sql|database|query|migration|schema|table)\b/}
+    ]
+
+    case Enum.find(domains, fn {_name, pattern} -> Regex.match?(pattern, lower) end) do
+      {name, _} -> name
+      nil -> nil
+    end
   end
 
   defp merge_node(%Node{} = node, attrs) do
@@ -1220,6 +1323,12 @@ defmodule Graphonomous.Store do
             map_get(attrs, :q_update_count, node.q_update_count),
             node.q_update_count
           ),
+        evidence_count:
+          normalize_integer(
+            map_get(attrs, :evidence_count, node.evidence_count),
+            node.evidence_count || 0
+          ),
+        agent_id: map_get(attrs, :agent_id, node.agent_id) || "default",
         forgotten_at: map_get(attrs, :forgotten_at, node.forgotten_at),
         updated_at: now
     }
@@ -1237,6 +1346,7 @@ defmodule Graphonomous.Store do
       metadata: normalize_map(map_get(attrs, :metadata, %{})),
       co_activation_count: normalize_integer(map_get(attrs, :co_activation_count, 0), 0),
       decay_rate: normalize_optional_probability(map_get(attrs, :decay_rate, nil)),
+      agent_id: map_get(attrs, :agent_id, "default") || "default",
       created_at: map_get(attrs, :created_at, now) |> normalize_datetime(now),
       last_activated_at: map_get(attrs, :last_activated_at, now) |> normalize_datetime(now)
     }
@@ -1321,7 +1431,13 @@ defmodule Graphonomous.Store do
           min_c -> node.confidence >= normalize_probability(min_c)
         end
 
-      type_ok? and confidence_ok?
+      agent_ok? =
+        case map_get(filters, :agent_id, nil) do
+          nil -> true
+          aid -> (node.agent_id || "default") == aid
+        end
+
+      type_ok? and confidence_ok? and agent_ok?
     end)
   end
 

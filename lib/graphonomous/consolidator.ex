@@ -173,6 +173,9 @@ defmodule Graphonomous.Consolidator do
     # Stage 7: generate abstractions from episodic clusters
     abstracted = stage_generate_abstractions()
 
+    # Stage 7b: detect procedural composition candidates (P2)
+    composition_candidates = stage_detect_composition_candidates()
+
     duration_ms = DateTime.diff(DateTime.utc_now(), started_at, :millisecond)
 
     :telemetry.execute(
@@ -188,6 +191,7 @@ defmodule Graphonomous.Consolidator do
         merged: merged,
         promoted: promoted,
         abstracted: abstracted,
+        composition_candidates: composition_candidates,
         errors: node_errors + edge_errors,
         duration_ms: duration_ms
       },
@@ -762,6 +766,133 @@ defmodule Graphonomous.Consolidator do
 
       _ ->
         :skip
+    end
+  end
+
+  # P2: Detect procedural nodes with overlapping postconditions as composition candidates.
+  # When 3+ procedural nodes share >60% postcondition overlap, annotate the abstraction
+  # metadata as a composition candidate (but don't compose yet).
+  defp stage_detect_composition_candidates do
+    case Graph.list_nodes(%{node_type: :procedural}) do
+      {:ok, procedures} when length(procedures) >= 3 ->
+        # Group by postconditions overlap
+        with_postconditions =
+          procedures
+          |> Enum.filter(fn node ->
+            meta = if is_map(node.metadata), do: node.metadata, else: %{}
+            postconds = get_in(meta, ["skill", "postconditions"]) || []
+            is_list(postconds) and length(postconds) > 0
+          end)
+
+        if length(with_postconditions) < 3 do
+          0
+        else
+          # Find groups with overlapping postconditions
+          detect_overlapping_groups(with_postconditions)
+        end
+
+      _ ->
+        0
+    end
+  end
+
+  defp detect_overlapping_groups(procedures) do
+    # Compare all pairs and group by shared postconditions
+    pairs =
+      for a <- procedures,
+          b <- procedures,
+          a.id < b.id,
+          overlap = postcondition_overlap(a, b),
+          overlap > 0.6,
+          do: {a.id, b.id, overlap}
+
+    # Build connected components from overlapping pairs
+    groups = build_groups(pairs)
+
+    # For groups of 3+, annotate as composition candidates
+    Enum.count(groups, fn group ->
+      if length(group) >= 3 do
+        group_nodes =
+          Enum.map(group, fn id ->
+            case Store.get_node(id) do
+              {:ok, node} -> node
+              _ -> nil
+            end
+          end)
+          |> Enum.reject(&is_nil/1)
+
+        Enum.each(group_nodes, fn node ->
+          meta = if is_map(node.metadata), do: node.metadata, else: %{}
+          skill = Map.get(meta, "skill", %{}) || %{}
+
+          updated_skill =
+            Map.put(skill, "composition_candidate", %{
+              "group_size" => length(group),
+              "peer_ids" => Enum.reject(group, &(&1 == node.id)),
+              "detected_at" => DateTime.to_iso8601(DateTime.utc_now())
+            })
+
+          updated_meta = Map.put(meta, "skill", updated_skill)
+          Store.update_node(node.id, %{metadata: updated_meta})
+        end)
+
+        true
+      else
+        false
+      end
+    end)
+  end
+
+  defp postcondition_overlap(a, b) do
+    meta_a = if is_map(a.metadata), do: a.metadata, else: %{}
+    meta_b = if is_map(b.metadata), do: b.metadata, else: %{}
+    postconds_a = MapSet.new(get_in(meta_a, ["skill", "postconditions"]) || [])
+    postconds_b = MapSet.new(get_in(meta_b, ["skill", "postconditions"]) || [])
+
+    union_size = MapSet.size(MapSet.union(postconds_a, postconds_b))
+
+    if union_size == 0 do
+      0.0
+    else
+      MapSet.size(MapSet.intersection(postconds_a, postconds_b)) / union_size
+    end
+  end
+
+  defp build_groups(pairs) do
+    # Simple union-find via adjacency
+    adj =
+      Enum.reduce(pairs, %{}, fn {a, b, _overlap}, acc ->
+        acc
+        |> Map.update(a, [b], &[b | &1])
+        |> Map.update(b, [a], &[a | &1])
+      end)
+
+    {groups, _visited} =
+      Enum.reduce(Map.keys(adj), {[], MapSet.new()}, fn node, {groups, visited} ->
+        if MapSet.member?(visited, node) do
+          {groups, visited}
+        else
+          {component, visited} = bfs_component(node, adj, visited)
+          {[component | groups], visited}
+        end
+      end)
+
+    groups
+  end
+
+  defp bfs_component(start, adj, visited) do
+    bfs_component([start], adj, visited, [])
+  end
+
+  defp bfs_component([], _adj, visited, component), do: {component, visited}
+
+  defp bfs_component([node | rest], adj, visited, component) do
+    if MapSet.member?(visited, node) do
+      bfs_component(rest, adj, visited, component)
+    else
+      visited = MapSet.put(visited, node)
+      neighbors = Map.get(adj, node, [])
+      bfs_component(rest ++ neighbors, adj, visited, [node | component])
     end
   end
 

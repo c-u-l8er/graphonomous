@@ -30,6 +30,8 @@ defmodule Graphonomous.Types.Node do
           superseded_by: binary() | nil,
           q_value: float(),
           q_update_count: non_neg_integer(),
+          evidence_count: non_neg_integer(),
+          agent_id: binary(),
           forgotten_at: DateTime.t() | nil,
           created_at: DateTime.t() | nil,
           updated_at: DateTime.t() | nil,
@@ -54,6 +56,8 @@ defmodule Graphonomous.Types.Node do
     timescale: :medium,
     q_value: 0.5,
     q_update_count: 0,
+    evidence_count: 0,
+    agent_id: "default",
     created_at: nil,
     updated_at: nil,
     last_accessed_at: nil

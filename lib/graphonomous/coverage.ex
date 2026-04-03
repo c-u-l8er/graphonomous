@@ -331,7 +331,8 @@ defmodule Graphonomous.Coverage do
     known_unknowns = clamp01(get_num(signal, :known_unknowns, 0.0))
 
     min_nodes = Keyword.get(opts, :min_context_nodes, 3)
-    node_count = length(Map.get(signal, :retrieved_nodes, []))
+    nodes = Map.get(signal, :retrieved_nodes, [])
+    node_count = length(nodes)
 
     low_evidence_penalty =
       if node_count >= min_nodes do
@@ -341,14 +342,33 @@ defmodule Graphonomous.Coverage do
       end
 
     score_dispersion =
-      signal
-      |> Map.get(:retrieved_nodes, [])
+      nodes
       |> Enum.map(&node_score/1)
       |> stddev()
 
-    (0.45 * semantic_gap + 0.25 * score_dispersion + 0.20 * low_evidence_penalty +
-       0.10 * known_unknowns)
+    # P2: Use Uncertainty.entropy for evidence-bearing nodes
+    entropy_signal = evidence_entropy(nodes)
+
+    (0.40 * semantic_gap + 0.20 * score_dispersion + 0.15 * low_evidence_penalty +
+       0.10 * known_unknowns + 0.15 * entropy_signal)
     |> clamp01()
+  end
+
+  # P2: Average entropy from evidence-bearing nodes via Uncertainty module.
+  # For nodes without evidence, use 0.5 (neutral) — they're file-ingested, not tested.
+  defp evidence_entropy(nodes) when is_list(nodes) do
+    entropies =
+      Enum.map(nodes, fn node ->
+        ec = get_num(node, :evidence_count, 0)
+
+        if is_number(ec) and ec > 0 do
+          Graphonomous.Uncertainty.entropy(node)
+        else
+          0.5
+        end
+      end)
+
+    mean_or_zero(entropies) |> clamp01()
   end
 
   defp risk_score(signal, components) do

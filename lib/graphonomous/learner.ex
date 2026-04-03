@@ -186,11 +186,16 @@ defmodule Graphonomous.Learner do
             if is_integer(n), do: n + 1, else: 1
           end)
 
+        # P2: Increment evidence_count for uncertainty quantification
+        old_evidence_count = node.evidence_count || 0
+        new_evidence_count = old_evidence_count + 1
+
         update_attrs = %{
           confidence: new_conf,
           metadata: merged_metadata,
           q_value: new_q,
-          q_update_count: new_q_count
+          q_update_count: new_q_count,
+          evidence_count: new_evidence_count
         }
 
         case Store.update_node(node_id, update_attrs) do
