@@ -13,8 +13,18 @@ defmodule Graphonomous.Retriever do
 
   use GenServer
 
-  alias Graphonomous.{Attention, CostTracker, Deliberator, Graph, ModelTier, Store, Topology}
-  alias Graphonomous.Types.Node
+  alias Graphonomous.{
+    Attention,
+    BM25Index,
+    CostTracker,
+    Deliberator,
+    Graph,
+    ModelTier,
+    Reranker,
+    Store,
+    Topology
+  }
+
   alias Graphonomous.Types.Node
 
   @default_similarity_limit 10
@@ -85,6 +95,7 @@ defmodule Graphonomous.Retriever do
       with {:ok, seed_hits} <-
              safe_graph_retrieve_similar(query, cfg.similarity_limit, cfg.similarity_timeout_ms),
            {:ok, seed_entries} <- seed_entries(seed_hits),
+           {:ok, seed_entries} <- hybrid_fuse_bm25(seed_entries, query, cfg),
            {:ok, expanded} <- expand_neighbors(seed_entries, cfg) do
         ranked =
           expanded
@@ -92,6 +103,7 @@ defmodule Graphonomous.Retriever do
           |> Enum.sort_by(& &1.score, :desc)
           |> maybe_diversify_domains(cfg)
           |> maybe_diversify_sessions(cfg)
+          |> maybe_cross_encoder_rerank(query)
           |> Enum.take(cfg.final_limit)
 
         topology = analyze_topology(ranked)
@@ -162,13 +174,18 @@ defmodule Graphonomous.Retriever do
           end
 
         if is_binary(node_id) and not forgotten? do
+          base_score = to_float(Map.get(hit, :score, 0.0))
+
+          # S7: Temporal boost — recently accessed/updated nodes get a recency bonus
+          temporal_boost = temporal_recency_boost(node_id)
+
           entry = %{
             node_id: node_id,
             content: Map.get(hit, :content, ""),
             node_type: Map.get(hit, :node_type, :semantic),
             confidence: clamp01(to_float(Map.get(hit, :confidence, 0.5))),
             similarity: to_float(Map.get(hit, :similarity, 0.0)),
-            score: to_float(Map.get(hit, :score, 0.0)),
+            score: base_score * temporal_boost,
             source: :seed,
             hops: 0,
             via: nil
@@ -181,6 +198,93 @@ defmodule Graphonomous.Retriever do
       end)
 
     {:ok, entries}
+  end
+
+  ## BM25 hybrid fusion via Reciprocal Rank Fusion (RRF)
+  #
+  # Runs a BM25 keyword search in parallel with ANN results, then fuses
+  # using RRF: score(d) = Σ 1/(k + rank_i(d)) for each retrieval system.
+  # k=60 is the standard RRF constant that balances high-ranked vs low-ranked items.
+
+  @rrf_k 60
+
+  defp hybrid_fuse_bm25(seed_entries, query, cfg) do
+    bm25_limit = Map.get(cfg, :similarity_limit, @default_similarity_limit) * 2
+
+    case BM25Index.search(query, limit: bm25_limit) do
+      {:ok, bm25_hits} when bm25_hits != [] ->
+        fused = rrf_fuse(seed_entries, bm25_hits)
+        {:ok, fused}
+
+      _ ->
+        # BM25 unavailable or empty — proceed with ANN-only results
+        {:ok, seed_entries}
+    end
+  rescue
+    _ -> {:ok, seed_entries}
+  end
+
+  defp rrf_fuse(ann_entries, bm25_hits) do
+    # Build ANN rank map (rank by descending score)
+    ann_ranked =
+      ann_entries
+      |> Map.values()
+      |> Enum.sort_by(& &1.score, :desc)
+      |> Enum.with_index(1)
+      |> Map.new(fn {entry, rank} -> {entry.node_id, rank} end)
+
+    # Build BM25 rank map (already sorted by relevance)
+    bm25_ranked =
+      bm25_hits
+      |> Enum.with_index(1)
+      |> Map.new(fn {{node_id, _score}, rank} -> {node_id, rank} end)
+
+    # All candidate node IDs
+    all_ids = MapSet.union(MapSet.new(Map.keys(ann_ranked)), MapSet.new(Map.keys(bm25_ranked)))
+
+    # Compute RRF score for each candidate
+    rrf_scores =
+      Map.new(all_ids, fn id ->
+        ann_rank = Map.get(ann_ranked, id, 1000)
+        bm25_rank = Map.get(bm25_ranked, id, 1000)
+        rrf_score = 1.0 / (@rrf_k + ann_rank) + 1.0 / (@rrf_k + bm25_rank)
+        {id, rrf_score}
+      end)
+
+    # Update existing entries with RRF scores
+    updated_entries =
+      Enum.reduce(ann_entries, %{}, fn {node_id, entry}, acc ->
+        rrf = Map.get(rrf_scores, node_id, entry.score)
+        Map.put(acc, node_id, %{entry | score: rrf})
+      end)
+
+    # Add BM25-only hits (not in ANN results) as new seed entries
+    bm25_only_ids =
+      MapSet.difference(MapSet.new(Map.keys(bm25_ranked)), MapSet.new(Map.keys(ann_ranked)))
+
+    Enum.reduce(bm25_only_ids, updated_entries, fn node_id, acc ->
+      case Store.get_node(node_id) do
+        {:ok, %Node{forgotten_at: nil} = node} ->
+          rrf = Map.get(rrf_scores, node_id, 0.0)
+
+          entry = %{
+            node_id: node.id,
+            content: node.content,
+            node_type: node.node_type,
+            confidence: clamp01(to_float(node.confidence)),
+            similarity: 0.0,
+            score: rrf,
+            source: :bm25,
+            hops: 0,
+            via: nil
+          }
+
+          Map.put(acc, node_id, entry)
+
+        _ ->
+          acc
+      end
+    end)
   end
 
   ## Neighborhood expansion
@@ -401,6 +505,54 @@ defmodule Graphonomous.Retriever do
       %{metadata: meta} when is_map(meta) -> Map.get(meta, "session_id", "unknown")
       _ -> "unknown"
     end
+  end
+
+  ## Cross-encoder reranking (Move 3: +2-4pp SHR)
+  #
+  # Takes top candidates and rescores them using a cross-encoder model that
+  # jointly attends to query+document. Only applies to top-30 to keep latency
+  # manageable (cross-encoders are O(n) per query).
+
+  @rerank_top_k 30
+
+  defp maybe_cross_encoder_rerank(results, _query) when length(results) <= 1, do: results
+
+  defp maybe_cross_encoder_rerank(results, query) do
+    case Reranker.info() do
+      %{status: :ready} ->
+        # Take top-k for reranking, keep the rest in original order
+        {to_rerank, rest} = Enum.split(results, @rerank_top_k)
+
+        candidates =
+          Enum.map(to_rerank, fn entry ->
+            {entry.node_id, entry.content || ""}
+          end)
+
+        case Reranker.rerank(query, candidates) do
+          {:ok, reranked_scores} ->
+            score_map = Map.new(reranked_scores)
+
+            reranked =
+              to_rerank
+              |> Enum.map(fn entry ->
+                rerank_score = Map.get(score_map, entry.node_id, 0.0)
+                # Blend original score (0.4) with reranker score (0.6)
+                blended = 0.4 * entry.score + 0.6 * rerank_score
+                %{entry | score: blended}
+              end)
+              |> Enum.sort_by(& &1.score, :desc)
+
+            reranked ++ rest
+
+          _ ->
+            results
+        end
+
+      _ ->
+        results
+    end
+  rescue
+    _ -> results
   end
 
   # K5: Fault-line-aware retrieval boosting — nodes at knowledge boundaries
@@ -805,6 +957,44 @@ defmodule Graphonomous.Retriever do
   end
 
   defp approx_token_count(_), do: 1
+
+  ## S7: Temporal recency boost
+  #
+  # Nodes accessed or updated recently get a mild score multiplier.
+  # Uses exponential decay with a half-life of 24 hours.
+  # Maximum boost: 1.15x (very recent), minimum: 1.0x (old).
+
+  @temporal_half_life_hours 24.0
+  @temporal_max_boost 1.15
+
+  defp temporal_recency_boost(node_id) do
+    case Store.get_node(node_id) do
+      {:ok, %Node{} = node} ->
+        now = DateTime.utc_now()
+
+        # Use the most recent timestamp (last_accessed_at or updated_at)
+        latest =
+          [node.last_accessed_at, node.updated_at]
+          |> Enum.filter(&is_struct(&1, DateTime))
+          |> Enum.max(DateTime, fn -> nil end)
+
+        case latest do
+          nil ->
+            1.0
+
+          ts ->
+            hours_ago = DateTime.diff(now, ts, :second) / 3600.0
+            decay = :math.pow(0.5, hours_ago / @temporal_half_life_hours)
+            # Scale from [0,1] to [1.0, max_boost]
+            1.0 + (@temporal_max_boost - 1.0) * decay
+        end
+
+      _ ->
+        1.0
+    end
+  rescue
+    _ -> 1.0
+  end
 
   ## Config + utils
 

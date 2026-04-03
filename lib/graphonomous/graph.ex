@@ -213,7 +213,7 @@ defmodule Graphonomous.Graph do
   def handle_call({:retrieve_similar, text, opts}, _from, state) do
     limit = Keyword.get(opts, :limit, @default_similarity_limit)
 
-    with {:ok, query_vec} <- Embedder.embed(text),
+    with {:ok, query_vec} <- Embedder.embed(text, task: :query),
          {:ok, ranked} <- hnsw_retrieve_with_fallback(query_vec, limit) do
       {:reply, {:ok, ranked}, state}
     else
@@ -262,7 +262,7 @@ defmodule Graphonomous.Graph do
           query = Map.get(params, :query) || Map.get(params, :text) || ""
           limit = Map.get(params, :limit, @default_similarity_limit)
 
-          with {:ok, vector} <- Embedder.embed(query),
+          with {:ok, vector} <- Embedder.embed(query, task: :query),
                {:ok, ranked} <- hnsw_retrieve_with_fallback(vector, normalize_limit(limit)) do
             {:ok, ranked}
           end
@@ -284,7 +284,7 @@ defmodule Graphonomous.Graph do
         {:ok, Map.put(attrs, :embedding, nil)}
 
       true ->
-        case Embedder.embed_binary(content) do
+        case Embedder.embed_binary(content, task: :document) do
           {:ok, embedding_blob} -> {:ok, Map.put(attrs, :embedding, embedding_blob)}
           {:error, _reason} -> {:ok, Map.put(attrs, :embedding, nil)}
         end

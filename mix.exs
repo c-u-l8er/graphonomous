@@ -43,6 +43,9 @@ defmodule Graphonomous.MixProject do
       # If EXLA fails to load, embedder gracefully falls back to deterministic hashing.
       # Set GRAPHONOMOUS_EMBEDDER_BACKEND=fallback to skip EXLA entirely.
       {:exla, "~> 0.9", runtime: false},
+      # ONNX Runtime for models not supported by Bumblebee (e.g. nomic-embed-v1.5)
+      # Also used for cross-encoder reranking.
+      {:ortex, "~> 0.1.10"},
 
       # Utilities
       {:jason, "~> 1.4"},

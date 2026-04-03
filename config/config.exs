@@ -2,7 +2,9 @@ import Config
 
 config :graphonomous,
   db_path: "priv/graphonomous.db",
-  embedding_model_id: "sentence-transformers/all-MiniLM-L6-v2",
+  embedding_model_id: "nomic-ai/nomic-embed-text-v1.5",
+  embedding_dimension: 768,
+  embedding_task_prefixes: %{query: "search_query: ", document: "search_document: "},
   embedder_backend: :auto,
   consolidator_interval_ms: 300_000,
   consolidator_decay_rate: 0.02,

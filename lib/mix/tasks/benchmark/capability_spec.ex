@@ -50,7 +50,11 @@ defmodule Mix.Tasks.Benchmark.CapabilitySpec do
         purge_graph()
         {passed, failed, skipped, details} = fun.()
         total = passed + failed + skipped
-        Mix.shell().info("  #{name}: #{passed}/#{total} passed, #{failed} failed, #{skipped} skipped")
+
+        Mix.shell().info(
+          "  #{name}: #{passed}/#{total} passed, #{failed} failed, #{skipped} skipped"
+        )
+
         %{category: name, passed: passed, failed: failed, skipped: skipped, details: details}
       end)
 
@@ -257,9 +261,15 @@ defmodule Mix.Tasks.Benchmark.CapabilitySpec do
 
   defp br4_detect_similarity do
     {:ok, _} = Graphonomous.BeliefRevision.expand("The database uses PostgreSQL", confidence: 0.8)
-    {:ok, _} = Graphonomous.BeliefRevision.expand("The database uses MySQL not PostgreSQL", confidence: 0.6)
 
-    contradictions = Graphonomous.BeliefRevision.detect_contradictions("database uses PostgreSQL or MySQL")
+    {:ok, _} =
+      Graphonomous.BeliefRevision.expand("The database uses MySQL not PostgreSQL",
+        confidence: 0.6
+      )
+
+    contradictions =
+      Graphonomous.BeliefRevision.detect_contradictions("database uses PostgreSQL or MySQL")
+
     # May or may not detect depending on embedder — pass if function runs
     assert_true(is_list(contradictions), "Expected list of contradictions")
   end
@@ -273,9 +283,12 @@ defmodule Mix.Tasks.Benchmark.CapabilitySpec do
     # Verify :contradicts edges exist (detect_contradictions uses similarity,
     # but edge-based contradictions are visible via graph edges directly)
     {:ok, edges} = Graphonomous.Graph.get_edges_for_node(a)
-    has_contradicts = Enum.any?(edges, fn e ->
-      e.edge_type == :contradicts and (e.target_id == b or e.source_id == b)
-    end)
+
+    has_contradicts =
+      Enum.any?(edges, fn e ->
+        e.edge_type == :contradicts and (e.target_id == b or e.source_id == b)
+      end)
+
     assert_true(has_contradicts, "Expected :contradicts edge between nodes")
   end
 
@@ -348,9 +361,12 @@ defmodule Mix.Tasks.Benchmark.CapabilitySpec do
     {:ok, _} = g_edge(b, a, :contradicts)
 
     {:ok, edges} = Graphonomous.Graph.get_edges_for_node(a)
-    has_contradicts = Enum.any?(edges, fn e ->
-      e.edge_type == :contradicts and (e.target_id == b or e.source_id == b)
-    end)
+
+    has_contradicts =
+      Enum.any?(edges, fn e ->
+        e.edge_type == :contradicts and (e.target_id == b or e.source_id == b)
+      end)
+
     assert_true(has_contradicts, "Expected :contradicts edge tagging the pair")
   end
 
@@ -456,7 +472,10 @@ defmodule Mix.Tasks.Benchmark.CapabilitySpec do
         end
       end)
 
-    assert_true(surviving >= 2, "At least 2 of 3 contradiction pairs should persist, got #{surviving}")
+    assert_true(
+      surviving >= 2,
+      "At least 2 of 3 contradiction pairs should persist, got #{surviving}"
+    )
   end
 
   # ============================================================================
@@ -484,7 +503,10 @@ defmodule Mix.Tasks.Benchmark.CapabilitySpec do
     assert_true(node_before.q_value == 0.5, "Initial Q should be 0.5")
 
     Graphonomous.Learner.learn_from_outcome(%{
-      action_id: "tr1", status: :success, confidence: 0.9, causal_node_ids: [id]
+      action_id: "tr1",
+      status: :success,
+      confidence: 0.9,
+      causal_node_ids: [id]
     })
 
     {:ok, node_after} = Graphonomous.Store.get_node(id)
@@ -495,7 +517,10 @@ defmodule Mix.Tasks.Benchmark.CapabilitySpec do
     {:ok, %{id: id}} = g_store("Failure Q-value test node", :semantic, 0.7)
 
     Graphonomous.Learner.learn_from_outcome(%{
-      action_id: "tr2", status: :failure, confidence: 0.8, causal_node_ids: [id]
+      action_id: "tr2",
+      status: :failure,
+      confidence: 0.8,
+      causal_node_ids: [id]
     })
 
     {:ok, node} = Graphonomous.Store.get_node(id)
@@ -524,7 +549,9 @@ defmodule Mix.Tasks.Benchmark.CapabilitySpec do
     for _ <- 1..3 do
       Graphonomous.Learner.learn_from_outcome(%{
         action_id: "tr4_#{:rand.uniform(10000)}",
-        status: :success, confidence: 0.9, causal_node_ids: [id]
+        status: :success,
+        confidence: 0.9,
+        causal_node_ids: [id]
       })
     end
 
@@ -537,7 +564,10 @@ defmodule Mix.Tasks.Benchmark.CapabilitySpec do
     {:ok, %{id: id}} = g_store("Decay rate test", :semantic, 0.8)
     # Set Q-value high via outcome
     Graphonomous.Learner.learn_from_outcome(%{
-      action_id: "tr5", status: :success, confidence: 0.9, causal_node_ids: [id]
+      action_id: "tr5",
+      status: :success,
+      confidence: 0.9,
+      causal_node_ids: [id]
     })
 
     {:ok, before} = Graphonomous.Store.get_node(id)
@@ -553,7 +583,10 @@ defmodule Mix.Tasks.Benchmark.CapabilitySpec do
 
     # Q decay should be less than confidence decay
     if conf_decay > 0.0001 do
-      assert_true(q_decay <= conf_decay, "Q decay (#{q_decay}) should be <= conf decay (#{conf_decay})")
+      assert_true(
+        q_decay <= conf_decay,
+        "Q decay (#{q_decay}) should be <= conf decay (#{conf_decay})"
+      )
     else
       assert_true(true, "Decay too small to compare meaningfully")
     end
@@ -561,33 +594,45 @@ defmodule Mix.Tasks.Benchmark.CapabilitySpec do
 
   defp tr6_utility_vs_confidence do
     # High confidence, low utility (many failures)
-    {:ok, %{id: hc_lu}} = g_store("High confidence low utility concept for testing", :semantic, 0.9)
+    {:ok, %{id: hc_lu}} =
+      g_store("High confidence low utility concept for testing", :semantic, 0.9)
+
     for _ <- 1..3 do
       Graphonomous.Learner.learn_from_outcome(%{
         action_id: "tr6f_#{:rand.uniform(10000)}",
-        status: :failure, confidence: 0.8, causal_node_ids: [hc_lu]
+        status: :failure,
+        confidence: 0.8,
+        causal_node_ids: [hc_lu]
       })
     end
 
     # Lower confidence, high utility (many successes)
-    {:ok, %{id: lc_hu}} = g_store("Lower confidence high utility concept for testing", :semantic, 0.5)
+    {:ok, %{id: lc_hu}} =
+      g_store("Lower confidence high utility concept for testing", :semantic, 0.5)
+
     for _ <- 1..3 do
       Graphonomous.Learner.learn_from_outcome(%{
         action_id: "tr6s_#{:rand.uniform(10000)}",
-        status: :success, confidence: 0.9, causal_node_ids: [lc_hu]
+        status: :success,
+        confidence: 0.9,
+        causal_node_ids: [lc_hu]
       })
     end
 
     {:ok, hc_node} = Graphonomous.Store.get_node(hc_lu)
     {:ok, lc_node} = Graphonomous.Store.get_node(lc_hu)
 
-    assert_true(lc_node.q_value > hc_node.q_value,
-      "High-utility node Q (#{lc_node.q_value}) should exceed low-utility Q (#{hc_node.q_value})")
+    assert_true(
+      lc_node.q_value > hc_node.q_value,
+      "High-utility node Q (#{lc_node.q_value}) should exceed low-utility Q (#{hc_node.q_value})"
+    )
   end
 
   defp tr7_rank_change do
     {:ok, %{id: id}} = g_store("Rank change test node for retrieval query", :semantic, 0.6)
-    {:ok, %{id: _other}} = g_store("Other rank change test node for retrieval query", :semantic, 0.6)
+
+    {:ok, %{id: _other}} =
+      g_store("Other rank change test node for retrieval query", :semantic, 0.6)
 
     # Retrieve before outcome
     {:ok, before} = Graphonomous.Retriever.retrieve("rank change test retrieval query")
@@ -595,7 +640,10 @@ defmodule Mix.Tasks.Benchmark.CapabilitySpec do
 
     # Apply success outcome to one node
     Graphonomous.Learner.learn_from_outcome(%{
-      action_id: "tr7", status: :success, confidence: 0.9, causal_node_ids: [id]
+      action_id: "tr7",
+      status: :success,
+      confidence: 0.9,
+      causal_node_ids: [id]
     })
 
     {:ok, after_result} = Graphonomous.Retriever.retrieve("rank change test retrieval query")
@@ -615,7 +663,10 @@ defmodule Mix.Tasks.Benchmark.CapabilitySpec do
     # 5 success outcomes
     for i <- 1..5 do
       Graphonomous.Learner.learn_from_outcome(%{
-        action_id: "tr8_#{i}", status: :success, confidence: 0.9, causal_node_ids: [id]
+        action_id: "tr8_#{i}",
+        status: :success,
+        confidence: 0.9,
+        causal_node_ids: [id]
       })
     end
 
@@ -693,8 +744,11 @@ defmodule Mix.Tasks.Benchmark.CapabilitySpec do
     expected_forget = total_active - max_nodes
 
     {:ok, result} = Graphonomous.Forgetter.forget_by_policy(:hybrid, max_nodes: max_nodes)
-    assert_true(result.forgotten_count == expected_forget,
-      "Should forget #{expected_forget} nodes, got #{result.forgotten_count}")
+
+    assert_true(
+      result.forgotten_count == expected_forget,
+      "Should forget #{expected_forget} nodes, got #{result.forgotten_count}"
+    )
   end
 
   defp if6_priority do
@@ -710,7 +764,11 @@ defmodule Mix.Tasks.Benchmark.CapabilitySpec do
 
     high_score = Graphonomous.Forgetter.priority_score(high)
     low_score = Graphonomous.Forgetter.priority_score(low)
-    assert_true(high_score > low_score, "High-priority (#{high_score}) > low-priority (#{low_score})")
+
+    assert_true(
+      high_score > low_score,
+      "High-priority (#{high_score}) > low-priority (#{low_score})"
+    )
   end
 
   defp if7_topology do

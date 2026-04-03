@@ -139,7 +139,7 @@ defmodule Graphonomous.FilesystemTraversal do
           texts = Enum.map(payloads, &Map.get(&1, :content, ""))
 
           embeddings =
-            case Graphonomous.Embedder.embed_many_binary(texts) do
+            case Graphonomous.Embedder.embed_many_binary(texts, task: :document) do
               {:ok, binaries} -> binaries
               {:error, _} -> List.duplicate(nil, length(texts))
             end

@@ -170,6 +170,8 @@ defmodule Graphonomous.Store do
 
     with :ok <- persist_node(state.conn, node) do
       true = :ets.insert(@nodes_table, {node.id, node})
+      # Keep BM25 FTS index in sync
+      maybe_bm25_upsert(node)
       {:reply, {:ok, node}, state}
     else
       {:error, reason} -> {:reply, {:error, reason}, state}
@@ -205,6 +207,8 @@ defmodule Graphonomous.Store do
 
         with :ok <- persist_node(state.conn, updated) do
           true = :ets.insert(@nodes_table, {updated.id, updated})
+          # Keep BM25 FTS index in sync
+          maybe_bm25_upsert(updated)
           {:reply, {:ok, updated}, state}
         else
           {:error, reason} -> {:reply, {:error, reason}, state}
@@ -217,6 +221,8 @@ defmodule Graphonomous.Store do
 
   def handle_call({:delete_node, node_id}, _from, state) do
     :ets.delete(@nodes_table, node_id)
+    # Remove from BM25 FTS index
+    maybe_bm25_delete(node_id)
 
     case execute_prepared(state.conn, "DELETE FROM nodes WHERE id = ?;", [node_id]) do
       :ok -> {:reply, :ok, state}
@@ -1007,6 +1013,25 @@ defmodule Graphonomous.Store do
       {:error, _reason} -> :ok
     end
   end
+
+  ## BM25 FTS sync helpers
+
+  defp maybe_bm25_upsert(%{id: id, content: content})
+       when is_binary(id) and is_binary(content) and content != "" do
+    if Process.whereis(Graphonomous.BM25Index) do
+      Graphonomous.BM25Index.upsert(id, content)
+    end
+  end
+
+  defp maybe_bm25_upsert(_), do: :ok
+
+  defp maybe_bm25_delete(node_id) when is_binary(node_id) do
+    if Process.whereis(Graphonomous.BM25Index) do
+      Graphonomous.BM25Index.delete(node_id)
+    end
+  end
+
+  defp maybe_bm25_delete(_), do: :ok
 
   ## Persistence helpers
 

@@ -647,7 +647,7 @@ defmodule Graphonomous.Attention do
     if valid_titles == [] do
       Map.new(titles, fn t -> {t, []} end)
     else
-      with {:ok, query_vecs} <- Embedder.embed_many(valid_titles) do
+      with {:ok, query_vecs} <- Embedder.embed_many(valid_titles, task: :query) do
         pairs = Enum.zip(valid_titles, query_vecs)
         use_hnsw = HNSWIndex.available?()
 

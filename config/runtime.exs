@@ -98,8 +98,13 @@ config :graphonomous,
   embedder_backend:
     parse_choice.(
       "GRAPHONOMOUS_EMBEDDER_BACKEND",
-      [:auto, :fallback],
+      [:auto, :fallback, :bumblebee, :onnx],
       get_default.(current_graphonomous, :embedder_backend, :auto)
+    ),
+  onnx_model_path:
+    maybe_env.(
+      "GRAPHONOMOUS_ONNX_MODEL_PATH",
+      get_default.(current_graphonomous, :onnx_model_path, nil)
     ),
   sqlite_vec_extension_path:
     maybe_env.(

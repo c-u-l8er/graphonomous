@@ -11,6 +11,8 @@ defmodule Graphonomous.Application do
       {Graphonomous.Embedder, embedder_opts()},
       {Graphonomous.HNSWIndex, hnsw_opts()},
       {Graphonomous.Graph, []},
+      {Graphonomous.BM25Index, []},
+      {Graphonomous.Reranker, reranker_opts()},
       {Graphonomous.Retriever, []},
       {Graphonomous.Orchestrator, orchestrator_opts()},
       {Graphonomous.Learner, []},
@@ -36,6 +38,8 @@ defmodule Graphonomous.Application do
           :embedding_model_id,
           "sentence-transformers/all-MiniLM-L6-v2"
         ),
+      dimension: Application.get_env(:graphonomous, :embedding_dimension, 384),
+      task_prefixes: Application.get_env(:graphonomous, :embedding_task_prefixes, nil),
       backend: Application.get_env(:graphonomous, :embedder_backend, :auto)
     ]
   end
@@ -52,17 +56,24 @@ defmodule Graphonomous.Application do
 
   defp hnsw_opts do
     [
-      dimension:
-        Application.get_env(:graphonomous, :embedding_dimension, 384),
-      max_elements:
-        Application.get_env(:graphonomous, :hnsw_max_elements, 100_000),
-      ef_construction:
-        Application.get_env(:graphonomous, :hnsw_ef_construction, 200),
+      dimension: Application.get_env(:graphonomous, :embedding_dimension, 384),
+      max_elements: Application.get_env(:graphonomous, :hnsw_max_elements, 100_000),
+      ef_construction: Application.get_env(:graphonomous, :hnsw_ef_construction, 200),
       m: Application.get_env(:graphonomous, :hnsw_m, 16),
-      ef_search:
-        Application.get_env(:graphonomous, :hnsw_ef_search, 50),
-      index_path:
-        Application.get_env(:graphonomous, :db_path, "priv/graphonomous.db")
+      ef_search: Application.get_env(:graphonomous, :hnsw_ef_search, 50),
+      index_path: Application.get_env(:graphonomous, :db_path, "priv/graphonomous.db")
+    ]
+  end
+
+  defp reranker_opts do
+    [
+      model_id:
+        Application.get_env(
+          :graphonomous,
+          :reranker_model_id,
+          "cross-encoder/ms-marco-MiniLM-L-6-v2"
+        ),
+      enabled: Application.get_env(:graphonomous, :reranker_enabled, true)
     ]
   end
 
