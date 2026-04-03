@@ -12,9 +12,7 @@ defmodule Graphonomous.MCP.BeliefContradictions do
   alias Graphonomous.BeliefRevision
 
   schema do
-    field(:node_id, :string,
-      description: "ID of a node to check for contradictions"
-    )
+    field(:node_id, :string, description: "ID of a node to check for contradictions")
 
     field(:content, :string,
       description: "Content string to check for contradictions (alternative to node_id)"

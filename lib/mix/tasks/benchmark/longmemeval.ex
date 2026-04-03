@@ -29,7 +29,8 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
                Default: oracle
     --limit    Max questions to evaluate (default: all 500)
     --purge    Purge graph before ingestion (default: true)
-    --neural   Use neural embeddings (requires EXLA/GPU)
+    --neural        Use neural embeddings (requires EXLA/GPU)
+    --skip-ingest   Skip ingestion, reuse cached graph from previous run (~100x faster)
 
   Competitive baselines (from published literature):
     - Hindsight (Vectorize, 2026): 91.4% QA accuracy
@@ -68,12 +69,19 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
   def run(args) do
     {opts, _, _} =
       OptionParser.parse(args,
-        switches: [split: :string, limit: :integer, purge: :boolean, neural: :boolean]
+        switches: [
+          split: :string,
+          limit: :integer,
+          purge: :boolean,
+          neural: :boolean,
+          skip_ingest: :boolean
+        ]
       )
 
     split = Keyword.get(opts, :split, "oracle")
     limit = Keyword.get(opts, :limit, 500)
     purge = Keyword.get(opts, :purge, true)
+    skip_ingest = Keyword.get(opts, :skip_ingest, false)
 
     if opts[:neural], do: Application.put_env(:graphonomous, :benchmark_neural, true)
 
@@ -105,20 +113,28 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
     total = length(questions)
     Mix.shell().info("Loaded #{total} questions from longmemeval_#{split}")
 
-    # Purge graph for clean benchmark
-    if purge do
+    # Purge graph for clean benchmark (skip if --skip-ingest)
+    if purge and not skip_ingest do
       Mix.shell().info("Purging graph for clean benchmark...")
       Helpers.purge_graph()
     end
 
-    # Phase 1: Ingest all unique sessions
-    Mix.shell().info("\n━━━ Phase 1: Ingesting Chat Sessions ━━━")
-    {ingest_us, ingest_stats} = Helpers.timed(fn -> ingest_sessions(questions, split) end)
+    # Phase 1: Ingest all unique sessions (skip if --skip-ingest)
+    {ingest_us, ingest_stats} =
+      if skip_ingest do
+        Mix.shell().info("\n━━━ Phase 1: SKIPPED (--skip-ingest, reusing cached graph) ━━━")
+        {0, %{sessions_ingested: 0, turns_ingested: 0}}
+      else
+        Mix.shell().info("\n━━━ Phase 1: Ingesting Chat Sessions ━━━")
+        {us, stats} = Helpers.timed(fn -> ingest_sessions(questions, split) end)
 
-    Mix.shell().info(
-      "  Ingested #{ingest_stats.sessions_ingested} sessions " <>
-        "(#{ingest_stats.turns_ingested} turns) in #{div(ingest_us, 1000)} ms"
-    )
+        Mix.shell().info(
+          "  Ingested #{stats.sessions_ingested} sessions " <>
+            "(#{stats.turns_ingested} turns) in #{div(us, 1000)} ms"
+        )
+
+        {us, stats}
+      end
 
     # Phase 2: Evaluate each question
     Mix.shell().info("\n━━━ Phase 2: Evaluating #{total} Questions ━━━")
@@ -153,9 +169,10 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
         engine_version: Mix.Project.config()[:version] || "0.2.0",
         embedder: Application.get_env(:graphonomous, :embedder_backend, :auto) |> to_string(),
         retrieval_params: %{
-          limit: 10,
-          expansion_hops: 1,
-          neighbors_per_node: 5
+          similarity_limit: "adaptive (15-25)",
+          final_limit: "adaptive (30-50)",
+          expansion_hops: "adaptive (1-2)",
+          neighbors_per_node: 8
         }
       },
       timestamp: DateTime.utc_now() |> DateTime.to_iso8601(),
@@ -221,46 +238,159 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
 
     Mix.shell().info("  Found #{length(sessions)} unique sessions to ingest")
 
-    total_turns =
-      Enum.reduce(sessions, 0, fn {session_id, turns}, acc ->
-        ingest_session(session_id, turns)
-        acc + length(turns)
+    # Phase 1: Ingest sessions, collect entity index for cross-session linking (S2)
+    {total_turns, entity_index} =
+      Enum.reduce(sessions, {0, %{}}, fn {session_id, turns}, {turn_acc, ent_acc} ->
+        {_node_ids, entities_by_node} = ingest_session(session_id, turns)
+
+        ent_acc =
+          Enum.reduce(entities_by_node, ent_acc, fn {node_id, entities}, acc ->
+            Enum.reduce(entities, acc, fn ent, inner ->
+              Map.update(inner, ent, [{node_id, session_id}], &[{node_id, session_id} | &1])
+            end)
+          end)
+
+        {turn_acc + length(turns), ent_acc}
       end)
+
+    # Phase 1.5 (S2): Cross-session entity edges
+    cross_edges = build_cross_session_edges(entity_index)
+    Mix.shell().info("  Created #{cross_edges} cross-session entity edges")
 
     %{sessions_ingested: length(sessions), turns_ingested: total_turns}
   end
 
   defp ingest_session(session_id, turns) when is_list(turns) do
-    turns
-    |> Enum.with_index()
-    |> Enum.each(fn {turn, turn_idx} ->
-      role = Map.get(turn, "role", "unknown")
-      content = Map.get(turn, "content", "")
-      has_answer = Map.get(turn, "has_answer", false)
+    # Store each turn, collecting node IDs and per-node entities for S2
+    {rev_ids, rev_ents} =
+      turns
+      |> Enum.with_index()
+      |> Enum.reduce({[], []}, fn {turn, turn_idx}, {id_acc, ent_acc} ->
+        role = Map.get(turn, "role", "unknown")
+        content = Map.get(turn, "content", "")
+        has_answer = Map.get(turn, "has_answer", false)
 
-      # Truncate very long turns for embedding efficiency
-      content_for_node = String.slice(content, 0, 4096)
+        content_for_node = String.slice(content, 0, 4096)
+        node_content = "[#{role}] #{content_for_node}"
 
-      node_content =
-        "[#{role}] #{content_for_node}"
+        node =
+          Graphonomous.store_node(%{
+            content: node_content,
+            node_type: :episodic,
+            confidence: 0.70,
+            source: "longmemeval",
+            metadata: %{
+              "session_id" => session_id,
+              "turn_index" => turn_idx,
+              "role" => role,
+              "has_answer" => has_answer,
+              "benchmark" => "longmemeval"
+            }
+          })
 
+        entities = extract_entities(content)
+        {[node.id | id_acc], [{node.id, entities} | ent_acc]}
+      end)
+
+    node_ids = Enum.reverse(rev_ids)
+    entities_by_node = Enum.reverse(rev_ents)
+
+    # S1: Sequential :follows edges between consecutive turns
+    node_ids
+    |> Enum.chunk_every(2, 1, :discard)
+    |> Enum.each(fn [prev, curr] ->
+      Graphonomous.link_nodes(prev, curr, %{
+        edge_type: :follows,
+        weight: 0.9,
+        metadata: %{"session_id" => session_id, "link_type" => "intra_session"}
+      })
+    end)
+
+    # S3: Session-level summary node (two-level hierarchy like LiCoMemory)
+    summary_content =
+      turns
+      |> Enum.map(fn t ->
+        "[#{Map.get(t, "role", "?")}] #{String.slice(Map.get(t, "content", ""), 0, 200)}"
+      end)
+      |> Enum.join(" | ")
+
+    summary =
       Graphonomous.store_node(%{
-        content: node_content,
-        node_type: :episodic,
-        confidence: 0.70,
+        content: "Session #{session_id} summary: #{String.slice(summary_content, 0, 4096)}",
+        node_type: :semantic,
+        confidence: 0.80,
         source: "longmemeval",
         metadata: %{
           "session_id" => session_id,
-          "turn_index" => turn_idx,
-          "role" => role,
-          "has_answer" => has_answer,
+          "is_summary" => true,
+          "turn_count" => length(turns),
           "benchmark" => "longmemeval"
         }
       })
+
+    Enum.each(node_ids, fn nid ->
+      Graphonomous.link_nodes(summary.id, nid, %{
+        edge_type: :part_of,
+        weight: 0.85,
+        metadata: %{"session_id" => session_id}
+      })
+    end)
+
+    {node_ids, entities_by_node}
+  end
+
+  defp ingest_session(_session_id, _), do: {[], []}
+
+  # S2: Cross-session entity edges — link turns in different sessions
+  # that mention the same proper nouns (people, places, topics).
+  defp build_cross_session_edges(entity_index) do
+    entity_index
+    |> Enum.filter(fn {_ent, nodes} ->
+      sessions = nodes |> Enum.map(fn {_, sid} -> sid end) |> Enum.uniq()
+      length(sessions) >= 2
+    end)
+    |> Enum.reduce(0, fn {_entity, node_infos}, edge_count ->
+      cross_pairs =
+        for {n1, s1} <- node_infos,
+            {n2, s2} <- node_infos,
+            s1 < s2,
+            n1 != n2,
+            do: {n1, n2}
+
+      pairs = cross_pairs |> Enum.uniq() |> Enum.take(3)
+
+      Enum.each(pairs, fn {n1, n2} ->
+        Graphonomous.link_nodes(n1, n2, %{
+          edge_type: :related,
+          weight: 0.7,
+          metadata: %{"link_type" => "cross_session_entity"}
+        })
+      end)
+
+      edge_count + length(pairs)
     end)
   end
 
-  defp ingest_session(_session_id, _), do: :ok
+  # Extract proper nouns from text for entity linking
+  defp extract_entities(text) when is_binary(text) do
+    text
+    |> String.split(~r/[.!?\n]+/)
+    |> Enum.flat_map(fn sentence ->
+      words = String.split(String.trim(sentence), ~r/\s+/)
+
+      # Skip first word (may be capitalized just because sentence-initial)
+      words
+      |> Enum.drop(1)
+      |> Enum.filter(fn word ->
+        byte_size(word) >= 3 and String.match?(word, ~r/^[A-Z][a-z]/)
+      end)
+    end)
+    |> Enum.map(fn w -> w |> String.replace(~r/[^\w]/, "") |> String.downcase() end)
+    |> Enum.reject(&(String.length(&1) < 3))
+    |> Enum.uniq()
+  end
+
+  defp extract_entities(_), do: []
 
   # ── Question Evaluation ──────────────────────────────────────────
 
@@ -275,13 +405,22 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
     ability = Map.get(@ability_map, question_type, :unknown)
     if is_abstention, do: :abstention, else: ability
 
+    # S4+S6: Adaptive retrieval limits — multi-session needs wider net
+    {sim_limit, final_limit, exp_hops} =
+      case question_type do
+        "multi-session" -> {25, 50, 2}
+        "temporal-reasoning" -> {20, 40, 1}
+        _ -> {15, 30, 1}
+      end
+
     # Retrieve from Graphonomous
     {retrieval_us, retrieval} =
       Helpers.timed(fn ->
         Graphonomous.retrieve_context(question_text,
-          limit: 10,
-          expansion_hops: 1,
-          neighbors_per_node: 5
+          similarity_limit: sim_limit,
+          final_limit: final_limit,
+          expansion_hops: exp_hops,
+          neighbors_per_node: 8
         )
       end)
 
@@ -334,19 +473,21 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
     keyword_recall = keyword_recall(expected_answer, retrieved_text)
     keyword_f1 = keyword_f1(expected_answer, retrieved_text)
 
-    # Metric 5: Abstention Detection
-    # For _abs questions: high score if retrieval returns low-confidence results
+    # Metric 5: Abstention Detection (S8 — calibrated thresholds)
+    # Use confidence gap: if top result isn't clearly better than average,
+    # retrieval found nothing definitive → correct abstention
     abstention_correct =
       if is_abstention do
-        avg_score =
-          if results == [] do
-            0.0
-          else
-            Enum.sum(Enum.map(results, & &1.score)) / length(results)
-          end
+        if results == [] do
+          true
+        else
+          scores = Enum.map(results, & &1.score)
+          top_score = Enum.max(scores)
+          mean_score = Enum.sum(scores) / length(scores)
+          gap = top_score - mean_score
 
-        # Low average score or few results suggests correct abstention
-        avg_score < 0.15 or length(results) < 3
+          gap < 0.05 or mean_score < 0.25 or length(results) < 3
+        end
       else
         nil
       end

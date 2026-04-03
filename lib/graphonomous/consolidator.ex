@@ -27,7 +27,7 @@ defmodule Graphonomous.Consolidator do
 
   require Logger
 
-  alias Graphonomous.{BeliefRevision, Graph}
+  alias Graphonomous.{BeliefRevision, Forgetter, Graph, Store}
 
   @default_interval_ms 300_000
   @default_decay_rate 0.02
@@ -147,9 +147,12 @@ defmodule Graphonomous.Consolidator do
     # Load all data once
     {nodes, edges} = load_graph_data()
 
-    # Stage 1 & 2: decay + prune weak nodes
+    # Stage 1: decay confidence (+ Q-value at half rate)
     {decayed, pruned_nodes, node_errors} =
       stage_decay_and_prune_nodes(nodes, state.decay_rate, state.prune_threshold)
+
+    # Stage 2 (P1): budget-aware forgetting via Forgetter
+    budget_pruned = stage_budget_prune()
 
     # Stage 3: prune weak edges
     {pruned_edges, edge_errors} = stage_prune_weak_edges(edges, state.edge_prune_threshold)
@@ -177,6 +180,7 @@ defmodule Graphonomous.Consolidator do
       %{
         decayed: decayed,
         pruned_nodes: pruned_nodes,
+        budget_pruned: budget_pruned,
         pruned_edges: pruned_edges,
         strengthened: strengthened,
         conflicts_resolved: resolved,
@@ -198,10 +202,11 @@ defmodule Graphonomous.Consolidator do
 
     Logger.info(
       "Consolidator cycle=#{state.cycle_count + 1} " <>
-        "decayed=#{decayed} pruned_nodes=#{pruned_nodes} pruned_edges=#{pruned_edges} " <>
-        "strengthened=#{strengthened} conflicts_resolved=#{resolved} " <>
-        "unresolved=#{unresolved_contradictions} merged=#{merged} promoted=#{promoted} " <>
-        "abstracted=#{abstracted} errors=#{node_errors + edge_errors} duration_ms=#{duration_ms}"
+        "decayed=#{decayed} pruned_nodes=#{pruned_nodes} budget_pruned=#{budget_pruned} " <>
+        "pruned_edges=#{pruned_edges} strengthened=#{strengthened} " <>
+        "conflicts_resolved=#{resolved} unresolved=#{unresolved_contradictions} " <>
+        "merged=#{merged} promoted=#{promoted} abstracted=#{abstracted} " <>
+        "errors=#{node_errors + edge_errors} duration_ms=#{duration_ms}"
     )
 
     state
@@ -246,6 +251,11 @@ defmodule Graphonomous.Consolidator do
     effective_decay = Map.get(node, :decay_rate) || decay_rate
     new_conf = clamp(old_conf * (1.0 - effective_decay), 0.0, 1.0)
 
+    # P1: Q-value decay at HALF the confidence decay rate
+    old_q = Map.get(node, :q_value) || 0.5
+    q_decay = effective_decay * 0.5
+    new_q = clamp(old_q * (1.0 - q_decay), 0.0, 1.0)
+
     cond do
       not is_binary(node_id) ->
         :error
@@ -265,11 +275,19 @@ defmodule Graphonomous.Consolidator do
             :error
         end
 
-      abs(new_conf - old_conf) <= 1.0e-12 ->
+      abs(new_conf - old_conf) <= 1.0e-12 and abs(new_q - old_q) <= 1.0e-12 ->
         :unchanged
 
       true ->
-        case Graph.update_node(node_id, %{confidence: new_conf}) do
+        update_attrs = %{confidence: new_conf}
+
+        # Only include q_value in update if it actually changed
+        update_attrs =
+          if abs(new_q - old_q) > 1.0e-12,
+            do: Map.put(update_attrs, :q_value, new_q),
+            else: update_attrs
+
+        case Graph.update_node(node_id, update_attrs) do
           {:ok, _updated} ->
             :telemetry.execute(
               [:graphonomous, :node, :decayed],
@@ -282,6 +300,21 @@ defmodule Graphonomous.Consolidator do
           {:error, _reason} ->
             :error
         end
+    end
+  end
+
+  ## Stage 2 (P1): Budget-aware forgetting via Forgetter
+  defp stage_budget_prune do
+    config = Forgetter.get_config()
+    node_count = Store.count_active_nodes()
+
+    if node_count > config.max_nodes do
+      case Forgetter.forget_by_policy(:hybrid, max_nodes: config.max_nodes) do
+        {:ok, %{forgotten_count: count}} -> count
+        _ -> 0
+      end
+    else
+      0
     end
   end
 
@@ -371,13 +404,19 @@ defmodule Graphonomous.Consolidator do
     Enum.reduce(contradicts_edges, {0, 0}, fn edge, {resolved, unresolved} ->
       case BeliefRevision.resolve_contradiction(edge.source_id, edge.target_id) do
         {:ok, :keep_a} ->
-          _ = BeliefRevision.revise(edge.target_id, "Superseded by #{edge.source_id}",
-                rationale: "Conflict resolution: keep_a")
+          _ =
+            BeliefRevision.revise(edge.target_id, "Superseded by #{edge.source_id}",
+              rationale: "Conflict resolution: keep_a"
+            )
+
           {resolved + 1, unresolved}
 
         {:ok, :keep_b} ->
-          _ = BeliefRevision.revise(edge.source_id, "Superseded by #{edge.target_id}",
-                rationale: "Conflict resolution: keep_b")
+          _ =
+            BeliefRevision.revise(edge.source_id, "Superseded by #{edge.target_id}",
+              rationale: "Conflict resolution: keep_b"
+            )
+
           {resolved + 1, unresolved}
 
         {:ok, :keep_both} ->

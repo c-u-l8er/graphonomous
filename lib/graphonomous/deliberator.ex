@@ -11,7 +11,7 @@ defmodule Graphonomous.Deliberator do
   Public entrypoint: `deliberate/4`.
   """
 
-  alias Graphonomous.{CostTracker, ModelTier}
+  alias Graphonomous.{CostTracker, Graph, ModelTier, Store}
 
   @type node_id :: binary()
 
@@ -482,13 +482,116 @@ defmodule Graphonomous.Deliberator do
   @spec deliberate_scc(scc(), binary(), [map()], map(), keyword()) ::
           {conclusion(), non_neg_integer()}
   defp deliberate_scc(scc, query, retrieval_results, budget, opts) do
+    nodes = scc |> get_in_any(:nodes, []) |> normalize_node_ids()
+    kappa = as_non_neg_int(get_in_any(scc, :kappa, 0))
+
+    # K3: Temporal contradiction fast-path — 2-node SCC with κ=1 and
+    # :contradicts edges = knowledge update. Resolve to temporally newer node.
+    case maybe_resolve_temporal_contradiction(nodes, kappa, scc, query, retrieval_results) do
+      {:resolved, conclusion} ->
+        {conclusion, 1}
+
+      :not_contradiction ->
+        do_deliberate_scc(scc, query, retrieval_results, budget, opts)
+    end
+  end
+
+  # K3: Detect 2-node SCCs where edges are :contradicts — these represent
+  # knowledge updates (old fact ↔ new fact). Skip full deliberation and
+  # resolve to the temporally newer node.
+  defp maybe_resolve_temporal_contradiction(nodes, kappa, scc, query, _retrieval_results)
+       when length(nodes) == 2 and kappa == 1 do
+    [node_a, node_b] = nodes
+
+    # Check if edges between these nodes are :contradicts
+    edges_between =
+      case Store.list_edges_between(nodes) do
+        {:ok, edges} -> edges
+        _ -> []
+      end
+
+    has_contradicts =
+      Enum.any?(edges_between, fn edge ->
+        edge_type = Map.get(edge, :edge_type, Map.get(edge, "edge_type"))
+        to_string(edge_type) == "contradicts"
+      end)
+
+    if has_contradicts do
+      # Resolve to temporally newer node by comparing inserted_at
+      node_a_data =
+        case Graph.get_node(node_a) do
+          {:ok, n} -> n
+          n when is_map(n) -> n
+          _ -> nil
+        end
+
+      node_b_data =
+        case Graph.get_node(node_b) do
+          {:ok, n} -> n
+          n when is_map(n) -> n
+          _ -> nil
+        end
+
+      {newer, older} =
+        cond do
+          is_nil(node_a_data) or is_nil(node_b_data) ->
+            {node_a_data || node_b_data, node_b_data || node_a_data}
+
+          true ->
+            a_time = Map.get(node_a_data, :inserted_at) || Map.get(node_a_data, :created_at)
+            b_time = Map.get(node_b_data, :inserted_at) || Map.get(node_b_data, :created_at)
+
+            if is_nil(a_time) or is_nil(b_time) or
+                 DateTime.compare(a_time, b_time) != :lt do
+              {node_a_data, node_b_data}
+            else
+              {node_b_data, node_a_data}
+            end
+        end
+
+      newer_content =
+        if newer, do: Map.get(newer, :content, ""), else: ""
+
+      older_content =
+        if older, do: Map.get(older, :content, ""), else: ""
+
+      scc_id = get_in_any(scc, :id, nil)
+      fault_lines = scc |> get_in_any(:fault_line_edges, []) |> normalize_fault_lines()
+
+      conclusion = %{
+        content:
+          "Temporal contradiction resolved for '#{query}': newer fact '#{String.slice(newer_content, 0, 200)}' supersedes '#{String.slice(older_content, 0, 200)}'.",
+        confidence: 0.85,
+        source_scc_id: scc_id,
+        source_kappa: 1,
+        fault_lines_examined: fault_lines
+      }
+
+      {:resolved, conclusion}
+    else
+      :not_contradiction
+    end
+  end
+
+  defp maybe_resolve_temporal_contradiction(_nodes, _kappa, _scc, _query, _retrieval_results) do
+    :not_contradiction
+  end
+
+  defp do_deliberate_scc(scc, query, retrieval_results, budget, opts) do
     partitions = decompose(scc)
     agent_fn = Keyword.fetch!(opts, :agent_fn)
 
+    # K1: Iterative retrieval in focus steps — after building the focused prompt
+    # for each partition, issue a scoped follow-up retrieval for nodes within
+    # the partition's node set to gather additional evidence.
     initial_intermediates =
       Enum.map(partitions, fn partition ->
         prompt = build_focused_prompt(query, partition, scc, retrieval_results)
-        agent_fn.(prompt) |> normalize_agent_output()
+
+        # K1: Scoped follow-up retrieval for this partition
+        enriched_prompt = enrich_prompt_with_partition_retrieval(prompt, partition, query)
+
+        agent_fn.(enriched_prompt) |> normalize_agent_output()
       end)
 
     initial = reconcile(initial_intermediates, scc, query, budget)
@@ -501,6 +604,51 @@ defmodule Graphonomous.Deliberator do
     else
       iterate_refinement(initial, query, scc, retrieval_results, budget, opts, 2, max_iterations)
     end
+  end
+
+  # K1: Enrich a focused prompt with additional evidence retrieved from
+  # the graph, scoped to nodes within the partition. This turns deliberation
+  # from "reason over fixed context" into "reason + retrieve + reason".
+  defp enrich_prompt_with_partition_retrieval(prompt, partition, _query) do
+    scope_node_ids = (partition.left ++ partition.right) |> Enum.uniq()
+
+    # Gather edges from partition nodes to find additional connected evidence
+    extra_evidence =
+      scope_node_ids
+      |> Enum.take(5)
+      |> Enum.flat_map(fn nid ->
+        case Graph.get_edges_for_node(nid) do
+          {:ok, edges} ->
+            edges
+            |> Enum.map(fn edge ->
+              neighbor_id =
+                if edge.source_id == nid, do: edge.target_id, else: edge.source_id
+
+              case Graph.get_node(neighbor_id) do
+                {:ok, node} when is_map(node) ->
+                  %{
+                    node_id: Map.get(node, :id),
+                    content: Map.get(node, :content, ""),
+                    confidence: Map.get(node, :confidence, 0.5)
+                  }
+
+                _ ->
+                  nil
+              end
+            end)
+            |> Enum.reject(&is_nil/1)
+
+          _ ->
+            []
+        end
+      end)
+      |> Enum.uniq_by(fn e -> Map.get(e, :node_id) end)
+      |> Enum.take(6)
+
+    existing_evidence = Map.get(prompt, :evidence, [])
+    combined = (existing_evidence ++ extra_evidence) |> Enum.uniq_by(&Map.get(&1, :node_id))
+
+    Map.put(prompt, :evidence, Enum.take(combined, 18))
   end
 
   defp iterate_refinement(

@@ -36,6 +36,9 @@ defmodule Graphonomous.MCP.Server do
   component(Graphonomous.MCP.DeleteNode)
   component(Graphonomous.MCP.BeliefRevise)
   component(Graphonomous.MCP.BeliefContradictions)
+  component(Graphonomous.MCP.ForgetNode)
+  component(Graphonomous.MCP.ForgetByPolicy)
+  component(Graphonomous.MCP.GdprErase)
 
   # MCP resource components
   component(Graphonomous.MCP.Resources.HealthSnapshot)

@@ -134,6 +134,8 @@ defmodule Graphonomous.Learner do
     {:ok, updates}
   end
 
+  @q_learning_rate 0.3
+
   defp update_node_from_outcome(node_id, outcome, learning_rate) do
     case Store.get_node(node_id) do
       {:ok, %Node{} = node} ->
@@ -145,6 +147,22 @@ defmodule Graphonomous.Learner do
           |> scale_signal(outcome.confidence)
 
         new_conf = update_confidence(old_conf, target_signal, learning_rate)
+
+        # P1: Q-value utility update (Bayesian, faster than confidence)
+        old_q = normalize_probability(node.q_value || 0.5)
+        old_q_count = node.q_update_count || 0
+
+        q_reward =
+          case outcome.status do
+            :success -> 1.0
+            :partial_success -> 0.65
+            :failure -> 0.0
+            :timeout -> 0.25
+            _ -> 0.25
+          end
+
+        new_q = clamp(old_q + @q_learning_rate * (q_reward - old_q), 0.0, 1.0)
+        new_q_count = old_q_count + 1
 
         node_metadata = if is_map(node.metadata), do: node.metadata, else: %{}
 
@@ -168,7 +186,14 @@ defmodule Graphonomous.Learner do
             if is_integer(n), do: n + 1, else: 1
           end)
 
-        case Store.update_node(node_id, %{confidence: new_conf, metadata: merged_metadata}) do
+        update_attrs = %{
+          confidence: new_conf,
+          metadata: merged_metadata,
+          q_value: new_q,
+          q_update_count: new_q_count
+        }
+
+        case Store.update_node(node_id, update_attrs) do
           {:ok, _updated_node} ->
             :telemetry.execute(
               [:graphonomous, :node, :confidence_updated],
@@ -181,7 +206,10 @@ defmodule Graphonomous.Learner do
               result: :updated,
               old_confidence: old_conf,
               new_confidence: new_conf,
-              delta: new_conf - old_conf
+              delta: new_conf - old_conf,
+              old_q_value: old_q,
+              new_q_value: new_q,
+              q_update_count: new_q_count
             }
 
           {:error, reason} ->

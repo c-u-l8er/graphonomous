@@ -19,25 +19,15 @@ defmodule Graphonomous.MCP.BeliefRevise do
       description: "Belief revision operation: expand, revise, or contract"
     )
 
-    field(:content, :string,
-      description: "New belief content (required for expand and revise)"
-    )
+    field(:content, :string, description: "New belief content (required for expand and revise)")
 
-    field(:node_id, :string,
-      description: "Target node ID (required for revise and contract)"
-    )
+    field(:node_id, :string, description: "Target node ID (required for revise and contract)")
 
-    field(:rationale, :string,
-      description: "Reason for the revision"
-    )
+    field(:rationale, :string, description: "Reason for the revision")
 
-    field(:confidence, :number,
-      description: "Confidence for new belief (0.0-1.0, default 0.6)"
-    )
+    field(:confidence, :number, description: "Confidence for new belief (0.0-1.0, default 0.6)")
 
-    field(:agent_id, :string,
-      description: "Agent performing the revision"
-    )
+    field(:agent_id, :string, description: "Agent performing the revision")
   end
 
   @impl true
@@ -135,25 +125,33 @@ defmodule Graphonomous.MCP.BeliefRevise do
 
   defp read_float(params, key, default) do
     case p(params, key) do
-      v when is_number(v) -> max(0.0, min(v * 1.0, 1.0))
+      v when is_number(v) ->
+        max(0.0, min(v * 1.0, 1.0))
+
       v when is_binary(v) ->
         case Float.parse(v) do
           {f, _} -> max(0.0, min(f, 1.0))
           :error -> default
         end
-      _ -> default
+
+      _ ->
+        default
     end
   end
 
   defp read_float_or_nil(params, key) do
     case p(params, key) do
-      v when is_number(v) -> max(0.0, min(v * 1.0, 1.0))
+      v when is_number(v) ->
+        max(0.0, min(v * 1.0, 1.0))
+
       v when is_binary(v) ->
         case Float.parse(v) do
           {f, _} -> max(0.0, min(f, 1.0))
           :error -> nil
         end
-      _ -> nil
+
+      _ ->
+        nil
     end
   end
 

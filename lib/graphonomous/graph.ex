@@ -14,7 +14,7 @@ defmodule Graphonomous.Graph do
 
   use GenServer
 
-  alias Graphonomous.{Embedder, Store}
+  alias Graphonomous.{Embedder, HNSWIndex, Store}
   alias Graphonomous.Types.Node
 
   @default_similarity_limit 10
@@ -145,6 +145,7 @@ defmodule Graphonomous.Graph do
 
     with {:ok, enriched} <- maybe_attach_embedding(attrs),
          {:ok, node} <- Store.insert_node(enriched) do
+      hnsw_sync_add(node)
       {:reply, {:ok, node}, state}
     else
       {:error, _} = err ->
@@ -172,6 +173,10 @@ defmodule Graphonomous.Graph do
 
     with {:ok, update_attrs} <- maybe_attach_embedding_for_update(attrs),
          {:ok, node} <- Store.update_node(node_id, update_attrs) do
+      if Map.has_key?(attrs, :content) or Map.has_key?(attrs, :embedding) do
+        hnsw_sync_add(node)
+      end
+
       {:reply, {:ok, node}, state}
     else
       {:error, _} = err ->
@@ -180,6 +185,7 @@ defmodule Graphonomous.Graph do
   end
 
   def handle_call({:delete_node, node_id}, _from, state) do
+    HNSWIndex.remove(node_id)
     reply = Store.delete_node(node_id)
     {:reply, reply, state}
   end
@@ -208,8 +214,7 @@ defmodule Graphonomous.Graph do
     limit = Keyword.get(opts, :limit, @default_similarity_limit)
 
     with {:ok, query_vec} <- Embedder.embed(text),
-         {:ok, nodes} <- Store.list_nodes(%{}),
-         {:ok, ranked} <- rank_nodes_by_similarity(nodes, query_vec, limit) do
+         {:ok, ranked} <- hnsw_retrieve_with_fallback(query_vec, limit) do
       {:reply, {:ok, ranked}, state}
     else
       {:error, _} = err ->
@@ -258,8 +263,7 @@ defmodule Graphonomous.Graph do
           limit = Map.get(params, :limit, @default_similarity_limit)
 
           with {:ok, vector} <- Embedder.embed(query),
-               {:ok, nodes} <- Store.list_nodes(%{}),
-               {:ok, ranked} <- rank_nodes_by_similarity(nodes, vector, normalize_limit(limit)) do
+               {:ok, ranked} <- hnsw_retrieve_with_fallback(vector, normalize_limit(limit)) do
             {:ok, ranked}
           end
       end
@@ -542,4 +546,64 @@ defmodule Graphonomous.Graph do
   defp clamp(v, min_v, _max_v) when v < min_v, do: min_v
   defp clamp(v, _min_v, max_v) when v > max_v, do: max_v
   defp clamp(v, _min_v, _max_v), do: v
+
+  ## HNSW integration
+
+  defp hnsw_retrieve_with_fallback(query_vec, limit) when is_list(query_vec) do
+    if HNSWIndex.available?() do
+      # Over-fetch from HNSW, then rerank by confidence-weighted score
+      case HNSWIndex.query(query_vec, limit * 3) do
+        {:ok, hnsw_results} when hnsw_results != [] ->
+          ranked =
+            hnsw_results
+            |> Enum.flat_map(fn {node_id, distance} ->
+              case Store.get_node(node_id) do
+                {:ok, %Node{} = node} ->
+                  # cosine distance -> similarity: sim = 1 - distance
+                  similarity = max(1.0 - distance, 0.0)
+                  score = similarity * clamp(to_float(node.confidence), 0.0, 1.0)
+
+                  [
+                    %{
+                      node: node,
+                      node_id: node.id,
+                      content: node.content,
+                      node_type: node.node_type,
+                      confidence: node.confidence,
+                      similarity: similarity,
+                      score: score
+                    }
+                  ]
+
+                _ ->
+                  []
+              end
+            end)
+            |> Enum.sort_by(& &1.score, :desc)
+            |> Enum.take(limit)
+
+          {:ok, ranked}
+
+        _ ->
+          # HNSW returned empty or errored — fall back to brute-force
+          brute_force_retrieve(query_vec, limit)
+      end
+    else
+      brute_force_retrieve(query_vec, limit)
+    end
+  end
+
+  defp brute_force_retrieve(query_vec, limit) do
+    with {:ok, nodes} <- Store.list_nodes(%{}),
+         {:ok, ranked} <- rank_nodes_by_similarity(nodes, query_vec, limit) do
+      {:ok, ranked}
+    end
+  end
+
+  defp hnsw_sync_add(%Node{id: id, embedding: embedding})
+       when is_binary(id) and is_binary(embedding) and byte_size(embedding) > 0 do
+    HNSWIndex.add(id, embedding)
+  end
+
+  defp hnsw_sync_add(_), do: :ok
 end

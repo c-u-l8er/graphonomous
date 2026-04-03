@@ -101,6 +101,17 @@ defmodule Graphonomous.Store do
   def list_revisions_for_node(node_id) when is_binary(node_id),
     do: GenServer.call(__MODULE__, {:list_revisions_for_node, node_id})
 
+  def count_nodes do
+    @nodes_table
+    |> :ets.info(:size)
+  end
+
+  def count_active_nodes do
+    @nodes_table
+    |> :ets.tab2list()
+    |> Enum.count(fn {_id, node} -> is_nil(node.forgotten_at) end)
+  end
+
   def rebuild_cache, do: GenServer.call(__MODULE__, :rebuild_cache, @write_timeout_ms)
 
   ## GenServer
@@ -524,6 +535,7 @@ defmodule Graphonomous.Store do
            SELECT id, content, node_type, confidence, embedding, metadata, source, access_count,
                   causal_parent_ids, creation_source, timescale, decay_rate,
                   revision_id, superseded_by,
+                  q_value, q_update_count, forgotten_at,
                   created_at, updated_at, last_accessed_at
            FROM nodes;
            """),
@@ -574,6 +586,9 @@ defmodule Graphonomous.Store do
          decay_rate,
          revision_id,
          superseded_by,
+         q_value,
+         q_update_count,
+         forgotten_at,
          created_at,
          updated_at,
          last_accessed_at
@@ -595,6 +610,9 @@ defmodule Graphonomous.Store do
       decay_rate: normalize_optional_probability(decay_rate),
       revision_id: revision_id,
       superseded_by: superseded_by,
+      q_value: normalize_probability(q_value || 0.5),
+      q_update_count: normalize_integer(q_update_count, 0),
+      forgotten_at: normalize_nullable_datetime(forgotten_at),
       created_at: normalize_datetime(created_at, now),
       updated_at: normalize_datetime(updated_at, now),
       last_accessed_at: normalize_datetime(last_accessed_at, now)
@@ -905,6 +923,23 @@ defmodule Graphonomous.Store do
          """,
          "CREATE INDEX IF NOT EXISTS idx_revisions_trigger ON revisions(trigger_node_id);",
          "CREATE INDEX IF NOT EXISTS idx_nodes_superseded ON nodes(superseded_by);"
+       ]},
+      {"2026_04_03_p1_q_value_forgetting",
+       [
+         "ALTER TABLE nodes ADD COLUMN q_value REAL DEFAULT 0.5;",
+         "ALTER TABLE nodes ADD COLUMN q_update_count INTEGER DEFAULT 0;",
+         "ALTER TABLE nodes ADD COLUMN forgotten_at TEXT;",
+         """
+         CREATE TABLE IF NOT EXISTS forgetting_config (
+           id TEXT PRIMARY KEY DEFAULT 'default',
+           policy TEXT NOT NULL DEFAULT 'hybrid',
+           max_nodes INTEGER DEFAULT 10000,
+           max_age_hours INTEGER DEFAULT 720,
+           updated_at TEXT NOT NULL
+         );
+         """,
+         "CREATE INDEX IF NOT EXISTS idx_nodes_forgotten ON nodes(forgotten_at);",
+         "CREATE INDEX IF NOT EXISTS idx_nodes_q_value ON nodes(q_value);"
        ]}
     ]
   end
@@ -989,8 +1024,9 @@ defmodule Graphonomous.Store do
       (id, content, node_type, confidence, embedding, metadata, source, access_count,
        causal_parent_ids, creation_source, timescale, decay_rate,
        revision_id, superseded_by,
+       q_value, q_update_count, forgotten_at,
        created_at, updated_at, last_accessed_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
       """,
       [
         node.id,
@@ -1007,6 +1043,9 @@ defmodule Graphonomous.Store do
         node.decay_rate,
         node.revision_id,
         node.superseded_by,
+        normalize_probability(node.q_value || 0.5),
+        normalize_integer(node.q_update_count || 0, 0),
+        nullable_iso8601(node.forgotten_at),
         iso8601(node.created_at),
         iso8601(node.updated_at),
         iso8601(node.last_accessed_at)
@@ -1120,6 +1159,9 @@ defmodule Graphonomous.Store do
       decay_rate: normalize_optional_probability(map_get(attrs, :decay_rate, nil)),
       revision_id: map_get(attrs, :revision_id, nil),
       superseded_by: map_get(attrs, :superseded_by, nil),
+      q_value: normalize_probability(map_get(attrs, :q_value, 0.5)),
+      q_update_count: normalize_integer(map_get(attrs, :q_update_count, 0), 0),
+      forgotten_at: nil,
       created_at: map_get(attrs, :created_at, now) |> normalize_datetime(now),
       updated_at: map_get(attrs, :updated_at, now) |> normalize_datetime(now),
       last_accessed_at: map_get(attrs, :last_accessed_at, now) |> normalize_datetime(now)
@@ -1147,6 +1189,13 @@ defmodule Graphonomous.Store do
         decay_rate: normalize_optional_probability(map_get(attrs, :decay_rate, node.decay_rate)),
         revision_id: map_get(attrs, :revision_id, node.revision_id),
         superseded_by: map_get(attrs, :superseded_by, node.superseded_by),
+        q_value: normalize_probability(map_get(attrs, :q_value, node.q_value)),
+        q_update_count:
+          normalize_integer(
+            map_get(attrs, :q_update_count, node.q_update_count),
+            node.q_update_count
+          ),
+        forgotten_at: map_get(attrs, :forgotten_at, node.forgotten_at),
         updated_at: now
     }
   end
@@ -1598,6 +1647,18 @@ defmodule Graphonomous.Store do
   end
 
   defp normalize_datetime(_value, fallback), do: fallback
+
+  defp normalize_nullable_datetime(nil), do: nil
+
+  defp normalize_nullable_datetime(value) when is_binary(value) do
+    case DateTime.from_iso8601(value) do
+      {:ok, dt, _offset} -> dt
+      _ -> nil
+    end
+  end
+
+  defp normalize_nullable_datetime(%DateTime{} = dt), do: dt
+  defp normalize_nullable_datetime(_), do: nil
 
   defp map_get(map, key, default \\ nil) when is_map(map) do
     Map.get(map, key, Map.get(map, Atom.to_string(key), default))

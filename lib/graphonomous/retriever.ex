@@ -15,6 +15,7 @@ defmodule Graphonomous.Retriever do
 
   alias Graphonomous.{Attention, CostTracker, Deliberator, Graph, ModelTier, Store, Topology}
   alias Graphonomous.Types.Node
+  alias Graphonomous.Types.Node
 
   @default_similarity_limit 10
   @default_final_limit 20
@@ -110,6 +111,9 @@ defmodule Graphonomous.Retriever do
         # that would change κ if linked; annotate for downstream reasoning
         edge_impact_notes = detect_edge_impact_opportunities(ranked, topology)
 
+        # P1: Two-phase retrieval — re-rank by Q-value utility scoring
+        ranked = utility_rerank(ranked, call_opts)
+
         base_result = %{
           query: query,
           results: ranked,
@@ -150,7 +154,14 @@ defmodule Graphonomous.Retriever do
       Enum.reduce(hits, %{}, fn hit, acc ->
         node_id = Map.get(hit, :node_id)
 
-        if is_binary(node_id) do
+        # P1: Filter out soft-forgotten nodes
+        forgotten? =
+          case node_id && Store.get_node(node_id) do
+            {:ok, %Node{forgotten_at: %DateTime{}}} -> true
+            _ -> false
+          end
+
+        if is_binary(node_id) and not forgotten? do
           entry = %{
             node_id: node_id,
             content: Map.get(hit, :content, ""),
@@ -575,6 +586,43 @@ defmodule Graphonomous.Retriever do
         end
       end)
       |> Enum.sort_by(& &1.score, :desc)
+    end
+  end
+
+  # P1: Two-phase retrieval — after semantic + topology scoring, re-rank by
+  # Q-value (outcome utility). Nodes that contributed to successful outcomes
+  # rank higher; failure nodes rank lower. Skip when no outcome data exists.
+  defp utility_rerank(ranked, opts) do
+    alpha = Keyword.get(opts, :utility_weight, 0.3)
+
+    # Check if any candidate has Q-value outcome data
+    has_outcome_data? =
+      Enum.any?(ranked, fn entry ->
+        case Store.get_node(entry.node_id) do
+          {:ok, %Node{q_update_count: count}} when count > 0 -> true
+          _ -> false
+        end
+      end)
+
+    if has_outcome_data? do
+      ranked
+      |> Enum.map(fn entry ->
+        {q, q_count} =
+          case Store.get_node(entry.node_id) do
+            {:ok, %Node{q_value: q, q_update_count: c}} -> {q, c}
+            _ -> {0.5, 0}
+          end
+
+        if q_count > 0 do
+          blended = (1.0 - alpha) * entry.score + alpha * q
+          Map.merge(entry, %{score: blended, utility: q})
+        else
+          entry
+        end
+      end)
+      |> Enum.sort_by(& &1.score, :desc)
+    else
+      ranked
     end
   end
 

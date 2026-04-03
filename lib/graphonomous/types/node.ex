@@ -28,6 +28,9 @@ defmodule Graphonomous.Types.Node do
           decay_rate: float() | nil,
           revision_id: binary() | nil,
           superseded_by: binary() | nil,
+          q_value: float(),
+          q_update_count: non_neg_integer(),
+          forgotten_at: DateTime.t() | nil,
           created_at: DateTime.t() | nil,
           updated_at: DateTime.t() | nil,
           last_accessed_at: DateTime.t() | nil
@@ -41,6 +44,7 @@ defmodule Graphonomous.Types.Node do
     :decay_rate,
     :revision_id,
     :superseded_by,
+    :forgotten_at,
     node_type: :semantic,
     confidence: 0.5,
     metadata: %{},
@@ -48,6 +52,8 @@ defmodule Graphonomous.Types.Node do
     causal_parent_ids: [],
     creation_source: :inference,
     timescale: :medium,
+    q_value: 0.5,
+    q_update_count: 0,
     created_at: nil,
     updated_at: nil,
     last_accessed_at: nil

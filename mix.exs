@@ -32,6 +32,9 @@ defmodule Graphonomous.MixProject do
       # sqlite-vec wrapper (if this fails, pin to a commit/branch or load extension manually)
       {:sqlite_vec, github: "joelpaulkoch/sqlite_vec"},
 
+      # ANN vector search (HNSW index for fast similarity retrieval)
+      {:hnswlib, "~> 0.1.7"},
+
       # Local embeddings
       {:bumblebee, "~> 0.6"},
       {:nx, "~> 0.9"},

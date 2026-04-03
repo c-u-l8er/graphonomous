@@ -9,6 +9,7 @@ defmodule Graphonomous.Application do
       {Anubis.Server.Registry, []},
       {Graphonomous.Store, store_opts()},
       {Graphonomous.Embedder, embedder_opts()},
+      {Graphonomous.HNSWIndex, hnsw_opts()},
       {Graphonomous.Graph, []},
       {Graphonomous.Retriever, []},
       {Graphonomous.Orchestrator, orchestrator_opts()},
@@ -46,6 +47,22 @@ defmodule Graphonomous.Application do
       max_learning_rate: Application.get_env(:graphonomous, :max_learning_rate, 0.4),
       metrics_interval_ms:
         Application.get_env(:graphonomous, :orchestrator_metrics_interval_ms, 30_000)
+    ]
+  end
+
+  defp hnsw_opts do
+    [
+      dimension:
+        Application.get_env(:graphonomous, :embedding_dimension, 384),
+      max_elements:
+        Application.get_env(:graphonomous, :hnsw_max_elements, 100_000),
+      ef_construction:
+        Application.get_env(:graphonomous, :hnsw_ef_construction, 200),
+      m: Application.get_env(:graphonomous, :hnsw_m, 16),
+      ef_search:
+        Application.get_env(:graphonomous, :hnsw_ef_search, 50),
+      index_path:
+        Application.get_env(:graphonomous, :db_path, "priv/graphonomous.db")
     ]
   end
 

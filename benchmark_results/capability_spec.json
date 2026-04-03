@@ -1,0 +1,212 @@
+{
+  "version": "0.2.0",
+  "date": "2026-04-03",
+  "benchmark": "GraphMemBench Phase 1",
+  "categories": [
+    {
+      "category": "1. Kappa Activation",
+      "failed": 0,
+      "details": [
+        {
+          "name": "K8: Deliberation triggers when κ>0",
+          "result": "pass"
+        },
+        {
+          "name": "K7: κ=0 fast path for acyclic subgraphs",
+          "result": "pass"
+        },
+        {
+          "name": "K6: 3-node SCC κ computation",
+          "result": "pass"
+        },
+        {
+          "name": "K5: 2-node SCC κ computation",
+          "result": "pass"
+        },
+        {
+          "name": "K4: Semantic back-references create reverse edges",
+          "result": "pass"
+        },
+        {
+          "name": "K3: Expanded topology includes neighbors",
+          "result": "pass"
+        },
+        {
+          "name": "K2: Contradicting facts form SCC",
+          "result": "pass"
+        },
+        {
+          "name": "K1: Mutual references create κ>=1",
+          "result": "pass"
+        }
+      ],
+      "skipped": 0,
+      "passed": 8
+    },
+    {
+      "category": "2. Belief Revision",
+      "failed": 0,
+      "details": [
+        {
+          "name": "BR8: Chain revision A→B→C provenance",
+          "result": "pass"
+        },
+        {
+          "name": "BR7: Pluggable hook receives contradiction notification",
+          "result": "pass"
+        },
+        {
+          "name": "BR6: Revision record created with correct fields",
+          "result": "pass"
+        },
+        {
+          "name": "BR5: Detect contradictions via :contradicts edges",
+          "result": "pass"
+        },
+        {
+          "name": "BR4: Detect contradictions via embedding similarity",
+          "result": "pass"
+        },
+        {
+          "name": "BR3: Contract — remove belief reduces dependents",
+          "result": "pass"
+        },
+        {
+          "name": "BR2: Revise — contradicting belief supersedes",
+          "result": "pass"
+        },
+        {
+          "name": "BR1: Expand — new belief, no contradiction",
+          "result": "pass"
+        }
+      ],
+      "skipped": 0,
+      "passed": 8
+    },
+    {
+      "category": "3. Conflict-Aware Consolidation",
+      "failed": 0,
+      "details": [
+        {
+          "name": "CC8: Multiple conflicts in one cycle",
+          "result": "pass"
+        },
+        {
+          "name": "CC7: Merge skips contradiction pairs",
+          "result": "pass"
+        },
+        {
+          "name": "CC6: Stage 4.5 runs between strengthen and merge",
+          "result": "pass"
+        },
+        {
+          "name": "CC5: Unresolved escalates to attention",
+          "result": "pass"
+        },
+        {
+          "name": "CC4: Unresolved creates :contradicts edges",
+          "result": "pass"
+        },
+        {
+          "name": "CC3: Evidence heuristic — more outcomes wins",
+          "result": "pass"
+        },
+        {
+          "name": "CC2: Temporal heuristic — newer wins",
+          "result": "pass"
+        },
+        {
+          "name": "CC1: High-similarity divergent-confidence pair tagged",
+          "result": "pass"
+        }
+      ],
+      "skipped": 0,
+      "passed": 8
+    },
+    {
+      "category": "4. Two-Phase Retrieval",
+      "failed": 0,
+      "details": [
+        {
+          "name": "TR8: Q-value converges after multiple cycles",
+          "result": "pass"
+        },
+        {
+          "name": "TR7: Rank change after outcome learning",
+          "result": "pass"
+        },
+        {
+          "name": "TR6: High-confidence low-utility below high-utility",
+          "result": "pass"
+        },
+        {
+          "name": "TR5: Q-value decay is half confidence rate",
+          "result": "pass"
+        },
+        {
+          "name": "TR4: Blended scoring with alpha=0.3",
+          "result": "pass"
+        },
+        {
+          "name": "TR3: No Q-value effect when q_update_count==0",
+          "result": "pass"
+        },
+        {
+          "name": "TR2: Failure outcome decreases Q-value",
+          "result": "pass"
+        },
+        {
+          "name": "TR1: Success outcome increases Q-value",
+          "result": "pass"
+        }
+      ],
+      "skipped": 0,
+      "passed": 8
+    },
+    {
+      "category": "5. Intentional Forgetting",
+      "failed": 0,
+      "details": [
+        {
+          "name": "IF8: Memory pressure in attention survey",
+          "result": "pass"
+        },
+        {
+          "name": "IF7: Forgotten nodes excluded from topology",
+          "result": "pass"
+        },
+        {
+          "name": "IF6: Priority scoring favors valuable nodes",
+          "result": "pass"
+        },
+        {
+          "name": "IF5: Hybrid pruning respects max_nodes",
+          "result": "pass"
+        },
+        {
+          "name": "IF4: GDPR erase leaves no trace",
+          "result": "pass"
+        },
+        {
+          "name": "IF3: Cascade propagates to orphaned dependents",
+          "result": "pass"
+        },
+        {
+          "name": "IF2: Hard forget removes node + edges",
+          "result": "pass"
+        },
+        {
+          "name": "IF1: Soft forget excludes from retrieval",
+          "result": "pass"
+        }
+      ],
+      "skipped": 0,
+      "passed": 8
+    }
+  ],
+  "duration_ms": 2015,
+  "total_failed": 0,
+  "total_passed": 40,
+  "total_scenarios": 40,
+  "total_skipped": 0
+}

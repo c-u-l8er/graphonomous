@@ -378,8 +378,76 @@ defmodule Graphonomous.Attention do
   # -- Survey + Triage ---------------------------------------------------------
 
   defp build_attention_map do
-    survey_goals()
-    |> triage()
+    items =
+      survey_goals()
+      |> triage()
+
+    # P1: Check memory pressure and inject warning if near budget
+    case check_memory_pressure() do
+      nil -> items
+      pressure_item -> [pressure_item | items]
+    end
+  end
+
+  # P1: Memory pressure detection — warn when approaching forgetting budget
+  defp check_memory_pressure do
+    config = Graphonomous.Forgetter.get_config()
+    count = Store.count_active_nodes()
+
+    cond do
+      count > config.max_nodes ->
+        %{
+          goal_id: nil,
+          goal_title: "Memory pressure: over budget",
+          region_node_ids: [],
+          coverage: %{},
+          topology: %{},
+          urgency: 0.9,
+          gap: 1.0,
+          surprise: 0.0,
+          friction: 0,
+          attention_score: 0.95,
+          dispatch_mode: :escalate,
+          attention_rationale:
+            "Node count #{count} exceeds max_nodes #{config.max_nodes}. " <>
+              "Run forget_by_policy to free memory.",
+          coverage_decision: "escalate",
+          coverage_rationale: ["memory_pressure: count=#{count} max=#{config.max_nodes}"],
+          max_kappa: 0,
+          routing: "fast",
+          decision_confidence: 0.9,
+          coverage_score: 0.0
+        }
+
+      count > config.max_nodes * 0.9 ->
+        %{
+          goal_id: nil,
+          goal_title: "Memory pressure: approaching budget",
+          region_node_ids: [],
+          coverage: %{},
+          topology: %{},
+          urgency: 0.5,
+          gap: 0.5,
+          surprise: 0.0,
+          friction: 0,
+          attention_score: 0.4,
+          dispatch_mode: :focus,
+          attention_rationale:
+            "Node count #{count} at #{Float.round(count / config.max_nodes * 100, 1)}% " <>
+              "of max_nodes #{config.max_nodes}.",
+          coverage_decision: "learn",
+          coverage_rationale: [
+            "memory_approaching: count=#{count} max=#{config.max_nodes}"
+          ],
+          max_kappa: 0,
+          routing: "fast",
+          decision_confidence: 0.5,
+          coverage_score: 0.5
+        }
+
+      true ->
+        nil
+    end
   end
 
   defp partial_survey(sccs, query) do
@@ -571,7 +639,7 @@ defmodule Graphonomous.Attention do
   # Layer 3: Batch ANN retrieval — one embed_many call + one node list fetch
   # for all K goal titles. Returns %{title => [retrieval_row, ...]}
   defp batch_retrieve_similar(titles, limit) do
-    alias Graphonomous.{Embedder, Graph}
+    alias Graphonomous.{Embedder, Graph, HNSWIndex}
 
     # Filter out empty titles
     valid_titles = Enum.filter(titles, &(is_binary(&1) and String.trim(&1) != ""))
@@ -579,42 +647,90 @@ defmodule Graphonomous.Attention do
     if valid_titles == [] do
       Map.new(titles, fn t -> {t, []} end)
     else
-      with {:ok, query_vecs} <- Embedder.embed_many(valid_titles),
-           {:ok, all_nodes} <- Store.list_nodes(%{}) do
-        # Build {title, query_vec} pairs
+      with {:ok, query_vecs} <- Embedder.embed_many(valid_titles) do
         pairs = Enum.zip(valid_titles, query_vecs)
+        use_hnsw = HNSWIndex.available?()
 
-        # Rank each query vector against the shared node list
         Map.new(pairs, fn {title, query_vec} ->
           ranked =
-            all_nodes
-            |> Enum.map(fn node ->
-              node_vec = Graph.decode_embedding_blob(node.embedding)
-              similarity = Graph.cosine_similarity(query_vec, node_vec)
-              score = similarity * clamp01(to_float(node.confidence))
-
-              %{
-                node_id: node.id,
-                content: node.content,
-                node_type: node.node_type,
-                confidence: node.confidence,
-                similarity: similarity,
-                score: score
-              }
-            end)
-            |> Enum.sort_by(& &1.score, :desc)
-            |> Enum.take(limit)
+            if use_hnsw do
+              hnsw_ranked(query_vec, limit)
+            else
+              brute_force_ranked(query_vec, limit)
+            end
 
           {title, ranked}
         end)
       else
         _ ->
-          # Fallback: return empty results for all titles
           Map.new(titles, fn t -> {t, []} end)
       end
     end
   rescue
     _ -> Map.new(titles, fn t -> {t, []} end)
+  end
+
+  defp hnsw_ranked(query_vec, limit) do
+    alias Graphonomous.HNSWIndex
+
+    case HNSWIndex.query(query_vec, limit * 3) do
+      {:ok, results} ->
+        results
+        |> Enum.flat_map(fn {node_id, distance} ->
+          case Store.get_node(node_id) do
+            {:ok, node} ->
+              similarity = max(1.0 - distance, 0.0)
+              score = similarity * clamp01(to_float(node.confidence))
+
+              [
+                %{
+                  node_id: node.id,
+                  content: node.content,
+                  node_type: node.node_type,
+                  confidence: node.confidence,
+                  similarity: similarity,
+                  score: score
+                }
+              ]
+
+            _ ->
+              []
+          end
+        end)
+        |> Enum.sort_by(& &1.score, :desc)
+        |> Enum.take(limit)
+
+      _ ->
+        brute_force_ranked(query_vec, limit)
+    end
+  end
+
+  defp brute_force_ranked(query_vec, limit) do
+    alias Graphonomous.Graph
+
+    case Store.list_nodes(%{}) do
+      {:ok, all_nodes} ->
+        all_nodes
+        |> Enum.map(fn node ->
+          node_vec = Graph.decode_embedding_blob(node.embedding)
+          similarity = Graph.cosine_similarity(query_vec, node_vec)
+          score = similarity * clamp01(to_float(node.confidence))
+
+          %{
+            node_id: node.id,
+            content: node.content,
+            node_type: node.node_type,
+            confidence: node.confidence,
+            similarity: similarity,
+            score: score
+          }
+        end)
+        |> Enum.sort_by(& &1.score, :desc)
+        |> Enum.take(limit)
+
+      _ ->
+        []
+    end
   end
 
   # Fetch outcomes once, share across all goal evaluations

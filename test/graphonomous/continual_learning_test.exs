@@ -28,10 +28,18 @@ defmodule Graphonomous.ContinualLearningTest do
     test "contradiction edges between two nodes create κ=1 SCC" do
       # Store two nodes
       {:ok, %{id: id_a}} =
-        Graph.store_node(%{content: "Earth is 4.5 billion years old", node_type: :semantic, confidence: 0.8})
+        Graph.store_node(%{
+          content: "Earth is 4.5 billion years old",
+          node_type: :semantic,
+          confidence: 0.8
+        })
 
       {:ok, %{id: id_b}} =
-        Graph.store_node(%{content: "Earth is 6000 years old", node_type: :semantic, confidence: 0.3})
+        Graph.store_node(%{
+          content: "Earth is 6000 years old",
+          node_type: :semantic,
+          confidence: 0.3
+        })
 
       # Create bidirectional :contradicts edges — this forms a 2-node SCC
       {:ok, _} = Graph.create_edge(id_a, id_b, %{edge_type: :contradicts, weight: 0.8})
@@ -58,18 +66,23 @@ defmodule Graphonomous.ContinualLearningTest do
 
       # Even if we only "retrieve" A and C (missing B), the expanded topology
       # should include B as a neighbor and detect the cycle
-      edges_for_a = case Store.list_edges_for_node(id_a) do
-        {:ok, e} -> e
-        _ -> []
-      end
+      edges_for_a =
+        case Store.list_edges_for_node(id_a) do
+          {:ok, e} -> e
+          _ -> []
+        end
 
-      edges_for_c = case Store.list_edges_for_node(id_c) do
-        {:ok, e} -> e
-        _ -> []
-      end
+      edges_for_c =
+        case Store.list_edges_for_node(id_c) do
+          {:ok, e} -> e
+          _ -> []
+        end
 
       all_edges = Enum.uniq_by(edges_for_a ++ edges_for_c, & &1.id)
-      neighbor_ids = all_edges |> Enum.flat_map(fn e -> [e.source_id, e.target_id] end) |> Enum.uniq()
+
+      neighbor_ids =
+        all_edges |> Enum.flat_map(fn e -> [e.source_id, e.target_id] end) |> Enum.uniq()
+
       expanded_ids = Enum.uniq([id_a, id_c] ++ neighbor_ids)
 
       adj = Topology.build_adjacency(expanded_ids, all_edges)
@@ -86,10 +99,18 @@ defmodule Graphonomous.ContinualLearningTest do
     test "merge skips node pairs with :contradicts edges" do
       # Create two very similar nodes (would normally merge at 0.95 similarity)
       {:ok, %{id: id_a}} =
-        Graph.store_node(%{content: "Test merge conflict A", node_type: :semantic, confidence: 0.8})
+        Graph.store_node(%{
+          content: "Test merge conflict A",
+          node_type: :semantic,
+          confidence: 0.8
+        })
 
       {:ok, %{id: id_b}} =
-        Graph.store_node(%{content: "Test merge conflict B", node_type: :semantic, confidence: 0.6})
+        Graph.store_node(%{
+          content: "Test merge conflict B",
+          node_type: :semantic,
+          confidence: 0.6
+        })
 
       # Add :contradicts edge
       {:ok, _} = Graph.create_edge(id_a, id_b, %{edge_type: :contradicts, weight: 0.8})
@@ -118,9 +139,7 @@ defmodule Graphonomous.ContinualLearningTest do
 
       # Expand with content that might contradict (shares negation markers)
       {:ok, result} =
-        BeliefRevision.expand(
-          "The project deadline is not Friday but actually Monday instead"
-        )
+        BeliefRevision.expand("The project deadline is not Friday but actually Monday instead")
 
       assert is_binary(result.node_id)
       # The contradictions list and edges depend on embedding similarity,

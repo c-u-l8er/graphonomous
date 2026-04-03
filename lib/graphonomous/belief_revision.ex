@@ -382,9 +382,22 @@ defmodule Graphonomous.BeliefRevision do
     new_lower = String.downcase(new)
     existing_lower = String.downcase(existing)
 
-    negation_words = ["not", "no longer", "incorrect", "wrong", "false", "deprecated",
-                       "outdated", "replaced", "instead", "actually", "contrary",
-                       "however", "but", "although"]
+    negation_words = [
+      "not",
+      "no longer",
+      "incorrect",
+      "wrong",
+      "false",
+      "deprecated",
+      "outdated",
+      "replaced",
+      "instead",
+      "actually",
+      "contrary",
+      "however",
+      "but",
+      "although"
+    ]
 
     Enum.any?(negation_words, fn word ->
       String.contains?(new_lower, word) or String.contains?(existing_lower, word)
