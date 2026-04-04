@@ -106,22 +106,29 @@ defmodule Graphonomous.Retriever do
           |> maybe_cross_encoder_rerank(query)
           |> Enum.take(cfg.final_limit)
 
-        topology = analyze_topology(ranked)
+        skip_topology = Keyword.get(call_opts, :skip_topology, false)
+
+        topology =
+          if skip_topology,
+            do: %{sccs: [], dag_nodes: [], routing: :fast, max_kappa: 0, scc_count: 0},
+            else: analyze_topology(ranked)
 
         # K2+K4: κ-guided adaptive expansion — if κ > 0, re-expand with
         # deeper hops and gentler decay to follow cyclic knowledge paths
-        {ranked, topology} = maybe_kappa_expand(ranked, topology, cfg)
+        {ranked, topology} =
+          if skip_topology, do: {ranked, topology}, else: maybe_kappa_expand(ranked, topology, cfg)
 
         # K5: Boost nodes adjacent to fault-line edges (knowledge boundaries)
-        ranked = apply_fault_line_boost(ranked, topology)
+        ranked = if skip_topology, do: ranked, else: apply_fault_line_boost(ranked, topology)
 
         # K7: Propagate confidence through SCC edges — high-confidence nodes
         # boost low-confidence neighbors in the same SCC
-        ranked = propagate_scc_confidence(ranked, topology)
+        ranked = if skip_topology, do: ranked, else: propagate_scc_confidence(ranked, topology)
 
         # K8: Query-time edge impact — detect high-scoring disconnected nodes
         # that would change κ if linked; annotate for downstream reasoning
-        edge_impact_notes = detect_edge_impact_opportunities(ranked, topology)
+        edge_impact_notes =
+          if skip_topology, do: [], else: detect_edge_impact_opportunities(ranked, topology)
 
         # P1: Two-phase retrieval — re-rank by Q-value utility scoring
         ranked = utility_rerank(ranked, call_opts)
@@ -143,7 +150,11 @@ defmodule Graphonomous.Retriever do
             do: Map.put(base_result, :edge_impact_notes, edge_impact_notes),
             else: base_result
 
-        {:ok, maybe_enrich_or_deliberate(base_result, query, call_opts)}
+        {:ok,
+         if(skip_topology,
+           do: base_result,
+           else: maybe_enrich_or_deliberate(base_result, query, call_opts)
+         )}
       end
 
     {:reply, reply, state}

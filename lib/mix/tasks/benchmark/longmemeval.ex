@@ -74,7 +74,8 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
           limit: :integer,
           purge: :boolean,
           neural: :boolean,
-          skip_ingest: :boolean
+          skip_ingest: :boolean,
+          skip_topology: :boolean
         ]
       )
 
@@ -82,8 +83,10 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
     limit = Keyword.get(opts, :limit, 500)
     purge = Keyword.get(opts, :purge, true)
     skip_ingest = Keyword.get(opts, :skip_ingest, false)
+    skip_topology = Keyword.get(opts, :skip_topology, false)
 
     if opts[:neural], do: Application.put_env(:graphonomous, :benchmark_neural, true)
+    if skip_topology, do: Application.put_env(:graphonomous, :benchmark_skip_topology, true)
 
     Helpers.ensure_started()
 
@@ -416,11 +419,14 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
     # Retrieve from Graphonomous
     {retrieval_us, retrieval} =
       Helpers.timed(fn ->
+        skip_topo = Application.get_env(:graphonomous, :benchmark_skip_topology, false)
+
         Graphonomous.retrieve_context(question_text,
           similarity_limit: sim_limit,
           final_limit: final_limit,
           expansion_hops: exp_hops,
-          neighbors_per_node: 8
+          neighbors_per_node: 8,
+          skip_topology: skip_topo
         )
       end)
 

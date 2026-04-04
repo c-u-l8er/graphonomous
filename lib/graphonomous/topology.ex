@@ -24,7 +24,7 @@ defmodule Graphonomous.Topology do
 
   alias Graphonomous.Types.Edge
 
-  @max_exact_scc_size 20
+  @max_exact_scc_size 10
 
   @type node_id :: binary()
   @type adjacency :: %{optional(node_id()) => MapSet.t(node_id())}
