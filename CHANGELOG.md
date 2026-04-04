@@ -1,5 +1,34 @@
 # Changelog
 
+## [0.3.2] — 2026-04-03
+
+### Added
+
+- **MCP tool: `belief_revise`** — AGM-rational belief revision with three operations: expand (add + contradiction detection), revise (supersede with provenance tracking), contract (retract + propagate)
+- **MCP tool: `belief_contradictions`** — detect contradicting nodes via embedding similarity (threshold 0.75) with content_preview and confidence
+- **MCP tool: `forget_node`** — intentional forgetting in three modes: soft (hidden from retrieval, reversible), hard (UtU constant-time delete), cascade (hard + orphan propagation)
+- **MCP tool: `forget_by_policy`** — budget-aware hybrid priority pruning; scores nodes by confidence × recency × access × connectivity; supports dry_run with candidate listing
+- **MCP tool: `gdpr_erase`** — GDPR Article 17 compliant permanent deletion with audit record (node_type, reason, erased_at); no recovery
+- **MCP tool: `epistemic_frontier`** — Wilson score confidence intervals at 95%; returns nodes sorted by information gain with interval_lower, interval_upper, width, evidence_count, access_count
+- **Consolidation Stage 4.5**: contradiction detection during consolidation pipeline
+- **Q-value tracking**: learn_from_outcome now updates q_values alongside confidence; retrieve_context uses q_values for outcome-weighted ranking
+- **Multi-agent scoping**: agent_id metadata field for per-agent node attribution; shared graph with cross-agent discovery via graph expansion
+- **Precondition matching**: typed-retrieval now boosts nodes matching query preconditions
+- **17 interactive A/B demos** covering all 28 MCP tools (up from 11 demos)
+- **309 tests** (up from 240), 120 GraphMemBench scenarios across 5 categories
+
+### Changed
+
+- MCP tool count: 22 → 28 (+ 5 resources unchanged)
+- Consolidation pipeline: 7-stage → 8-stage (added contradiction detection)
+- learn_from_outcome response now includes `new_q_value`, `old_q_value`, `q_update_count` in updates array
+- Demo suite expanded: 6 new demos (belief-revision, intentional-forgetting, epistemic-frontier, causal-chains, qvalue-retrieval, multi-agent-memory), 2 existing demos updated
+
+### Fixed
+
+- store_node MCP timeout bug: GenServer.call defaulting to 5s while embedder takes up to 15s; added 30s timeout + exit catch in facade
+- All demo payloads now match real MCP tool output structures (previously showed fabricated response fields)
+
 ## [0.2.0] — 2026-04-02
 
 ### Added

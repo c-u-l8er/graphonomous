@@ -448,6 +448,42 @@ better over time without retraining any model weights**.
 
 ---
 
+## Consolidation + Active Forgetting
+
+Consolidation handles **passive** memory management (decay, prune, merge).
+For **active** memory management, use the forgetting tools:
+
+| Need | Tool | How It Complements Consolidation |
+|------|------|----------------------------------|
+| Hide a node from retrieval (reversible) | `forget_node(mode: "soft")` | Faster than waiting for decay; node stays in graph |
+| Delete a node permanently | `forget_node(mode: "hard")` | Immediate removal; consolidation would take many cycles |
+| Delete a node + orphaned dependents | `forget_node(mode: "cascade")` | Cleans up subtrees; consolidation can't do targeted cascades |
+| Auto-prune lowest-priority nodes | `forget_by_policy(policy: "hybrid")` | Budget-aware cleanup; consolidation has no budget concept |
+| GDPR-compliant permanent deletion | `gdpr_erase` | Legal requirement; consolidation doesn't create audit trails |
+
+**When to use which:**
+- Let **consolidation** handle routine maintenance (run automatically or at session end)
+- Use **forget_node** when you *know* specific nodes should go
+- Use **forget_by_policy** when the graph is too large overall
+- Use **gdpr_erase** only for legal compliance
+
+See [12_FORGETTING.md](12_FORGETTING.md) for full details on active forgetting.
+
+---
+
+## Consolidation + Belief Revision
+
+When `belief_revise(operation: "revise")` supersedes a node, the old node's
+confidence drops to 30% of its original value. Consolidation may then prune
+it in subsequent cycles if it stays below the prune threshold. This is the
+intended lifecycle: revise → decay → prune.
+
+If you want the old belief preserved for historical reference, raise its
+confidence above the prune threshold (but below the new node's confidence)
+after revision. Otherwise, let consolidation handle the cleanup.
+
+---
+
 ## Consolidation + Goals
 
 Consolidation affects goal-linked nodes. If a node linked to a goal gets

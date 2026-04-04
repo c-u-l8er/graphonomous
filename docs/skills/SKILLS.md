@@ -44,6 +44,9 @@ Every interaction should follow this rhythm:
 | [08_ATTENTION.md](08_ATTENTION.md) | Autonomous focus — `attention_survey` and `attention_run_cycle` |
 | [09_WORKFLOWS.md](09_WORKFLOWS.md) | End-to-end recipes for common tasks |
 | [10_ANTI_PATTERNS.md](10_ANTI_PATTERNS.md) | What NOT to do — common mistakes and how to avoid them |
+| [11_BELIEF_REVISION.md](11_BELIEF_REVISION.md) | AGM-style belief management — `belief_revise`, `belief_contradictions`, self-correcting knowledge |
+| [12_FORGETTING.md](12_FORGETTING.md) | Memory lifecycle — `forget_node`, `forget_by_policy`, `gdpr_erase`, active memory management |
+| [13_EPISTEMIC_FRONTIER.md](13_EPISTEMIC_FRONTIER.md) | Uncertainty-driven exploration — `epistemic_frontier`, Wilson intervals, information gain |
 
 ---
 
@@ -52,12 +55,19 @@ Every interaction should follow this rhythm:
 ### Write Tools
 | Tool | Purpose | Key Params |
 |------|---------|------------|
-| `store_node` | Store a knowledge node | `content` (required), `node_type`, `confidence`, `source`, `metadata` |
-| `store_edge` | Create a directed edge between nodes | `source_id` + `target_id` (required), `edge_type`, `weight`, `metadata` |
-| `learn_from_outcome` | Report action outcome and update causal node confidence | `action_id` + `status` + `confidence` + `causal_node_ids` (required) |
+| `store_node` | Store a knowledge node | `content` (required), `node_type`, `confidence`, `source`, `metadata`, `agent_id` |
+| `store_edge` | Create a directed edge between nodes | `source_id` + `target_id` (required), `edge_type`, `weight`, `metadata`, `agent_id` |
+| `delete_node` | Remove a node and its edges from the graph | `node_id` (required) |
+| `manage_edge` | List, update, or delete edges | `operation` (required), `edge_id`, `source_id`, `target_id`, `updates` |
+| `learn_from_outcome` | Report action outcome and update causal node confidence | `action_id` + `status` + `confidence` + `causal_node_ids` (required), `evidence` |
 | `learn_from_feedback` | Process positive/negative/correction feedback on a node | `node_id` + `feedback_type` (required), `correction` |
 | `learn_detect_novelty` | Check if a query represents novel knowledge | `query` (required), `threshold` |
 | `learn_from_interaction` | Full learning pipeline: novelty → episodic → semantic extraction → edges | `user_message` + `model_response` (required), `context` |
+| `belief_revise` | AGM-style belief revision: expand, revise, or contract beliefs | `operation` (required), `content`, `node_id`, `rationale`, `confidence`, `agent_id` |
+| `belief_contradictions` | Detect contradictions for a node or content string | `node_id` or `content` (one required) |
+| `forget_node` | Forget a node: soft (hide), hard (delete), or cascade (delete + orphans) | `node_id` (required), `mode` (soft/hard/cascade), `reason` |
+| `forget_by_policy` | Auto-prune lowest-priority nodes by hybrid LRU + priority-decay policy | `policy`, `dry_run`, `max_nodes` |
+| `gdpr_erase` | Permanent GDPR Article 17 deletion with audit trail | `node_id` (required) |
 | `manage_goal` | Goal CRUD and lifecycle operations | `operation` (required), varies by operation |
 | `review_goal` | Epistemic coverage evaluation with decision policy | `goal_id` + `signal` (required) |
 | `deliberate` | κ-driven deliberation over cyclic knowledge regions | `query` (required), `node_ids`, `write_back` |
@@ -67,14 +77,15 @@ Every interaction should follow this rhythm:
 ### Read Tools
 | Tool | Purpose | Key Params |
 |------|---------|------------|
-| `retrieve_context` | Semantic search with neighborhood expansion + topology | `query` (required), `limit`, `expansion_hops`, `min_score`, `node_type` |
+| `retrieve_context` | Hybrid search (nomic 768d + BM25 + cross-encoder reranking) with topology | `query` (required), `limit`, `expansion_hops`, `min_score`, `node_type` |
 | `query_graph` | Inspect graph state (list, get, edges, similarity) | `operation` (required), varies by operation |
 | `topology_analyze` | Compute SCCs, κ values, routing decision | `node_ids`, `query` |
 | `graph_traverse` | BFS walk from a starting node with depth/relationship filters | `start_node_id` (required), `max_depth`, `relationship_types` |
 | `graph_stats` | Aggregate graph statistics (counts, distributions, orphans) | _(none required)_ |
 | `retrieve_episodic` | Time-range filtered episodic node retrieval | `since`, `until`, `limit` |
-| `retrieve_procedural` | Semantic search scoped to procedural nodes | `query` (required), `limit`, `min_confidence` |
+| `retrieve_procedural` | Semantic search scoped to procedural nodes with precondition matching | `query` (required), `limit`, `min_confidence` |
 | `coverage_query` | Standalone epistemic coverage assessment (act/learn/escalate) | `query` (required), `limit`, `expansion_hops` |
+| `epistemic_frontier` | Identify highest-uncertainty nodes where evidence would most reduce uncertainty | `min_gap` (default 0.3), `limit` (default 10) |
 | `attention_survey` | Read current attention priority map | `include_idle` |
 
 ### Resources (Read-Only)
@@ -109,6 +120,7 @@ Every interaction should follow this rhythm:
 | `contradicts` | A conflicts with B | "Doc says X, but code does Y" |
 | `related` | A is thematically connected to B | "Auth module ↔ User module" |
 | `derived_from` | A was derived or extracted from B | "Summary node ← source document node" |
+| `superseded_by` | A was replaced by B (created by belief revision) | "Old fact → revised fact" |
 
 ---
 

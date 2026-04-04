@@ -46,6 +46,11 @@ Use this as a pre-flight checklist or periodic self-audit.
 | 18 | [Signal Fabrication](#18--signal-fabrication) | 🔴 Critical | `review_goal` |
 | 19 | [Causal Context Discard](#19--causal-context-discard) | 🔴 Critical | `retrieve_context`, `learn_from_outcome` |
 | 20 | [Progress Fantasy](#20--progress-fantasy) | 🟠 High | `manage_goal` |
+| 21 | [Revise Without Checking](#21--revise-without-checking) | 🟠 High | `belief_revise` |
+| 22 | [Expand When You Should Revise](#22--expand-when-you-should-revise) | 🟡 Medium | `belief_revise` |
+| 23 | [Hard Delete Without Traversal](#23--hard-delete-without-traversal) | 🟠 High | `forget_node` |
+| 24 | [Ignoring the Frontier](#24--ignoring-the-frontier) | 🟡 Medium | `epistemic_frontier` |
+| 25 | [Forgetting Instead of Revising](#25--forgetting-instead-of-revising) | 🟡 Medium | `forget_node`, `belief_revise` |
 
 ---
 
@@ -856,3 +861,128 @@ Run through this checklist periodically (every few sessions or iterations):
 | 🟡 8 | Trigger consolidation periodically (Anti-pattern #10) |
 | 🟡 9 | Always set `source` on stored nodes (Anti-pattern #11) |
 | 🟡 10 | Watch for `routing: "deliberate"` in retrieval topology (Anti-pattern #13) |
+| 🟠 11 | Check contradictions before revising beliefs (Anti-pattern #21) |
+| 🟠 12 | Traverse before cascade-deleting (Anti-pattern #23) |
+
+---
+
+## v0.3 Anti-Patterns (Belief Revision, Forgetting, Epistemic Frontier)
+
+---
+
+### 21 — Revise Without Checking
+
+**The mistake:** Calling `belief_revise(operation: "revise")` without first
+checking if the old node is actually contradicted or wrong.
+
+**Why it's harmful:**
+- Supersedes correct knowledge with unverified replacement
+- Propagates 0.6× confidence decay through dependents — weakening good nodes
+- Creates `:superseded_by` edges that can't be undone
+- Once propagated, the damage compounds through the dependency graph
+
+**The fix:** Always run `belief_contradictions` first. Verify the old node
+is genuinely wrong before revising.
+
+```
+# Check first
+belief_contradictions(node_id: "node_old")
+# Only revise if contradictions confirmed
+belief_revise(operation: "revise", node_id: "node_old", content: "...", rationale: "...")
+```
+
+---
+
+### 22 — Expand When You Should Revise
+
+**The mistake:** Using `belief_revise(operation: "expand")` to add corrected
+information alongside wrong information, instead of revising the wrong node.
+
+**Why it's harmful:**
+- Both the wrong and correct versions remain active in retrieval
+- Creates `:contradicts` edges and κ=1 SCCs that need deliberation
+- Future retrievals return conflicting information
+- The graph accumulates contradictions instead of resolving them
+
+**The fix:** If you know the old belief is wrong, use `revise` to replace it.
+Only use `expand` when adding genuinely new knowledge.
+
+| Situation | Correct Operation |
+|---|---|
+| Old fact is wrong, you have the correct version | `revise` |
+| Old fact is wrong, you don't have a replacement | `contract` |
+| New fact, no conflict with existing knowledge | `expand` |
+| New fact, legitimately contradicts existing (both may be right) | `expand` (then deliberate) |
+
+---
+
+### 23 — Hard Delete Without Traversal
+
+**The mistake:** Using `forget_node(mode: "hard")` or `forget_node(mode:
+"cascade")` without first checking what depends on the node.
+
+**Why it's harmful:**
+- Hard delete severs all edges permanently — orphaning dependent nodes
+- Cascade delete removes the node *plus* all orphaned dependents — potentially
+  deleting far more than expected
+- No recovery possible after hard/cascade delete
+- Goal coverage may silently degrade if linked nodes are deleted
+
+**The fix:** Always inspect the neighborhood before hard-deleting.
+
+```
+# Check what depends on this node
+graph_traverse(start_node_id: "node_target", max_depth: 2)
+
+# Only then decide on mode
+forget_node(node_id: "node_target", mode: "hard")  # or cascade if orphans are OK
+```
+
+---
+
+### 24 — Ignoring the Frontier
+
+**The mistake:** Starting exploratory or learning work without checking
+`epistemic_frontier` — investigating things you're already certain about while
+genuinely uncertain knowledge goes unexamined.
+
+**Why it's harmful:**
+- Wastes investigation effort on already-established knowledge
+- High-uncertainty nodes remain uncertain, degrading coverage scores
+- Goals stay in `learn` state because their uncertain nodes never get evidence
+- The graph's overall reliability plateaus
+
+**The fix:** Check the frontier before exploratory work.
+
+```
+# Before investigating, see what's most uncertain
+epistemic_frontier(min_gap: 0.3, limit: 5)
+
+# Investigate top information-gain nodes first
+# Report outcomes to shrink the frontier
+learn_from_outcome(action_id: "...", causal_node_ids: [...], ...)
+```
+
+---
+
+### 25 — Forgetting Instead of Revising
+
+**The mistake:** Using `forget_node` to remove wrong knowledge instead of
+`belief_revise` to correct it.
+
+**Why it's harmful:**
+- Forgetting doesn't propagate confidence decay to dependent nodes
+- Dependent nodes retain their original confidence despite their foundation
+  being removed — creating unsupported claims
+- No revision record — the correction is invisible to future sessions
+- Misses the opportunity to strengthen the graph with corrected knowledge
+
+**The fix:** If knowledge is *wrong*, revise it. If knowledge is *irrelevant*,
+forget it. The distinction matters.
+
+| Knowledge is... | Action |
+|---|---|
+| **Wrong** (has a correct replacement) | `belief_revise(operation: "revise")` |
+| **Wrong** (no replacement available) | `belief_revise(operation: "contract")` |
+| **Irrelevant** (correct but not useful) | `forget_node(mode: "soft")` |
+| **Dangerous** (must be deleted) | `forget_node(mode: "hard")` or `gdpr_erase` |

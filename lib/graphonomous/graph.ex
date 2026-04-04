@@ -37,7 +37,7 @@ defmodule Graphonomous.Graph do
 
   @spec store_node(map()) :: {:ok, Node.t()} | {:error, term()}
   def store_node(attrs) when is_map(attrs) do
-    GenServer.call(__MODULE__, {:store_node, attrs})
+    GenServer.call(__MODULE__, {:store_node, attrs}, @default_call_timeout)
   end
 
   @spec get_node(node_id()) :: {:ok, Node.t()} | {:error, term()}
@@ -52,7 +52,7 @@ defmodule Graphonomous.Graph do
 
   @spec update_node(node_id(), map()) :: {:ok, Node.t()} | {:error, term()}
   def update_node(node_id, attrs) when is_binary(node_id) and is_map(attrs) do
-    GenServer.call(__MODULE__, {:update_node, node_id, attrs})
+    GenServer.call(__MODULE__, {:update_node, node_id, attrs}, @default_call_timeout)
   end
 
   @spec delete_node(node_id()) :: :ok | {:error, term()}

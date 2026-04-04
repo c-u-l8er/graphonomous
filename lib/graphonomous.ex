@@ -44,6 +44,12 @@ defmodule Graphonomous do
 
     Attention.notify_graph_mutation()
     result
+  catch
+    :exit, {:timeout, _} ->
+      {:error, :timeout}
+
+    :exit, reason ->
+      {:error, {:exit, reason}}
   end
 
   @doc """
@@ -54,6 +60,12 @@ defmodule Graphonomous do
   def retrieve_context(query, opts) when is_binary(query) and is_list(opts) do
     Retriever.retrieve(query, opts)
     |> unwrap_ok()
+  catch
+    :exit, {:timeout, _} ->
+      {:error, :timeout}
+
+    :exit, reason ->
+      {:error, {:exit, reason}}
   end
 
   @doc """
@@ -152,6 +164,12 @@ defmodule Graphonomous do
 
     Attention.notify_graph_mutation()
     result
+  catch
+    :exit, {:timeout, _} ->
+      {:error, :timeout}
+
+    :exit, reason ->
+      {:error, {:exit, reason}}
   end
 
   @doc """

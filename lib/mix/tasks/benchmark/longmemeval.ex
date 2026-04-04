@@ -424,6 +424,13 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
         )
       end)
 
+    # Handle timeout / error from retrieve_context
+    {retrieval, timed_out?} =
+      case retrieval do
+        {:error, _reason} -> {%{results: [], topology: %{}}, true}
+        map when is_map(map) -> {map, false}
+      end
+
     results = Map.get(retrieval, :results, [])
     topology = Map.get(retrieval, :topology, %{})
 
@@ -513,6 +520,7 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
       question_type: question_type,
       ability: if(is_abstention, do: :abstention, else: ability),
       is_abstention: is_abstention,
+      timed_out: timed_out?,
       retrieval_latency_us: retrieval_us,
       result_count: length(results),
       session_hit: session_hit,
@@ -655,7 +663,8 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
       mean_latency_ms: div(round(mean(question_results, :retrieval_latency_us)), 1000),
       total_questions: length(question_results),
       non_abstention_count: length(non_abstention),
-      abstention_count: length(abstention)
+      abstention_count: length(abstention),
+      timeout_count: Enum.count(question_results, & &1.timed_out)
     }
 
     abstention_metrics =
@@ -744,6 +753,7 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
     ╠══════════════════════════════════════════════════════════╣
     ║  Split: #{String.pad_trailing(split, 49)}║
     ║  Questions: #{String.pad_trailing("#{total}", 45)}║
+    ║  Timeouts:  #{String.pad_trailing("#{o.timeout_count}", 45)}║
     ║                                                          ║
     ║  OVERALL METRICS                                         ║
     ║  ─────────────────────────────────────                   ║

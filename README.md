@@ -2,13 +2,13 @@
 
 Continual learning engine for AI agents, implemented as an Elixir OTP application with a durable SQLite-backed knowledge graph, confidence-updating learning loop, GoalGraph orchestration, κ-aware topology routing, and MCP tools/resources.
 
-**v0.2.0** — Full spec compliance: 6 node types, 16 edge types, 7-stage consolidation pipeline, 22 MCP tools, 5 MCP resources. κ-aware topology routing works end-to-end — `κ = 0` triggers fast retrieval, `κ > 0` triggers deliberation with fault-line decomposition. 240 tests, 0 failures.
+**v0.3.2** — Full spec compliance: 6 node types, 16 edge types, 8-stage consolidation pipeline, 28 MCP tools, 5 MCP resources. κ-aware topology routing, AGM-rational belief revision, intentional forgetting (soft/hard/cascade/GDPR), Wilson score epistemic frontier, Q-value outcome-weighted retrieval, and multi-agent scoping via `agent_id`. 309 tests, 0 failures.
 
 > **TL;DR**
 > - Install: `npm i -g graphonomous` or `npx -y graphonomous`
 > - Use as an MCP server over stdio or HTTP
 > - κ-aware topology routing ships out of the box — no configuration needed
-> - 22 tools covering knowledge CRUD, retrieval, learning, goals, consolidation, and attention
+> - 28 tools covering knowledge CRUD, retrieval, learning, belief revision, forgetting, goals, consolidation, and attention
 > - Works with Claude Code, Zed, and any MCP-compatible client
 
 ---
@@ -218,7 +218,7 @@ npm i -g graphonomous
 
 ---
 
-### 5) MCP tools (22 total)
+### 5) MCP tools (28 total)
 
 **Knowledge graph write:**
 - `store_node`, `store_edge`, `delete_node`, `manage_edge`
@@ -235,8 +235,20 @@ npm i -g graphonomous
 - `retrieve_procedural` — semantic search scoped to procedural nodes
 - `coverage_query` — standalone epistemic coverage (act/learn/escalate)
 
+**Belief revision (v0.3):**
+- `belief_revise` — AGM-rational expand/revise/contract with contradiction detection
+- `belief_contradictions` — find contradicting nodes by embedding similarity
+
+**Intentional forgetting (v0.3):**
+- `forget_node` — soft/hard/cascade forgetting modes
+- `forget_by_policy` — budget-aware hybrid priority pruning with dry-run
+- `gdpr_erase` — GDPR Article 17 compliant permanent deletion with audit
+
+**Uncertainty quantification (v0.3):**
+- `epistemic_frontier` — Wilson score intervals, information gain ranking
+
 **Learning loop:**
-- `learn_from_outcome` — causal confidence updates
+- `learn_from_outcome` — causal confidence + Q-value updates
 - `learn_from_feedback` — positive/negative/correction feedback
 - `learn_detect_novelty` — similarity-based novelty scoring
 - `learn_from_interaction` — full pipeline (novelty → store → extract → link)
@@ -368,7 +380,7 @@ cd ProjectAmp2/graphonomous/npm
 npm pack
 mkdir -p /tmp/graphonomous-npm-smoke && cd /tmp/graphonomous-npm-smoke
 npm init -y
-npm i /home/travis/ProjectAmp2/graphonomous/npm/graphonomous-0.2.0.tgz
+npm i /home/travis/ProjectAmp2/graphonomous/npm/graphonomous-0.3.2.tgz
 npx graphonomous --help
 ```
 

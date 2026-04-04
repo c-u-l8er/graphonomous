@@ -411,6 +411,44 @@ See [04_GOAL_MANAGEMENT.md](04_GOAL_MANAGEMENT.md) and
 
 ---
 
+## Integration with Belief Revision
+
+When `learn_from_outcome` reveals that causal knowledge was **wrong** (status:
+`failure`), the learning loop reduces confidence on those nodes. But if the
+knowledge is fundamentally incorrect — not just unreliable — consider going
+further:
+
+1. **Detect contradictions**: `belief_contradictions(node_id: "<failed_causal_node>")`
+2. **Revise or contract**: `belief_revise(operation: "revise", node_id: "...", content: "<corrected knowledge>")`
+3. **Propagate**: Revision automatically propagates confidence decay through dependent nodes
+
+The learning loop adjusts *confidence*. Belief revision adjusts *content and structure*.
+Use both when knowledge needs correction, not just re-weighting.
+
+See [11_BELIEF_REVISION.md](11_BELIEF_REVISION.md) for the full belief revision workflow.
+
+---
+
+## Integration with Epistemic Frontier
+
+Each `learn_from_outcome` call increments the `evidence_count` on causal nodes.
+This feeds into the **epistemic frontier** — the set of nodes where additional
+evidence would most reduce uncertainty (Wilson score intervals).
+
+After a round of outcome reporting, check what's still uncertain:
+
+```
+epistemic_frontier(min_gap: 0.3, limit: 5)
+```
+
+The frontier shrinks as you close more learning loops. If a node keeps
+appearing on the frontier despite multiple outcomes, it may be genuinely
+contested — consider `belief_contradictions` or `deliberate`.
+
+See [13_EPISTEMIC_FRONTIER.md](13_EPISTEMIC_FRONTIER.md) for details.
+
+---
+
 ## Summary
 
 | Principle | Practice |

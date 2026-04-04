@@ -1,6 +1,6 @@
 {
   "name": "graphonomous",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Continual learning MCP server for AI agents — topology-aware knowledge graph with kappa-routing, 28 tools, causal metadata, GraphMemBench 120-scenario suite, and neural embeddings",
   "private": false,
   "license": "Apache-2.0",
