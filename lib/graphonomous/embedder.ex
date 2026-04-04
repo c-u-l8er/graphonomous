@@ -4,7 +4,7 @@ defmodule Graphonomous.Embedder do
 
   Backends (tried in order for `:auto`):
   1. **Bumblebee** — Nx.Serving with sentence-transformers (BERT-family models)
-  2. **ONNX** — Ortex + HuggingFace Tokenizers for any ONNX model (e.g. nomic-embed-v1.5)
+  2. **ONNX** — Ortex + HuggingFace Tokenizers for any ONNX model (e.g. nomic-embed-text-v2-moe)
   3. **Fallback** — deterministic local hashing (no ML, always works)
 
   Task prefixes:
@@ -649,6 +649,16 @@ defmodule Graphonomous.Embedder do
         size_mb = Float.round(byte_size(body) / 1_048_576, 1)
         Logger.info("Graphonomous.Embedder ONNX model downloaded: #{size_mb}MB → #{target_path}")
         {:ok, target_path}
+
+      {:ok, {{_, 404, _}, _headers, _body}} ->
+        Logger.warning("""
+        ONNX model not found on HuggingFace for #{model_id}.
+        If this model requires a local ONNX export, run:
+          python scripts/export_onnx_v2_moe.py
+        Then retry — the file will be found at #{target_path}
+        """)
+
+        {:error, {:onnx_not_published, model_id}}
 
       {:ok, {{_, status, reason}, _headers, _body}} ->
         {:error, {:onnx_download_failed, status, to_string(reason)}}

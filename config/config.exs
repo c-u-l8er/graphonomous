@@ -2,7 +2,7 @@ import Config
 
 config :graphonomous,
   db_path: "priv/graphonomous.db",
-  embedding_model_id: "nomic-ai/nomic-embed-text-v1.5",
+  embedding_model_id: "nomic-ai/nomic-embed-text-v2-moe",
   embedding_dimension: 768,
   embedding_task_prefixes: %{query: "search_query: ", document: "search_document: "},
   embedder_backend: :auto,
