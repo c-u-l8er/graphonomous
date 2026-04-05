@@ -1,0 +1,42 @@
+{"type":"node","key":"t3_scc_001_n1","role":1,"content":"In the circadian rhythm process, stage 1 of 4 (marker t3_scc_001_n1): this phase causally feeds into stage 2 of the circadian rhythm cycle. The circadian rhythm cycle closes on itself — its stages form a loop with no single root.","scc_id":"t3_scc_001"}
+{"type":"node","key":"t3_scc_001_n2","role":2,"content":"In the circadian rhythm process, stage 2 of 4 (marker t3_scc_001_n2): this phase causally feeds into stage 3 of the circadian rhythm cycle. The circadian rhythm cycle closes on itself — its stages form a loop with no single root.","scc_id":"t3_scc_001"}
+{"type":"node","key":"t3_scc_001_n3","role":3,"content":"In the circadian rhythm process, stage 3 of 4 (marker t3_scc_001_n3): this phase causally feeds into stage 4 of the circadian rhythm cycle. The circadian rhythm cycle closes on itself — its stages form a loop with no single root.","scc_id":"t3_scc_001"}
+{"type":"node","key":"t3_scc_001_n4","role":4,"content":"In the circadian rhythm process, stage 4 of 4 (marker t3_scc_001_n4): this phase causally feeds into stage 1 of the circadian rhythm cycle. The circadian rhythm cycle closes on itself — its stages form a loop with no single root.","scc_id":"t3_scc_001"}
+{"type":"edge","source":"t3_scc_001_n1","target":"t3_scc_001_n2","edge_type":"causal"}
+{"type":"edge","source":"t3_scc_001_n2","target":"t3_scc_001_n3","edge_type":"causal"}
+{"type":"edge","source":"t3_scc_001_n3","target":"t3_scc_001_n4","edge_type":"causal"}
+{"type":"edge","source":"t3_scc_001_n4","target":"t3_scc_001_n1","edge_type":"causal"}
+{"type":"node","key":"t3_scc_002_n1","role":1,"content":"In the photosynthesis cycle process, stage 1 of 4 (marker t3_scc_002_n1): this phase causally feeds into stage 2 of the photosynthesis cycle cycle. The photosynthesis cycle cycle closes on itself — its stages form a loop with no single root.","scc_id":"t3_scc_002"}
+{"type":"node","key":"t3_scc_002_n2","role":2,"content":"In the photosynthesis cycle process, stage 2 of 4 (marker t3_scc_002_n2): this phase causally feeds into stage 3 of the photosynthesis cycle cycle. The photosynthesis cycle cycle closes on itself — its stages form a loop with no single root.","scc_id":"t3_scc_002"}
+{"type":"node","key":"t3_scc_002_n3","role":3,"content":"In the photosynthesis cycle process, stage 3 of 4 (marker t3_scc_002_n3): this phase causally feeds into stage 4 of the photosynthesis cycle cycle. The photosynthesis cycle cycle closes on itself — its stages form a loop with no single root.","scc_id":"t3_scc_002"}
+{"type":"node","key":"t3_scc_002_n4","role":4,"content":"In the photosynthesis cycle process, stage 4 of 4 (marker t3_scc_002_n4): this phase causally feeds into stage 1 of the photosynthesis cycle cycle. The photosynthesis cycle cycle closes on itself — its stages form a loop with no single root.","scc_id":"t3_scc_002"}
+{"type":"edge","source":"t3_scc_002_n1","target":"t3_scc_002_n2","edge_type":"causal"}
+{"type":"edge","source":"t3_scc_002_n2","target":"t3_scc_002_n3","edge_type":"causal"}
+{"type":"edge","source":"t3_scc_002_n3","target":"t3_scc_002_n4","edge_type":"causal"}
+{"type":"edge","source":"t3_scc_002_n4","target":"t3_scc_002_n1","edge_type":"causal"}
+{"type":"node","key":"t3_scc_003_n1","role":1,"content":"In the krebs cycle process, stage 1 of 4 (marker t3_scc_003_n1): this phase causally feeds into stage 2 of the krebs cycle cycle. The krebs cycle cycle closes on itself — its stages form a loop with no single root.","scc_id":"t3_scc_003"}
+{"type":"node","key":"t3_scc_003_n2","role":2,"content":"In the krebs cycle process, stage 2 of 4 (marker t3_scc_003_n2): this phase causally feeds into stage 3 of the krebs cycle cycle. The krebs cycle cycle closes on itself — its stages form a loop with no single root.","scc_id":"t3_scc_003"}
+{"type":"node","key":"t3_scc_003_n3","role":3,"content":"In the krebs cycle process, stage 3 of 4 (marker t3_scc_003_n3): this phase causally feeds into stage 4 of the krebs cycle cycle. The krebs cycle cycle closes on itself — its stages form a loop with no single root.","scc_id":"t3_scc_003"}
+{"type":"node","key":"t3_scc_003_n4","role":4,"content":"In the krebs cycle process, stage 4 of 4 (marker t3_scc_003_n4): this phase causally feeds into stage 1 of the krebs cycle cycle. The krebs cycle cycle closes on itself — its stages form a loop with no single root.","scc_id":"t3_scc_003"}
+{"type":"edge","source":"t3_scc_003_n1","target":"t3_scc_003_n2","edge_type":"causal"}
+{"type":"edge","source":"t3_scc_003_n2","target":"t3_scc_003_n3","edge_type":"causal"}
+{"type":"edge","source":"t3_scc_003_n3","target":"t3_scc_003_n4","edge_type":"causal"}
+{"type":"edge","source":"t3_scc_003_n4","target":"t3_scc_003_n1","edge_type":"causal"}
+{"type":"node","key":"t3_scc_004_n1","role":1,"content":"In the water cycle process, stage 1 of 5 (marker t3_scc_004_n1): this phase causally feeds into stage 2 of the water cycle cycle. The water cycle cycle closes on itself — its stages form a loop with no single root.","scc_id":"t3_scc_004"}
+{"type":"node","key":"t3_scc_004_n2","role":2,"content":"In the water cycle process, stage 2 of 5 (marker t3_scc_004_n2): this phase causally feeds into stage 3 of the water cycle cycle. The water cycle cycle closes on itself — its stages form a loop with no single root.","scc_id":"t3_scc_004"}
+{"type":"node","key":"t3_scc_004_n3","role":3,"content":"In the water cycle process, stage 3 of 5 (marker t3_scc_004_n3): this phase causally feeds into stage 4 of the water cycle cycle. The water cycle cycle closes on itself — its stages form a loop with no single root.","scc_id":"t3_scc_004"}
+{"type":"node","key":"t3_scc_004_n4","role":4,"content":"In the water cycle process, stage 4 of 5 (marker t3_scc_004_n4): this phase causally feeds into stage 5 of the water cycle cycle. The water cycle cycle closes on itself — its stages form a loop with no single root.","scc_id":"t3_scc_004"}
+{"type":"node","key":"t3_scc_004_n5","role":5,"content":"In the water cycle process, stage 5 of 5 (marker t3_scc_004_n5): this phase causally feeds into stage 1 of the water cycle cycle. The water cycle cycle closes on itself — its stages form a loop with no single root.","scc_id":"t3_scc_004"}
+{"type":"edge","source":"t3_scc_004_n1","target":"t3_scc_004_n2","edge_type":"causal"}
+{"type":"edge","source":"t3_scc_004_n2","target":"t3_scc_004_n3","edge_type":"causal"}
+{"type":"edge","source":"t3_scc_004_n3","target":"t3_scc_004_n4","edge_type":"causal"}
+{"type":"edge","source":"t3_scc_004_n4","target":"t3_scc_004_n5","edge_type":"causal"}
+{"type":"edge","source":"t3_scc_004_n5","target":"t3_scc_004_n1","edge_type":"causal"}
+{"type":"node","key":"t3_scc_005_n1","role":1,"content":"In the carbon cycle process, stage 1 of 4 (marker t3_scc_005_n1): this phase causally feeds into stage 2 of the carbon cycle cycle. The carbon cycle cycle closes on itself — its stages form a loop with no single root.","scc_id":"t3_scc_005"}
+{"type":"node","key":"t3_scc_005_n2","role":2,"content":"In the carbon cycle process, stage 2 of 4 (marker t3_scc_005_n2): this phase causally feeds into stage 3 of the carbon cycle cycle. The carbon cycle cycle closes on itself — its stages form a loop with no single root.","scc_id":"t3_scc_005"}
+{"type":"node","key":"t3_scc_005_n3","role":3,"content":"In the carbon cycle process, stage 3 of 4 (marker t3_scc_005_n3): this phase causally feeds into stage 4 of the carbon cycle cycle. The carbon cycle cycle closes on itself — its stages form a loop with no single root.","scc_id":"t3_scc_005"}
+{"type":"node","key":"t3_scc_005_n4","role":4,"content":"In the carbon cycle process, stage 4 of 4 (marker t3_scc_005_n4): this phase causally feeds into stage 1 of the carbon cycle cycle. The carbon cycle cycle closes on itself — its stages form a loop with no single root.","scc_id":"t3_scc_005"}
+{"type":"edge","source":"t3_scc_005_n1","target":"t3_scc_005_n2","edge_type":"causal"}
+{"type":"edge","source":"t3_scc_005_n2","target":"t3_scc_005_n3","edge_type":"causal"}
+{"type":"edge","source":"t3_scc_005_n3","target":"t3_scc_005_n4","edge_type":"causal"}
+{"type":"edge","source":"t3_scc_005_n4","target":"t3_scc_005_n1","edge_type":"causal"}
