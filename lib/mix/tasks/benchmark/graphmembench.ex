@@ -64,15 +64,21 @@ defmodule Mix.Tasks.Benchmark.Graphmembench do
         other -> Mix.raise("--topology must be 'on' or 'off', got: #{inspect(other)}")
       end
 
-    if tier != 3 do
-      Mix.raise("Only tier 3 is implemented. Got --tier #{tier}.")
+    if tier not in [3, 5] do
+      Mix.raise("Only tiers 3 and 5 are implemented. Got --tier #{tier}.")
     end
 
     Helpers.ensure_started()
 
+    tier_label =
+      case tier do
+        3 -> "κ=1 simple-cycle"
+        5 -> "κ=0-1 adversarial contradiction"
+      end
+
     Mix.shell().info("""
     ╔══════════════════════════════════════════════════════════╗
-    ║  GraphMemBench v2 — Tier #{tier} (κ=1 simple-cycle)              ║
+    ║  GraphMemBench v2 — Tier #{tier} (#{String.pad_trailing(tier_label, 33)})║
     ║                                                          ║
     ║  Topology:     #{String.pad_trailing(topology_mode, 42)}║
     ║  Sanity:       #{String.pad_trailing(to_string(sanity), 42)}║
@@ -96,7 +102,7 @@ defmodule Mix.Tasks.Benchmark.Graphmembench do
     end
 
     Mix.shell().info(
-      "Plan: #{length(plan.sccs)} SCCs, " <>
+      "Plan: #{group_count(plan)} groups, " <>
         "#{length(plan.distractor_chains)} distractor chains, " <>
         "#{length(plan.questions)} questions"
     )
@@ -104,7 +110,7 @@ defmodule Mix.Tasks.Benchmark.Graphmembench do
     # Phase 1: Ingest nodes
     Mix.shell().info("\n━━━ Phase 1: Ingesting synthetic graph ━━━")
 
-    {ingest_us, %{key_to_id: key_to_id, gold_scc_ids: gold_scc_ids}} =
+    {ingest_us, %{key_to_id: key_to_id, gold_groups: gold_groups}} =
       Helpers.timed(fn -> ingest_plan(plan) end)
 
     Mix.shell().info(
@@ -123,14 +129,14 @@ defmodule Mix.Tasks.Benchmark.Graphmembench do
         |> Enum.with_index(1)
         |> Enum.map(fn {q, idx} ->
           if rem(idx, 10) == 0, do: Mix.shell().info("  #{idx}/#{length(questions)}")
-          evaluate_question(q, skip_topology, gold_scc_ids)
+          evaluate_question(q, skip_topology, gold_groups, key_to_id)
         end)
       end)
 
     Mix.shell().info("  Eval done in #{div(eval_us, 1000)} ms")
 
     # Phase 3: Aggregate metrics
-    metrics = aggregate_metrics(per_question, gold_scc_ids)
+    metrics = aggregate_metrics(per_question, tier)
 
     result = %{
       benchmark: "graphmembench:T#{tier}",
@@ -141,7 +147,7 @@ defmodule Mix.Tasks.Benchmark.Graphmembench do
       distractors: distractors,
       timestamp: DateTime.utc_now() |> DateTime.to_iso8601(),
       plan: %{
-        scc_count: length(plan.sccs),
+        group_count: group_count(plan),
         distractor_chain_count: length(plan.distractor_chains),
         question_count: length(questions)
       },
@@ -153,87 +159,151 @@ defmodule Mix.Tasks.Benchmark.Graphmembench do
     filename = "graphmembench_T#{tier}_topology_#{topology_mode}"
     path = Helpers.write_results(filename, result)
 
-    Mix.shell().info("""
-
-    === GraphMemBench T#{tier} Complete (topology=#{topology_mode}) ===
-    kappa_recall:         #{fmt(metrics.kappa_recall)}
-    kappa_precision:      #{fmt(metrics.kappa_precision)}
-    scc_membership_f1:    #{fmt(metrics.scc_membership_f1)}
-    routing_precision:    #{fmt(metrics.routing_precision)}
-    cycle_root_accuracy:  #{fmt(metrics.cycle_root_accuracy)}
-    latency p50/p95:      #{metrics.latency_ms_p50}ms / #{metrics.latency_ms_p95}ms
-    Output:               #{path}
-    """)
+    Mix.shell().info(summary_text(tier, topology_mode, metrics, path))
   end
+
+  defp summary_text(3, mode, m, path) do
+    """
+
+    === GraphMemBench T3 Complete (topology=#{mode}) ===
+    kappa_recall:         #{fmt(m.kappa_recall)}
+    kappa_precision:      #{fmt(m.kappa_precision)}
+    scc_membership_f1:    #{fmt(m.scc_membership_f1)}
+    routing_precision:    #{fmt(m.routing_precision)}
+    cycle_root_accuracy:  #{fmt(m.cycle_root_accuracy)}
+    latency p50/p95:      #{m.latency_ms_p50}ms / #{m.latency_ms_p95}ms
+    Output:               #{path}
+    """
+  end
+
+  defp summary_text(5, mode, m, path) do
+    """
+
+    === GraphMemBench T5 Complete (topology=#{mode}) ===
+    kappa_recall:              #{fmt(m.kappa_recall)}         (κ=1 subset only)
+    kappa_precision:           #{fmt(m.kappa_precision)}
+    scc_membership_f1:         #{fmt(m.scc_membership_f1)}
+    routing_precision:         #{fmt(m.routing_precision)}    (over κ>0 questions)
+    fresh_belief_top1_rate:    #{fmt(m.fresh_belief_top1_rate)}
+    fresh_belief_mrr:          #{fmt(m.fresh_belief_mrr)}
+    belief_revision_rank_mean: #{fmt(m.belief_revision_rank_mean)}
+    latency p50/p95:           #{m.latency_ms_p50}ms / #{m.latency_ms_p95}ms
+    Output:                    #{path}
+    """
+  end
+
+  defp group_count(%{sccs: sccs}) when is_list(sccs), do: length(sccs)
+  defp group_count(%{contradiction_pairs: pairs}) when is_list(pairs), do: length(pairs)
 
   # ---------- Ingestion ----------
 
-  defp ingest_plan(plan) do
-    # Flatten all nodes from SCCs + distractors
+  defp ingest_plan(%{tier: 3} = plan) do
+    # T3: SCCs of 3-5 nodes forming cycles. All nodes stored with conf 0.9.
     all_nodes =
       Enum.flat_map(plan.sccs, & &1.nodes) ++
         Enum.flat_map(plan.distractor_chains, & &1.nodes)
 
-    # Store nodes; capture key → node_id mapping
-    key_to_id =
-      Enum.reduce(all_nodes, %{}, fn n, acc ->
+    key_to_id = store_nodes(all_nodes, 3, 0.9)
+    create_edges(plan.sccs ++ plan.distractor_chains, key_to_id)
+
+    gold_groups =
+      Enum.reduce(plan.sccs, %{}, fn scc, acc ->
+        ids = scc.nodes |> Enum.map(&key_to_id[&1.key]) |> MapSet.new()
+        Map.put(acc, scc.scc_id, %{node_ids: ids, kappa: 1})
+      end)
+
+    %{key_to_id: key_to_id, gold_groups: gold_groups}
+  end
+
+  defp ingest_plan(%{tier: 5} = plan) do
+    # T5: contradiction pairs. Each node carries its own confidence (old=0.5, new=0.9).
+    all_pair_nodes = Enum.flat_map(plan.contradiction_pairs, & &1.nodes)
+    distractor_nodes = Enum.flat_map(plan.distractor_chains, & &1.nodes)
+
+    key_to_id_pairs =
+      Enum.reduce(all_pair_nodes, %{}, fn n, acc ->
         stored =
           Graphonomous.store_node(%{
             content: n.content,
-            node_type: "semantic",
-            confidence: 0.9,
-            source: "graphmembench:T3:gen",
+            node_type: "episodic",
+            confidence: n.confidence,
+            source: "graphmembench:T5:gen",
             metadata: %{
               "benchmark" => "graphmembench",
-              "tier" => 3,
-              "scc_id" => n.scc_id,
-              "role" => n.role,
+              "tier" => 5,
+              "pair_id" => n.pair_id,
+              "role" => to_string(n.role),
               "key" => n.key,
-              "domain" => n.domain
+              "subject" => n.subject
             }
           })
 
         Map.put(acc, n.key, stored.id)
       end)
 
-    # Create edges for SCC cycles
-    Enum.each(plan.sccs, fn scc ->
-      Enum.each(scc.edges, fn e ->
+    key_to_id_dist = store_nodes(distractor_nodes, 5, 0.7)
+    key_to_id = Map.merge(key_to_id_pairs, key_to_id_dist)
+
+    create_edges(plan.contradiction_pairs ++ plan.distractor_chains, key_to_id)
+
+    gold_groups =
+      Enum.reduce(plan.contradiction_pairs, %{}, fn pair, acc ->
+        ids = pair.nodes |> Enum.map(&key_to_id[&1.key]) |> MapSet.new()
+        kappa = if pair.cyclic?, do: 1, else: 0
+        Map.put(acc, pair.pair_id, %{node_ids: ids, kappa: kappa})
+      end)
+
+    %{key_to_id: key_to_id, gold_groups: gold_groups}
+  end
+
+  defp store_nodes(nodes, tier, confidence) do
+    Enum.reduce(nodes, %{}, fn n, acc ->
+      stored =
+        Graphonomous.store_node(%{
+          content: n.content,
+          node_type: "semantic",
+          confidence: confidence,
+          source: "graphmembench:T#{tier}:gen",
+          metadata: %{
+            "benchmark" => "graphmembench",
+            "tier" => tier,
+            "scc_id" => Map.get(n, :scc_id),
+            "role" => to_string(Map.get(n, :role)),
+            "key" => n.key,
+            "domain" => Map.get(n, :domain)
+          }
+        })
+
+      Map.put(acc, n.key, stored.id)
+    end)
+  end
+
+  defp create_edges(groups, key_to_id) do
+    Enum.each(groups, fn group ->
+      edges = Map.get(group, :edges, [])
+
+      Enum.each(edges, fn e ->
         Graphonomous.link_nodes(key_to_id[e.source_key], key_to_id[e.target_key], %{
           edge_type: e.edge_type,
           weight: 0.9
         })
       end)
     end)
-
-    # Create edges for distractor chains
-    Enum.each(plan.distractor_chains, fn chain ->
-      Enum.each(chain.edges, fn e ->
-        Graphonomous.link_nodes(key_to_id[e.source_key], key_to_id[e.target_key], %{
-          edge_type: e.edge_type,
-          weight: 0.8
-        })
-      end)
-    end)
-
-    # Build gold_scc_ids: scc_id → MapSet of node_ids (used for detection matching)
-    gold_scc_ids =
-      Enum.reduce(plan.sccs, %{}, fn scc, acc ->
-        ids = scc.nodes |> Enum.map(&key_to_id[&1.key]) |> MapSet.new()
-        Map.put(acc, scc.scc_id, ids)
-      end)
-
-    %{key_to_id: key_to_id, gold_scc_ids: gold_scc_ids}
   end
 
-  defp edge_count(plan) do
+  defp edge_count(%{tier: 3} = plan) do
     Enum.sum(Enum.map(plan.sccs, &length(&1.edges))) +
+      Enum.sum(Enum.map(plan.distractor_chains, &length(&1.edges)))
+  end
+
+  defp edge_count(%{tier: 5} = plan) do
+    Enum.sum(Enum.map(plan.contradiction_pairs, &length(&1.edges))) +
       Enum.sum(Enum.map(plan.distractor_chains, &length(&1.edges)))
   end
 
   # ---------- Evaluation ----------
 
-  defp evaluate_question(q, skip_topology, gold_scc_ids) do
+  defp evaluate_question(q, skip_topology, gold_groups, key_to_id) do
     {retrieval_us, retrieval} =
       Helpers.timed(fn ->
         Graphonomous.retrieve_context(q.query,
@@ -251,27 +321,30 @@ defmodule Mix.Tasks.Benchmark.Graphmembench do
         map when is_map(map) -> {map, false}
       end
 
+    results = Map.get(retrieval, :results, [])
     topology = Map.get(retrieval, :topology, %{}) || %{}
     detected_sccs = Map.get(topology, :sccs, []) || []
     max_kappa = Map.get(topology, :max_kappa, 0) || 0
-    routing = Map.get(topology, :routing, :fast)
-    routing_str = to_string(routing)
+    routing_str = topology |> Map.get(:routing, :fast) |> to_string()
 
-    # Match detected SCCs against gold SCCs (a detected SCC matches a gold SCC
-    # iff the gold SCC's node-id set is a subset of the detected node set).
     detected_id_sets =
-      Enum.map(detected_sccs, fn scc ->
-        scc |> Map.get(:nodes, []) |> MapSet.new()
-      end)
+      Enum.map(detected_sccs, fn scc -> scc |> Map.get(:nodes, []) |> MapSet.new() end)
 
-    gold_scc = q.gold[:scc_id]
-    gold_ids = Map.get(gold_scc_ids, gold_scc, MapSet.new())
+    # Gold group this question is about (T3: scc_id; T5: pair_id)
+    group_id = q.gold[:scc_id] || q.gold[:pair_id]
+    gold_group = Map.get(gold_groups, group_id, %{node_ids: MapSet.new(), kappa: 0})
+    gold_ids = gold_group.node_ids
+    expected_kappa = q.gold[:expected_kappa_min] || 0
 
     gold_detected? =
-      Enum.any?(detected_id_sets, fn d -> MapSet.subset?(gold_ids, d) end)
+      MapSet.size(gold_ids) > 0 and
+        Enum.any?(detected_id_sets, fn d -> MapSet.subset?(gold_ids, d) end)
 
-    # A detected SCC is "correct" if it covers any gold SCC's node set
-    gold_id_sets = Map.values(gold_scc_ids)
+    # A detected SCC is "correct" if it covers any gold κ≥1 group
+    gold_id_sets =
+      gold_groups
+      |> Enum.filter(fn {_, g} -> g.kappa >= 1 end)
+      |> Enum.map(fn {_, g} -> g.node_ids end)
 
     detected_correct_count =
       Enum.count(detected_id_sets, fn d ->
@@ -279,65 +352,84 @@ defmodule Mix.Tasks.Benchmark.Graphmembench do
       end)
 
     routing_correct? =
-      q.gold[:expected_kappa_min] >= 1 and routing_str == "deliberate" and max_kappa >= 1
+      expected_kappa >= 1 and routing_str == "deliberate" and max_kappa >= 1
 
     membership_predicted =
       if max_kappa >= 1 and gold_detected?, do: true, else: false
 
     membership_gold = Map.get(q.gold, :membership_answer)
 
+    # T5-specific: rank of expected_top1 node in results
+    expected_top1_key = q.gold[:expected_top1_key]
+    expected_top1_id = if expected_top1_key, do: key_to_id[expected_top1_key], else: nil
+
+    result_ids = Enum.map(results, & &1.node_id)
+
+    expected_top1_rank =
+      if expected_top1_id do
+        case Enum.find_index(result_ids, &(&1 == expected_top1_id)) do
+          nil -> nil
+          idx -> idx + 1
+        end
+      else
+        nil
+      end
+
+    fresh_belief_top1? = expected_top1_rank == 1
+
     %{
       q_id: q.q_id,
       pattern: q.pattern,
-      gold_scc_id: gold_scc,
+      group_id: group_id,
       latency_ms: div(retrieval_us, 1000),
       timed_out: timed_out?,
       detected_scc_count: length(detected_sccs),
       detected_correct_count: detected_correct_count,
       max_kappa: max_kappa,
       routing: routing_str,
+      expected_kappa_min: expected_kappa,
       gold_detected: gold_detected?,
       routing_correct: routing_correct?,
       membership_predicted: membership_predicted,
-      membership_gold: membership_gold
+      membership_gold: membership_gold,
+      expected_top1_rank: expected_top1_rank,
+      fresh_belief_top1: fresh_belief_top1?
     }
   end
 
   # ---------- Metrics aggregation ----------
 
-  defp aggregate_metrics(per_question, _gold_scc_ids) do
+  defp aggregate_metrics(per_question, tier) do
     n = length(per_question)
 
-    # kappa_recall: mean over questions of "was gold SCC detected?"
-    kappa_recall = mean(per_question, fn r -> if r.gold_detected, do: 1.0, else: 0.0 end)
+    # Common κ metrics: only count over κ-expected (κ≥1) questions
+    kappa_expected = Enum.filter(per_question, fn r -> r.expected_kappa_min >= 1 end)
 
-    # kappa_precision: micro-average — correct_detections / total_detections
+    kappa_recall =
+      mean(kappa_expected, fn r -> if r.gold_detected, do: 1.0, else: 0.0 end)
+
     total_detected = Enum.sum(Enum.map(per_question, & &1.detected_scc_count))
     total_correct = Enum.sum(Enum.map(per_question, & &1.detected_correct_count))
 
     kappa_precision =
       if total_detected == 0, do: 0.0, else: total_correct / total_detected
 
-    # routing_precision: among questions with expected_kappa_min≥1, fraction
-    # that got routing=deliberate AND max_kappa≥1 (all questions here are κ-expected)
-    routing_precision = mean(per_question, fn r -> if r.routing_correct, do: 1.0, else: 0.0 end)
+    routing_precision =
+      mean(kappa_expected, fn r -> if r.routing_correct, do: 1.0, else: 0.0 end)
 
-    # scc_membership_f1: binary F1 over membership pattern questions
     memb = Enum.filter(per_question, fn r -> r.pattern == "scc_membership" end)
     scc_membership_f1 = binary_f1(memb)
 
-    # cycle_root_accuracy: root-paradox questions where routing was deliberate
     roots = Enum.filter(per_question, fn r -> r.pattern == "cycle_root_paradox" end)
 
     cycle_root_accuracy =
       mean(roots, fn r -> if r.routing_correct, do: 1.0, else: 0.0 end)
 
-    # latency percentiles
     latencies = per_question |> Enum.map(& &1.latency_ms) |> Enum.sort()
     p50 = percentile(latencies, 0.50)
     p95 = percentile(latencies, 0.95)
 
-    %{
+    base = %{
       kappa_recall: kappa_recall,
       kappa_precision: kappa_precision,
       scc_membership_f1: scc_membership_f1,
@@ -348,6 +440,45 @@ defmodule Mix.Tasks.Benchmark.Graphmembench do
       question_count: n,
       timed_out_count: Enum.count(per_question, & &1.timed_out),
       per_question: per_question
+    }
+
+    if tier == 5 do
+      Map.merge(base, t5_extra_metrics(per_question))
+    else
+      base
+    end
+  end
+
+  defp t5_extra_metrics(per_question) do
+    # Belief revision: over contradiction_resolution questions
+    resolution_qs =
+      Enum.filter(per_question, fn r -> r.pattern == "contradiction_resolution" end)
+
+    ranked = Enum.filter(resolution_qs, fn r -> not is_nil(r.expected_top1_rank) end)
+
+    fresh_belief_top1_rate =
+      mean(resolution_qs, fn r -> if r.fresh_belief_top1, do: 1.0, else: 0.0 end)
+
+    fresh_belief_mrr =
+      mean(resolution_qs, fn r ->
+        case r.expected_top1_rank do
+          nil -> 0.0
+          rank -> 1.0 / rank
+        end
+      end)
+
+    belief_revision_rank_mean =
+      if ranked == [] do
+        nil
+      else
+        ranks = Enum.map(ranked, & &1.expected_top1_rank)
+        Enum.sum(ranks) / length(ranks)
+      end
+
+    %{
+      fresh_belief_top1_rate: fresh_belief_top1_rate,
+      fresh_belief_mrr: fresh_belief_mrr,
+      belief_revision_rank_mean: belief_revision_rank_mean
     }
   end
 

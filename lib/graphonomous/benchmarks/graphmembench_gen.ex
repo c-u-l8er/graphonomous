@@ -19,6 +19,53 @@ defmodule Graphonomous.Benchmarks.GraphMemBenchGen do
     hydrological_cycle neural_feedback_loop boom_bust_cycle predator_prey_cycle immune_response_cycle
   )
 
+  # T5 contradiction subjects (paired with state transitions below).
+  @t5_subjects [
+    "project codename Ardent",
+    "deployment pipeline Orion",
+    "feature flag eta-beam",
+    "service mesh handle Spectre",
+    "database cluster Delphi",
+    "ML model ingest_v3",
+    "agent persona Nimbus",
+    "telemetry pipeline Quartz",
+    "build system Granite",
+    "tenant config for account Vortex",
+    "migration job Atlas-9",
+    "cache layer Meridian",
+    "search index Terra",
+    "auth flow Sentinel",
+    "data lake Horizon",
+    "edge runtime Cirrus",
+    "queue topic Nautilus",
+    "feature store Lagoon",
+    "scheduler Polaris",
+    "observability stream Helix"
+  ]
+
+  @t5_state_pairs [
+    {"phase alpha", "phase beta"},
+    {"disabled", "enabled"},
+    {"experimental", "generally available"},
+    {"paused", "running"},
+    {"single-region", "multi-region"},
+    {"read-only mode", "read-write mode"},
+    {"v1 schema", "v2 schema"},
+    {"manual trigger", "automated trigger"},
+    {"weekly cadence", "daily cadence"},
+    {"on premises", "cloud hosted"},
+    {"planning", "executing"},
+    {"synchronous", "asynchronous"},
+    {"opt-in", "default-on"},
+    {"batch mode", "streaming mode"},
+    {"deprecated", "reinstated"},
+    {"internal only", "public-facing"},
+    {"gated rollout", "full rollout"},
+    {"replicated", "sharded"},
+    {"snapshot-based", "log-based"},
+    {"advisory-only", "enforcing"}
+  ]
+
   @doc """
   Generate a T3 benchmark plan.
 
@@ -28,7 +75,10 @@ defmodule Graphonomous.Benchmarks.GraphMemBenchGen do
     * `:distractors` — number of acyclic distractor chains to add (default 0)
   """
   @spec generate(pos_integer(), keyword()) :: map()
-  def generate(tier, opts \\ []) when tier == 3 do
+  def generate(tier, opts \\ [])
+
+  def generate(3, opts) do
+    tier = 3
     seed = Keyword.get(opts, :seed, 42)
     sanity = Keyword.get(opts, :sanity, false)
     distractors = Keyword.get(opts, :distractors, 0)
@@ -59,6 +109,166 @@ defmodule Graphonomous.Benchmarks.GraphMemBenchGen do
       distractor_chains: distractor_chains,
       questions: questions
     }
+  end
+
+  # Tier 5 — Adversarial contradiction (κ=0-1 mix, belief revision)
+  def generate(5, opts) do
+    tier = 5
+    seed = Keyword.get(opts, :seed, 42)
+    sanity = Keyword.get(opts, :sanity, false)
+    distractors = Keyword.get(opts, :distractors, 0)
+
+    :rand.seed(:exsss, {seed, seed * 7 + 1, seed * 13 + 3})
+
+    n_pairs = if sanity, do: 10, else: 20
+    n_questions = if sanity, do: 10, else: 100
+
+    # Half cyclic (κ=1, bidirectional contradicts), half acyclic (κ=0, one-way)
+    pairs =
+      for idx <- 1..n_pairs do
+        cyclic? = rem(idx, 2) == 1
+        turn_offset = :rand.uniform(10) + 1
+        build_contradiction_pair(idx, cyclic?, turn_offset)
+      end
+
+    distractor_chains = build_distractors(distractors, n_pairs)
+    questions = build_t5_questions(pairs, n_questions)
+
+    %{
+      tier: tier,
+      seed: seed,
+      sanity: sanity,
+      distractors: distractors,
+      contradiction_pairs: pairs,
+      distractor_chains: distractor_chains,
+      questions: questions
+    }
+  end
+
+  defp build_contradiction_pair(idx, cyclic?, turn_offset) do
+    pair_id = "t5_pair_#{String.pad_leading(Integer.to_string(idx), 3, "0")}"
+    subject = Enum.at(@t5_subjects, rem(idx - 1, length(@t5_subjects)))
+    {old_state, new_state} = Enum.at(@t5_state_pairs, rem(idx - 1, length(@t5_state_pairs)))
+
+    old_key = "#{pair_id}_old"
+    new_key = "#{pair_id}_new"
+
+    old_content =
+      "At an earlier turn, #{subject} was in state \"#{old_state}\" (fact #{old_key}). " <>
+        "Historical observation about #{subject}."
+
+    new_content =
+      "At a later turn (turn +#{turn_offset} after the prior fact), #{subject} is now in state \"#{new_state}\" (fact #{new_key}). " <>
+        "This is the current, superseding observation about #{subject}."
+
+    nodes = [
+      %{
+        key: old_key,
+        content: old_content,
+        role: :old,
+        pair_id: pair_id,
+        subject: subject,
+        confidence: 0.5
+      },
+      %{
+        key: new_key,
+        content: new_content,
+        role: :new,
+        pair_id: pair_id,
+        subject: subject,
+        confidence: 0.9
+      }
+    ]
+
+    edges =
+      if cyclic? do
+        # Bidirectional contradicts → 2-node SCC κ=1
+        [
+          %{source_key: old_key, target_key: new_key, edge_type: "contradicts"},
+          %{source_key: new_key, target_key: old_key, edge_type: "contradicts"}
+        ]
+      else
+        # Unidirectional supersedes → κ=0 control
+        [%{source_key: new_key, target_key: old_key, edge_type: "supersedes"}]
+      end
+
+    %{
+      pair_id: pair_id,
+      subject: subject,
+      cyclic?: cyclic?,
+      turn_offset: turn_offset,
+      old_state: old_state,
+      new_state: new_state,
+      nodes: nodes,
+      edges: edges
+    }
+  end
+
+  defp build_t5_questions(pairs, n) do
+    n_resolution = round(n * 0.5)
+    n_memb = round(n * 0.25)
+    n_oracle = n - n_resolution - n_memb
+    pair_count = length(pairs)
+
+    resolution_qs =
+      for i <- 1..n_resolution do
+        pair = Enum.at(pairs, rem(i - 1, pair_count))
+
+        %{
+          q_id: "t5_res_#{i}",
+          pattern: "contradiction_resolution",
+          query:
+            "What is the current state of #{pair.subject}? " <>
+              "Give the latest superseding fact, not the outdated one.",
+          gold: %{
+            pair_id: pair.pair_id,
+            expected_top1_key: "#{pair.pair_id}_new",
+            cyclic?: pair.cyclic?,
+            turn_offset: pair.turn_offset,
+            expected_routing: if(pair.cyclic?, do: "deliberate", else: "fast"),
+            expected_kappa_min: if(pair.cyclic?, do: 1, else: 0)
+          }
+        }
+      end
+
+    memb_qs =
+      for i <- 1..n_memb do
+        pair = Enum.at(pairs, rem(i - 1, pair_count))
+
+        %{
+          q_id: "t5_memb_#{i}",
+          pattern: "scc_membership",
+          query:
+            "Are the two observations about #{pair.subject} stored in memory " <>
+              "contradictory — do they form a cyclic contradiction?",
+          gold: %{
+            pair_id: pair.pair_id,
+            cyclic?: pair.cyclic?,
+            expected_routing: if(pair.cyclic?, do: "deliberate", else: "fast"),
+            expected_kappa_min: if(pair.cyclic?, do: 1, else: 0),
+            membership_answer: pair.cyclic?
+          }
+        }
+      end
+
+    oracle_qs =
+      for i <- 1..n_oracle do
+        pair = Enum.at(pairs, rem(i - 1, pair_count))
+
+        %{
+          q_id: "t5_oracle_#{i}",
+          pattern: "routing_oracle",
+          query: "Summarize what is known about #{pair.subject} across all observations.",
+          gold: %{
+            pair_id: pair.pair_id,
+            cyclic?: pair.cyclic?,
+            expected_routing: if(pair.cyclic?, do: "deliberate", else: "fast"),
+            expected_kappa_min: if(pair.cyclic?, do: 1, else: 0)
+          }
+        }
+      end
+
+    resolution_qs ++ memb_qs ++ oracle_qs
   end
 
   defp build_scc(domain, idx, size) do
@@ -196,44 +406,10 @@ defmodule Graphonomous.Benchmarks.GraphMemBenchGen do
     File.mkdir_p!(dir)
 
     graph_lines =
-      Enum.flat_map(plan.sccs, fn scc ->
-        node_lines =
-          Enum.map(scc.nodes, fn n ->
-            %{
-              type: "node",
-              key: n.key,
-              scc_id: scc.scc_id,
-              role: n.role,
-              content: n.content
-            }
-          end)
-
-        edge_lines =
-          Enum.map(scc.edges, fn e ->
-            %{type: "edge", source: e.source_key, target: e.target_key, edge_type: e.edge_type}
-          end)
-
-        node_lines ++ edge_lines
-      end) ++
-        Enum.flat_map(plan.distractor_chains, fn chain ->
-          node_lines =
-            Enum.map(chain.nodes, fn n ->
-              %{
-                type: "node",
-                key: n.key,
-                scc_id: nil,
-                role: n.role,
-                content: n.content
-              }
-            end)
-
-          edge_lines =
-            Enum.map(chain.edges, fn e ->
-              %{type: "edge", source: e.source_key, target: e.target_key, edge_type: e.edge_type}
-            end)
-
-          node_lines ++ edge_lines
-        end)
+      case plan.tier do
+        3 -> dump_t3_graph_lines(plan)
+        5 -> dump_t5_graph_lines(plan)
+      end
 
     File.write!(
       Path.join(dir, "graph.jsonl"),
@@ -246,5 +422,84 @@ defmodule Graphonomous.Benchmarks.GraphMemBenchGen do
     )
 
     dir
+  end
+
+  defp dump_t3_graph_lines(plan) do
+    Enum.flat_map(plan.sccs, fn scc ->
+      node_lines =
+        Enum.map(scc.nodes, fn n ->
+          %{
+            type: "node",
+            key: n.key,
+            scc_id: scc.scc_id,
+            role: n.role,
+            content: n.content
+          }
+        end)
+
+      edge_lines =
+        Enum.map(scc.edges, fn e ->
+          %{type: "edge", source: e.source_key, target: e.target_key, edge_type: e.edge_type}
+        end)
+
+      node_lines ++ edge_lines
+    end) ++
+      Enum.flat_map(plan.distractor_chains, fn chain ->
+        node_lines =
+          Enum.map(chain.nodes, fn n ->
+            %{
+              type: "node",
+              key: n.key,
+              scc_id: nil,
+              role: n.role,
+              content: n.content
+            }
+          end)
+
+        edge_lines =
+          Enum.map(chain.edges, fn e ->
+            %{type: "edge", source: e.source_key, target: e.target_key, edge_type: e.edge_type}
+          end)
+
+        node_lines ++ edge_lines
+      end)
+  end
+
+  defp dump_t5_graph_lines(plan) do
+    Enum.flat_map(plan.contradiction_pairs, fn pair ->
+      node_lines =
+        Enum.map(pair.nodes, fn n ->
+          %{
+            type: "node",
+            key: n.key,
+            pair_id: pair.pair_id,
+            role: n.role,
+            cyclic: pair.cyclic?,
+            turn_offset: pair.turn_offset,
+            confidence: n.confidence,
+            content: n.content
+          }
+        end)
+
+      edge_lines =
+        Enum.map(pair.edges, fn e ->
+          %{type: "edge", source: e.source_key, target: e.target_key, edge_type: e.edge_type}
+        end)
+
+      node_lines ++ edge_lines
+    end) ++
+      Enum.flat_map(plan.distractor_chains, fn chain ->
+        node_lines =
+          Enum.map(chain.nodes, fn n ->
+            %{type: "node", key: n.key, role: n.role, content: n.content}
+          end)
+
+        edge_lines =
+          Enum.map(chain.edges, fn e ->
+            %{type: "edge", source: e.source_key, target: e.target_key, edge_type: e.edge_type}
+          end)
+
+        node_lines ++ edge_lines
+      end)
   end
 end
