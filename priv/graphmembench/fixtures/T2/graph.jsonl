@@ -1,0 +1,55 @@
+{"type":"node","key":"t2_tree_001_root","role":1,"content":"In the branching circadian rhythm decomposition, node root (marker t2_tree_001_root) is a non-cyclic junction — causality flows outward along the tree, never back to the root.","chain_id":"t2_tree_001"}
+{"type":"node","key":"t2_tree_001_A","role":2,"content":"In the branching circadian rhythm decomposition, node A (marker t2_tree_001_A) is a non-cyclic junction — causality flows outward along the tree, never back to the root.","chain_id":"t2_tree_001"}
+{"type":"node","key":"t2_tree_001_B","role":3,"content":"In the branching circadian rhythm decomposition, node B (marker t2_tree_001_B) is a non-cyclic junction — causality flows outward along the tree, never back to the root.","chain_id":"t2_tree_001"}
+{"type":"node","key":"t2_tree_001_A1","role":4,"content":"In the branching circadian rhythm decomposition, node A1 (marker t2_tree_001_A1) is a non-cyclic junction — causality flows outward along the tree, never back to the root.","chain_id":"t2_tree_001"}
+{"type":"node","key":"t2_tree_001_A2","role":5,"content":"In the branching circadian rhythm decomposition, node A2 (marker t2_tree_001_A2) is a non-cyclic junction — causality flows outward along the tree, never back to the root.","chain_id":"t2_tree_001"}
+{"type":"node","key":"t2_tree_001_B1","role":6,"content":"In the branching circadian rhythm decomposition, node B1 (marker t2_tree_001_B1) is a non-cyclic junction — causality flows outward along the tree, never back to the root.","chain_id":"t2_tree_001"}
+{"type":"edge","source":"t2_tree_001_root","target":"t2_tree_001_A","edge_type":"causal"}
+{"type":"edge","source":"t2_tree_001_root","target":"t2_tree_001_B","edge_type":"causal"}
+{"type":"edge","source":"t2_tree_001_A","target":"t2_tree_001_A1","edge_type":"causal"}
+{"type":"edge","source":"t2_tree_001_A","target":"t2_tree_001_A2","edge_type":"causal"}
+{"type":"edge","source":"t2_tree_001_B","target":"t2_tree_001_B1","edge_type":"causal"}
+{"type":"node","key":"t2_tree_002_root","role":1,"content":"In the branching photosynthesis cycle decomposition, node root (marker t2_tree_002_root) is a non-cyclic junction — causality flows outward along the tree, never back to the root.","chain_id":"t2_tree_002"}
+{"type":"node","key":"t2_tree_002_A","role":2,"content":"In the branching photosynthesis cycle decomposition, node A (marker t2_tree_002_A) is a non-cyclic junction — causality flows outward along the tree, never back to the root.","chain_id":"t2_tree_002"}
+{"type":"node","key":"t2_tree_002_B","role":3,"content":"In the branching photosynthesis cycle decomposition, node B (marker t2_tree_002_B) is a non-cyclic junction — causality flows outward along the tree, never back to the root.","chain_id":"t2_tree_002"}
+{"type":"node","key":"t2_tree_002_A1","role":4,"content":"In the branching photosynthesis cycle decomposition, node A1 (marker t2_tree_002_A1) is a non-cyclic junction — causality flows outward along the tree, never back to the root.","chain_id":"t2_tree_002"}
+{"type":"node","key":"t2_tree_002_A2","role":5,"content":"In the branching photosynthesis cycle decomposition, node A2 (marker t2_tree_002_A2) is a non-cyclic junction — causality flows outward along the tree, never back to the root.","chain_id":"t2_tree_002"}
+{"type":"node","key":"t2_tree_002_B1","role":6,"content":"In the branching photosynthesis cycle decomposition, node B1 (marker t2_tree_002_B1) is a non-cyclic junction — causality flows outward along the tree, never back to the root.","chain_id":"t2_tree_002"}
+{"type":"edge","source":"t2_tree_002_root","target":"t2_tree_002_A","edge_type":"causal"}
+{"type":"edge","source":"t2_tree_002_root","target":"t2_tree_002_B","edge_type":"causal"}
+{"type":"edge","source":"t2_tree_002_A","target":"t2_tree_002_A1","edge_type":"causal"}
+{"type":"edge","source":"t2_tree_002_A","target":"t2_tree_002_A2","edge_type":"causal"}
+{"type":"edge","source":"t2_tree_002_B","target":"t2_tree_002_B1","edge_type":"causal"}
+{"type":"node","key":"t2_tree_003_root","role":1,"content":"In the branching krebs cycle decomposition, node root (marker t2_tree_003_root) is a non-cyclic junction — causality flows outward along the tree, never back to the root.","chain_id":"t2_tree_003"}
+{"type":"node","key":"t2_tree_003_A","role":2,"content":"In the branching krebs cycle decomposition, node A (marker t2_tree_003_A) is a non-cyclic junction — causality flows outward along the tree, never back to the root.","chain_id":"t2_tree_003"}
+{"type":"node","key":"t2_tree_003_B","role":3,"content":"In the branching krebs cycle decomposition, node B (marker t2_tree_003_B) is a non-cyclic junction — causality flows outward along the tree, never back to the root.","chain_id":"t2_tree_003"}
+{"type":"node","key":"t2_tree_003_A1","role":4,"content":"In the branching krebs cycle decomposition, node A1 (marker t2_tree_003_A1) is a non-cyclic junction — causality flows outward along the tree, never back to the root.","chain_id":"t2_tree_003"}
+{"type":"node","key":"t2_tree_003_A2","role":5,"content":"In the branching krebs cycle decomposition, node A2 (marker t2_tree_003_A2) is a non-cyclic junction — causality flows outward along the tree, never back to the root.","chain_id":"t2_tree_003"}
+{"type":"node","key":"t2_tree_003_B1","role":6,"content":"In the branching krebs cycle decomposition, node B1 (marker t2_tree_003_B1) is a non-cyclic junction — causality flows outward along the tree, never back to the root.","chain_id":"t2_tree_003"}
+{"type":"edge","source":"t2_tree_003_root","target":"t2_tree_003_A","edge_type":"causal"}
+{"type":"edge","source":"t2_tree_003_root","target":"t2_tree_003_B","edge_type":"causal"}
+{"type":"edge","source":"t2_tree_003_A","target":"t2_tree_003_A1","edge_type":"causal"}
+{"type":"edge","source":"t2_tree_003_A","target":"t2_tree_003_A2","edge_type":"causal"}
+{"type":"edge","source":"t2_tree_003_B","target":"t2_tree_003_B1","edge_type":"causal"}
+{"type":"node","key":"t2_tree_004_root","role":1,"content":"In the branching water cycle decomposition, node root (marker t2_tree_004_root) is a non-cyclic junction — causality flows outward along the tree, never back to the root.","chain_id":"t2_tree_004"}
+{"type":"node","key":"t2_tree_004_A","role":2,"content":"In the branching water cycle decomposition, node A (marker t2_tree_004_A) is a non-cyclic junction — causality flows outward along the tree, never back to the root.","chain_id":"t2_tree_004"}
+{"type":"node","key":"t2_tree_004_B","role":3,"content":"In the branching water cycle decomposition, node B (marker t2_tree_004_B) is a non-cyclic junction — causality flows outward along the tree, never back to the root.","chain_id":"t2_tree_004"}
+{"type":"node","key":"t2_tree_004_A1","role":4,"content":"In the branching water cycle decomposition, node A1 (marker t2_tree_004_A1) is a non-cyclic junction — causality flows outward along the tree, never back to the root.","chain_id":"t2_tree_004"}
+{"type":"node","key":"t2_tree_004_A2","role":5,"content":"In the branching water cycle decomposition, node A2 (marker t2_tree_004_A2) is a non-cyclic junction — causality flows outward along the tree, never back to the root.","chain_id":"t2_tree_004"}
+{"type":"node","key":"t2_tree_004_B1","role":6,"content":"In the branching water cycle decomposition, node B1 (marker t2_tree_004_B1) is a non-cyclic junction — causality flows outward along the tree, never back to the root.","chain_id":"t2_tree_004"}
+{"type":"edge","source":"t2_tree_004_root","target":"t2_tree_004_A","edge_type":"causal"}
+{"type":"edge","source":"t2_tree_004_root","target":"t2_tree_004_B","edge_type":"causal"}
+{"type":"edge","source":"t2_tree_004_A","target":"t2_tree_004_A1","edge_type":"causal"}
+{"type":"edge","source":"t2_tree_004_A","target":"t2_tree_004_A2","edge_type":"causal"}
+{"type":"edge","source":"t2_tree_004_B","target":"t2_tree_004_B1","edge_type":"causal"}
+{"type":"node","key":"t2_tree_005_root","role":1,"content":"In the branching carbon cycle decomposition, node root (marker t2_tree_005_root) is a non-cyclic junction — causality flows outward along the tree, never back to the root.","chain_id":"t2_tree_005"}
+{"type":"node","key":"t2_tree_005_A","role":2,"content":"In the branching carbon cycle decomposition, node A (marker t2_tree_005_A) is a non-cyclic junction — causality flows outward along the tree, never back to the root.","chain_id":"t2_tree_005"}
+{"type":"node","key":"t2_tree_005_B","role":3,"content":"In the branching carbon cycle decomposition, node B (marker t2_tree_005_B) is a non-cyclic junction — causality flows outward along the tree, never back to the root.","chain_id":"t2_tree_005"}
+{"type":"node","key":"t2_tree_005_A1","role":4,"content":"In the branching carbon cycle decomposition, node A1 (marker t2_tree_005_A1) is a non-cyclic junction — causality flows outward along the tree, never back to the root.","chain_id":"t2_tree_005"}
+{"type":"node","key":"t2_tree_005_A2","role":5,"content":"In the branching carbon cycle decomposition, node A2 (marker t2_tree_005_A2) is a non-cyclic junction — causality flows outward along the tree, never back to the root.","chain_id":"t2_tree_005"}
+{"type":"node","key":"t2_tree_005_B1","role":6,"content":"In the branching carbon cycle decomposition, node B1 (marker t2_tree_005_B1) is a non-cyclic junction — causality flows outward along the tree, never back to the root.","chain_id":"t2_tree_005"}
+{"type":"edge","source":"t2_tree_005_root","target":"t2_tree_005_A","edge_type":"causal"}
+{"type":"edge","source":"t2_tree_005_root","target":"t2_tree_005_B","edge_type":"causal"}
+{"type":"edge","source":"t2_tree_005_A","target":"t2_tree_005_A1","edge_type":"causal"}
+{"type":"edge","source":"t2_tree_005_A","target":"t2_tree_005_A2","edge_type":"causal"}
+{"type":"edge","source":"t2_tree_005_B","target":"t2_tree_005_B1","edge_type":"causal"}

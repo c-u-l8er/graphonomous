@@ -77,6 +77,75 @@ defmodule Graphonomous.Benchmarks.GraphMemBenchGen do
   @spec generate(pos_integer(), keyword()) :: map()
   def generate(tier, opts \\ [])
 
+  # Tier 1 — Linear chains (κ=0 control)
+  def generate(1, opts) do
+    tier = 1
+    seed = Keyword.get(opts, :seed, 42)
+    sanity = Keyword.get(opts, :sanity, false)
+    distractors = Keyword.get(opts, :distractors, 0)
+
+    :rand.seed(:exsss, {seed, seed * 7 + 1, seed * 13 + 3})
+
+    n_chains = if sanity, do: 5, else: 20
+    n_questions = if sanity, do: 10, else: 100
+
+    chains =
+      @domains
+      |> Enum.take(n_chains)
+      |> Enum.with_index(1)
+      |> Enum.map(fn {domain, idx} ->
+        size = 3 + :rand.uniform(3) - 1
+        build_linear_chain(domain, idx, size)
+      end)
+
+    distractor_chains = build_distractors(distractors, n_chains)
+    questions = build_acyclic_questions(chains, n_questions, 1)
+
+    %{
+      tier: tier,
+      seed: seed,
+      sanity: sanity,
+      distractors: distractors,
+      chains: chains,
+      distractor_chains: distractor_chains,
+      questions: questions
+    }
+  end
+
+  # Tier 2 — Branching DAG (κ=0 control)
+  def generate(2, opts) do
+    tier = 2
+    seed = Keyword.get(opts, :seed, 42)
+    sanity = Keyword.get(opts, :sanity, false)
+    distractors = Keyword.get(opts, :distractors, 0)
+
+    :rand.seed(:exsss, {seed, seed * 7 + 1, seed * 13 + 3})
+
+    n_trees = if sanity, do: 5, else: 15
+    n_questions = if sanity, do: 10, else: 100
+
+    chains =
+      @domains
+      |> Enum.take(n_trees)
+      |> Enum.with_index(1)
+      |> Enum.map(fn {domain, idx} ->
+        build_branching_tree(domain, idx)
+      end)
+
+    distractor_chains = build_distractors(distractors, n_trees)
+    questions = build_acyclic_questions(chains, n_questions, 2)
+
+    %{
+      tier: tier,
+      seed: seed,
+      sanity: sanity,
+      distractors: distractors,
+      chains: chains,
+      distractor_chains: distractor_chains,
+      questions: questions
+    }
+  end
+
   def generate(3, opts) do
     tier = 3
     seed = Keyword.get(opts, :seed, 42)
@@ -304,6 +373,135 @@ defmodule Graphonomous.Benchmarks.GraphMemBenchGen do
       end
 
     resolution_qs ++ memb_qs ++ oracle_qs
+  end
+
+  defp build_linear_chain(domain, idx, size) do
+    chain_id = "t1_chain_#{String.pad_leading(Integer.to_string(idx), 3, "0")}"
+    pretty = String.replace(domain, "_", " ")
+
+    nodes =
+      for i <- 1..size do
+        key = "#{chain_id}_n#{i}"
+
+        content =
+          "In the linear #{pretty} sequence, step #{i} of #{size} (marker #{key}): " <>
+            "this step flows forward only, never looping back. The #{pretty} sequence " <>
+            "has a clear starting point and a clear ending point."
+
+        %{key: key, content: content, role: i, scc_id: nil, domain: domain, chain_id: chain_id}
+      end
+
+    edges =
+      for i <- 0..(size - 2) do
+        from = Enum.at(nodes, i)
+        to = Enum.at(nodes, i + 1)
+        %{source_key: from.key, target_key: to.key, edge_type: "causal"}
+      end
+
+    %{chain_id: chain_id, domain: domain, size: size, nodes: nodes, edges: edges}
+  end
+
+  defp build_branching_tree(domain, idx) do
+    tree_id = "t2_tree_#{String.pad_leading(Integer.to_string(idx), 3, "0")}"
+    pretty = String.replace(domain, "_", " ")
+
+    # Small binary branching DAG: root -> {A, B}; A -> {A1, A2}; B -> {B1}.
+    labels = ["root", "A", "B", "A1", "A2", "B1"]
+
+    nodes =
+      labels
+      |> Enum.with_index(1)
+      |> Enum.map(fn {label, role} ->
+        key = "#{tree_id}_#{label}"
+
+        content =
+          "In the branching #{pretty} decomposition, node #{label} (marker #{key}) is a " <>
+            "non-cyclic junction — causality flows outward along the tree, never back to the root."
+
+        %{key: key, content: content, role: role, scc_id: nil, domain: domain, chain_id: tree_id}
+      end)
+
+    index = Enum.into(Enum.with_index(nodes, 0), %{}, fn {n, i} -> {Enum.at(labels, i), n} end)
+
+    edges =
+      [
+        {"root", "A"},
+        {"root", "B"},
+        {"A", "A1"},
+        {"A", "A2"},
+        {"B", "B1"}
+      ]
+      |> Enum.map(fn {from_l, to_l} ->
+        from = index[from_l]
+        to = index[to_l]
+        %{source_key: from.key, target_key: to.key, edge_type: "causal"}
+      end)
+
+    %{chain_id: tree_id, domain: domain, size: length(nodes), nodes: nodes, edges: edges}
+  end
+
+  defp build_acyclic_questions(chains, n, tier) do
+    n_rank = round(n * 0.5)
+    n_memb = round(n * 0.25)
+    n_oracle = n - n_rank - n_memb
+    chain_count = length(chains)
+    prefix = "t#{tier}"
+
+    rank_qs =
+      for i <- 1..n_rank do
+        chain = Enum.at(chains, rem(i - 1, chain_count))
+        pretty = String.replace(chain.domain, "_", " ")
+
+        %{
+          q_id: "#{prefix}_rank_#{i}",
+          pattern: "linear_recall",
+          query: "What are the steps of the #{pretty} sequence, in order from start to end?",
+          gold: %{
+            scc_id: chain.chain_id,
+            expected_routing: "fast",
+            expected_kappa_min: 0
+          }
+        }
+      end
+
+    memb_qs =
+      for i <- 1..n_memb do
+        chain = Enum.at(chains, rem(i - 1, chain_count))
+        pretty = String.replace(chain.domain, "_", " ")
+
+        %{
+          q_id: "#{prefix}_memb_#{i}",
+          pattern: "scc_membership",
+          query:
+            "Are the steps of the #{pretty} sequence causally cyclic — " <>
+              "do they loop back to the beginning?",
+          gold: %{
+            scc_id: chain.chain_id,
+            expected_routing: "fast",
+            expected_kappa_min: 0,
+            membership_answer: false
+          }
+        }
+      end
+
+    oracle_qs =
+      for i <- 1..n_oracle do
+        chain = Enum.at(chains, rem(i - 1, chain_count))
+        pretty = String.replace(chain.domain, "_", " ")
+
+        %{
+          q_id: "#{prefix}_oracle_#{i}",
+          pattern: "routing_oracle",
+          query: "Describe the #{pretty} sequence and how its steps connect.",
+          gold: %{
+            scc_id: chain.chain_id,
+            expected_routing: "fast",
+            expected_kappa_min: 0
+          }
+        }
+      end
+
+    rank_qs ++ memb_qs ++ oracle_qs
   end
 
   defp build_dense_scc(domain, idx, size) do
@@ -586,6 +784,8 @@ defmodule Graphonomous.Benchmarks.GraphMemBenchGen do
 
     graph_lines =
       case plan.tier do
+        1 -> dump_acyclic_graph_lines(plan)
+        2 -> dump_acyclic_graph_lines(plan)
         3 -> dump_t3_graph_lines(plan)
         4 -> dump_t4_graph_lines(plan)
         5 -> dump_t5_graph_lines(plan)
@@ -634,6 +834,35 @@ defmodule Graphonomous.Benchmarks.GraphMemBenchGen do
               role: n.role,
               content: n.content
             }
+          end)
+
+        edge_lines =
+          Enum.map(chain.edges, fn e ->
+            %{type: "edge", source: e.source_key, target: e.target_key, edge_type: e.edge_type}
+          end)
+
+        node_lines ++ edge_lines
+      end)
+  end
+
+  defp dump_acyclic_graph_lines(plan) do
+    Enum.flat_map(plan.chains, fn chain ->
+      node_lines =
+        Enum.map(chain.nodes, fn n ->
+          %{type: "node", key: n.key, chain_id: chain.chain_id, role: n.role, content: n.content}
+        end)
+
+      edge_lines =
+        Enum.map(chain.edges, fn e ->
+          %{type: "edge", source: e.source_key, target: e.target_key, edge_type: e.edge_type}
+        end)
+
+      node_lines ++ edge_lines
+    end) ++
+      Enum.flat_map(plan.distractor_chains, fn chain ->
+        node_lines =
+          Enum.map(chain.nodes, fn n ->
+            %{type: "node", key: n.key, scc_id: nil, role: n.role, content: n.content}
           end)
 
         edge_lines =

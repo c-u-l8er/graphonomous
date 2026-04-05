@@ -64,14 +64,16 @@ defmodule Mix.Tasks.Benchmark.Graphmembench do
         other -> Mix.raise("--topology must be 'on' or 'off', got: #{inspect(other)}")
       end
 
-    if tier not in [3, 4, 5] do
-      Mix.raise("Only tiers 3, 4, and 5 are implemented. Got --tier #{tier}.")
+    if tier not in [1, 2, 3, 4, 5] do
+      Mix.raise("Only tiers 1–5 are implemented. Got --tier #{tier}.")
     end
 
     Helpers.ensure_started()
 
     tier_label =
       case tier do
+        1 -> "κ=0 linear control"
+        2 -> "κ=0 branching control"
         3 -> "κ=1 simple-cycle"
         4 -> "κ≥2 multi-SCC fault-line"
         5 -> "κ=0-1 adversarial contradiction"
@@ -165,6 +167,20 @@ defmodule Mix.Tasks.Benchmark.Graphmembench do
     Mix.shell().info(summary_text(tier, topology_mode, metrics, path))
   end
 
+  defp summary_text(tier, mode, m, path) when tier in [1, 2] do
+    """
+
+    === GraphMemBench T#{tier} Complete (topology=#{mode}) — κ=0 control ===
+    kappa_recall:         #{fmt(m.kappa_recall)}    (expected 0 — no κ-gold)
+    kappa_precision:      #{fmt(m.kappa_precision)}    (expected 0 — no cycles)
+    scc_membership_f1:    #{fmt(m.scc_membership_f1)}    (over "is it cyclic?" gold=false)
+    routing_precision:    #{fmt(m.routing_precision)}    (no κ-expected qs)
+    max_kappa_seen:       #{Map.get(m, :max_kappa_seen, 0)}
+    latency p50/p95:      #{m.latency_ms_p50}ms / #{m.latency_ms_p95}ms
+    Output:               #{path}
+    """
+  end
+
   defp summary_text(3, mode, m, path) do
     """
 
@@ -213,6 +229,7 @@ defmodule Mix.Tasks.Benchmark.Graphmembench do
 
   defp group_count(%{sccs: sccs}) when is_list(sccs), do: length(sccs)
   defp group_count(%{contradiction_pairs: pairs}) when is_list(pairs), do: length(pairs)
+  defp group_count(%{chains: chains}) when is_list(chains), do: length(chains)
 
   defp fault_line_map_for_plan(%{tier: 4} = plan, key_to_id) do
     Enum.reduce(plan.sccs, %{}, fn scc, acc ->
@@ -229,6 +246,24 @@ defmodule Mix.Tasks.Benchmark.Graphmembench do
   defp fault_line_map_for_plan(_plan, _key_to_id), do: %{}
 
   # ---------- Ingestion ----------
+
+  defp ingest_plan(%{tier: tier} = plan) when tier in [1, 2] do
+    # T1/T2: acyclic control — all κ=0
+    all_nodes =
+      Enum.flat_map(plan.chains, & &1.nodes) ++
+        Enum.flat_map(plan.distractor_chains, & &1.nodes)
+
+    key_to_id = store_nodes(all_nodes, tier, 0.9)
+    create_edges(plan.chains ++ plan.distractor_chains, key_to_id)
+
+    gold_groups =
+      Enum.reduce(plan.chains, %{}, fn chain, acc ->
+        ids = chain.nodes |> Enum.map(&key_to_id[&1.key]) |> MapSet.new()
+        Map.put(acc, chain.chain_id, %{node_ids: ids, kappa: 0})
+      end)
+
+    %{key_to_id: key_to_id, gold_groups: gold_groups}
+  end
 
   defp ingest_plan(%{tier: 3} = plan) do
     # T3: SCCs of 3-5 nodes forming cycles. All nodes stored with conf 0.9.
@@ -340,6 +375,11 @@ defmodule Mix.Tasks.Benchmark.Graphmembench do
         })
       end)
     end)
+  end
+
+  defp edge_count(%{tier: tier} = plan) when tier in [1, 2] do
+    Enum.sum(Enum.map(plan.chains, &length(&1.edges))) +
+      Enum.sum(Enum.map(plan.distractor_chains, &length(&1.edges)))
   end
 
   defp edge_count(%{tier: 3} = plan) do
@@ -530,9 +570,25 @@ defmodule Mix.Tasks.Benchmark.Graphmembench do
     }
 
     cond do
-      tier == 4 -> Map.merge(base, t4_extra_metrics(per_question))
-      tier == 5 -> Map.merge(base, t5_extra_metrics(per_question))
-      true -> base
+      tier in [1, 2] ->
+        max_kappa_seen =
+          per_question
+          |> Enum.map(& &1.max_kappa)
+          |> case do
+            [] -> 0
+            l -> Enum.max(l)
+          end
+
+        Map.put(base, :max_kappa_seen, max_kappa_seen)
+
+      tier == 4 ->
+        Map.merge(base, t4_extra_metrics(per_question))
+
+      tier == 5 ->
+        Map.merge(base, t5_extra_metrics(per_question))
+
+      true ->
+        base
     end
   end
 
