@@ -344,17 +344,19 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
   # ── Session Ingestion ────────────────────────────────────────────
 
   defp ingest_sessions(questions, _split) do
-    # Collect all unique sessions across questions
-    # Key: session_id, Value: list of turns
+    # Collect all unique sessions across questions with their haystack_dates.
+    # Step B: sessions now carry their actual chronological date from the dataset.
     sessions =
       questions
       |> Enum.flat_map(fn q ->
         session_ids = Map.get(q, "haystack_session_ids", [])
         sessions = Map.get(q, "haystack_sessions", [])
+        dates = Map.get(q, "haystack_dates", [])
+        padded_dates = dates ++ List.duplicate(nil, max(length(session_ids) - length(dates), 0))
 
-        Enum.zip(session_ids, sessions)
+        Enum.zip([session_ids, sessions, padded_dates])
       end)
-      |> Enum.uniq_by(fn {sid, _} -> sid end)
+      |> Enum.uniq_by(fn {sid, _, _} -> sid end)
 
     Mix.shell().info("  Found #{length(sessions)} unique sessions to ingest")
 
@@ -367,8 +369,10 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
       sessions
       |> Enum.with_index()
       |> Task.async_stream(
-        fn {{session_id, turns}, session_rank} ->
-          {_node_ids, entities_by_node} = ingest_session(session_id, turns, session_rank)
+        fn {{session_id, turns, session_date_str}, session_rank} ->
+          {_node_ids, entities_by_node} =
+            ingest_session(session_id, turns, session_rank, session_date_str)
+
           {session_id, length(turns), entities_by_node}
         end,
         max_concurrency: max_concurrency,
@@ -394,7 +398,8 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
     %{sessions_ingested: length(sessions), turns_ingested: total_turns}
   end
 
-  defp ingest_session(session_id, turns, session_rank) when is_list(turns) do
+  defp ingest_session(session_id, turns, session_rank, session_date_str)
+       when is_list(turns) do
     # P2-I1: Batch-embed all turn contents up front instead of per-turn embedding.
     # Graphonomous.store_node skips embedding when :embedding key is already present.
     turn_contents =
@@ -426,8 +431,36 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
         # P4-Q7: Extract structured facts for BM25 key expansion
         bm25_facts = extract_facts(content, role)
 
-        # P4-Q8: Dual timestamps — document_date (ingestion) + event_date (content)
-        event_date = extract_event_date(content)
+        # P4-Q8: Dual timestamps — document_date (session chronological date
+        # from haystack_dates) + event_date (relative/explicit phrases in content).
+        # Step B: document_date now reflects the actual session date from the
+        # longmemeval dataset, enabling date-window retrieval.
+        session_date_parsed = Graphonomous.TemporalParser.parse_session_date(session_date_str)
+
+        document_date =
+          case session_date_parsed do
+            %Date{} = d -> Date.to_iso8601(d)
+            _ -> nil
+          end
+
+        # Step B: Extract event_date from turn content. First try explicit dates,
+        # then fall back to relative phrases ("two weeks ago") anchored to session date.
+        event_date =
+          case extract_event_date(content) do
+            date when is_binary(date) ->
+              date
+
+            _ ->
+              with %Date{} = ref <- session_date_parsed,
+                   {:ok, {start_d, end_d}} <-
+                     Graphonomous.TemporalParser.parse_relative_date(content, ref) do
+                # Use midpoint of window as event_date
+                mid = Date.add(start_d, div(Date.diff(end_d, start_d), 2))
+                Date.to_iso8601(mid)
+              else
+                _ -> nil
+              end
+          end
 
         attrs = %{
           content: node_content,
@@ -442,7 +475,7 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
               "role" => role,
               "has_answer" => has_answer,
               "benchmark" => "longmemeval",
-              "document_date" => DateTime.utc_now() |> DateTime.to_iso8601(),
+              "document_date" => document_date,
               "event_date" => event_date
             }
             |> then(fn m ->
@@ -538,7 +571,7 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
     end
   end
 
-  defp ingest_session(_session_id, _, _session_rank), do: {[], []}
+  defp ingest_session(_session_id, _, _session_rank, _session_date_str), do: {[], []}
 
   # S2: Cross-session entity edges — link turns in different sessions
   # that mention the same proper nouns (people, places, topics).
@@ -1022,6 +1055,11 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
     ability = Map.get(@ability_map, question_type, :unknown)
     if is_abstention, do: :abstention, else: ability
 
+    # Step B: Parse question_date so the retriever can anchor relative-date
+    # phrases ("two weeks ago", "last Saturday") in the query.
+    question_ref_date =
+      Graphonomous.TemporalParser.parse_session_date(Map.get(q, "question_date"))
+
     # S4+S6: Adaptive retrieval limits — multi-session needs wider net
     # R2-P3: Multi-session 50→60 final_limit, 2→2 hops, 25→30 sim_limit
     # R2-P2: Temporal 40→50 final_limit for more temporal range coverage
@@ -1041,7 +1079,8 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
           final_limit: final_limit,
           expansion_hops: exp_hops,
           neighbors_per_node: 8,
-          skip_topology: skip_topology
+          skip_topology: skip_topology,
+          reference_date: question_ref_date
         )
       end)
 

@@ -134,6 +134,20 @@ defmodule Graphonomous.Retriever do
     # P3-Q2: Detect temporal intent from query
     temporal_intent = detect_temporal_intent(query)
 
+    # Step B: Parse relative-date expressions ("two weeks ago", "last Saturday")
+    # into a date window, anchored to the caller's reference_date (session or today).
+    relative_date_window =
+      case Keyword.get(call_opts, :reference_date) do
+        %Date{} = ref ->
+          case Graphonomous.TemporalParser.parse_relative_date(query, ref) do
+            {:ok, window} -> window
+            _ -> nil
+          end
+
+        _ ->
+          nil
+      end
+
     # P3-Q3: Expand query into variants for broader recall via multi-source BM25
     query_variants = expand_query(query)
     bm25_limit = Map.get(cfg, :similarity_limit, @default_similarity_limit) * 2
@@ -197,6 +211,12 @@ defmodule Graphonomous.Retriever do
         # by promoting clusters of correct-session evidence to top ranks.
         {session_boost_us, ranked} =
           :timer.tc(fn -> maybe_session_aggregate_boost(ranked) end)
+
+        # STEP B: Relative-date boost — for queries with "two weeks ago",
+        # "last Saturday", etc., boost candidates whose session document_date
+        # or event_date falls inside the target window.
+        {relative_date_us, ranked} =
+          :timer.tc(fn -> maybe_relative_date_boost(ranked, relative_date_window) end)
 
         # R2-P2: Temporal filter — for temporal queries, filter results by session_rank
         # to remove results from the wrong time range (e.g., keep only early sessions
@@ -309,6 +329,7 @@ defmodule Graphonomous.Retriever do
           |> Map.put(:cross_encoder_rerank, rerank_us)
           |> Map.put(:chain_retrieval, chain_us)
           |> Map.put(:session_aggregate_boost, session_boost_us)
+          |> Map.put(:relative_date_boost, relative_date_us)
           |> Map.put(:temporal_filter, temporal_filter_us)
           |> Map.put(:topology, topology_us)
           |> Map.put(:kappa_expand, kappa_expand_us)
@@ -1110,6 +1131,48 @@ defmodule Graphonomous.Retriever do
       _ -> "unknown"
     end
   end
+
+  # STEP B: Boost candidates whose document_date or event_date falls inside
+  # the target date window derived from a relative-date query phrase.
+  # Window is a soft ±3-day filter; within the window gets +0.25 bonus, all
+  # others are lightly penalized (×0.85) to surface time-matched sessions.
+  defp maybe_relative_date_boost(ranked, nil), do: ranked
+
+  defp maybe_relative_date_boost(ranked, {_start_d, _end_d} = window) do
+    Enum.map(ranked, fn entry ->
+      node_id = Map.get(entry, :node_id)
+
+      candidate_date =
+        with true <- is_binary(node_id),
+             {:ok, %{metadata: meta}} when is_map(meta) <- cached_get_node(node_id) do
+          doc_d = parse_iso_date(Map.get(meta, "document_date"))
+          evt_d = parse_iso_date(Map.get(meta, "event_date"))
+          evt_d || doc_d
+        else
+          _ -> nil
+        end
+
+      in_window? = Graphonomous.TemporalParser.date_in_window?(candidate_date, window)
+
+      cond do
+        in_window? -> %{entry | score: entry.score + 0.25}
+        is_nil(candidate_date) -> entry
+        true -> %{entry | score: entry.score * 0.85}
+      end
+    end)
+    |> Enum.sort_by(& &1.score, :desc)
+  end
+
+  defp parse_iso_date(nil), do: nil
+
+  defp parse_iso_date(str) when is_binary(str) do
+    case Date.from_iso8601(String.slice(str, 0, 10)) do
+      {:ok, d} -> d
+      _ -> nil
+    end
+  end
+
+  defp parse_iso_date(_), do: nil
 
   # STEP A: Session-aggregate ranking boost.
   # Groups results by session_id, computes sum of top-3 node scores per session,
