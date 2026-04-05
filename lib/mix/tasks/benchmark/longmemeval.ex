@@ -639,6 +639,9 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
   # These facts become BM25-searchable even when the original content uses different phrasing.
 
   @fact_preference_re ~r/(?:I|i) (?:prefer|like|love|enjoy|hate|dislike|favor|want|choose)\s+(.{3,60}?)(?:\.|,|$|\band\b|\bbut\b|\bbecause\b|\bover\b)/
+  # Fix 2: "my favorite X is Y" / "X is my favorite"
+  @fact_favorite_re ~r/(?:my |the )(?:favorite|favourite|preferred|go-to)\s+(.{2,30}?)\s+(?:is|are|was|would be)\s+(.{2,40}?)(?:\.|,|$|\band\b)/i
+  @fact_reverse_favorite_re ~r/(.{3,40}?)\s+(?:is|are|was) (?:my|the) (?:favorite|favourite|preferred|go-to)(?:\s+(.{2,30}?))?(?:\.|,|$)/i
   @fact_identity_re ~r/(?:I am|I'm|i am|i'm) (?:a |an )?(.{3,40}?)(?:\.|,|$|\band\b|\bbut\b|\bwho\b)/
   @fact_location_re ~r/(?:I live|I'm from|I moved to|I'm based|I stay|I reside)\s+(?:in |at |near )?(.{3,40}?)(?:\.|,|$|\band\b|\bbut\b)/i
   @fact_hobby_re ~r/(?:I enjoy|I like to|my hobby is|I usually|I often|I always)\s+(.{3,50}?)(?:\.|,|$|\band\b|\bbut\b)/i
@@ -651,8 +654,37 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
     facts =
       facts ++
         Enum.flat_map(Regex.scan(@fact_preference_re, content), fn
-          [_, obj] -> ["preference: #{String.trim(obj)}"]
-          _ -> []
+          [_, obj] ->
+            trimmed = String.trim(obj)
+            ["preference: #{trimmed}", "user prefers #{trimmed}"]
+
+          _ ->
+            []
+        end)
+
+    # Fix 2: "My favorite food is Thai"
+    facts =
+      facts ++
+        Enum.flat_map(Regex.scan(@fact_favorite_re, content), fn
+          [_, category, value] ->
+            cat = String.trim(category)
+            val = String.trim(value)
+            ["preference: #{val}", "favorite #{cat}: #{val}"]
+
+          _ ->
+            []
+        end)
+
+    # Fix 2: "Thai food is my favorite"
+    facts =
+      facts ++
+        Enum.flat_map(Regex.scan(@fact_reverse_favorite_re, content), fn
+          [_, subject | _rest] ->
+            subj = String.trim(subject)
+            ["preference: #{subj}", "user favorite: #{subj}"]
+
+          _ ->
+            []
         end)
 
     facts =
@@ -898,20 +930,43 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
     keyword_recall = keyword_recall(expected_answer, retrieved_text)
     keyword_f1 = keyword_f1(expected_answer, retrieved_text)
 
-    # Metric 5: Abstention Detection (S8 — calibrated thresholds)
-    # Use confidence gap: if top result isn't clearly better than average,
-    # retrieval found nothing definitive → correct abstention
+    # Metric 5: Abstention Detection (Fix 1+4 — learned threshold + retrieval confidence)
+    # Use retriever's statistical signals combined with legacy heuristics.
+    retrieval_stats = Map.get(retrieval, :stats, %{})
+
     abstention_correct =
       if is_abstention do
-        if results == [] do
-          true
-        else
-          scores = Enum.map(results, & &1.score)
-          top_score = Enum.max(scores)
-          mean_score = Enum.sum(scores) / length(scores)
-          gap = top_score - mean_score
+        cond do
+          results == [] ->
+            true
 
-          gap < 0.05 or mean_score < 0.25 or length(results) < 3
+          # Primary: use retriever's learned abstention signal (ANN stats + confidence)
+          Map.get(retrieval_stats, :abstention_signal, false) ->
+            true
+
+          # Low retrieval confidence
+          Map.get(retrieval_stats, :retrieval_confidence, 1.0) < 0.3 ->
+            true
+
+          # Low max ANN similarity — raw cosine signal before reranking
+          (Map.get(retrieval_stats, :max_ann_similarity, 1.0) || 1.0) < 0.45 ->
+            true
+
+          # Score uniformity — all results are similarly scored (no clear winner)
+          length(results) >= 10 and score_uniformity_abstention?(results) ->
+            true
+
+          # Legacy fallbacks
+          length(results) < 3 ->
+            true
+
+          true ->
+            # Legacy gap heuristic as final fallback
+            scores = Enum.map(results, & &1.score)
+            top_score = Enum.max(scores)
+            mean_score = Enum.sum(scores) / length(scores)
+            gap = top_score - mean_score
+            gap < 0.05 or mean_score < 0.25
         end
       else
         nil
@@ -987,6 +1042,10 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
       answer_sessions_found: Enum.count(retrieved_session_ids, &(&1 in answer_session_ids)),
       retrieved_session_ids: Enum.uniq(retrieved_session_ids),
       stage_timings: Map.get(retrieval, :stage_timings),
+      # Fix 1+4: Retrieval confidence diagnostics
+      retrieval_confidence: Map.get(retrieval_stats, :retrieval_confidence),
+      max_ann_similarity: Map.get(retrieval_stats, :max_ann_similarity),
+      abstention_signal: Map.get(retrieval_stats, :abstention_signal),
       judge_score: judge_score,
       judge_answer: judge_answer,
       judge_reasoning: judge_reasoning
@@ -1070,6 +1129,31 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
       sum + gain / :math.log2(rank + 1)
     end)
   end
+
+  # Fix 1+4: Score uniformity check for abstention detection.
+  # When top 10 results have very similar scores (low CV), no clear match exists.
+  defp score_uniformity_abstention?(results) when length(results) >= 10 do
+    top_scores = results |> Enum.take(10) |> Enum.map(& &1.score)
+    mean = Enum.sum(top_scores) / length(top_scores)
+    top_score = List.first(top_scores, 0.0)
+
+    if mean > 0.0 do
+      variance =
+        Enum.sum(Enum.map(top_scores, fn s -> (s - mean) * (s - mean) end)) / length(top_scores)
+
+      stddev = :math.sqrt(variance)
+      cv = stddev / mean
+
+      score_10 = List.last(top_scores, 0.0)
+      ratio = if score_10 > 0.0, do: top_score / score_10, else: 10.0
+
+      cv < 0.15 and ratio < 1.3
+    else
+      true
+    end
+  end
+
+  defp score_uniformity_abstention?(_), do: false
 
   # ── Keyword Metrics ──────────────────────────────────────────────
 

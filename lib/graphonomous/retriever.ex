@@ -35,6 +35,10 @@ defmodule Graphonomous.Retriever do
   @node_cache_key :__retriever_node_cache__
   @default_similarity_timeout_ms 25_000
 
+  # Fix 1: Learned abstention — track running statistics of max ANN similarity
+  # across queries to detect low-confidence retrievals (observe-only, no filtering).
+  @abstention_zscore_threshold 1.5
+
   # P3-Q3: Stop words for query expansion (concept extraction)
   @stop_words MapSet.new(~w(
     a an the is are was were be been being have has had do does did
@@ -95,7 +99,11 @@ defmodule Graphonomous.Retriever do
         normalize_timeout_ms(
           Keyword.get(opts, :similarity_timeout_ms, @default_similarity_timeout_ms),
           @default_similarity_timeout_ms
-        )
+        ),
+      # Fix 1: Running statistics for max ANN similarity (Welford's online algorithm)
+      ann_score_count: 0,
+      ann_score_mean: 0.0,
+      ann_score_m2: 0.0
     }
 
     {:ok, state}
@@ -131,6 +139,8 @@ defmodule Graphonomous.Retriever do
                Task.await(ann_task, cfg.similarity_timeout_ms + 1_000)
              end),
            timings = Map.put(timings, :ann_retrieve, ann_us),
+           # Fix 1: Capture max ANN similarity BEFORE any boosting/fusion (observe-only)
+           max_ann_similarity = extract_max_ann_similarity(seed_hits),
            {seed_us, {:ok, seed_entries}} <-
              :timer.tc(fn -> seed_entries(seed_hits, temporal_intent) end),
            timings = Map.put(timings, :seed_entries, seed_us),
@@ -209,6 +219,30 @@ defmodule Graphonomous.Retriever do
 
         {enrich_us, enriched_or_base} =
           :timer.tc(fn ->
+            # Fix 1+4: Compute retrieval confidence signals (observe-only, no filtering)
+            top_blended_score =
+              case ranked do
+                [first | _] -> first.score
+                [] -> 0.0
+              end
+
+            node_count = safe_node_count()
+            expected_max = 0.5 + 0.1 * :math.log(max(node_count, 100)) / :math.log(1000)
+            retrieval_confidence = min(top_blended_score / max(expected_max, 0.01), 1.0)
+
+            ann_stats = %{
+              mean: state.ann_score_mean,
+              stddev: ann_score_stddev(state),
+              count: state.ann_score_count
+            }
+
+            ann_low_confidence =
+              state.ann_score_count >= 10 and ann_stats.stddev > 0.0 and
+                max_ann_similarity <
+                  ann_stats.mean - @abstention_zscore_threshold * ann_stats.stddev
+
+            abstention_signal = ann_low_confidence and retrieval_confidence < 0.4
+
             base_result = %{
               query: query,
               results: ranked,
@@ -218,7 +252,12 @@ defmodule Graphonomous.Retriever do
                 expanded_count: max(map_size(expanded) - map_size(seed_entries), 0),
                 returned: length(ranked),
                 temporal_intent: temporal_intent,
-                topology_skipped: skip_topology
+                topology_skipped: skip_topology,
+                # Fix 1+4: Observe-only confidence signals
+                max_ann_similarity: max_ann_similarity,
+                retrieval_confidence: retrieval_confidence,
+                abstention_signal: abstention_signal,
+                ann_score_stats: ann_stats
               },
               topology: topology,
               topology_skipped: skip_topology
@@ -250,6 +289,16 @@ defmodule Graphonomous.Retriever do
           |> Map.put(:enrich_deliberate, enrich_us)
 
         {:ok, Map.put(enriched_or_base, :stage_timings, stage_timings)}
+      end
+
+    # Fix 1: Update running ANN score statistics (Welford's online algorithm)
+    state =
+      case reply do
+        {:ok, %{stats: %{max_ann_similarity: mas}}} when is_float(mas) and mas > 0.0 ->
+          update_ann_score_stats(state, mas)
+
+        _ ->
+          state
       end
 
     clear_node_cache()
@@ -321,6 +370,42 @@ defmodule Graphonomous.Retriever do
       end)
 
     {:ok, entries}
+  end
+
+  ## Fix 1: ANN score statistics for learned abstention (observe-only)
+
+  defp extract_max_ann_similarity(seed_hits) when is_list(seed_hits) do
+    seed_hits
+    |> Enum.map(fn hit -> to_float(Map.get(hit, :similarity, 0.0)) end)
+    |> Enum.max(fn -> 0.0 end)
+  end
+
+  defp extract_max_ann_similarity(_), do: 0.0
+
+  # Welford's online algorithm for running mean/variance
+  defp update_ann_score_stats(state, new_score) do
+    n = state.ann_score_count + 1
+    delta = new_score - state.ann_score_mean
+    new_mean = state.ann_score_mean + delta / n
+    delta2 = new_score - new_mean
+    new_m2 = state.ann_score_m2 + delta * delta2
+    %{state | ann_score_count: n, ann_score_mean: new_mean, ann_score_m2: new_m2}
+  end
+
+  defp ann_score_stddev(%{ann_score_count: n, ann_score_m2: m2}) when n >= 2 do
+    :math.sqrt(m2 / (n - 1))
+  end
+
+  defp ann_score_stddev(_), do: 0.0
+
+  # Safe node count for retrieval confidence normalization
+  defp safe_node_count do
+    case Store.count_nodes() do
+      {:ok, count} when is_integer(count) -> count
+      _ -> 1000
+    end
+  rescue
+    _ -> 1000
   end
 
   ## BM25 hybrid fusion via Reciprocal Rank Fusion (RRF)
