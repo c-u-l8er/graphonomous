@@ -2,23 +2,33 @@ defmodule Mix.Tasks.Benchmark.LlmJudge do
   @moduledoc """
   LLM-based answer generation and judging for LongMemEval benchmark.
 
-  Uses the Claude API via :httpc to:
-  1. Generate an answer from retrieved context
-  2. Judge the generated answer against the expected answer
+  Generates and judges answers using one of two backends:
 
-  Requires ANTHROPIC_API_KEY environment variable.
+    * **Claude** (default) — requires `ANTHROPIC_API_KEY`
+    * **LMStudio** (local, zero cost) — set `GRAPHONOMOUS_JUDGE_BACKEND=lmstudio`.
+      Optional env: `LMSTUDIO_URL` (default `http://localhost:1234/v1/chat/completions`),
+      `LMSTUDIO_MODEL` (default `google/gemma-3-4b-it`).
   """
 
   require Logger
 
   @api_url ~c"https://api.anthropic.com/v1/messages"
   @model "claude-haiku-4-5-20251001"
+  @lmstudio_url_default "http://localhost:1234/v1/chat/completions"
+  @lmstudio_model_default "google/gemma-3-4b-it"
   @max_tokens 256
   @judge_max_tokens 64
 
-  @doc "Check if judge mode is available (API key set)"
+  @doc "Check if judge mode is available (API key set OR LMStudio backend selected)"
   def available? do
-    System.get_env("ANTHROPIC_API_KEY") != nil
+    backend() == :lmstudio or System.get_env("ANTHROPIC_API_KEY") != nil
+  end
+
+  defp backend do
+    case System.get_env("GRAPHONOMOUS_JUDGE_BACKEND") do
+      "lmstudio" -> :lmstudio
+      _ -> :claude
+    end
   end
 
   @doc """
@@ -51,7 +61,7 @@ defmodule Mix.Tasks.Benchmark.LlmJudge do
     Answer concisely in 1-3 sentences:
     """
 
-    call_claude(prompt, @max_tokens)
+    call_llm(prompt, @max_tokens)
   end
 
   defp score_answer(question, generated_answer, expected_answer) do
@@ -70,7 +80,7 @@ defmodule Mix.Tasks.Benchmark.LlmJudge do
     Respond with ONLY a JSON object: {"score": <number>, "reasoning": "<brief explanation>"}
     """
 
-    case call_claude(prompt, @judge_max_tokens) do
+    case call_llm(prompt, @judge_max_tokens) do
       {:ok, response} ->
         parse_judge_response(response)
 
@@ -110,6 +120,55 @@ defmodule Mix.Tasks.Benchmark.LlmJudge do
   defp clamp_score(s) when s >= 0.75, do: 1.0
   defp clamp_score(s) when s >= 0.25, do: 0.5
   defp clamp_score(_), do: 0.0
+
+  defp call_llm(prompt, max_tokens) do
+    case backend() do
+      :lmstudio -> call_lmstudio(prompt, max_tokens)
+      :claude -> call_claude(prompt, max_tokens)
+    end
+  end
+
+  defp call_lmstudio(prompt, max_tokens) do
+    url =
+      System.get_env("LMSTUDIO_URL", @lmstudio_url_default)
+      |> String.to_charlist()
+
+    model = System.get_env("LMSTUDIO_MODEL", @lmstudio_model_default)
+
+    :inets.start()
+    :ssl.start()
+
+    body =
+      Jason.encode!(%{
+        model: model,
+        max_tokens: max_tokens,
+        temperature: 0.0,
+        messages: [%{role: "user", content: prompt}]
+      })
+
+    headers = [{~c"content-type", ~c"application/json"}]
+    request = {url, headers, ~c"application/json", body}
+
+    case :httpc.request(:post, request, [{:timeout, 120_000}], []) do
+      {:ok, {{_, 200, _}, _headers, resp_body}} ->
+        case Jason.decode(to_string(resp_body)) do
+          {:ok, %{"choices" => [%{"message" => %{"content" => text}} | _]}} ->
+            {:ok, text}
+
+          {:ok, other} ->
+            {:error, {:unexpected_response, other}}
+
+          {:error, reason} ->
+            {:error, {:json_decode, reason}}
+        end
+
+      {:ok, {{_, status, _}, _headers, resp_body}} ->
+        {:error, {:api_error, status, to_string(resp_body)}}
+
+      {:error, reason} ->
+        {:error, {:http_error, reason}}
+    end
+  end
 
   defp call_claude(prompt, max_tokens) do
     api_key = System.get_env("ANTHROPIC_API_KEY")

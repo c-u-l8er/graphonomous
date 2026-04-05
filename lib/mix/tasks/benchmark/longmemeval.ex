@@ -102,7 +102,11 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
     if judge, do: Application.put_env(:graphonomous, :benchmark_judge, true)
 
     if judge and not Mix.Tasks.Benchmark.LlmJudge.available?() do
-      Mix.shell().error("--judge requires ANTHROPIC_API_KEY environment variable")
+      Mix.shell().error(
+        "--judge requires ANTHROPIC_API_KEY, OR set GRAPHONOMOUS_JUDGE_BACKEND=lmstudio " <>
+          "(with LMStudio running locally on :1234)"
+      )
+
       exit({:shutdown, 1})
     end
 
