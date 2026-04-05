@@ -242,11 +242,16 @@
     "duration_ms": 1188508
   },
   "competitive_baselines": {
+    "agentmemory V4 (Opus 4.6)": 96.2,
+    "OMEGA (GPT-4.1)": 95.4,
+    "Mastra OM (GPT-5-mini)": 94.87,
+    "Hindsight v0.4.19": 94.6,
     "Emergence AI (RAG)": 87.0,
-    "GPT-4 128K": 63.5,
-    "Hindsight (Vectorize)": 91.4,
+    "Supermemory (Gemini-3)": 85.2,
+    "Mastra OM (GPT-4o)": 84.23,
+    "Zep/Graphiti": 71.2,
     "Letta/MemGPT": 65.0,
-    "Zep/Graphiti": 65.0
+    "GPT-4 128K (full ctx)": 63.5
   },
   "dataset_split": "oracle",
   "questions": [

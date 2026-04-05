@@ -58,11 +58,16 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
   }
 
   @competitive_baselines %{
-    "Hindsight (Vectorize)" => 91.4,
+    "agentmemory V4 (Opus 4.6)" => 96.2,
+    "OMEGA (GPT-4.1)" => 95.4,
+    "Mastra OM (GPT-5-mini)" => 94.87,
+    "Hindsight v0.4.19" => 94.6,
     "Emergence AI (RAG)" => 87.0,
-    "Zep/Graphiti" => 65.0,
+    "Supermemory (Gemini-3)" => 85.2,
+    "Mastra OM (GPT-4o)" => 84.23,
+    "Zep/Graphiti" => 71.2,
     "Letta/MemGPT" => 65.0,
-    "GPT-4 128K" => 63.5
+    "GPT-4 128K (full ctx)" => 63.5
   }
 
   @impl Mix.Task
@@ -1319,11 +1324,11 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
     # Sort baselines + our result for comparison
     all_scores =
       @competitive_baselines
-      |> Map.put("Graphonomous v0.2.0", o.qa_proxy_pct)
+      |> Map.put("Graphonomous v0.3.2", o.qa_proxy_pct)
       |> Enum.sort_by(fn {_, v} -> -v end)
 
     Enum.each(all_scores, fn {name, score} ->
-      marker = if name == "Graphonomous v0.2.0", do: " ◀ YOU", else: ""
+      marker = if name == "Graphonomous v0.3.2", do: " ◀ YOU", else: ""
       formatted = "#{score}%#{marker}"
 
       Mix.shell().info(
