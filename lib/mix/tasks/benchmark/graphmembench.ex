@@ -64,8 +64,8 @@ defmodule Mix.Tasks.Benchmark.Graphmembench do
         other -> Mix.raise("--topology must be 'on' or 'off', got: #{inspect(other)}")
       end
 
-    if tier not in [3, 5] do
-      Mix.raise("Only tiers 3 and 5 are implemented. Got --tier #{tier}.")
+    if tier not in [3, 4, 5] do
+      Mix.raise("Only tiers 3, 4, and 5 are implemented. Got --tier #{tier}.")
     end
 
     Helpers.ensure_started()
@@ -73,6 +73,7 @@ defmodule Mix.Tasks.Benchmark.Graphmembench do
     tier_label =
       case tier do
         3 -> "κ=1 simple-cycle"
+        4 -> "κ≥2 multi-SCC fault-line"
         5 -> "κ=0-1 adversarial contradiction"
       end
 
@@ -113,6 +114,8 @@ defmodule Mix.Tasks.Benchmark.Graphmembench do
     {ingest_us, %{key_to_id: key_to_id, gold_groups: gold_groups}} =
       Helpers.timed(fn -> ingest_plan(plan) end)
 
+    fault_line_map = fault_line_map_for_plan(plan, key_to_id)
+
     Mix.shell().info(
       "  Ingested #{map_size(key_to_id)} nodes, " <>
         "#{edge_count(plan)} edges in #{div(ingest_us, 1000)} ms"
@@ -129,7 +132,7 @@ defmodule Mix.Tasks.Benchmark.Graphmembench do
         |> Enum.with_index(1)
         |> Enum.map(fn {q, idx} ->
           if rem(idx, 10) == 0, do: Mix.shell().info("  #{idx}/#{length(questions)}")
-          evaluate_question(q, skip_topology, gold_groups, key_to_id)
+          evaluate_question(q, skip_topology, gold_groups, key_to_id, fault_line_map)
         end)
       end)
 
@@ -176,6 +179,22 @@ defmodule Mix.Tasks.Benchmark.Graphmembench do
     """
   end
 
+  defp summary_text(4, mode, m, path) do
+    """
+
+    === GraphMemBench T4 Complete (topology=#{mode}) ===
+    kappa_recall:              #{fmt(m.kappa_recall)}
+    kappa_precision:           #{fmt(m.kappa_precision)}
+    scc_membership_f1:         #{fmt(m.scc_membership_f1)}
+    routing_precision:         #{fmt(m.routing_precision)}
+    faultline_mrr:             #{fmt(m.faultline_mrr)}
+    faultline_node_recall@10:  #{fmt(m.faultline_node_recall_at_10)}
+    max_observed_kappa:        #{m.max_observed_kappa}
+    latency p50/p95:           #{m.latency_ms_p50}ms / #{m.latency_ms_p95}ms
+    Output:                    #{path}
+    """
+  end
+
   defp summary_text(5, mode, m, path) do
     """
 
@@ -195,6 +214,20 @@ defmodule Mix.Tasks.Benchmark.Graphmembench do
   defp group_count(%{sccs: sccs}) when is_list(sccs), do: length(sccs)
   defp group_count(%{contradiction_pairs: pairs}) when is_list(pairs), do: length(pairs)
 
+  defp fault_line_map_for_plan(%{tier: 4} = plan, key_to_id) do
+    Enum.reduce(plan.sccs, %{}, fn scc, acc ->
+      ids =
+        scc.fault_line_keys
+        |> Enum.map(&Map.get(key_to_id, &1))
+        |> Enum.reject(&is_nil/1)
+        |> MapSet.new()
+
+      Map.put(acc, scc.scc_id, ids)
+    end)
+  end
+
+  defp fault_line_map_for_plan(_plan, _key_to_id), do: %{}
+
   # ---------- Ingestion ----------
 
   defp ingest_plan(%{tier: 3} = plan) do
@@ -210,6 +243,24 @@ defmodule Mix.Tasks.Benchmark.Graphmembench do
       Enum.reduce(plan.sccs, %{}, fn scc, acc ->
         ids = scc.nodes |> Enum.map(&key_to_id[&1.key]) |> MapSet.new()
         Map.put(acc, scc.scc_id, %{node_ids: ids, kappa: 1})
+      end)
+
+    %{key_to_id: key_to_id, gold_groups: gold_groups}
+  end
+
+  defp ingest_plan(%{tier: 4} = plan) do
+    # T4: dense multi-SCC with chord edges producing κ≥2
+    all_nodes =
+      Enum.flat_map(plan.sccs, & &1.nodes) ++
+        Enum.flat_map(plan.distractor_chains, & &1.nodes)
+
+    key_to_id = store_nodes(all_nodes, 4, 0.9)
+    create_edges(plan.sccs ++ plan.distractor_chains, key_to_id)
+
+    gold_groups =
+      Enum.reduce(plan.sccs, %{}, fn scc, acc ->
+        ids = scc.nodes |> Enum.map(&key_to_id[&1.key]) |> MapSet.new()
+        Map.put(acc, scc.scc_id, %{node_ids: ids, kappa: max(scc.observed_kappa, 1)})
       end)
 
     %{key_to_id: key_to_id, gold_groups: gold_groups}
@@ -296,6 +347,11 @@ defmodule Mix.Tasks.Benchmark.Graphmembench do
       Enum.sum(Enum.map(plan.distractor_chains, &length(&1.edges)))
   end
 
+  defp edge_count(%{tier: 4} = plan) do
+    Enum.sum(Enum.map(plan.sccs, &length(&1.edges))) +
+      Enum.sum(Enum.map(plan.distractor_chains, &length(&1.edges)))
+  end
+
   defp edge_count(%{tier: 5} = plan) do
     Enum.sum(Enum.map(plan.contradiction_pairs, &length(&1.edges))) +
       Enum.sum(Enum.map(plan.distractor_chains, &length(&1.edges)))
@@ -303,7 +359,7 @@ defmodule Mix.Tasks.Benchmark.Graphmembench do
 
   # ---------- Evaluation ----------
 
-  defp evaluate_question(q, skip_topology, gold_groups, key_to_id) do
+  defp evaluate_question(q, skip_topology, gold_groups, key_to_id, fault_line_map) do
     {retrieval_us, retrieval} =
       Helpers.timed(fn ->
         Graphonomous.retrieve_context(q.query,
@@ -377,6 +433,34 @@ defmodule Mix.Tasks.Benchmark.Graphmembench do
 
     fresh_belief_top1? = expected_top1_rank == 1
 
+    # T4-specific: rank of fault-line nodes in results
+    fault_line_ids = Map.get(fault_line_map, group_id, MapSet.new())
+
+    {faultline_first_rank, faultline_top10_count} =
+      if MapSet.size(fault_line_ids) == 0 do
+        {nil, 0}
+      else
+        ranked_hits =
+          result_ids
+          |> Enum.with_index(1)
+          |> Enum.filter(fn {id, _idx} -> MapSet.member?(fault_line_ids, id) end)
+
+        first_rank =
+          ranked_hits
+          |> List.first()
+          |> case do
+            nil -> nil
+            {_id, idx} -> idx
+          end
+
+        top10 =
+          Enum.count(ranked_hits, fn {_id, idx} -> idx <= 10 end)
+
+        {first_rank, top10}
+      end
+
+    fault_line_size = MapSet.size(fault_line_ids)
+
     %{
       q_id: q.q_id,
       pattern: q.pattern,
@@ -393,7 +477,10 @@ defmodule Mix.Tasks.Benchmark.Graphmembench do
       membership_predicted: membership_predicted,
       membership_gold: membership_gold,
       expected_top1_rank: expected_top1_rank,
-      fresh_belief_top1: fresh_belief_top1?
+      fresh_belief_top1: fresh_belief_top1?,
+      faultline_first_rank: faultline_first_rank,
+      faultline_top10_count: faultline_top10_count,
+      fault_line_size: fault_line_size
     }
   end
 
@@ -442,11 +529,47 @@ defmodule Mix.Tasks.Benchmark.Graphmembench do
       per_question: per_question
     }
 
-    if tier == 5 do
-      Map.merge(base, t5_extra_metrics(per_question))
-    else
-      base
+    cond do
+      tier == 4 -> Map.merge(base, t4_extra_metrics(per_question))
+      tier == 5 -> Map.merge(base, t5_extra_metrics(per_question))
+      true -> base
     end
+  end
+
+  defp t4_extra_metrics(per_question) do
+    faultline_qs =
+      Enum.filter(per_question, fn r -> r.pattern == "faultline_spanning" end)
+
+    faultline_mrr =
+      mean(faultline_qs, fn r ->
+        case r.faultline_first_rank do
+          nil -> 0.0
+          rank -> 1.0 / rank
+        end
+      end)
+
+    faultline_node_recall_at_10 =
+      mean(faultline_qs, fn r ->
+        if r.fault_line_size == 0 do
+          0.0
+        else
+          r.faultline_top10_count / r.fault_line_size
+        end
+      end)
+
+    max_observed_kappa =
+      per_question
+      |> Enum.map(& &1.max_kappa)
+      |> case do
+        [] -> 0
+        list -> Enum.max(list)
+      end
+
+    %{
+      faultline_mrr: faultline_mrr,
+      faultline_node_recall_at_10: faultline_node_recall_at_10,
+      max_observed_kappa: max_observed_kappa
+    }
   end
 
   defp t5_extra_metrics(per_question) do

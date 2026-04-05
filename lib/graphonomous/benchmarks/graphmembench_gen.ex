@@ -111,6 +111,41 @@ defmodule Graphonomous.Benchmarks.GraphMemBenchGen do
     }
   end
 
+  # Tier 4 — Multi-SCC with chord edges (κ≥2, fault-line spanning)
+  def generate(4, opts) do
+    tier = 4
+    seed = Keyword.get(opts, :seed, 42)
+    sanity = Keyword.get(opts, :sanity, false)
+    distractors = Keyword.get(opts, :distractors, 0)
+
+    :rand.seed(:exsss, {seed, seed * 7 + 1, seed * 13 + 3})
+
+    n_sccs = if sanity, do: 5, else: 15
+    n_questions = if sanity, do: 10, else: 100
+
+    sccs =
+      @domains
+      |> Enum.take(n_sccs)
+      |> Enum.with_index(1)
+      |> Enum.map(fn {domain, idx} ->
+        size = 4 + rem(idx, 3)
+        build_dense_scc(domain, idx, size)
+      end)
+
+    distractor_chains = build_distractors(distractors, n_sccs)
+    questions = build_t4_questions(sccs, n_questions)
+
+    %{
+      tier: tier,
+      seed: seed,
+      sanity: sanity,
+      distractors: distractors,
+      sccs: sccs,
+      distractor_chains: distractor_chains,
+      questions: questions
+    }
+  end
+
   # Tier 5 — Adversarial contradiction (κ=0-1 mix, belief revision)
   def generate(5, opts) do
     tier = 5
@@ -271,6 +306,150 @@ defmodule Graphonomous.Benchmarks.GraphMemBenchGen do
     resolution_qs ++ memb_qs ++ oracle_qs
   end
 
+  defp build_dense_scc(domain, idx, size) do
+    scc_id = "t4_scc_#{String.pad_leading(Integer.to_string(idx), 3, "0")}"
+    pretty = String.replace(domain, "_", " ")
+
+    nodes =
+      for i <- 1..size do
+        key = "#{scc_id}_n#{i}"
+
+        content =
+          "In the densely connected #{pretty} process, stage #{i} of #{size} " <>
+            "(marker #{key}): this stage is part of a multi-cycle structure " <>
+            "with several redundant feedback paths — it is not a simple root."
+
+        %{key: key, content: content, role: i, scc_id: scc_id, domain: domain}
+      end
+
+    # Bidirectional ring + diameter chords → dense SCC with κ≥2.
+    half = div(size, 2)
+
+    forward_edges =
+      for i <- 0..(size - 1) do
+        from = Enum.at(nodes, i)
+        to = Enum.at(nodes, rem(i + 1, size))
+        %{source_key: from.key, target_key: to.key, edge_type: "causal"}
+      end
+
+    backward_edges =
+      for i <- 0..(size - 1) do
+        from = Enum.at(nodes, rem(i + 1, size))
+        to = Enum.at(nodes, i)
+        %{source_key: from.key, target_key: to.key, edge_type: "feedback"}
+      end
+
+    chord_edges =
+      for i <- 0..(size - 1), rem(i, 2) == 0 do
+        from = Enum.at(nodes, i)
+        to = Enum.at(nodes, rem(i + half, size))
+        %{source_key: from.key, target_key: to.key, edge_type: "causal"}
+      end
+
+    edges = forward_edges ++ backward_edges ++ chord_edges
+
+    # Compute observed κ locally — Topology.analyze is generic over strings.
+    node_keys = Enum.map(nodes, & &1.key)
+
+    edge_maps =
+      Enum.map(edges, fn e -> %{source_id: e.source_key, target_id: e.target_key} end)
+
+    adjacency = Graphonomous.Topology.build_adjacency(node_keys, edge_maps)
+    analysis = Graphonomous.Topology.analyze(adjacency)
+    observed_kappa = Map.get(analysis, :max_kappa, 0)
+
+    fault_line_keys =
+      analysis
+      |> Map.get(:sccs, [])
+      |> Enum.flat_map(fn scc ->
+        scc
+        |> Map.get(:fault_line_edges, [])
+        |> Enum.flat_map(fn
+          %{source: s, target: t} -> [s, t]
+          _ -> []
+        end)
+      end)
+      |> Enum.uniq()
+
+    %{
+      scc_id: scc_id,
+      domain: domain,
+      size: size,
+      nodes: nodes,
+      edges: edges,
+      observed_kappa: observed_kappa,
+      fault_line_keys: fault_line_keys
+    }
+  end
+
+  defp build_t4_questions(sccs, n) do
+    n_faultline = round(n * 0.5)
+    n_memb = round(n * 0.25)
+    n_oracle = n - n_faultline - n_memb
+    scc_count = length(sccs)
+
+    faultline_qs =
+      for i <- 1..n_faultline do
+        scc = Enum.at(sccs, rem(i - 1, scc_count))
+        pretty = String.replace(scc.domain, "_", " ")
+
+        %{
+          q_id: "t4_fault_#{i}",
+          pattern: "faultline_spanning",
+          query:
+            "In the #{pretty} process, which stages sit at the transition boundary " <>
+              "between the sub-cycles and act as the main junctions?",
+          gold: %{
+            scc_id: scc.scc_id,
+            fault_line_keys: scc.fault_line_keys,
+            expected_routing: "deliberate",
+            expected_kappa_min: max(scc.observed_kappa, 1)
+          }
+        }
+      end
+
+    memb_qs =
+      for i <- 1..n_memb do
+        scc = Enum.at(sccs, rem(i - 1, scc_count))
+        pretty = String.replace(scc.domain, "_", " ")
+
+        %{
+          q_id: "t4_memb_#{i}",
+          pattern: "scc_membership",
+          query:
+            "Are the stages of the densely connected #{pretty} process causally cyclic " <>
+              "with multiple redundant feedback paths?",
+          gold: %{
+            scc_id: scc.scc_id,
+            expected_routing: "deliberate",
+            expected_kappa_min: max(scc.observed_kappa, 1),
+            membership_answer: true
+          }
+        }
+      end
+
+    oracle_qs =
+      for i <- 1..n_oracle do
+        scc = Enum.at(sccs, rem(i - 1, scc_count))
+        pretty = String.replace(scc.domain, "_", " ")
+
+        %{
+          q_id: "t4_oracle_#{i}",
+          pattern: "routing_oracle",
+          query:
+            "Summarize the interconnected stages of the #{pretty} process and " <>
+              "their multi-directional feedback loops.",
+          gold: %{
+            scc_id: scc.scc_id,
+            expected_routing: "deliberate",
+            expected_kappa_min: max(scc.observed_kappa, 1)
+          }
+        }
+      end
+
+    faultline_qs ++ memb_qs ++ oracle_qs
+  end
+
   defp build_scc(domain, idx, size) do
     scc_id = "t3_scc_#{String.pad_leading(Integer.to_string(idx), 3, "0")}"
     pretty = String.replace(domain, "_", " ")
@@ -408,6 +587,7 @@ defmodule Graphonomous.Benchmarks.GraphMemBenchGen do
     graph_lines =
       case plan.tier do
         3 -> dump_t3_graph_lines(plan)
+        4 -> dump_t4_graph_lines(plan)
         5 -> dump_t5_graph_lines(plan)
       end
 
@@ -454,6 +634,43 @@ defmodule Graphonomous.Benchmarks.GraphMemBenchGen do
               role: n.role,
               content: n.content
             }
+          end)
+
+        edge_lines =
+          Enum.map(chain.edges, fn e ->
+            %{type: "edge", source: e.source_key, target: e.target_key, edge_type: e.edge_type}
+          end)
+
+        node_lines ++ edge_lines
+      end)
+  end
+
+  defp dump_t4_graph_lines(plan) do
+    Enum.flat_map(plan.sccs, fn scc ->
+      node_lines =
+        Enum.map(scc.nodes, fn n ->
+          %{
+            type: "node",
+            key: n.key,
+            scc_id: scc.scc_id,
+            role: n.role,
+            content: n.content,
+            observed_kappa: scc.observed_kappa,
+            fault_line: n.key in scc.fault_line_keys
+          }
+        end)
+
+      edge_lines =
+        Enum.map(scc.edges, fn e ->
+          %{type: "edge", source: e.source_key, target: e.target_key, edge_type: e.edge_type}
+        end)
+
+      node_lines ++ edge_lines
+    end) ++
+      Enum.flat_map(plan.distractor_chains, fn chain ->
+        node_lines =
+          Enum.map(chain.nodes, fn n ->
+            %{type: "node", key: n.key, scc_id: nil, role: n.role, content: n.content}
           end)
 
         edge_lines =
