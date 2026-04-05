@@ -44,7 +44,13 @@ defmodule Mix.Tasks.Benchmark.Graphmembench do
           topology: :string,
           purge: :boolean,
           limit: :integer,
-          dump_fixtures: :boolean
+          dump_fixtures: :boolean,
+          density: :integer,
+          homogenize: :boolean,
+          similarity_limit: :integer,
+          final_limit: :integer,
+          expansion_hops: :integer,
+          neighbors_per_node: :integer
         ]
       )
 
@@ -56,6 +62,15 @@ defmodule Mix.Tasks.Benchmark.Graphmembench do
     purge = Keyword.get(opts, :purge, true)
     limit = Keyword.get(opts, :limit)
     dump_fixtures = Keyword.get(opts, :dump_fixtures, true)
+    density = Keyword.get(opts, :density, 2)
+    homogenize = Keyword.get(opts, :homogenize, false)
+
+    retrieval_opts = [
+      similarity_limit: Keyword.get(opts, :similarity_limit, 20),
+      final_limit: Keyword.get(opts, :final_limit, 30),
+      expansion_hops: Keyword.get(opts, :expansion_hops, 1),
+      neighbors_per_node: Keyword.get(opts, :neighbors_per_node, 8)
+    ]
 
     skip_topology =
       case topology_mode do
@@ -64,8 +79,8 @@ defmodule Mix.Tasks.Benchmark.Graphmembench do
         other -> Mix.raise("--topology must be 'on' or 'off', got: #{inspect(other)}")
       end
 
-    if tier not in [1, 2, 3, 4, 5] do
-      Mix.raise("Only tiers 1–5 are implemented. Got --tier #{tier}.")
+    if tier not in [1, 2, 3, 4, 5, 6] do
+      Mix.raise("Only tiers 1–6 are implemented. Got --tier #{tier}.")
     end
 
     Helpers.ensure_started()
@@ -77,6 +92,7 @@ defmodule Mix.Tasks.Benchmark.Graphmembench do
         3 -> "κ=1 simple-cycle"
         4 -> "κ≥2 multi-SCC fault-line"
         5 -> "κ=0-1 adversarial contradiction"
+        6 -> "mixed-κ discrimination"
       end
 
     Mix.shell().info("""
@@ -96,7 +112,14 @@ defmodule Mix.Tasks.Benchmark.Graphmembench do
     end
 
     # Generate deterministic plan
-    plan = GraphMemBenchGen.generate(tier, seed: seed, sanity: sanity, distractors: distractors)
+    plan =
+      GraphMemBenchGen.generate(tier,
+        seed: seed,
+        sanity: sanity,
+        distractors: distractors,
+        density: density,
+        homogenize: homogenize
+      )
 
     if dump_fixtures do
       root = Path.expand("../../../../", __DIR__)
@@ -134,7 +157,14 @@ defmodule Mix.Tasks.Benchmark.Graphmembench do
         |> Enum.with_index(1)
         |> Enum.map(fn {q, idx} ->
           if rem(idx, 10) == 0, do: Mix.shell().info("  #{idx}/#{length(questions)}")
-          evaluate_question(q, skip_topology, gold_groups, key_to_id, fault_line_map)
+          evaluate_question(
+            q,
+            skip_topology,
+            gold_groups,
+            key_to_id,
+            fault_line_map,
+            retrieval_opts
+          )
         end)
       end)
 
@@ -205,6 +235,22 @@ defmodule Mix.Tasks.Benchmark.Graphmembench do
     routing_precision:         #{fmt(m.routing_precision)}
     faultline_mrr:             #{fmt(m.faultline_mrr)}
     faultline_node_recall@10:  #{fmt(m.faultline_node_recall_at_10)}
+    max_observed_kappa:        #{m.max_observed_kappa}
+    latency p50/p95:           #{m.latency_ms_p50}ms / #{m.latency_ms_p95}ms
+    Output:                    #{path}
+    """
+  end
+
+  defp summary_text(6, mode, m, path) do
+    """
+
+    === GraphMemBench T6 Complete (topology=#{mode}) — mixed-κ discrimination ===
+    kappa_recall:              #{fmt(m.kappa_recall)}
+    kappa_precision:           #{fmt(m.kappa_precision)}
+    scc_membership_f1:         #{fmt(m.scc_membership_f1)}
+    routing_precision:         #{fmt(m.routing_precision)}
+    kappa_discrim_accuracy:    #{fmt(m.kappa_discrim_accuracy)}
+    kappa_discrim_mae:         #{fmt(m.kappa_discrim_mae)}
     max_observed_kappa:        #{m.max_observed_kappa}
     latency p50/p95:           #{m.latency_ms_p50}ms / #{m.latency_ms_p95}ms
     Output:                    #{path}
@@ -301,6 +347,23 @@ defmodule Mix.Tasks.Benchmark.Graphmembench do
     %{key_to_id: key_to_id, gold_groups: gold_groups}
   end
 
+  defp ingest_plan(%{tier: 6} = plan) do
+    all_nodes =
+      Enum.flat_map(plan.sccs, & &1.nodes) ++
+        Enum.flat_map(plan.distractor_chains, & &1.nodes)
+
+    key_to_id = store_nodes(all_nodes, 6, 0.9)
+    create_edges(plan.sccs ++ plan.distractor_chains, key_to_id)
+
+    gold_groups =
+      Enum.reduce(plan.sccs, %{}, fn scc, acc ->
+        ids = scc.nodes |> Enum.map(&key_to_id[&1.key]) |> MapSet.new()
+        Map.put(acc, scc.scc_id, %{node_ids: ids, kappa: scc.observed_kappa})
+      end)
+
+    %{key_to_id: key_to_id, gold_groups: gold_groups}
+  end
+
   defp ingest_plan(%{tier: 5} = plan) do
     # T5: contradiction pairs. Each node carries its own confidence (old=0.5, new=0.9).
     all_pair_nodes = Enum.flat_map(plan.contradiction_pairs, & &1.nodes)
@@ -392,6 +455,11 @@ defmodule Mix.Tasks.Benchmark.Graphmembench do
       Enum.sum(Enum.map(plan.distractor_chains, &length(&1.edges)))
   end
 
+  defp edge_count(%{tier: 6} = plan) do
+    Enum.sum(Enum.map(plan.sccs, &length(&1.edges))) +
+      Enum.sum(Enum.map(plan.distractor_chains, &length(&1.edges)))
+  end
+
   defp edge_count(%{tier: 5} = plan) do
     Enum.sum(Enum.map(plan.contradiction_pairs, &length(&1.edges))) +
       Enum.sum(Enum.map(plan.distractor_chains, &length(&1.edges)))
@@ -399,15 +467,12 @@ defmodule Mix.Tasks.Benchmark.Graphmembench do
 
   # ---------- Evaluation ----------
 
-  defp evaluate_question(q, skip_topology, gold_groups, key_to_id, fault_line_map) do
+  defp evaluate_question(q, skip_topology, gold_groups, key_to_id, fault_line_map, retrieval_opts) do
     {retrieval_us, retrieval} =
       Helpers.timed(fn ->
-        Graphonomous.retrieve_context(q.query,
-          similarity_limit: 20,
-          final_limit: 30,
-          expansion_hops: 1,
-          neighbors_per_node: 8,
-          skip_topology: skip_topology
+        Graphonomous.retrieve_context(
+          q.query,
+          Keyword.merge(retrieval_opts, skip_topology: skip_topology)
         )
       end)
 
@@ -520,7 +585,8 @@ defmodule Mix.Tasks.Benchmark.Graphmembench do
       fresh_belief_top1: fresh_belief_top1?,
       faultline_first_rank: faultline_first_rank,
       faultline_top10_count: faultline_top10_count,
-      fault_line_size: fault_line_size
+      fault_line_size: fault_line_size,
+      expected_kappa_exact: Map.get(q.gold, :expected_kappa_exact)
     }
   end
 
@@ -584,6 +650,9 @@ defmodule Mix.Tasks.Benchmark.Graphmembench do
       tier == 4 ->
         Map.merge(base, t4_extra_metrics(per_question))
 
+      tier == 6 ->
+        Map.merge(base, t6_extra_metrics(per_question))
+
       tier == 5 ->
         Map.merge(base, t5_extra_metrics(per_question))
 
@@ -624,6 +693,31 @@ defmodule Mix.Tasks.Benchmark.Graphmembench do
     %{
       faultline_mrr: faultline_mrr,
       faultline_node_recall_at_10: faultline_node_recall_at_10,
+      max_observed_kappa: max_observed_kappa
+    }
+  end
+
+  defp t6_extra_metrics(per_question) do
+    discrim_qs =
+      Enum.filter(per_question, fn r ->
+        r.pattern == "kappa_discrimination" and not is_nil(r.expected_kappa_exact)
+      end)
+
+    kappa_discrim_accuracy =
+      mean(discrim_qs, fn r -> if r.max_kappa == r.expected_kappa_exact, do: 1.0, else: 0.0 end)
+
+    kappa_discrim_mae =
+      mean(discrim_qs, fn r -> abs(r.max_kappa - r.expected_kappa_exact) * 1.0 end)
+
+    max_observed_kappa =
+      per_question |> Enum.map(& &1.max_kappa) |> case do
+        [] -> 0
+        l -> Enum.max(l)
+      end
+
+    %{
+      kappa_discrim_accuracy: kappa_discrim_accuracy,
+      kappa_discrim_mae: kappa_discrim_mae,
       max_observed_kappa: max_observed_kappa
     }
   end

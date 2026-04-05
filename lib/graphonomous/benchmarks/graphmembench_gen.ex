@@ -186,6 +186,8 @@ defmodule Graphonomous.Benchmarks.GraphMemBenchGen do
     seed = Keyword.get(opts, :seed, 42)
     sanity = Keyword.get(opts, :sanity, false)
     distractors = Keyword.get(opts, :distractors, 0)
+    density = Keyword.get(opts, :density, 2)
+    homogenize = Keyword.get(opts, :homogenize, false)
 
     :rand.seed(:exsss, {seed, seed * 7 + 1, seed * 13 + 3})
 
@@ -197,18 +199,63 @@ defmodule Graphonomous.Benchmarks.GraphMemBenchGen do
       |> Enum.take(n_sccs)
       |> Enum.with_index(1)
       |> Enum.map(fn {domain, idx} ->
-        size = 4 + rem(idx, 3)
-        build_dense_scc(domain, idx, size)
+        size = max(4 + rem(idx, 3), density + 2)
+        build_dense_scc(domain, idx, size, density, homogenize)
       end)
 
     distractor_chains = build_distractors(distractors, n_sccs)
-    questions = build_t4_questions(sccs, n_questions)
+    questions = build_t4_questions(sccs, n_questions, homogenize)
 
     %{
       tier: tier,
       seed: seed,
       sanity: sanity,
       distractors: distractors,
+      density: density,
+      homogenize: homogenize,
+      sccs: sccs,
+      distractor_chains: distractor_chains,
+      questions: questions
+    }
+  end
+
+  # Tier 6 — Mixed-κ discrimination (SCCs with κ ∈ {0,1,2,4,8} side-by-side)
+  def generate(6, opts) do
+    tier = 6
+    seed = Keyword.get(opts, :seed, 42)
+    sanity = Keyword.get(opts, :sanity, false)
+    distractors = Keyword.get(opts, :distractors, 0)
+    homogenize = Keyword.get(opts, :homogenize, false)
+
+    :rand.seed(:exsss, {seed, seed * 7 + 1, seed * 13 + 3})
+
+    # Build SCCs across a ladder of densities. Each density level yields
+    # several κ buckets, letting the benchmark measure κ-discrimination.
+    density_ladder = if sanity, do: [1, 2, 3], else: [1, 2, 3, 4, 5]
+    per_density = if sanity, do: 2, else: 3
+    n_questions = if sanity, do: 12, else: 100
+
+    sccs =
+      density_ladder
+      |> Enum.flat_map(fn density ->
+        for j <- 1..per_density do
+          domain_idx = (density - 1) * per_density + j
+          domain = Enum.at(@domains, rem(domain_idx - 1, length(@domains)))
+          size = max(4 + rem(j, 3), density + 2)
+          build_dense_scc(domain, domain_idx, size, density, homogenize)
+        end
+      end)
+
+    distractor_chains = build_distractors(distractors, length(sccs))
+    questions = build_t6_questions(sccs, n_questions, homogenize)
+
+    %{
+      tier: tier,
+      seed: seed,
+      sanity: sanity,
+      distractors: distractors,
+      homogenize: homogenize,
+      density_ladder: density_ladder,
       sccs: sccs,
       distractor_chains: distractor_chains,
       questions: questions
@@ -504,9 +551,9 @@ defmodule Graphonomous.Benchmarks.GraphMemBenchGen do
     rank_qs ++ memb_qs ++ oracle_qs
   end
 
-  defp build_dense_scc(domain, idx, size) do
+  defp build_dense_scc(domain, idx, size, density, homogenize) do
     scc_id = "t4_scc_#{String.pad_leading(Integer.to_string(idx), 3, "0")}"
-    pretty = String.replace(domain, "_", " ")
+    pretty = if homogenize, do: "system-#{idx}", else: String.replace(domain, "_", " ")
 
     nodes =
       for i <- 1..size do
@@ -520,9 +567,8 @@ defmodule Graphonomous.Benchmarks.GraphMemBenchGen do
         %{key: key, content: content, role: i, scc_id: scc_id, domain: domain}
       end
 
-    # Bidirectional ring + diameter chords → dense SCC with κ≥2.
-    half = div(size, 2)
-
+    # Bidirectional ring + layered chords. density=1 ring only, density=k adds
+    # chords at offsets {size/2, size/3, size/4, ...} for k-1 layers.
     forward_edges =
       for i <- 0..(size - 1) do
         from = Enum.at(nodes, i)
@@ -537,14 +583,19 @@ defmodule Graphonomous.Benchmarks.GraphMemBenchGen do
         %{source_key: from.key, target_key: to.key, edge_type: "feedback"}
       end
 
+    chord_layers = max(density - 1, 0)
+
     chord_edges =
-      for i <- 0..(size - 1), rem(i, 2) == 0 do
+      for layer <- 1..chord_layers//1,
+          i <- 0..(size - 1),
+          rem(i, max(2, div(layer, 2) + 1)) == 0 do
+        offset = max(div(size, layer + 1), 2)
         from = Enum.at(nodes, i)
-        to = Enum.at(nodes, rem(i + half, size))
+        to = Enum.at(nodes, rem(i + offset, size))
         %{source_key: from.key, target_key: to.key, edge_type: "causal"}
       end
 
-    edges = forward_edges ++ backward_edges ++ chord_edges
+    edges = (forward_edges ++ backward_edges ++ chord_edges) |> Enum.uniq()
 
     # Compute observed κ locally — Topology.analyze is generic over strings.
     node_keys = Enum.map(nodes, & &1.key)
@@ -580,16 +631,24 @@ defmodule Graphonomous.Benchmarks.GraphMemBenchGen do
     }
   end
 
-  defp build_t4_questions(sccs, n) do
+  defp build_t4_questions(sccs, n, homogenize) do
     n_faultline = round(n * 0.5)
     n_memb = round(n * 0.25)
     n_oracle = n - n_faultline - n_memb
     scc_count = length(sccs)
+    pretty_of = fn scc ->
+      if homogenize do
+        idx = scc.scc_id |> String.split("_") |> List.last() |> String.to_integer()
+        "system-#{idx}"
+      else
+        String.replace(scc.domain, "_", " ")
+      end
+    end
 
     faultline_qs =
       for i <- 1..n_faultline do
         scc = Enum.at(sccs, rem(i - 1, scc_count))
-        pretty = String.replace(scc.domain, "_", " ")
+        pretty = pretty_of.(scc)
 
         %{
           q_id: "t4_fault_#{i}",
@@ -609,7 +668,7 @@ defmodule Graphonomous.Benchmarks.GraphMemBenchGen do
     memb_qs =
       for i <- 1..n_memb do
         scc = Enum.at(sccs, rem(i - 1, scc_count))
-        pretty = String.replace(scc.domain, "_", " ")
+        pretty = pretty_of.(scc)
 
         %{
           q_id: "t4_memb_#{i}",
@@ -629,7 +688,7 @@ defmodule Graphonomous.Benchmarks.GraphMemBenchGen do
     oracle_qs =
       for i <- 1..n_oracle do
         scc = Enum.at(sccs, rem(i - 1, scc_count))
-        pretty = String.replace(scc.domain, "_", " ")
+        pretty = pretty_of.(scc)
 
         %{
           q_id: "t4_oracle_#{i}",
@@ -646,6 +705,79 @@ defmodule Graphonomous.Benchmarks.GraphMemBenchGen do
       end
 
     faultline_qs ++ memb_qs ++ oracle_qs
+  end
+
+  defp build_t6_questions(sccs, n, homogenize) do
+    n_discrim = round(n * 0.5)
+    n_memb = round(n * 0.25)
+    n_routing = n - n_discrim - n_memb
+    scc_count = length(sccs)
+
+    pretty_of = fn scc ->
+      if homogenize do
+        idx = scc.scc_id |> String.split("_") |> List.last() |> String.to_integer()
+        "system-#{idx}"
+      else
+        String.replace(scc.domain, "_", " ")
+      end
+    end
+
+    discrim_qs =
+      for i <- 1..n_discrim do
+        scc = Enum.at(sccs, rem(i - 1, scc_count))
+        pretty = pretty_of.(scc)
+
+        %{
+          q_id: "t6_disc_#{i}",
+          pattern: "kappa_discrimination",
+          query:
+            "How cyclically entangled is the #{pretty} process? " <>
+              "Is it a simple loop, a mildly tangled cycle, or a densely woven multi-cycle?",
+          gold: %{
+            scc_id: scc.scc_id,
+            expected_kappa_exact: scc.observed_kappa,
+            expected_routing: if(scc.observed_kappa >= 1, do: "deliberate", else: "fast"),
+            expected_kappa_min: max(scc.observed_kappa, 0)
+          }
+        }
+      end
+
+    memb_qs =
+      for i <- 1..n_memb do
+        scc = Enum.at(sccs, rem(i - 1, scc_count))
+        pretty = pretty_of.(scc)
+
+        %{
+          q_id: "t6_memb_#{i}",
+          pattern: "scc_membership",
+          query: "Does the #{pretty} process contain any causal cycles?",
+          gold: %{
+            scc_id: scc.scc_id,
+            expected_kappa_min: max(scc.observed_kappa, 0),
+            expected_routing: if(scc.observed_kappa >= 1, do: "deliberate", else: "fast"),
+            membership_answer: scc.observed_kappa >= 1
+          }
+        }
+      end
+
+    routing_qs =
+      for i <- 1..n_routing do
+        scc = Enum.at(sccs, rem(i - 1, scc_count))
+        pretty = pretty_of.(scc)
+
+        %{
+          q_id: "t6_route_#{i}",
+          pattern: "routing_oracle",
+          query: "Summarize the internal structure of the #{pretty} process.",
+          gold: %{
+            scc_id: scc.scc_id,
+            expected_kappa_min: max(scc.observed_kappa, 0),
+            expected_routing: if(scc.observed_kappa >= 1, do: "deliberate", else: "fast")
+          }
+        }
+      end
+
+    discrim_qs ++ memb_qs ++ routing_qs
   end
 
   defp build_scc(domain, idx, size) do
@@ -789,6 +921,7 @@ defmodule Graphonomous.Benchmarks.GraphMemBenchGen do
         3 -> dump_t3_graph_lines(plan)
         4 -> dump_t4_graph_lines(plan)
         5 -> dump_t5_graph_lines(plan)
+        6 -> dump_t4_graph_lines(plan)
       end
 
     File.write!(
