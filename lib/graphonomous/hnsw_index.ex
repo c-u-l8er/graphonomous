@@ -42,6 +42,20 @@ defmodule Graphonomous.HNSWIndex do
     :exit, _ -> {:error, :hnsw_unavailable}
   end
 
+  @doc """
+  Add multiple node embeddings to the HNSW index in a single batched operation.
+
+  Accepts a list of `{node_id, embedding_blob}` tuples. Uses a single
+  `HNSWLib.Index.add_items` call with a stacked Nx tensor for efficiency.
+  Returns `{:ok, added_count}` or `{:error, reason}`.
+  """
+  @spec batch_add([{binary(), binary()}]) :: {:ok, non_neg_integer()} | {:error, term()}
+  def batch_add(items) when is_list(items) do
+    GenServer.call(__MODULE__, {:batch_add, items}, 60_000)
+  catch
+    :exit, _ -> {:error, :hnsw_unavailable}
+  end
+
   @doc "Remove a node from the HNSW index."
   @spec remove(binary()) :: :ok | {:error, term()}
   def remove(node_id) when is_binary(node_id) do
@@ -144,6 +158,17 @@ defmodule Graphonomous.HNSWIndex do
       {:ok, new_state} ->
         new_state = maybe_schedule_save(new_state)
         {:reply, :ok, new_state}
+
+      {:error, reason} ->
+        {:reply, {:error, reason}, state}
+    end
+  end
+
+  def handle_call({:batch_add, items}, _from, state) do
+    case do_batch_add(state, items) do
+      {:ok, new_state, added} ->
+        new_state = maybe_schedule_save(new_state)
+        {:reply, {:ok, added}, new_state}
 
       {:error, reason} ->
         {:reply, {:error, reason}, state}
@@ -292,6 +317,66 @@ defmodule Graphonomous.HNSWIndex do
           }
 
           {:ok, new_state}
+
+        {:error, reason} ->
+          {:error, reason}
+      end
+    end
+  end
+
+  defp do_batch_add(%{index: nil}, _items), do: {:error, :index_not_ready}
+
+  defp do_batch_add(state, items) when items == [], do: {:ok, state, 0}
+
+  defp do_batch_add(state, items) do
+    # Decode and validate all items, removing existing labels
+    {valid, state} =
+      Enum.reduce(items, {[], state}, fn {node_id, blob}, {acc, st} ->
+        vec = decode_f32_le(blob)
+
+        if length(vec) == st.dimension do
+          st = maybe_remove_existing(st, node_id)
+          {[{node_id, vec} | acc], st}
+        else
+          {acc, st}
+        end
+      end)
+
+    valid = Enum.reverse(valid)
+
+    if valid == [] do
+      {:ok, state, 0}
+    else
+      # Assign contiguous labels
+      start_label = state.next_label
+
+      {rows, labels, id_to_label, label_to_id} =
+        valid
+        |> Enum.with_index()
+        |> Enum.reduce({[], [], state.id_to_label, state.label_to_id}, fn
+          {{node_id, vec}, idx}, {r_acc, l_acc, i2l, l2i} ->
+            label = start_label + idx
+
+            {[vec | r_acc], [label | l_acc], Map.put(i2l, node_id, label),
+             Map.put(l2i, label, node_id)}
+        end)
+
+      batch_tensor = rows |> Enum.reverse() |> Nx.tensor(type: :f32)
+      labels_tensor = labels |> Enum.reverse() |> Nx.tensor(type: :s64)
+      count = length(valid)
+
+      case HNSWLib.Index.add_items(state.index, batch_tensor, ids: labels_tensor) do
+        :ok ->
+          new_state = %{
+            state
+            | id_to_label: id_to_label,
+              label_to_id: label_to_id,
+              next_label: start_label + count,
+              element_count: state.element_count + count,
+              inserts_since_save: state.inserts_since_save + count
+          }
+
+          {:ok, new_state, count}
 
         {:error, reason} ->
           {:error, reason}

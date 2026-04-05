@@ -96,7 +96,12 @@ defmodule Graphonomous.MCP.LearnFromInteraction do
         0
       end
 
-    # Step 5: Check for contradictions on each claim node and create
+    # Step 5: P3-Q4 — Auto-detect knowledge updates and invoke BeliefRevision.
+    # When user says "actually...", "correction:", "I changed my mind", etc.,
+    # find the nearest existing node and supersede it via BeliefRevision.revise().
+    revision_count = maybe_auto_revise(user_message, model_response, novelty.nearest_node_ids)
+
+    # Step 6: Check for contradictions on each claim node and create
     # :contradicts edges (forms 2-node SCCs = κ=1)
     contradiction_edges =
       claim_nodes
@@ -119,7 +124,8 @@ defmodule Graphonomous.MCP.LearnFromInteraction do
        edges_created: edges_created + linking_edges + contradiction_edges,
        episodic_node_id: episodic_id,
        claim_count: length(claim_nodes),
-       contradiction_edges: contradiction_edges
+       contradiction_edges: contradiction_edges,
+       revisions: revision_count
      }}
   end
 
@@ -226,6 +232,31 @@ defmodule Graphonomous.MCP.LearnFromInteraction do
         _ -> acc
       end
     end)
+  end
+
+  # P3-Q4: Auto-detect knowledge updates from user messages.
+  # Looks for correction markers and invokes BeliefRevision.revise() on the
+  # nearest existing node to create :superseded_by edges + confidence reduction.
+  @update_markers ~r/\b(?:actually|correction|I changed my mind|I was mistaken|to clarify|not .{3,20} but|I meant|I no longer|update:|changed to|switched to|instead of)\b/i
+
+  defp maybe_auto_revise(user_message, model_response, nearest_node_ids) do
+    if Regex.match?(@update_markers, user_message) and nearest_node_ids != [] do
+      # The most similar existing node is the one being corrected
+      target_id = hd(nearest_node_ids)
+      new_content = String.slice(model_response, 0, 1000)
+
+      case Graphonomous.BeliefRevision.revise(target_id, new_content,
+             rationale: "Auto-detected knowledge update from user message",
+             confidence: 0.7
+           ) do
+        {:ok, _result} -> 1
+        _ -> 0
+      end
+    else
+      0
+    end
+  rescue
+    _ -> 0
   end
 
   defp detect_and_link_contradictions(node_id) do

@@ -53,6 +53,29 @@ defmodule Graphonomous do
   end
 
   @doc """
+  Store multiple knowledge nodes in batch, using a single HNSW batch_add call.
+
+  Accepts a list of maps (same shape as `store_node/1`). Returns the list of
+  successfully created nodes (unwrapped).
+  """
+  def store_nodes_batch(attrs_list) when is_list(attrs_list) do
+    result =
+      attrs_list
+      |> Enum.map(&normalize_node_attrs/1)
+      |> Graph.store_nodes_batch()
+      |> unwrap_ok()
+
+    Attention.notify_graph_mutation()
+    result
+  catch
+    :exit, {:timeout, _} ->
+      {:error, :timeout}
+
+    :exit, reason ->
+      {:error, {:exit, reason}}
+  end
+
+  @doc """
   Retrieve semantically relevant context nodes for a natural-language query.
   """
   def retrieve_context(query, opts \\ [])
@@ -182,6 +205,12 @@ defmodule Graphonomous do
 
     Attention.notify_graph_mutation()
     result
+  catch
+    :exit, {:timeout, _} ->
+      {:error, :timeout}
+
+    :exit, reason ->
+      {:error, {:exit, reason}}
   end
 
   @doc """

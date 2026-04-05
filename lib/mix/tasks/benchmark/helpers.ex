@@ -128,20 +128,84 @@ defmodule Mix.Tasks.Benchmark.Helpers do
 
   @doc "Purge all nodes and goals from the graph (for clean benchmarks)."
   def purge_graph do
-    case Graphonomous.list_nodes(%{limit: 100_000}) do
-      nodes when is_list(nodes) ->
-        Enum.each(nodes, fn node -> Graphonomous.delete_node(node.id) end)
+    node_failures =
+      case Graphonomous.list_nodes(%{limit: 100_000}) do
+        nodes when is_list(nodes) ->
+          Enum.reduce(nodes, 0, fn node, failures ->
+            case safe_delete_node(node.id) do
+              :ok ->
+                failures
 
-      _ ->
-        :ok
+              {:error, reason} ->
+                Mix.shell().info(
+                  "  purge warning: failed to delete node #{node.id}: #{inspect(reason)}"
+                )
+
+                failures + 1
+            end
+          end)
+
+        _ ->
+          0
+      end
+
+    goal_failures =
+      case Graphonomous.list_goals(%{include_abandoned: true, limit: 100_000}) do
+        goals when is_list(goals) ->
+          Enum.reduce(goals, 0, fn goal, failures ->
+            case safe_delete_goal(goal.id) do
+              :ok ->
+                failures
+
+              {:error, reason} ->
+                Mix.shell().info(
+                  "  purge warning: failed to delete goal #{goal.id}: #{inspect(reason)}"
+                )
+
+                failures + 1
+            end
+          end)
+
+        _ ->
+          0
+      end
+
+    if node_failures > 0 or goal_failures > 0 do
+      Mix.shell().info(
+        "  Purge completed with warnings (node failures: #{node_failures}, goal failures: #{goal_failures})"
+      )
     end
 
-    case Graphonomous.list_goals(%{include_abandoned: true, limit: 100_000}) do
-      goals when is_list(goals) ->
-        Enum.each(goals, fn goal -> Graphonomous.delete_goal(goal.id) end)
+    :ok
+  end
 
-      _ ->
-        :ok
+  defp safe_delete_node(node_id) when is_binary(node_id) do
+    try do
+      case Graphonomous.delete_node(node_id) do
+        :ok -> :ok
+        {:error, reason} -> {:error, reason}
+        other -> {:error, {:unexpected_delete_node_result, other}}
+      end
+    catch
+      :exit, {:timeout, _} -> {:error, :timeout}
+      :exit, reason -> {:error, {:exit, reason}}
+    rescue
+      e -> {:error, {:exception, Exception.message(e)}}
+    end
+  end
+
+  defp safe_delete_goal(goal_id) when is_binary(goal_id) do
+    try do
+      case Graphonomous.delete_goal(goal_id) do
+        :ok -> :ok
+        {:error, reason} -> {:error, reason}
+        other -> {:error, {:unexpected_delete_goal_result, other}}
+      end
+    catch
+      :exit, {:timeout, _} -> {:error, :timeout}
+      :exit, reason -> {:error, {:exit, reason}}
+    rescue
+      e -> {:error, {:exception, Exception.message(e)}}
     end
   end
 
@@ -151,9 +215,9 @@ defmodule Mix.Tasks.Benchmark.Helpers do
     default_backend = if neural, do: :auto, else: :fallback
     backend = Keyword.get(opts, :backend, default_backend)
 
-    # When using neural embeddings, start EXLA application first
+    # EXLA is only required for Bumblebee. Avoid starting it for ONNX-only runs.
     # (runtime: false in mix.exs means it won't auto-start)
-    if backend != :fallback do
+    if backend == :bumblebee do
       case Application.ensure_all_started(:exla) do
         {:ok, _} -> Mix.shell().info("  EXLA application started")
         {:error, reason} -> Mix.shell().info("  EXLA start failed: #{inspect(reason)}")
@@ -183,6 +247,10 @@ defmodule Mix.Tasks.Benchmark.Helpers do
       case Graphonomous.Embedder.info() do
         %{backend: :bumblebee} ->
           Mix.shell().info("  Embedder ready (Bumblebee)")
+          {:halt, :ok}
+
+        %{backend: :onnx} ->
+          Mix.shell().info("  Embedder ready (ONNX)")
           {:halt, :ok}
 
         %{backend: :fallback} ->

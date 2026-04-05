@@ -92,7 +92,7 @@ config :graphonomous,
       get_default.(
         current_graphonomous,
         :embedding_model_id,
-        "sentence-transformers/all-MiniLM-L6-v2"
+        "nomic-ai/nomic-embed-text-v1.5"
       )
     ),
   embedder_backend:
@@ -105,6 +105,11 @@ config :graphonomous,
     maybe_env.(
       "GRAPHONOMOUS_ONNX_MODEL_PATH",
       get_default.(current_graphonomous, :onnx_model_path, nil)
+    ),
+  onnx_sequence_length:
+    parse_int.(
+      "GRAPHONOMOUS_ONNX_SEQUENCE_LENGTH",
+      get_default.(current_graphonomous, :onnx_sequence_length, 64)
     ),
   sqlite_vec_extension_path:
     maybe_env.(

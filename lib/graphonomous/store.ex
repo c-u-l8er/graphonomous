@@ -14,12 +14,15 @@ defmodule Graphonomous.Store do
   """
 
   use GenServer
+  require Logger
 
   alias Exqlite.Sqlite3
   alias Graphonomous.Types.{Edge, Goal, Node, Outcome}
 
   @nodes_table :graphonomous_nodes
   @edges_table :graphonomous_edges
+  @edges_by_source :graphonomous_edges_by_source
+  @edges_by_target :graphonomous_edges_by_target
   @outcomes_table :graphonomous_outcomes
   @goals_table :graphonomous_goals
   @write_timeout_ms 30_000
@@ -44,6 +47,14 @@ defmodule Graphonomous.Store do
   def get_node(node_id) when is_binary(node_id),
     do: GenServer.call(__MODULE__, {:get_node, node_id})
 
+  @doc "Direct ETS read bypassing GenServer. Safe because tables are :public + read_concurrency."
+  def get_node_direct(node_id) when is_binary(node_id) do
+    case :ets.lookup(@nodes_table, node_id) do
+      [{^node_id, %Node{} = node}] -> {:ok, node}
+      _ -> {:error, :not_found}
+    end
+  end
+
   def list_nodes(filters \\ %{}) when is_map(filters),
     do: GenServer.call(__MODULE__, {:list_nodes, filters})
 
@@ -54,7 +65,7 @@ defmodule Graphonomous.Store do
     do: GenServer.call(__MODULE__, {:delete_node, node_id}, @write_timeout_ms)
 
   def increment_access(node_id) when is_binary(node_id),
-    do: GenServer.call(__MODULE__, {:increment_access, node_id}, @write_timeout_ms)
+    do: GenServer.cast(__MODULE__, {:increment_access, node_id})
 
   def upsert_edge(attrs) when is_map(attrs),
     do: GenServer.call(__MODULE__, {:upsert_edge, attrs}, @write_timeout_ms)
@@ -64,6 +75,13 @@ defmodule Graphonomous.Store do
 
   def list_edges_for_node(node_id) when is_binary(node_id),
     do: GenServer.call(__MODULE__, {:list_edges_for_node, node_id})
+
+  @doc "Direct ETS bag lookup bypassing GenServer. O(degree) via secondary indexes."
+  def list_edges_for_node_direct(node_id) when is_binary(node_id) do
+    source_edges = :ets.lookup(@edges_by_source, node_id) |> Enum.map(&elem(&1, 1))
+    target_edges = :ets.lookup(@edges_by_target, node_id) |> Enum.map(&elem(&1, 1))
+    {:ok, Enum.uniq_by(source_edges ++ target_edges, & &1.id)}
+  end
 
   def list_edges_between(node_ids) when is_list(node_ids),
     do: GenServer.call(__MODULE__, {:list_edges_between, node_ids})
@@ -136,15 +154,18 @@ defmodule Graphonomous.Store do
     state = %{
       conn: nil,
       db_path: db_path,
-      vec_extension_path: vec_extension_path
+      vec_extension_path: vec_extension_path,
+      access_batch: MapSet.new()
     }
 
     case Sqlite3.open(db_path) do
       {:ok, conn} ->
-        with :ok <- bootstrap_schema(conn),
+        with :ok <- apply_sqlite_pragmas(conn),
+             :ok <- bootstrap_schema(conn),
              :ok <- run_migrations(conn),
              :ok <- maybe_load_vec_extension(conn, vec_extension_path),
              :ok <- warm_cache_from_db(conn) do
+          schedule_access_flush()
           {:ok, %{state | conn: conn}}
         else
           {:error, reason} -> {:stop, {:bootstrap_failed, reason}}
@@ -233,35 +254,18 @@ defmodule Graphonomous.Store do
     end
   end
 
-  def handle_call({:increment_access, node_id}, _from, state) do
-    case :ets.lookup(@nodes_table, node_id) do
-      [{^node_id, %Node{} = node}] ->
-        now = DateTime.utc_now()
-
-        updated = %Node{
-          node
-          | access_count: node.access_count + 1,
-            last_accessed_at: now,
-            updated_at: now
-        }
-
-        with :ok <- persist_node(state.conn, updated) do
-          true = :ets.insert(@nodes_table, {updated.id, updated})
-          {:reply, {:ok, updated}, state}
-        else
-          {:error, reason} -> {:reply, {:error, reason}, state}
-        end
-
-      _ ->
-        {:reply, {:error, :not_found}, state}
-    end
-  end
-
   def handle_call({:upsert_edge, attrs}, _from, state) do
     edge = build_edge(attrs)
 
+    # Deindex old edge if this is an update (upsert may overwrite)
+    case :ets.lookup(@edges_table, edge.id) do
+      [{_, old_edge}] -> deindex_edge(old_edge)
+      _ -> :ok
+    end
+
     with :ok <- persist_edge(state.conn, edge) do
       true = :ets.insert(@edges_table, {edge.id, edge})
+      index_edge(edge)
       {:reply, {:ok, edge}, state}
     else
       {:error, reason} -> {:reply, {:error, reason}, state}
@@ -276,11 +280,12 @@ defmodule Graphonomous.Store do
   end
 
   def handle_call({:list_edges_for_node, node_id}, _from, state) do
-    edges =
-      @edges_table
-      |> :ets.tab2list()
-      |> Enum.map(fn {_id, edge} -> edge end)
-      |> Enum.filter(&(&1.source_id == node_id or &1.target_id == node_id))
+    # O(degree) via secondary bag indexes instead of O(E) full table scan
+    source_edges = :ets.lookup(@edges_by_source, node_id) |> Enum.map(&elem(&1, 1))
+    target_edges = :ets.lookup(@edges_by_target, node_id) |> Enum.map(&elem(&1, 1))
+
+    # Deduplicate self-loops (edge where source_id == target_id appears in both)
+    edges = Enum.uniq_by(source_edges ++ target_edges, & &1.id)
 
     {:reply, {:ok, edges}, state}
   end
@@ -295,13 +300,14 @@ defmodule Graphonomous.Store do
       if MapSet.size(node_set) == 0 do
         []
       else
-        @edges_table
-        |> :ets.tab2list()
-        |> Enum.map(fn {_id, edge} -> edge end)
-        |> Enum.filter(fn edge ->
-          MapSet.member?(node_set, edge.source_id) and
-            MapSet.member?(node_set, edge.target_id)
+        # Collect outgoing edges from all nodes in the set, keep only those
+        # whose target is also in the set. O(sum of degrees) instead of O(E).
+        node_set
+        |> Enum.flat_map(fn nid ->
+          :ets.lookup(@edges_by_source, nid) |> Enum.map(&elem(&1, 1))
         end)
+        |> Enum.filter(fn edge -> MapSet.member?(node_set, edge.target_id) end)
+        |> Enum.uniq_by(& &1.id)
       end
 
     {:reply, {:ok, edges}, state}
@@ -336,7 +342,9 @@ defmodule Graphonomous.Store do
         }
 
         with :ok <- persist_edge(state.conn, updated) do
+          deindex_edge(existing)
           true = :ets.insert(@edges_table, {updated.id, updated})
+          index_edge(updated)
           {:reply, {:ok, updated}, state}
         else
           {:error, reason} -> {:reply, {:error, reason}, state}
@@ -348,6 +356,12 @@ defmodule Graphonomous.Store do
   end
 
   def handle_call({:delete_edge, edge_id}, _from, state) do
+    # Deindex from secondary bag tables before removing from primary
+    case :ets.lookup(@edges_table, edge_id) do
+      [{_, edge}] -> deindex_edge(edge)
+      _ -> :ok
+    end
+
     :ets.delete(@edges_table, edge_id)
 
     case execute_prepared(state.conn, "DELETE FROM edges WHERE id = ?;", [edge_id]) do
@@ -533,13 +547,90 @@ defmodule Graphonomous.Store do
     end
   end
 
+  # P2-L8: Batch increment_access — update ETS immediately, defer SQLite persist
+  @impl true
+  def handle_cast({:increment_access, node_id}, state) do
+    case :ets.lookup(@nodes_table, node_id) do
+      [{^node_id, %Node{} = node}] ->
+        now = DateTime.utc_now()
+
+        updated = %Node{
+          node
+          | access_count: node.access_count + 1,
+            last_accessed_at: now,
+            updated_at: now
+        }
+
+        true = :ets.insert(@nodes_table, {updated.id, updated})
+        {:noreply, %{state | access_batch: MapSet.put(state.access_batch, node_id)}}
+
+      _ ->
+        {:noreply, state}
+    end
+  end
+
+  # P2-L8: Periodic flush of batched access updates to SQLite
+  @access_flush_interval_ms 5_000
+
+  @impl true
+  def handle_info(:flush_access_batch, %{access_batch: batch} = state) when batch == %MapSet{} do
+    schedule_access_flush()
+    {:noreply, state}
+  end
+
+  def handle_info(:flush_access_batch, %{access_batch: batch, conn: conn} = state)
+      when not is_nil(conn) do
+    batch
+    |> MapSet.to_list()
+    |> Enum.each(fn node_id ->
+      case :ets.lookup(@nodes_table, node_id) do
+        [{^node_id, %Node{} = node}] ->
+          case persist_node(conn, node) do
+            :ok -> :ok
+            {:error, reason} -> Logger.warning("access batch persist failed: #{inspect(reason)}")
+          end
+
+        _ ->
+          :ok
+      end
+    end)
+
+    schedule_access_flush()
+    {:noreply, %{state | access_batch: MapSet.new()}}
+  end
+
+  def handle_info(:flush_access_batch, state) do
+    schedule_access_flush()
+    {:noreply, state}
+  end
+
+  defp schedule_access_flush do
+    Process.send_after(self(), :flush_access_batch, @access_flush_interval_ms)
+  end
+
   @impl true
   def terminate(_reason, %{conn: nil}), do: :ok
 
-  def terminate(_reason, %{conn: conn}) do
+  def terminate(_reason, %{conn: conn} = state) do
+    # Flush any remaining access batch before closing
+    flush_access_batch_sync(state)
     _ = Sqlite3.close(conn)
     :ok
   end
+
+  defp flush_access_batch_sync(%{access_batch: batch, conn: conn})
+       when not is_nil(conn) do
+    batch
+    |> MapSet.to_list()
+    |> Enum.each(fn node_id ->
+      case :ets.lookup(@nodes_table, node_id) do
+        [{^node_id, %Node{} = node}] -> persist_node(conn, node)
+        _ -> :ok
+      end
+    end)
+  end
+
+  defp flush_access_batch_sync(_state), do: :ok
 
   ## Cache warm/rebuild
 
@@ -583,6 +674,8 @@ defmodule Graphonomous.Store do
   defp clear_cache_tables do
     :ets.delete_all_objects(@nodes_table)
     :ets.delete_all_objects(@edges_table)
+    :ets.delete_all_objects(@edges_by_source)
+    :ets.delete_all_objects(@edges_by_target)
     :ets.delete_all_objects(@outcomes_table)
     :ets.delete_all_objects(@goals_table)
   end
@@ -671,6 +764,7 @@ defmodule Graphonomous.Store do
     }
 
     true = :ets.insert(@edges_table, {edge.id, edge})
+    index_edge(edge)
   end
 
   defp cache_outcome_row([
@@ -783,6 +877,28 @@ defmodule Graphonomous.Store do
     else
       {:error, reason} -> {:error, reason}
     end
+  end
+
+  ## SQLite performance pragmas
+
+  defp apply_sqlite_pragmas(conn) do
+    pragmas = [
+      "PRAGMA journal_mode=WAL;",
+      "PRAGMA synchronous=NORMAL;",
+      "PRAGMA cache_size=-64000;",
+      "PRAGMA busy_timeout=5000;",
+      "PRAGMA temp_store=MEMORY;",
+      "PRAGMA mmap_size=268435456;"
+    ]
+
+    Enum.each(pragmas, fn pragma ->
+      case Sqlite3.execute(conn, pragma) do
+        :ok -> :ok
+        {:error, reason} -> Logger.warning("SQLite pragma failed: #{pragma} — #{inspect(reason)}")
+      end
+    end)
+
+    :ok
   end
 
   ## Schema bootstrap
@@ -1040,6 +1156,18 @@ defmodule Graphonomous.Store do
 
   ## BM25 FTS sync helpers
 
+  # P4-Q7: Fact-augmented key expansion — append extracted facts/preferences
+  # from metadata to BM25 content for broader keyword recall. This addresses
+  # the +5pp improvement from the LongMemEval paper by making implicit facts
+  # (e.g., "I prefer Thai food") searchable via BM25 keyword matching.
+  defp maybe_bm25_upsert(%{id: id, content: content, metadata: meta})
+       when is_binary(id) and is_binary(content) and content != "" and is_map(meta) do
+    if Process.whereis(Graphonomous.BM25Index) do
+      augmented = augment_bm25_content(content, meta)
+      Graphonomous.BM25Index.upsert(id, augmented)
+    end
+  end
+
   defp maybe_bm25_upsert(%{id: id, content: content})
        when is_binary(id) and is_binary(content) and content != "" do
     if Process.whereis(Graphonomous.BM25Index) do
@@ -1048,6 +1176,19 @@ defmodule Graphonomous.Store do
   end
 
   defp maybe_bm25_upsert(_), do: :ok
+
+  # Append fact keywords from metadata to BM25 content for broader recall.
+  # Facts stored in metadata["bm25_facts"] are appended as a separate section.
+  defp augment_bm25_content(content, meta) when is_map(meta) do
+    facts = Map.get(meta, "bm25_facts", [])
+
+    if is_list(facts) and facts != [] do
+      fact_text = Enum.join(facts, " | ")
+      content <> " [FACTS: " <> fact_text <> "]"
+    else
+      content
+    end
+  end
 
   defp maybe_bm25_delete(node_id) when is_binary(node_id) do
     if Process.whereis(Graphonomous.BM25Index) do
@@ -1501,6 +1642,8 @@ defmodule Graphonomous.Store do
   defp ensure_cache_tables do
     ensure_table(@nodes_table)
     ensure_table(@edges_table)
+    ensure_bag_table(@edges_by_source)
+    ensure_bag_table(@edges_by_target)
     ensure_table(@outcomes_table)
     ensure_table(@goals_table)
     :ok
@@ -1520,6 +1663,36 @@ defmodule Graphonomous.Store do
       _tid ->
         :ok
     end
+  end
+
+  defp ensure_bag_table(name) do
+    case :ets.whereis(name) do
+      :undefined ->
+        :ets.new(name, [
+          :bag,
+          :named_table,
+          :public,
+          read_concurrency: true,
+          write_concurrency: true
+        ])
+
+      _tid ->
+        :ok
+    end
+  end
+
+  # Secondary edge index helpers — keep bag tables in sync with @edges_table.
+  # Bag tables store {node_id, edge} tuples for O(degree) lookups.
+  defp index_edge(%Edge{} = edge) do
+    true = :ets.insert(@edges_by_source, {edge.source_id, edge})
+    true = :ets.insert(@edges_by_target, {edge.target_id, edge})
+    :ok
+  end
+
+  defp deindex_edge(%Edge{} = edge) do
+    :ets.delete_object(@edges_by_source, {edge.source_id, edge})
+    :ets.delete_object(@edges_by_target, {edge.target_id, edge})
+    :ok
   end
 
   @valid_node_types [:episodic, :semantic, :procedural, :temporal, :outcome, :goal]

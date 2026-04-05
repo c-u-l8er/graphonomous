@@ -75,7 +75,9 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
           purge: :boolean,
           neural: :boolean,
           skip_ingest: :boolean,
-          skip_topology: :boolean
+          skip_topology: :boolean,
+          judge: :boolean,
+          reflect: :boolean
         ]
       )
 
@@ -84,11 +86,18 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
     purge = Keyword.get(opts, :purge, true)
     skip_ingest = Keyword.get(opts, :skip_ingest, false)
     skip_topology = Keyword.get(opts, :skip_topology, false)
+    judge = Keyword.get(opts, :judge, false)
+    reflect = Keyword.get(opts, :reflect, false)
 
     if opts[:neural], do: Application.put_env(:graphonomous, :benchmark_neural, true)
-    if skip_topology, do: Application.put_env(:graphonomous, :benchmark_skip_topology, true)
+    if judge, do: Application.put_env(:graphonomous, :benchmark_judge, true)
 
-    Helpers.ensure_started()
+    if judge and not Mix.Tasks.Benchmark.LlmJudge.available?() do
+      Mix.shell().error("--judge requires ANTHROPIC_API_KEY environment variable")
+      exit({:shutdown, 1})
+    end
+
+    {embedder_info, embedder_runtime} = ensure_neural_embedder_for_benchmark()
 
     Mix.shell().info("""
     ╔══════════════════════════════════════════════════════════╗
@@ -97,8 +106,25 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
     ║  Split:    #{String.pad_trailing(split, 46)}║
     ║  Limit:    #{String.pad_trailing("#{limit} questions", 46)}║
     ║  System:   Graphonomous v#{String.pad_trailing(Mix.Project.config()[:version] || "0.2.0", 33)}║
+    ║  Embedder: #{String.pad_trailing(to_string(embedder_runtime), 46)}║
     ╚══════════════════════════════════════════════════════════╝
     """)
+
+    if skip_topology do
+      Mix.shell().info("""
+      ⚠️  WARNING: Topology is DISABLED for this run (--skip-topology)
+          κ-routing, SCC confidence propagation, fault-line boosts, and
+          deliberation enrichment are bypassed. Accuracy may be reduced.
+      """)
+    end
+
+    if limit < 50 do
+      Mix.shell().info("""
+      ⚠️  WARNING: Very small sample size (limit=#{limit})
+          Results may be noisy and unrepresentative, especially since
+          questions are evaluated in dataset order.
+      """)
+    end
 
     # Load dataset
     dataset = load_dataset(split)
@@ -139,6 +165,25 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
         {us, stats}
       end
 
+    # Phase 1.5: Reflector pass (optional --reflect flag)
+    if reflect and not skip_ingest do
+      Mix.shell().info("\n━━━ Phase 1.5: Reflector Pass ━━━")
+
+      {reflect_us, reflect_result} =
+        Helpers.timed(fn -> Graphonomous.Reflector.reflect() end)
+
+      case reflect_result do
+        {:ok, r} ->
+          Mix.shell().info(
+            "  Reflector: #{r.clusters_created} clusters, #{r.insights_extracted} insights, " <>
+              "#{r.sessions_distilled} distilled in #{div(reflect_us, 1000)} ms"
+          )
+
+        {:error, reason} ->
+          Mix.shell().info("  Reflector failed: #{inspect(reason)}")
+      end
+    end
+
     # Phase 2: Evaluate each question
     Mix.shell().info("\n━━━ Phase 2: Evaluating #{total} Questions ━━━")
 
@@ -150,7 +195,7 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
           if rem(idx, 50) == 0 or idx == 1,
             do: Mix.shell().info("  Progress: #{idx}/#{total}...")
 
-          evaluate_question(q)
+          evaluate_question(q, skip_topology)
         end)
       end)
 
@@ -170,12 +215,18 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
       system: %{
         engine: "Graphonomous",
         engine_version: Mix.Project.config()[:version] || "0.2.0",
-        embedder: Application.get_env(:graphonomous, :embedder_backend, :auto) |> to_string(),
+        embedder: to_string(embedder_runtime),
+        embedder_runtime: %{
+          backend: to_string(Map.get(embedder_info, :backend, :unknown)),
+          status: to_string(Map.get(embedder_info, :status, :unknown)),
+          model_id: Map.get(embedder_info, :model_id)
+        },
         retrieval_params: %{
           similarity_limit: "adaptive (15-25)",
           final_limit: "adaptive (30-50)",
           expansion_hops: "adaptive (1-2)",
-          neighbors_per_node: 8
+          neighbors_per_node: 8,
+          topology_mode: if(skip_topology, do: "disabled", else: "enabled")
         }
       },
       timestamp: DateTime.utc_now() |> DateTime.to_iso8601(),
@@ -197,6 +248,63 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
 
     # Print competitive comparison
     print_results(metrics, split, total, path)
+  end
+
+  # Ordered preference: best model first.
+  # nomic-v2-moe: MoE architecture, 768D, highest quality. Uses dense-forward ONNX export.
+  # nomic-v1.5: standard transformer fallback, same 768D, ONNX-stable.
+  # MiniLM: last resort, 384D.
+  @benchmark_model_cascade [
+    {"nomic-ai/nomic-embed-text-v2-moe", 768,
+     %{query: "search_query: ", document: "search_document: "}},
+    {"nomic-ai/nomic-embed-text-v1.5", 768,
+     %{query: "search_query: ", document: "search_document: "}},
+    {"sentence-transformers/all-MiniLM-L6-v2", 384, nil}
+  ]
+
+  defp ensure_neural_embedder_for_benchmark do
+    Enum.reduce_while(@benchmark_model_cascade, nil, fn {model, dim, prefixes}, _acc ->
+      Mix.shell().info("  Trying benchmark embedder: #{model} (#{dim}D)")
+
+      Application.put_env(:graphonomous, :embedding_model_id, model)
+      Application.put_env(:graphonomous, :embedding_dimension, dim)
+      Application.put_env(:graphonomous, :embedding_task_prefixes, prefixes)
+
+      Helpers.ensure_started(backend: :onnx)
+
+      embedder_info = Graphonomous.Embedder.info()
+      backend = Map.get(embedder_info, :backend, :unknown)
+
+      if backend in [:onnx, :bumblebee] and inference_smoke_test?() do
+        Mix.shell().info("  ✓ #{model} ready (#{backend}, inference verified)")
+        {:halt, {embedder_info, backend}}
+      else
+        Mix.shell().info("  ✗ #{model} failed (backend=#{backend}, inference broken)")
+        {:cont, nil}
+      end
+    end)
+    |> case do
+      nil ->
+        Mix.shell().info("  ⚠️  All neural models failed — running with fallback embedder")
+        embedder_info = Graphonomous.Embedder.info()
+        {embedder_info, :fallback}
+
+      result ->
+        result
+    end
+  end
+
+  # Smoke-test actual inference, not just model loading.
+  defp inference_smoke_test? do
+    case Graphonomous.Embedder.embed("benchmark smoke test") do
+      {:ok, vec} when is_list(vec) ->
+        # Verify it's not a deterministic fallback (all values near-uniform)
+        unique_vals = vec |> Enum.take(20) |> Enum.uniq() |> length()
+        unique_vals > 5
+
+      _ ->
+        false
+    end
   end
 
   # ── Dataset Loading ──────────────────────────────────────────────
@@ -241,11 +349,25 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
 
     Mix.shell().info("  Found #{length(sessions)} unique sessions to ingest")
 
-    # Phase 1: Ingest sessions, collect entity index for cross-session linking (S2)
-    {total_turns, entity_index} =
-      Enum.reduce(sessions, {0, %{}}, fn {session_id, turns}, {turn_acc, ent_acc} ->
-        {_node_ids, entities_by_node} = ingest_session(session_id, turns)
+    # Phase 1: Ingest sessions in parallel, collect entity index for cross-session linking (S2)
+    # P2-I2: Parallel session ingestion via Task.async_stream (sessions are independent)
+    # P3-Q2: Track session_rank for cross-session temporal ordering
+    max_concurrency = System.schedulers_online() |> min(8)
 
+    {total_turns, entity_index} =
+      sessions
+      |> Enum.with_index()
+      |> Task.async_stream(
+        fn {{session_id, turns}, session_rank} ->
+          {_node_ids, entities_by_node} = ingest_session(session_id, turns, session_rank)
+          {session_id, length(turns), entities_by_node}
+        end,
+        max_concurrency: max_concurrency,
+        timeout: 120_000,
+        ordered: false
+      )
+      |> Enum.reduce({0, %{}}, fn {:ok, {session_id, turn_count, entities_by_node}},
+                                  {turn_acc, ent_acc} ->
         ent_acc =
           Enum.reduce(entities_by_node, ent_acc, fn {node_id, entities}, acc ->
             Enum.reduce(entities, acc, fn ent, inner ->
@@ -253,7 +375,7 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
             end)
           end)
 
-        {turn_acc + length(turns), ent_acc}
+        {turn_acc + turn_count, ent_acc}
       end)
 
     # Phase 1.5 (S2): Cross-session entity edges
@@ -263,40 +385,81 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
     %{sessions_ingested: length(sessions), turns_ingested: total_turns}
   end
 
-  defp ingest_session(session_id, turns) when is_list(turns) do
-    # Store each turn, collecting node IDs and per-node entities for S2
-    {rev_ids, rev_ents} =
+  defp ingest_session(session_id, turns, session_rank) when is_list(turns) do
+    # P2-I1: Batch-embed all turn contents up front instead of per-turn embedding.
+    # Graphonomous.store_node skips embedding when :embedding key is already present.
+    turn_contents =
+      Enum.map(turns, fn turn ->
+        role = Map.get(turn, "role", "unknown")
+        content = Map.get(turn, "content", "")
+        content_for_node = String.slice(content, 0, 4096)
+        "[#{role}] #{content_for_node}"
+      end)
+
+    embeddings =
+      case Graphonomous.Embedder.embed_many_binary(turn_contents, task: :document) do
+        {:ok, embs} -> embs
+        {:error, _} -> List.duplicate(nil, length(turns))
+      end
+
+    # P2-I3: Batch store all turns with a single HNSW batch_add call
+    all_attrs =
       turns
       |> Enum.with_index()
-      |> Enum.reduce({[], []}, fn {turn, turn_idx}, {id_acc, ent_acc} ->
+      |> Enum.map(fn {turn, turn_idx} ->
         role = Map.get(turn, "role", "unknown")
         content = Map.get(turn, "content", "")
         has_answer = Map.get(turn, "has_answer", false)
 
-        content_for_node = String.slice(content, 0, 4096)
-        node_content = "[#{role}] #{content_for_node}"
+        node_content = Enum.at(turn_contents, turn_idx)
+        embedding = Enum.at(embeddings, turn_idx)
 
-        node =
-          Graphonomous.store_node(%{
-            content: node_content,
-            node_type: :episodic,
-            confidence: 0.70,
-            source: "longmemeval",
-            metadata: %{
+        # P4-Q7: Extract structured facts for BM25 key expansion
+        bm25_facts = extract_facts(content, role)
+
+        # P4-Q8: Dual timestamps — document_date (ingestion) + event_date (content)
+        event_date = extract_event_date(content)
+
+        attrs = %{
+          content: node_content,
+          node_type: :episodic,
+          confidence: 0.70,
+          source: "longmemeval",
+          metadata:
+            %{
               "session_id" => session_id,
               "turn_index" => turn_idx,
+              "session_rank" => session_rank,
               "role" => role,
               "has_answer" => has_answer,
-              "benchmark" => "longmemeval"
+              "benchmark" => "longmemeval",
+              "document_date" => DateTime.utc_now() |> DateTime.to_iso8601(),
+              "event_date" => event_date
             }
-          })
+            |> then(fn m ->
+              if bm25_facts != [], do: Map.put(m, "bm25_facts", bm25_facts), else: m
+            end)
+        }
 
+        if embedding, do: Map.put(attrs, :embedding, embedding), else: attrs
+      end)
+
+    nodes = Graphonomous.store_nodes_batch(all_attrs)
+
+    {node_ids, entities_by_node} =
+      turns
+      |> Enum.zip(nodes)
+      |> Enum.reduce({[], []}, fn {turn, node}, {id_acc, ent_acc} ->
+        content = Map.get(turn, "content", "")
         entities = extract_entities(content)
         {[node.id | id_acc], [{node.id, entities} | ent_acc]}
       end)
+      |> then(fn {ids, ents} -> {Enum.reverse(ids), Enum.reverse(ents)} end)
 
-    node_ids = Enum.reverse(rev_ids)
-    entities_by_node = Enum.reverse(rev_ents)
+    # P3-Q4: Detect knowledge updates within the session.
+    # When a user turn contains correction markers, create :superseded_by edge
+    # from the previous assistant turn to the corrected version, and reduce confidence.
+    detect_knowledge_updates(turns, node_ids)
 
     # S1: Sequential :follows edges between consecutive turns
     node_ids
@@ -317,18 +480,34 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
       end)
       |> Enum.join(" | ")
 
+    # P4-Q7: Collect all facts from session turns for summary-level BM25 indexing
+    all_session_facts =
+      turns
+      |> Enum.flat_map(fn t ->
+        extract_facts(Map.get(t, "content", ""), Map.get(t, "role", ""))
+      end)
+      |> Enum.uniq()
+      |> Enum.take(20)
+
+    summary_meta =
+      %{
+        "session_id" => session_id,
+        "is_summary" => true,
+        "turn_count" => length(turns),
+        "session_rank" => session_rank,
+        "benchmark" => "longmemeval"
+      }
+      |> then(fn m ->
+        if all_session_facts != [], do: Map.put(m, "bm25_facts", all_session_facts), else: m
+      end)
+
     summary =
       Graphonomous.store_node(%{
         content: "Session #{session_id} summary: #{String.slice(summary_content, 0, 4096)}",
         node_type: :semantic,
         confidence: 0.80,
         source: "longmemeval",
-        metadata: %{
-          "session_id" => session_id,
-          "is_summary" => true,
-          "turn_count" => length(turns),
-          "benchmark" => "longmemeval"
-        }
+        metadata: summary_meta
       })
 
     Enum.each(node_ids, fn nid ->
@@ -342,7 +521,7 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
     {node_ids, entities_by_node}
   end
 
-  defp ingest_session(_session_id, _), do: {[], []}
+  defp ingest_session(_session_id, _, _session_rank), do: {[], []}
 
   # S2: Cross-session entity edges — link turns in different sessions
   # that mention the same proper nouns (people, places, topics).
@@ -374,30 +553,260 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
     end)
   end
 
-  # Extract proper nouns from text for entity linking
-  defp extract_entities(text) when is_binary(text) do
-    text
-    |> String.split(~r/[.!?\n]+/)
-    |> Enum.flat_map(fn sentence ->
-      words = String.split(String.trim(sentence), ~r/\s+/)
+  # P3-Q5: Enhanced entity extraction — captures proper nouns, acronyms,
+  # preferences, compound concepts, and hyphenated names. The original only
+  # caught capitalized words, missing "Thai food", "GPT-4", "video editing", etc.
+  # This directly addresses the 65.1% single-session-preference score (worst category).
 
-      # Skip first word (may be capitalized just because sentence-initial)
-      words
-      |> Enum.drop(1)
-      |> Enum.filter(fn word ->
-        byte_size(word) >= 3 and String.match?(word, ~r/^[A-Z][a-z]/)
+  @preference_verbs ~r/\b(?:prefer|like|love|enjoy|hate|dislike|favor|favourite|favorite)\b/i
+  @acronym_pattern ~r/\b[A-Z]{2,}(?:-\d+(?:\.\d+)*)?\b/
+
+  defp extract_entities(text) when is_binary(text) do
+    sentences = String.split(text, ~r/[.!?\n]+/)
+
+    # 1. Original: capitalized words (proper nouns), skip sentence-initial
+    proper_nouns =
+      Enum.flat_map(sentences, fn sentence ->
+        words = String.split(String.trim(sentence), ~r/\s+/)
+
+        words
+        |> Enum.drop(1)
+        |> Enum.filter(fn word ->
+          byte_size(word) >= 3 and String.match?(word, ~r/^[A-Z][a-z]/)
+        end)
       end)
+
+    # 2. Acronyms: GPT-4, NASA, API, HNSW, etc.
+    acronyms = Regex.scan(@acronym_pattern, text) |> Enum.map(&hd/1)
+
+    # 3. Hyphenated names: Johnson-Smith, etc.
+    hyphenated =
+      Regex.scan(~r/\b[A-Z][a-z]+-[A-Z][a-z]+\b/, text)
+      |> Enum.map(&hd/1)
+
+    # 4. Preference objects: "I prefer Thai food" → "thai food"
+    preference_objects =
+      Enum.flat_map(sentences, fn sentence ->
+        if Regex.match?(@preference_verbs, sentence) do
+          # Extract the object after the preference verb
+          case Regex.run(
+                 ~r/(?:prefer|like|love|enjoy|hate|dislike|favor|favourite|favorite)\s+(.{3,40}?)(?:\.|,|$|\band\b|\bbut\b|\bbecause\b)/i,
+                 sentence
+               ) do
+            [_, object] -> [String.trim(object)]
+            _ -> []
+          end
+        else
+          []
+        end
+      end)
+
+    # 5. Compound bigrams: consecutive capitalized words → "New York", "San Francisco"
+    bigrams =
+      Enum.flat_map(sentences, fn sentence ->
+        words = String.split(String.trim(sentence), ~r/\s+/)
+
+        words
+        |> Enum.chunk_every(2, 1, :discard)
+        |> Enum.filter(fn [a, b] ->
+          String.match?(a, ~r/^[A-Z][a-z]/) and String.match?(b, ~r/^[A-Z][a-z]/)
+        end)
+        |> Enum.map(fn [a, b] -> "#{a} #{b}" end)
+      end)
+
+    (proper_nouns ++ acronyms ++ hyphenated ++ preference_objects ++ bigrams)
+    |> Enum.map(fn w ->
+      w |> String.replace(~r/[^\w\s-]/, "") |> String.downcase() |> String.trim()
     end)
-    |> Enum.map(fn w -> w |> String.replace(~r/[^\w]/, "") |> String.downcase() end)
     |> Enum.reject(&(String.length(&1) < 3))
     |> Enum.uniq()
   end
 
   defp extract_entities(_), do: []
 
+  # P4-Q7: Fact-augmented key expansion — extract structured facts from turn content
+  # that should be indexed as BM25 keywords. This captures:
+  #   1. Preference statements: "I prefer Thai food" → "preference: thai food"
+  #   2. Self-descriptions: "I am a teacher" → "identity: teacher"
+  #   3. Named entities with context: "My cat Max" → "pet: Max"
+  #   4. Activity/hobby mentions: "I enjoy hiking" → "hobby: hiking"
+  #   5. Location references: "I live in Seattle" → "location: Seattle"
+  # These facts become BM25-searchable even when the original content uses different phrasing.
+
+  @fact_preference_re ~r/(?:I|i) (?:prefer|like|love|enjoy|hate|dislike|favor|want|choose)\s+(.{3,60}?)(?:\.|,|$|\band\b|\bbut\b|\bbecause\b|\bover\b)/
+  @fact_identity_re ~r/(?:I am|I'm|i am|i'm) (?:a |an )?(.{3,40}?)(?:\.|,|$|\band\b|\bbut\b|\bwho\b)/
+  @fact_location_re ~r/(?:I live|I'm from|I moved to|I'm based|I stay|I reside)\s+(?:in |at |near )?(.{3,40}?)(?:\.|,|$|\band\b|\bbut\b)/i
+  @fact_hobby_re ~r/(?:I enjoy|I like to|my hobby is|I usually|I often|I always)\s+(.{3,50}?)(?:\.|,|$|\band\b|\bbut\b)/i
+  @fact_possession_re ~r/(?:my |I have a |I own a )(.{3,40}?)(?:\.|,|$|\band\b|\bbut\b|\bnamed\b|\bcalled\b)/i
+  @fact_name_re ~r/(?:my name is|I'm called|call me|I go by)\s+(.{2,30}?)(?:\.|,|$|\band\b)/i
+
+  defp extract_facts(content, _role) when is_binary(content) do
+    facts = []
+
+    facts =
+      facts ++
+        Enum.flat_map(Regex.scan(@fact_preference_re, content), fn
+          [_, obj] -> ["preference: #{String.trim(obj)}"]
+          _ -> []
+        end)
+
+    facts =
+      facts ++
+        Enum.flat_map(Regex.scan(@fact_identity_re, content), fn
+          [_, obj] -> ["identity: #{String.trim(obj)}"]
+          _ -> []
+        end)
+
+    facts =
+      facts ++
+        Enum.flat_map(Regex.scan(@fact_location_re, content), fn
+          [_, obj] -> ["location: #{String.trim(obj)}"]
+          _ -> []
+        end)
+
+    facts =
+      facts ++
+        Enum.flat_map(Regex.scan(@fact_hobby_re, content), fn
+          [_, obj] -> ["hobby: #{String.trim(obj)}"]
+          _ -> []
+        end)
+
+    facts =
+      facts ++
+        Enum.flat_map(Regex.scan(@fact_possession_re, content), fn
+          [_, obj] -> ["possession: #{String.trim(obj)}"]
+          _ -> []
+        end)
+
+    facts =
+      facts ++
+        Enum.flat_map(Regex.scan(@fact_name_re, content), fn
+          [_, obj] -> ["name: #{String.trim(obj)}"]
+          _ -> []
+        end)
+
+    facts |> Enum.uniq() |> Enum.take(10)
+  end
+
+  defp extract_facts(_, _), do: []
+
+  # P4-Q8: Extract event dates from turn content for dual timestamp storage
+  @date_iso_re ~r/\b(\d{4}-\d{2}-\d{2})\b/
+  @date_month_day_re ~r/\b(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{1,2})(?:st|nd|rd|th)?,?\s*(\d{4})?\b/i
+
+  defp extract_event_date(content) when is_binary(content) do
+    cond do
+      # ISO date: 2024-01-15
+      match = Regex.run(@date_iso_re, content) ->
+        List.last(match) |> validate_date_string()
+
+      # Month Day Year: "January 15, 2024" or "January 15th"
+      match = Regex.run(@date_month_day_re, content) ->
+        format_month_date(match)
+
+      true ->
+        nil
+    end
+  end
+
+  defp extract_event_date(_), do: nil
+
+  defp validate_date_string(date_str) do
+    case Date.from_iso8601(date_str) do
+      {:ok, _} -> date_str
+      _ -> nil
+    end
+  end
+
+  @month_map %{
+    "january" => "01",
+    "february" => "02",
+    "march" => "03",
+    "april" => "04",
+    "may" => "05",
+    "june" => "06",
+    "july" => "07",
+    "august" => "08",
+    "september" => "09",
+    "october" => "10",
+    "november" => "11",
+    "december" => "12"
+  }
+
+  defp format_month_date([_, month, day | rest]) do
+    month_num = Map.get(@month_map, String.downcase(month))
+
+    year =
+      case rest do
+        [y] when is_binary(y) and y != "" -> y
+        _ -> "2024"
+      end
+
+    day_padded = String.pad_leading(day, 2, "0")
+    date_str = "#{year}-#{month_num}-#{day_padded}"
+    validate_date_string(date_str)
+  end
+
+  defp format_month_date(_), do: nil
+
+  # P3-Q4: Detect knowledge updates within a session during ingestion.
+  # When a user turn contains correction markers ("actually", "I changed my mind", etc.),
+  # create :superseded_by edges from the most recent assistant turn to the assistant turn
+  # following the correction, reducing the old node's confidence.
+  # "actually" removed — fires 298/338 times on casual usage ("I actually prefer..."),
+  # not corrections. "instead of" removed — common in preference statements.
+  # Kept only high-precision correction markers.
+  @update_markers_re ~r/\b(?:correction|I changed my mind|I was mistaken|I no longer|I meant|changed to|switched to)\b/i
+
+  defp detect_knowledge_updates(turns, node_ids) do
+    paired = Enum.zip(turns, node_ids)
+
+    paired
+    |> Enum.with_index()
+    |> Enum.each(fn {{turn, _node_id}, idx} ->
+      role = Map.get(turn, "role", "")
+      content = Map.get(turn, "content", "")
+
+      if role == "user" and Regex.match?(@update_markers_re, content) do
+        # Find the most recent assistant turn before this correction
+        prev_assistant =
+          paired
+          |> Enum.take(idx)
+          |> Enum.reverse()
+          |> Enum.find(fn {t, _id} -> Map.get(t, "role") == "assistant" end)
+
+        # Find the next assistant turn (the corrected response)
+        next_assistant =
+          paired
+          |> Enum.drop(idx + 1)
+          |> Enum.find(fn {t, _id} -> Map.get(t, "role") == "assistant" end)
+
+        if prev_assistant && next_assistant do
+          {_prev_turn, prev_id} = prev_assistant
+          {_next_turn, next_id} = next_assistant
+
+          # Create superseded_by edge: old → new
+          Graphonomous.link_nodes(prev_id, next_id, %{
+            edge_type: :superseded_by,
+            weight: 0.9,
+            metadata: %{"source" => "knowledge_update_detection", "automated" => true}
+          })
+
+          # Reduce confidence on the superseded node
+          Graphonomous.Store.update_node(prev_id, %{
+            superseded_by: next_id,
+            confidence: 0.21
+          })
+        end
+      end
+    end)
+  rescue
+    _ -> :ok
+  end
+
   # ── Question Evaluation ──────────────────────────────────────────
 
-  defp evaluate_question(q) do
+  defp evaluate_question(q, skip_topology) do
     question_id = Map.get(q, "question_id", "unknown")
     question_type = Map.get(q, "question_type", "unknown")
     question_text = Map.get(q, "question", "")
@@ -419,14 +828,12 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
     # Retrieve from Graphonomous
     {retrieval_us, retrieval} =
       Helpers.timed(fn ->
-        skip_topo = Application.get_env(:graphonomous, :benchmark_skip_topology, false)
-
         Graphonomous.retrieve_context(question_text,
           similarity_limit: sim_limit,
           final_limit: final_limit,
           expansion_hops: exp_hops,
           neighbors_per_node: 8,
-          skip_topology: skip_topo
+          skip_topology: skip_topology
         )
       end)
 
@@ -442,7 +849,7 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
 
     # Extract session_ids from retrieved nodes
     retrieved_session_ids = extract_session_ids(results)
-    retrieved_has_answer_turns = count_evidence_turns(results)
+    retrieved_has_answer_turns = count_evidence_turns(results, answer_session_ids)
 
     # Metric 1: Session Hit Rate (SHR)
     # Did any retrieved node come from an answer session?
@@ -505,6 +912,17 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
         nil
       end
 
+    # P4-Q9: Session-level NDCG — measures ranking quality, not just hit/miss.
+    # A result is "relevant" (gain=1) if its session_id is in answer_session_ids.
+    # Ideal ranking would place all relevant results at the top.
+    session_ndcg =
+      if answer_session_ids == [] do
+        if is_abstention, do: 1.0, else: 0.0
+      else
+        answer_set = MapSet.new(answer_session_ids)
+        compute_session_ndcg(results, answer_set)
+      end
+
     # Composite QA proxy score (weighted combination)
     # This approximates QA accuracy without requiring a judge LLM
     # Session hit is the strongest signal; keyword recall validates content relevance
@@ -514,11 +932,32 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
           if abstention_correct, do: 1.0, else: 0.0
 
         true ->
-          # Weight: 40% session hit, 30% keyword recall, 20% session recall, 10% turn evidence
+          # Weight: 35% session hit, 25% keyword recall, 20% session recall,
+          #         10% turn evidence, 10% NDCG ranking quality
           w_hit = if session_hit, do: 1.0, else: 0.0
 
-          0.40 * w_hit + 0.30 * keyword_recall + 0.20 * session_recall +
-            0.10 * turn_evidence_recall
+          0.35 * w_hit + 0.25 * keyword_recall + 0.20 * session_recall +
+            0.10 * turn_evidence_recall + 0.10 * session_ndcg
+      end
+
+    # P3-Q1: LLM judge scoring (optional --judge flag)
+    {judge_score, judge_answer, judge_reasoning} =
+      if Application.get_env(:graphonomous, :benchmark_judge, false) do
+        retrieved_text_for_judge = Enum.map(results, & &1.content) |> Enum.join("\n\n")
+
+        case Mix.Tasks.Benchmark.LlmJudge.judge_answer(
+               question_text,
+               retrieved_text_for_judge,
+               expected_answer
+             ) do
+          {:ok, %{answer: ans, score: score, reasoning: reasoning}} ->
+            {score, ans, reasoning}
+
+          {:error, _} ->
+            {nil, nil, nil}
+        end
+      else
+        {nil, nil, nil}
       end
 
     %{
@@ -534,13 +973,18 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
       turn_evidence_recall: Float.round(turn_evidence_recall, 4),
       keyword_recall: Float.round(keyword_recall, 4),
       keyword_f1: Float.round(keyword_f1, 4),
+      session_ndcg: Float.round(session_ndcg, 4),
       abstention_correct: abstention_correct,
       qa_proxy_score: Float.round(qa_proxy, 4),
       topology_routing: Map.get(topology, :routing),
       topology_kappa: Map.get(topology, :max_kappa, 0),
       answer_sessions_expected: length(answer_session_ids),
       answer_sessions_found: Enum.count(retrieved_session_ids, &(&1 in answer_session_ids)),
-      retrieved_session_ids: Enum.uniq(retrieved_session_ids)
+      retrieved_session_ids: Enum.uniq(retrieved_session_ids),
+      stage_timings: Map.get(retrieval, :stage_timings),
+      judge_score: judge_score,
+      judge_answer: judge_answer,
+      judge_reasoning: judge_reasoning
     }
   end
 
@@ -560,13 +1004,16 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
     |> Enum.uniq()
   end
 
-  defp count_evidence_turns(results) do
+  defp count_evidence_turns(results, answer_session_ids) do
+    answer_set = MapSet.new(answer_session_ids)
+
     Enum.count(results, fn r ->
       node_id = Map.get(r, :node_id)
 
       case Graphonomous.get_node(node_id) do
         %{metadata: meta} when is_map(meta) ->
-          Map.get(meta, "has_answer", false) == true
+          Map.get(meta, "has_answer", false) == true and
+            MapSet.member?(answer_set, Map.get(meta, "session_id", ""))
 
         _ ->
           false
@@ -583,6 +1030,39 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
       else
         acc
       end
+    end)
+  end
+
+  # ── Session-level NDCG (P4-Q9) ─────────────────────────────────
+  # Normalized Discounted Cumulative Gain using binary relevance:
+  # A result at rank i is relevant (gain=1) if its session_id ∈ answer_session_ids.
+  # DCG = Σ gain_i / log2(i+1), NDCG = DCG / ideal_DCG
+
+  defp compute_session_ndcg(results, answer_set) when is_list(results) do
+    relevance =
+      Enum.map(results, fn r ->
+        node_id = Map.get(r, :node_id)
+
+        sid =
+          case Graphonomous.get_node(node_id) do
+            %{metadata: meta} when is_map(meta) -> Map.get(meta, "session_id")
+            _ -> nil
+          end
+
+        if sid && MapSet.member?(answer_set, sid), do: 1.0, else: 0.0
+      end)
+
+    dcg = compute_dcg(relevance)
+    ideal = relevance |> Enum.sort(:desc) |> compute_dcg()
+
+    if ideal > 0.0, do: min(dcg / ideal, 1.0), else: 0.0
+  end
+
+  defp compute_dcg(gains) do
+    gains
+    |> Enum.with_index(1)
+    |> Enum.reduce(0.0, fn {gain, rank}, sum ->
+      sum + gain / :math.log2(rank + 1)
     end)
   end
 
@@ -664,13 +1144,15 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
       mean_turn_evidence_recall: mean(non_abstention, :turn_evidence_recall),
       mean_keyword_recall: mean(non_abstention, :keyword_recall),
       mean_keyword_f1: mean(non_abstention, :keyword_f1),
+      mean_session_ndcg: mean(non_abstention, :session_ndcg),
       mean_qa_proxy: mean(question_results, :qa_proxy_score),
       qa_proxy_pct: Float.round(mean(question_results, :qa_proxy_score) * 100, 1),
       mean_latency_ms: div(round(mean(question_results, :retrieval_latency_us)), 1000),
       total_questions: length(question_results),
       non_abstention_count: length(non_abstention),
       abstention_count: length(abstention),
-      timeout_count: Enum.count(question_results, & &1.timed_out)
+      timeout_count: Enum.count(question_results, & &1.timed_out),
+      judge_qa_accuracy: judge_accuracy(question_results)
     }
 
     abstention_metrics =
@@ -716,12 +1198,51 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
       end)
       |> Map.new()
 
+    # Aggregate stage timings (P0 instrumentation)
+    stage_timing_agg =
+      question_results
+      |> Enum.map(& &1.stage_timings)
+      |> Enum.reject(&is_nil/1)
+      |> aggregate_stage_timings()
+
     %{
       overall: overall,
       abstention: abstention_metrics,
       by_ability: by_ability,
-      by_question_type: by_type
+      by_question_type: by_type,
+      stage_timings: stage_timing_agg
     }
+  end
+
+  defp aggregate_stage_timings([]), do: %{}
+
+  defp aggregate_stage_timings(all_timings) do
+    stages =
+      all_timings
+      |> Enum.flat_map(&Map.keys/1)
+      |> Enum.uniq()
+
+    n = length(all_timings)
+
+    Map.new(stages, fn stage ->
+      values =
+        all_timings
+        |> Enum.map(&Map.get(&1, stage, 0))
+        |> Enum.sort()
+
+      {stage,
+       %{
+         mean_ms: Float.round(Enum.sum(values) / n / 1000, 1),
+         p50_ms: Float.round(percentile(values, 50) / 1000, 1),
+         p95_ms: Float.round(percentile(values, 95) / 1000, 1),
+         max_ms: Float.round(Enum.max(values) / 1000, 1)
+       }}
+    end)
+  end
+
+  defp percentile(sorted, p) when is_list(sorted) and length(sorted) > 0 do
+    k = max(0, (p / 100 * length(sorted) - 1) |> Float.ceil() |> trunc())
+    Enum.at(sorted, min(k, length(sorted) - 1))
   end
 
   defp pct(items, field) when items != [] do
@@ -747,6 +1268,17 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
 
   defp mean(_, _), do: 0.0
 
+  defp judge_accuracy(results) do
+    judged = Enum.filter(results, fn r -> r[:judge_score] != nil end)
+
+    if judged == [] do
+      nil
+    else
+      mean_score = Enum.sum(Enum.map(judged, & &1.judge_score)) / length(judged)
+      Float.round(mean_score * 100, 1)
+    end
+  end
+
   # ── Output ───────────────────────────────────────────────────────
 
   defp print_results(metrics, split, total, path) do
@@ -760,6 +1292,7 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
     ║  Split: #{String.pad_trailing(split, 49)}║
     ║  Questions: #{String.pad_trailing("#{total}", 45)}║
     ║  Timeouts:  #{String.pad_trailing("#{o.timeout_count}", 45)}║
+    ║  Embedder:  #{String.pad_trailing(Application.get_env(:graphonomous, :embedder_backend, :auto) |> to_string(), 45)}║
     ║                                                          ║
     ║  OVERALL METRICS                                         ║
     ║  ─────────────────────────────────────                   ║
@@ -769,6 +1302,15 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
     ║  Mean Keyword Recall:   #{String.pad_trailing("#{o.mean_keyword_recall}", 31)}║
     ║  QA Proxy Score:        #{String.pad_trailing("#{o.qa_proxy_pct}%", 31)}║
     ║  Mean Latency:          #{String.pad_trailing("#{o.mean_latency_ms} ms", 31)}║
+    """)
+
+    if o.judge_qa_accuracy do
+      Mix.shell().info(
+        "    ║  Judge QA Accuracy:     #{String.pad_trailing("#{o.judge_qa_accuracy}%", 31)}║"
+      )
+    end
+
+    Mix.shell().info("""
     ╠══════════════════════════════════════════════════════════╣
     ║  COMPETITIVE COMPARISON (QA Proxy %)                     ║
     ║  ─────────────────────────────────────                   ║
@@ -811,6 +1353,26 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
     Mix.shell().info("""
     ║                                                          ║
     ║  ABSTENTION: #{String.pad_trailing("#{abs.accuracy}% accuracy (#{abs.count} questions)", 44)}║
+    """)
+
+    if metrics.stage_timings != %{} do
+      Mix.shell().info("""
+      ╠══════════════════════════════════════════════════════════╣
+      ║  STAGE TIMINGS (mean / p50 / p95 ms)                     ║
+      ║  ─────────────────────────────────────                   ║
+      """)
+
+      metrics.stage_timings
+      |> Enum.sort_by(fn {_, v} -> -v.mean_ms end)
+      |> Enum.each(fn {stage, v} ->
+        label = stage |> to_string() |> String.pad_trailing(22)
+        vals = "#{v.mean_ms} / #{v.p50_ms} / #{v.p95_ms}"
+
+        Mix.shell().info("    ║  #{label} #{String.pad_trailing(vals, 33)}║")
+      end)
+    end
+
+    Mix.shell().info("""
     ╠══════════════════════════════════════════════════════════╣
     ║  Output: #{String.pad_trailing(path, 48)}║
     ╚══════════════════════════════════════════════════════════╝

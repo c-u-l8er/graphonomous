@@ -40,14 +40,20 @@ defmodule Graphonomous.Graph do
     GenServer.call(__MODULE__, {:store_node, attrs}, @default_call_timeout)
   end
 
+  @doc "Store multiple nodes in batch, using a single HNSW batch_add call."
+  @spec store_nodes_batch([map()]) :: {:ok, [Node.t()]} | {:error, term()}
+  def store_nodes_batch(attrs_list) when is_list(attrs_list) do
+    GenServer.call(__MODULE__, {:store_nodes_batch, attrs_list}, 60_000)
+  end
+
   @spec get_node(node_id()) :: {:ok, Node.t()} | {:error, term()}
   def get_node(node_id) when is_binary(node_id) do
-    GenServer.call(__MODULE__, {:get_node, node_id})
+    GenServer.call(__MODULE__, {:get_node, node_id}, @default_call_timeout)
   end
 
   @spec list_nodes(map()) :: {:ok, [Node.t()]} | {:error, term()}
   def list_nodes(filters \\ %{}) when is_map(filters) do
-    GenServer.call(__MODULE__, {:list_nodes, filters})
+    GenServer.call(__MODULE__, {:list_nodes, filters}, @default_call_timeout)
   end
 
   @spec update_node(node_id(), map()) :: {:ok, Node.t()} | {:error, term()}
@@ -57,12 +63,12 @@ defmodule Graphonomous.Graph do
 
   @spec delete_node(node_id()) :: :ok | {:error, term()}
   def delete_node(node_id) when is_binary(node_id) do
-    GenServer.call(__MODULE__, {:delete_node, node_id})
+    GenServer.call(__MODULE__, {:delete_node, node_id}, @default_call_timeout)
   end
 
   @spec create_edge(map()) :: {:ok, map()} | {:error, term()}
   def create_edge(attrs) when is_map(attrs) do
-    GenServer.call(__MODULE__, {:create_edge, attrs})
+    GenServer.call(__MODULE__, {:create_edge, attrs}, @default_call_timeout)
   end
 
   @spec create_edge(node_id(), node_id(), map()) :: {:ok, map()} | {:error, term()}
@@ -73,12 +79,12 @@ defmodule Graphonomous.Graph do
       |> Map.put(:source_id, source_id)
       |> Map.put(:target_id, target_id)
 
-    GenServer.call(__MODULE__, {:create_edge, attrs})
+    GenServer.call(__MODULE__, {:create_edge, attrs}, @default_call_timeout)
   end
 
   @spec get_edges_for_node(node_id()) :: {:ok, [map()]} | {:error, term()}
   def get_edges_for_node(node_id) when is_binary(node_id) do
-    GenServer.call(__MODULE__, {:get_edges_for_node, node_id})
+    GenServer.call(__MODULE__, {:get_edges_for_node, node_id}, @default_call_timeout)
   end
 
   @spec list_all_edges() :: {:ok, [map()]} | {:error, term()}
@@ -129,7 +135,7 @@ defmodule Graphonomous.Graph do
 
   @spec touch_node(node_id()) :: {:ok, Node.t()} | {:error, term()}
   def touch_node(node_id) when is_binary(node_id) do
-    GenServer.call(__MODULE__, {:touch_node, node_id})
+    GenServer.call(__MODULE__, {:touch_node, node_id}, @default_call_timeout)
   end
 
   ## GenServer callbacks
@@ -151,6 +157,32 @@ defmodule Graphonomous.Graph do
       {:error, _} = err ->
         {:reply, err, state}
     end
+  end
+
+  def handle_call({:store_nodes_batch, attrs_list}, _from, state) do
+    results =
+      Enum.map(attrs_list, fn attrs ->
+        attrs = normalize_map_keys(attrs)
+
+        with {:ok, enriched} <- maybe_attach_embedding(attrs),
+             {:ok, node} <- Store.insert_node(enriched) do
+          {:ok, node}
+        end
+      end)
+
+    # Collect successful nodes for batch HNSW add
+    nodes = for {:ok, node} <- results, do: node
+
+    hnsw_items =
+      for %Node{id: id, embedding: emb} <- nodes,
+          is_binary(id) and is_binary(emb) and byte_size(emb) > 0,
+          do: {id, emb}
+
+    if hnsw_items != [] do
+      HNSWIndex.batch_add(hnsw_items)
+    end
+
+    {:reply, {:ok, nodes}, state}
   end
 
   def handle_call({:get_node, node_id}, _from, state) do

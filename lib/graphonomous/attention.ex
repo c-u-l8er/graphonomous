@@ -1713,11 +1713,13 @@ defmodule Graphonomous.Attention do
         [:graphonomous, :consolidator, :complete],
         [:graphonomous, :consolidator, :stage_complete]
       ],
-      fn _event, _measurements, _metadata, _config ->
-        notify_graph_mutation()
-      end,
+      &__MODULE__.handle_attention_cache_invalidation_telemetry/4,
       nil
     )
+  end
+
+  def handle_attention_cache_invalidation_telemetry(_event, _measurements, _metadata, _config) do
+    notify_graph_mutation()
   end
 
   # Returns {items, updated_state} — either from cache or fresh computation

@@ -63,8 +63,10 @@ defmodule Graphonomous.StoreTest do
     assert_in_delta updated.confidence, 0.91, 1.0e-6
     assert updated.metadata["updated"] == true
 
-    assert {:ok, touched} = Store.increment_access(node_id)
-    assert touched.id == node_id
+    assert :ok = Store.increment_access(node_id)
+    # Cast is async; give it a moment to process
+    Process.sleep(50)
+    assert {:ok, touched} = Store.get_node(node_id)
     assert touched.access_count >= 1
 
     assert :ok = Store.delete_node(node_id)

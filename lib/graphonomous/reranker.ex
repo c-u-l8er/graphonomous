@@ -117,17 +117,11 @@ defmodule Graphonomous.Reranker do
   ## Cross-encoder inference
 
   defp do_rerank(query, candidates, %{model: model, tokenizer: tokenizer}) do
-    scored =
-      Enum.map(candidates, fn {node_id, content} ->
-        score = cross_encode_score(query, content, model, tokenizer)
-        {node_id, score}
-      end)
-
-    sorted = Enum.sort_by(scored, fn {_id, score} -> score end, :desc)
-    {:ok, sorted}
+    # P2-L5: Batch inference — tokenize all pairs, pad, run single Ortex.run
+    batch_rerank(query, candidates, model, tokenizer)
   rescue
     e ->
-      Logger.warning("Reranker inference error: #{Exception.message(e)}")
+      Logger.warning("Reranker batch inference error: #{Exception.message(e)}")
       # Fallback to original order
       fallback =
         candidates
@@ -137,38 +131,85 @@ defmodule Graphonomous.Reranker do
       {:ok, fallback}
   end
 
-  defp cross_encode_score(query, document, model, tokenizer) do
-    # Cross-encoders take a sentence pair as input
-    {:ok, encoding} = Tokenizers.Tokenizer.encode(tokenizer, {query, document})
-    input_ids = Tokenizers.Encoding.get_ids(encoding)
-    attention_mask = Tokenizers.Encoding.get_attention_mask(encoding)
+  @max_token_len 512
 
-    # Truncate to max 512 tokens
-    max_len = 512
-    input_ids = Enum.take(input_ids, max_len)
-    attention_mask = Enum.take(attention_mask, max_len)
+  defp batch_rerank(query, candidates, model, tokenizer) do
+    # 1. Tokenize all query-document pairs
+    encodings =
+      Enum.map(candidates, fn {_node_id, content} ->
+        case Tokenizers.Tokenizer.encode(tokenizer, {query, content}) do
+          {:ok, enc} -> enc
+          _ -> nil
+        end
+      end)
 
-    input_ids_t = Nx.tensor([input_ids], type: :s64)
-    attention_mask_t = Nx.tensor([attention_mask], type: :s64)
-    token_type_ids_t = build_token_type_ids(encoding, max_len)
+    # Split into valid (tokenized) and failed
+    indexed = Enum.with_index(encodings)
+    valid = Enum.filter(indexed, fn {enc, _idx} -> enc != nil end)
 
-    output_tuple = Ortex.run(model, {input_ids_t, attention_mask_t, token_type_ids_t})
+    if valid == [] do
+      fallback =
+        candidates
+        |> Enum.with_index()
+        |> Enum.map(fn {{node_id, _}, idx} -> {node_id, 1.0 / (idx + 1)} end)
 
-    # Cross-encoder output is logits {1, 1} — single relevance score
-    logits = elem(output_tuple, 0) |> Nx.backend_transfer()
+      {:ok, fallback}
+    else
+      # 2. Extract and truncate token sequences
+      sequences =
+        Enum.map(valid, fn {enc, _idx} ->
+          ids = Tokenizers.Encoding.get_ids(enc) |> Enum.take(@max_token_len)
+          mask = Tokenizers.Encoding.get_attention_mask(enc) |> Enum.take(@max_token_len)
+          type_ids = Tokenizers.Encoding.get_type_ids(enc) |> Enum.take(@max_token_len)
+          {ids, mask, type_ids}
+        end)
 
-    logits
-    |> Nx.squeeze()
-    |> Nx.to_number()
-    |> sigmoid()
-  rescue
-    _ -> 0.0
-  end
+      # 3. Pad all to same length
+      max_len = sequences |> Enum.map(fn {ids, _, _} -> length(ids) end) |> Enum.max()
 
-  defp build_token_type_ids(encoding, max_len) do
-    type_ids = Tokenizers.Encoding.get_type_ids(encoding)
-    type_ids = Enum.take(type_ids, max_len)
-    Nx.tensor([type_ids], type: :s64)
+      {ids_batch, mask_batch, type_batch} =
+        Enum.reduce(sequences, {[], [], []}, fn {ids, mask, type_ids}, {a_ids, a_mask, a_type} ->
+          pad_len = max_len - length(ids)
+
+          {
+            [ids ++ List.duplicate(0, pad_len) | a_ids],
+            [mask ++ List.duplicate(0, pad_len) | a_mask],
+            [type_ids ++ List.duplicate(0, pad_len) | a_type]
+          }
+        end)
+
+      # Reverse because we prepended
+      ids_t = ids_batch |> Enum.reverse() |> Nx.tensor(type: :s64)
+      mask_t = mask_batch |> Enum.reverse() |> Nx.tensor(type: :s64)
+      type_t = type_batch |> Enum.reverse() |> Nx.tensor(type: :s64)
+
+      # 4. Single batched Ortex.run
+      output_tuple = Ortex.run(model, {ids_t, mask_t, type_t})
+      logits = elem(output_tuple, 0) |> Nx.backend_transfer()
+
+      # 5. Extract per-candidate scores
+      scores =
+        logits
+        |> Nx.squeeze(axes: [-1])
+        |> Nx.to_flat_list()
+        |> Enum.map(&sigmoid/1)
+
+      # Map scores back to candidates (including 0.0 for failed tokenizations)
+      score_map =
+        valid
+        |> Enum.zip(scores)
+        |> Map.new(fn {{_enc, idx}, score} -> {idx, score} end)
+
+      scored =
+        candidates
+        |> Enum.with_index()
+        |> Enum.map(fn {{node_id, _content}, idx} ->
+          {node_id, Map.get(score_map, idx, 0.0)}
+        end)
+
+      sorted = Enum.sort_by(scored, fn {_id, score} -> score end, :desc)
+      {:ok, sorted}
+    end
   end
 
   defp sigmoid(x) do

@@ -639,6 +639,9 @@ defmodule Graphonomous.Coverage do
     end
   end
 
+  # Handle non-map values (e.g. plain string node IDs in retrieved_nodes)
+  defp get_num(_non_map, _key, default), do: default
+
   defp get_val(map, key, default) when is_map(map) do
     Map.get(map, key, Map.get(map, Atom.to_string(key), default))
   end

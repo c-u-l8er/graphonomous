@@ -155,12 +155,12 @@ defmodule Graphonomous.EmbedderTest do
   describe "task prefixes with v2-moe style config" do
     test "configured prefixes change embeddings vs no prefix" do
       {:ok, pid} =
-        GenServer.start_link(Embedder, [
+        GenServer.start_link(Embedder,
           model_id: "test-model",
           dimension: 64,
           backend: :fallback,
           task_prefixes: %{query: "search_query: ", document: "search_document: "}
-        ])
+        )
 
       {:ok, v_query} = GenServer.call(pid, {:embed, "hello", :query})
       {:ok, v_doc} = GenServer.call(pid, {:embed, "hello", :document})
@@ -200,9 +200,9 @@ defmodule Graphonomous.EmbedderTest do
     end
   end
 
-  # ---- v2-moe production config validation ----
+  # ---- nomic production config validation ----
 
-  describe "v2-moe production config" do
+  describe "nomic production config" do
     test "config.exs specifies nomic-embed-text-v2-moe" do
       {:ok, contents} = File.read("config/config.exs")
       assert contents =~ "nomic-ai/nomic-embed-text-v2-moe"
@@ -225,12 +225,12 @@ defmodule Graphonomous.EmbedderTest do
   describe "dimension handling" do
     test "small dimension produces correct size" do
       {:ok, pid} =
-        GenServer.start_link(Embedder, [
+        GenServer.start_link(Embedder,
           model_id: "test-model",
           dimension: 32,
           backend: :fallback,
           task_prefixes: nil
-        ])
+        )
 
       info = GenServer.call(pid, :info)
       assert info.dimension == 32
@@ -243,12 +243,12 @@ defmodule Graphonomous.EmbedderTest do
 
     test "large dimension pads and normalizes correctly" do
       {:ok, pid} =
-        GenServer.start_link(Embedder, [
+        GenServer.start_link(Embedder,
           model_id: "test-model",
           dimension: 1024,
           backend: :fallback,
           task_prefixes: nil
-        ])
+        )
 
       {:ok, vector} = GenServer.call(pid, {:embed, "test", nil})
       assert length(vector) == 1024
@@ -261,12 +261,12 @@ defmodule Graphonomous.EmbedderTest do
 
     test "768 dimension works (v2-moe production dimension)" do
       {:ok, pid} =
-        GenServer.start_link(Embedder, [
+        GenServer.start_link(Embedder,
           model_id: "test-model",
           dimension: 768,
           backend: :fallback,
           task_prefixes: %{query: "search_query: ", document: "search_document: "}
-        ])
+        )
 
       {:ok, vector} = GenServer.call(pid, {:embed, "production dimension test", :query})
       assert length(vector) == 768
@@ -308,12 +308,12 @@ defmodule Graphonomous.EmbedderTest do
   describe "backend selection" do
     test "fallback backend starts immediately without warmup" do
       {:ok, pid} =
-        GenServer.start_link(Embedder, [
+        GenServer.start_link(Embedder,
           model_id: "nonexistent-model",
           dimension: 64,
           backend: :fallback,
           task_prefixes: nil
-        ])
+        )
 
       info = GenServer.call(pid, :info)
       assert info.backend == :fallback
@@ -323,12 +323,12 @@ defmodule Graphonomous.EmbedderTest do
 
     test "auto backend falls back after failing to load model" do
       {:ok, pid} =
-        GenServer.start_link(Embedder, [
+        GenServer.start_link(Embedder,
           model_id: "nonexistent/model-that-wont-load",
           dimension: 64,
           backend: :auto,
           task_prefixes: nil
-        ])
+        )
 
       # Give warmup task time to fail and fall back
       Process.sleep(3_000)
@@ -341,12 +341,12 @@ defmodule Graphonomous.EmbedderTest do
 
     test "warming state still serves embeddings via fallback" do
       {:ok, pid} =
-        GenServer.start_link(Embedder, [
+        GenServer.start_link(Embedder,
           model_id: "nonexistent/slow-model",
           dimension: 64,
           backend: :auto,
           task_prefixes: nil
-        ])
+        )
 
       # Immediately call before warmup completes — should use fallback
       {:ok, vector} = GenServer.call(pid, {:embed, "test during warmup", nil})

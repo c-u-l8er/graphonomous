@@ -21,6 +21,7 @@ defmodule Graphonomous.Embedder do
   @default_dimension 384
   @default_timeout 15_000
   @default_batch_size 8
+  @default_onnx_sequence_length 64
 
   @onnx_cache_base Path.join([System.user_home() || "/tmp", ".cache", "graphonomous", "onnx"])
 
@@ -36,7 +37,8 @@ defmodule Graphonomous.Embedder do
           model_id: String.t(),
           dimension: pos_integer(),
           warmup_in_progress: boolean(),
-          task_prefixes: map() | nil
+          task_prefixes: map() | nil,
+          onnx_sequence_length: pos_integer()
         }
 
   ## Public API
@@ -129,13 +131,21 @@ defmodule Graphonomous.Embedder do
         Application.get_env(:graphonomous, :embedding_task_prefixes, nil)
       )
 
+    onnx_sequence_length =
+      opts
+      |> Keyword.get(
+        :onnx_sequence_length,
+        Application.get_env(:graphonomous, :onnx_sequence_length, @default_onnx_sequence_length)
+      )
+      |> normalize_onnx_sequence_length()
+
     requested_backend = requested_backend(opts)
 
     state =
       case requested_backend do
         :fallback ->
           Logger.info("Graphonomous.Embedder forced to fallback backend via config/opts")
-          fallback_state(model_id, dimension, task_prefixes)
+          fallback_state(model_id, dimension, task_prefixes, onnx_sequence_length)
 
         _ ->
           Logger.info(
@@ -143,7 +153,9 @@ defmodule Graphonomous.Embedder do
           )
 
           Process.send_after(self(), :warmup, 0)
-          warming_state(model_id, dimension, task_prefixes)
+
+          warming_state(model_id, dimension, task_prefixes, onnx_sequence_length)
+          |> Map.put(:requested_backend, requested_backend)
       end
 
     {:ok, state}
@@ -172,9 +184,20 @@ defmodule Graphonomous.Embedder do
 
   defp normalize_backend(_), do: :auto
 
+  defp normalize_onnx_sequence_length(value) when is_integer(value) and value > 0, do: value
+
+  defp normalize_onnx_sequence_length(value) when is_binary(value) do
+    case Integer.parse(String.trim(value)) do
+      {parsed, ""} when parsed > 0 -> parsed
+      _ -> @default_onnx_sequence_length
+    end
+  end
+
+  defp normalize_onnx_sequence_length(_), do: @default_onnx_sequence_length
+
   ## State constructors
 
-  defp bumblebee_state(serving, model_id, dimension, task_prefixes) do
+  defp bumblebee_state(serving, model_id, dimension, task_prefixes, onnx_sequence_length) do
     %{
       backend: :bumblebee,
       serving: serving,
@@ -183,11 +206,19 @@ defmodule Graphonomous.Embedder do
       model_id: model_id,
       dimension: dimension,
       warmup_in_progress: false,
-      task_prefixes: task_prefixes
+      task_prefixes: task_prefixes,
+      onnx_sequence_length: onnx_sequence_length
     }
   end
 
-  defp onnx_state(onnx_model, tokenizer, model_id, dimension, task_prefixes) do
+  defp onnx_state(
+         onnx_model,
+         tokenizer,
+         model_id,
+         dimension,
+         task_prefixes,
+         onnx_sequence_length
+       ) do
     %{
       backend: :onnx,
       serving: nil,
@@ -196,11 +227,12 @@ defmodule Graphonomous.Embedder do
       model_id: model_id,
       dimension: dimension,
       warmup_in_progress: false,
-      task_prefixes: task_prefixes
+      task_prefixes: task_prefixes,
+      onnx_sequence_length: onnx_sequence_length
     }
   end
 
-  defp fallback_state(model_id, dimension, task_prefixes) do
+  defp fallback_state(model_id, dimension, task_prefixes, onnx_sequence_length) do
     %{
       backend: :fallback,
       serving: nil,
@@ -209,11 +241,12 @@ defmodule Graphonomous.Embedder do
       model_id: model_id,
       dimension: dimension,
       warmup_in_progress: false,
-      task_prefixes: task_prefixes
+      task_prefixes: task_prefixes,
+      onnx_sequence_length: onnx_sequence_length
     }
   end
 
-  defp warming_state(model_id, dimension, task_prefixes) do
+  defp warming_state(model_id, dimension, task_prefixes, onnx_sequence_length) do
     %{
       backend: :warming,
       serving: nil,
@@ -222,7 +255,8 @@ defmodule Graphonomous.Embedder do
       model_id: model_id,
       dimension: dimension,
       warmup_in_progress: true,
-      task_prefixes: task_prefixes
+      task_prefixes: task_prefixes,
+      onnx_sequence_length: onnx_sequence_length
     }
   end
 
@@ -230,7 +264,7 @@ defmodule Graphonomous.Embedder do
 
   @impl true
   def handle_call(:info, _from, state) do
-    {:reply, Map.take(state, [:backend, :model_id, :dimension]), state}
+    {:reply, Map.take(state, [:backend, :model_id, :dimension, :onnx_sequence_length]), state}
   end
 
   def handle_call({:embed, text, task}, _from, state) do
@@ -297,9 +331,10 @@ defmodule Graphonomous.Embedder do
   @impl true
   def handle_info(:warmup, %{model_id: model_id} = state) do
     parent = self()
+    requested_backend = Map.get(state, :requested_backend, :auto)
 
     Task.start(fn ->
-      result = try_load_model(model_id)
+      result = try_load_model(model_id, requested_backend)
       send(parent, {:warmup_complete, result})
     end)
 
@@ -309,24 +344,34 @@ defmodule Graphonomous.Embedder do
   def handle_info({:warmup_complete, result}, %{
         model_id: model_id,
         dimension: dimension,
-        task_prefixes: task_prefixes
+        task_prefixes: task_prefixes,
+        onnx_sequence_length: onnx_sequence_length
       }) do
     new_state =
       case result do
         {:ok, :bumblebee, serving} ->
           Logger.info("Graphonomous.Embedder warmup complete: Bumblebee model=#{model_id}")
-          bumblebee_state(serving, model_id, dimension, task_prefixes)
+
+          bumblebee_state(serving, model_id, dimension, task_prefixes, onnx_sequence_length)
 
         {:ok, :onnx, onnx_model, tokenizer} ->
           Logger.info("Graphonomous.Embedder warmup complete: ONNX model=#{model_id}")
-          onnx_state(onnx_model, tokenizer, model_id, dimension, task_prefixes)
+
+          onnx_state(
+            onnx_model,
+            tokenizer,
+            model_id,
+            dimension,
+            task_prefixes,
+            onnx_sequence_length
+          )
 
         {:error, reason} ->
           Logger.warning(
             "Graphonomous.Embedder warmup failed; using deterministic fallback: #{inspect(reason)}"
           )
 
-          fallback_state(model_id, dimension, task_prefixes)
+          fallback_state(model_id, dimension, task_prefixes, onnx_sequence_length)
       end
 
     {:noreply, new_state}
@@ -337,9 +382,29 @@ defmodule Graphonomous.Embedder do
     {:noreply, state}
   end
 
-  ## Model loading — tries Bumblebee, then ONNX, then gives up
+  ## Model loading — respects requested backend mode
 
-  defp try_load_model(model_id) do
+  defp try_load_model(model_id, :onnx) do
+    case load_onnx_model(model_id) do
+      {:ok, onnx_model, tokenizer} ->
+        {:ok, :onnx, onnx_model, tokenizer}
+
+      {:error, onnx_reason} ->
+        {:error, {:onnx_failed, onnx_reason}}
+    end
+  end
+
+  defp try_load_model(model_id, :bumblebee) do
+    case load_bumblebee_serving(model_id) do
+      {:ok, serving} ->
+        {:ok, :bumblebee, serving}
+
+      {:error, bumblebee_reason} ->
+        {:error, {:bumblebee_failed, bumblebee_reason}}
+    end
+  end
+
+  defp try_load_model(model_id, _requested_backend) do
     case load_bumblebee_serving(model_id) do
       {:ok, serving} ->
         {:ok, :bumblebee, serving}
@@ -379,18 +444,27 @@ defmodule Graphonomous.Embedder do
     collect_ok(results)
   end
 
-  defp batch_embed_with_state(texts, %{backend: :onnx} = state) do
-    batch_size = @default_batch_size
-
+  defp batch_embed_with_state(texts, %{backend: :onnx, model_id: model_id} = state) do
     results =
-      texts
-      |> Enum.chunk_every(batch_size)
-      |> Enum.flat_map(fn chunk ->
-        case run_onnx_batch(chunk, state) do
-          {:ok, vectors} -> Enum.map(vectors, &{:ok, &1})
-          {:error, _} -> Enum.map(chunk, &{:ok, fallback_embed(&1, state.dimension)})
-        end
-      end)
+      if onnx_force_sequential?(model_id) do
+        # nomic-embed-text-v2-moe ONNX exports are unstable for batched inference
+        Enum.map(texts, &embed_with_state(&1, state))
+      else
+        batch_size = @default_batch_size
+
+        texts
+        |> Enum.chunk_every(batch_size)
+        |> Enum.flat_map(fn chunk ->
+          case run_onnx_batch(chunk, state) do
+            {:ok, vectors} ->
+              Enum.map(vectors, &{:ok, &1})
+
+            {:error, _} ->
+              # Sequential retry path before deterministic fallback
+              Enum.map(chunk, &embed_with_state(&1, state))
+          end
+        end)
+      end
 
     collect_ok(results)
   end
@@ -670,11 +744,16 @@ defmodule Graphonomous.Embedder do
 
   ## ONNX inference
 
-  defp run_onnx(text, %{onnx_model: model, tokenizer: tokenizer, dimension: dimension}) do
+  defp run_onnx(text, %{
+         onnx_model: model,
+         tokenizer: tokenizer,
+         dimension: dimension,
+         onnx_sequence_length: onnx_sequence_length
+       }) do
     try do
       {:ok, encoding} = Tokenizers.Tokenizer.encode(tokenizer, text)
-      input_ids = Tokenizers.Encoding.get_ids(encoding)
-      attention_mask = Tokenizers.Encoding.get_attention_mask(encoding)
+
+      {input_ids, attention_mask} = fixed_length_onnx_inputs(encoding, onnx_sequence_length)
 
       input_ids_t = Nx.tensor([input_ids], type: :s64)
       attention_mask_t = Nx.tensor([attention_mask], type: :s64)
@@ -695,7 +774,12 @@ defmodule Graphonomous.Embedder do
     end
   end
 
-  defp run_onnx_batch(texts, %{onnx_model: model, tokenizer: tokenizer, dimension: dimension}) do
+  defp run_onnx_batch(texts, %{
+         onnx_model: model,
+         tokenizer: tokenizer,
+         dimension: dimension,
+         onnx_sequence_length: onnx_sequence_length
+       }) do
     try do
       encodings =
         Enum.map(texts, fn text ->
@@ -703,20 +787,10 @@ defmodule Graphonomous.Embedder do
           enc
         end)
 
-      # Pad to uniform length for batching
-      max_len =
-        encodings
-        |> Enum.map(&length(Tokenizers.Encoding.get_ids(&1)))
-        |> Enum.max()
-
       {ids_list, mask_list} =
         Enum.reduce(encodings, {[], []}, fn enc, {ids_acc, mask_acc} ->
-          ids = Tokenizers.Encoding.get_ids(enc)
-          mask = Tokenizers.Encoding.get_attention_mask(enc)
-          pad_len = max_len - length(ids)
-          padded_ids = ids ++ List.duplicate(0, pad_len)
-          padded_mask = mask ++ List.duplicate(0, pad_len)
-          {ids_acc ++ [padded_ids], mask_acc ++ [padded_mask]}
+          {ids, mask} = fixed_length_onnx_inputs(enc, onnx_sequence_length)
+          {ids_acc ++ [ids], mask_acc ++ [mask]}
         end)
 
       input_ids_t = Nx.tensor(ids_list, type: :s64)
@@ -770,6 +844,38 @@ defmodule Graphonomous.Embedder do
       length(vector) == dimension -> vector
       length(vector) > dimension -> Enum.take(vector, dimension)
       true -> vector ++ List.duplicate(0.0, dimension - length(vector))
+    end
+  end
+
+  # nomic-v2-moe ONNX now uses a dense-forward export (all experts computed for
+  # all tokens with static shapes). Works in Ortex 0.1.10 (ORT 1.19 via ort 2.0.0-rc.8).
+  # The original sparse MoE export used Expand/ScatterElements with data-dependent
+  # shapes which failed in every ORT version. Re-exported with dense computation
+  # that produces identical embeddings (cosine sim 1.0 vs original).
+  defp unstable_onnx_model?(_model_id), do: false
+
+  defp onnx_force_sequential?(_model_id), do: false
+
+  defp fixed_length_onnx_inputs(encoding, seq_len) do
+    input_ids =
+      encoding
+      |> Tokenizers.Encoding.get_ids()
+      |> Enum.take(seq_len)
+      |> pad_to_length(seq_len, 0)
+
+    attention_mask =
+      encoding
+      |> Tokenizers.Encoding.get_attention_mask()
+      |> Enum.take(seq_len)
+      |> pad_to_length(seq_len, 0)
+
+    {input_ids, attention_mask}
+  end
+
+  defp pad_to_length(list, length, pad_value) do
+    case length - Kernel.length(list) do
+      diff when diff > 0 -> list ++ List.duplicate(pad_value, diff)
+      _ -> list
     end
   end
 

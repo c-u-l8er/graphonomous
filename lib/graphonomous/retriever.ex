@@ -32,7 +32,21 @@ defmodule Graphonomous.Retriever do
   @default_expansion_hops 1
   @default_neighbors_per_node 5
   @default_hop_decay 0.85
+  @node_cache_key :__retriever_node_cache__
   @default_similarity_timeout_ms 25_000
+
+  # P3-Q3: Stop words for query expansion (concept extraction)
+  @stop_words MapSet.new(~w(
+    a an the is are was were be been being have has had do does did
+    will would shall should can could may might must
+    i me my we our you your he she it they them their his her its
+    this that these those what which who whom when where why how
+    in on at to for with from by of and or but not no nor so yet
+    about above after again against all am any between both down
+    during each few into more most other out over own same some
+    such than then through too under up very also just than
+    if as because while until before after since during
+  ))
 
   @type retrieve_opts :: keyword()
   @type retrieval_result :: %{
@@ -90,73 +104,155 @@ defmodule Graphonomous.Retriever do
   @impl true
   def handle_call({:retrieve, query, call_opts}, _from, state) do
     cfg = merge_opts(state, call_opts)
+    init_node_cache()
+    timings = %{}
+
+    # P3-Q2: Detect temporal intent from query
+    temporal_intent = detect_temporal_intent(query)
+
+    # P3-Q3: Expand query into variants for broader recall via multi-source BM25
+    query_variants = expand_query(query)
+    bm25_limit = Map.get(cfg, :similarity_limit, @default_similarity_limit) * 2
+
+    # P2-L4 + P3-Q3: Run ANN (HNSW) + BM25 variants fully in parallel, then fuse with RRF
+    bm25_tasks =
+      Enum.map(query_variants, fn variant ->
+        {variant, Task.async(fn -> safe_bm25_search(variant, bm25_limit) end)}
+      end)
+
+    ann_task =
+      Task.async(fn ->
+        safe_graph_retrieve_similar(query, cfg.similarity_limit, cfg.similarity_timeout_ms)
+      end)
 
     reply =
-      with {:ok, seed_hits} <-
-             safe_graph_retrieve_similar(query, cfg.similarity_limit, cfg.similarity_timeout_ms),
-           {:ok, seed_entries} <- seed_entries(seed_hits),
-           {:ok, seed_entries} <- hybrid_fuse_bm25(seed_entries, query, cfg),
-           {:ok, expanded} <- expand_neighbors(seed_entries, cfg) do
-        ranked =
-          expanded
-          |> Map.values()
-          |> Enum.sort_by(& &1.score, :desc)
-          |> maybe_diversify_domains(cfg)
-          |> maybe_diversify_sessions(cfg)
-          |> maybe_cross_encoder_rerank(query)
-          |> Enum.take(cfg.final_limit)
+      with {ann_us, {:ok, seed_hits}} <-
+             :timer.tc(fn ->
+               Task.await(ann_task, cfg.similarity_timeout_ms + 1_000)
+             end),
+           timings = Map.put(timings, :ann_retrieve, ann_us),
+           {seed_us, {:ok, seed_entries}} <-
+             :timer.tc(fn -> seed_entries(seed_hits, temporal_intent) end),
+           timings = Map.put(timings, :seed_entries, seed_us),
+           {bm25_await_us, bm25_results} <-
+             :timer.tc(fn ->
+               Enum.map(bm25_tasks, fn {variant, task} ->
+                 {variant, await_bm25_task(task, 5_000)}
+               end)
+             end),
+           timings = Map.put(timings, :bm25_await, bm25_await_us),
+           {fuse_us, {:ok, seed_entries}} <-
+             :timer.tc(fn -> hybrid_fuse_expanded(seed_entries, bm25_results, cfg) end),
+           timings = Map.put(timings, :hybrid_fuse, fuse_us),
+           {expand_us, {:ok, expanded}} <-
+             :timer.tc(fn -> expand_neighbors(seed_entries, cfg) end),
+           timings = Map.put(timings, :expand_neighbors, expand_us) do
+        {sort_us, sorted} =
+          :timer.tc(fn ->
+            expanded |> Map.values() |> Enum.sort_by(& &1.score, :desc)
+          end)
+
+        {diversify_domain_us, ranked} =
+          :timer.tc(fn -> maybe_diversify_domains(sorted, cfg) end)
+
+        {diversify_session_us, ranked} =
+          :timer.tc(fn -> maybe_diversify_sessions(ranked, cfg, query) end)
+
+        {rerank_us, ranked} =
+          :timer.tc(fn -> maybe_cross_encoder_rerank(ranked, query) end)
+
+        # P4-Q11: Chain-of-retrieval — if first pass results are weak,
+        # extract entities from top results and run a supplementary BM25 pass
+        {chain_us, ranked} =
+          :timer.tc(fn -> maybe_chain_retrieval(ranked, query, cfg, temporal_intent) end)
+
+        ranked = Enum.take(ranked, cfg.final_limit)
 
         skip_topology = Keyword.get(call_opts, :skip_topology, false)
 
-        topology =
-          if skip_topology,
-            do: %{sccs: [], dag_nodes: [], routing: :fast, max_kappa: 0, scc_count: 0},
-            else: analyze_topology(ranked)
+        {topology_us, {topology, adjacency}} =
+          :timer.tc(fn ->
+            if skip_topology,
+              do: {%{sccs: [], dag_nodes: [], routing: :fast, max_kappa: 0, scc_count: 0}, %{}},
+              else: analyze_topology_with_adjacency(ranked)
+          end)
 
-        # K2+K4: κ-guided adaptive expansion — if κ > 0, re-expand with
-        # deeper hops and gentler decay to follow cyclic knowledge paths
-        {ranked, topology} =
-          if skip_topology, do: {ranked, topology}, else: maybe_kappa_expand(ranked, topology, cfg)
+        # K2+K4: κ-guided adaptive expansion
+        {kappa_expand_us, {ranked, topology}} =
+          :timer.tc(fn ->
+            if skip_topology,
+              do: {ranked, topology},
+              else: maybe_kappa_expand(ranked, topology, adjacency, cfg)
+          end)
 
-        # K5: Boost nodes adjacent to fault-line edges (knowledge boundaries)
-        ranked = if skip_topology, do: ranked, else: apply_fault_line_boost(ranked, topology)
+        # K5: Boost nodes adjacent to fault-line edges
+        {fault_line_us, ranked} =
+          :timer.tc(fn ->
+            if skip_topology, do: ranked, else: apply_fault_line_boost(ranked, topology)
+          end)
 
-        # K7: Propagate confidence through SCC edges — high-confidence nodes
-        # boost low-confidence neighbors in the same SCC
-        ranked = if skip_topology, do: ranked, else: propagate_scc_confidence(ranked, topology)
+        # K7: Propagate confidence through SCC edges
+        {scc_conf_us, ranked} =
+          :timer.tc(fn ->
+            if skip_topology, do: ranked, else: propagate_scc_confidence(ranked, topology)
+          end)
 
-        # K8: Query-time edge impact — detect high-scoring disconnected nodes
-        # that would change κ if linked; annotate for downstream reasoning
-        edge_impact_notes =
-          if skip_topology, do: [], else: detect_edge_impact_opportunities(ranked, topology)
+        # K8: Query-time edge impact
+        {edge_impact_us, edge_impact_notes} =
+          :timer.tc(fn ->
+            if skip_topology, do: [], else: detect_edge_impact_opportunities(ranked, adjacency)
+          end)
 
         # P1: Two-phase retrieval — re-rank by Q-value utility scoring
-        ranked = utility_rerank(ranked, call_opts)
+        {utility_us, ranked} =
+          :timer.tc(fn -> utility_rerank(ranked, call_opts) end)
 
-        base_result = %{
-          query: query,
-          results: ranked,
-          causal_context: Enum.map(ranked, & &1.node_id),
-          stats: %{
-            seed_count: map_size(seed_entries),
-            expanded_count: max(map_size(expanded) - map_size(seed_entries), 0),
-            returned: length(ranked)
-          },
-          topology: topology
-        }
+        {enrich_us, enriched_or_base} =
+          :timer.tc(fn ->
+            base_result = %{
+              query: query,
+              results: ranked,
+              causal_context: Enum.map(ranked, & &1.node_id),
+              stats: %{
+                seed_count: map_size(seed_entries),
+                expanded_count: max(map_size(expanded) - map_size(seed_entries), 0),
+                returned: length(ranked),
+                temporal_intent: temporal_intent,
+                topology_skipped: skip_topology
+              },
+              topology: topology,
+              topology_skipped: skip_topology
+            }
 
-        base_result =
-          if edge_impact_notes != [],
-            do: Map.put(base_result, :edge_impact_notes, edge_impact_notes),
-            else: base_result
+            base_result =
+              if edge_impact_notes != [],
+                do: Map.put(base_result, :edge_impact_notes, edge_impact_notes),
+                else: base_result
 
-        {:ok,
-         if(skip_topology,
-           do: base_result,
-           else: maybe_enrich_or_deliberate(base_result, query, call_opts)
-         )}
+            if skip_topology,
+              do: base_result,
+              else: maybe_enrich_or_deliberate(base_result, query, call_opts)
+          end)
+
+        stage_timings =
+          timings
+          |> Map.put(:sort, sort_us)
+          |> Map.put(:diversify_domains, diversify_domain_us)
+          |> Map.put(:diversify_sessions, diversify_session_us)
+          |> Map.put(:cross_encoder_rerank, rerank_us)
+          |> Map.put(:chain_retrieval, chain_us)
+          |> Map.put(:topology, topology_us)
+          |> Map.put(:kappa_expand, kappa_expand_us)
+          |> Map.put(:fault_line_boost, fault_line_us)
+          |> Map.put(:scc_confidence, scc_conf_us)
+          |> Map.put(:edge_impact, edge_impact_us)
+          |> Map.put(:utility_rerank, utility_us)
+          |> Map.put(:enrich_deliberate, enrich_us)
+
+        {:ok, Map.put(enriched_or_base, :stage_timings, stage_timings)}
       end
 
+    clear_node_cache()
     {:reply, reply, state}
   end
 
@@ -172,14 +268,14 @@ defmodule Graphonomous.Retriever do
 
   ## Build seed entries (from similarity search)
 
-  defp seed_entries(hits) when is_list(hits) do
+  defp seed_entries(hits, temporal_intent) when is_list(hits) do
     entries =
       Enum.reduce(hits, %{}, fn hit, acc ->
         node_id = Map.get(hit, :node_id)
 
         # P1: Filter out soft-forgotten nodes
         forgotten? =
-          case node_id && Store.get_node(node_id) do
+          case node_id && cached_get_node(node_id) do
             {:ok, %Node{forgotten_at: %DateTime{}}} -> true
             _ -> false
           end
@@ -188,7 +284,10 @@ defmodule Graphonomous.Retriever do
           base_score = to_float(Map.get(hit, :score, 0.0))
 
           # S7: Temporal boost — recently accessed/updated nodes get a recency bonus
-          temporal_boost = temporal_recency_boost(node_id)
+          temporal_boost = temporal_recency_boost(node_id, temporal_intent)
+
+          # P3-Q2: Turn-index boost for temporal queries
+          turn_boost = temporal_turn_boost(node_id, temporal_intent)
 
           entry = %{
             node_id: node_id,
@@ -196,7 +295,7 @@ defmodule Graphonomous.Retriever do
             node_type: Map.get(hit, :node_type, :semantic),
             confidence: clamp01(to_float(Map.get(hit, :confidence, 0.5))),
             similarity: to_float(Map.get(hit, :similarity, 0.0)),
-            score: base_score * temporal_boost,
+            score: base_score * temporal_boost * turn_boost,
             source: :seed,
             hops: 0,
             via: nil
@@ -205,6 +304,19 @@ defmodule Graphonomous.Retriever do
           Map.put(acc, node_id, entry)
         else
           acc
+        end
+      end)
+
+    # P3-Q4: Penalize superseded nodes — if a seed node has been superseded_by another,
+    # reduce its score to 0.3x so the superseding node wins during ranking.
+    entries =
+      Map.new(entries, fn {id, entry} ->
+        case cached_get_node(id) do
+          {:ok, %Node{superseded_by: sb}} when is_binary(sb) and sb != "" ->
+            {id, %{entry | score: entry.score * 0.3}}
+
+          _ ->
+            {id, entry}
         end
       end)
 
@@ -219,10 +331,36 @@ defmodule Graphonomous.Retriever do
 
   @rrf_k 60
 
-  defp hybrid_fuse_bm25(seed_entries, query, cfg) do
-    bm25_limit = Map.get(cfg, :similarity_limit, @default_similarity_limit) * 2
+  # P3-Q3: Fuse ANN results with multiple expanded BM25 result sets via RRF.
+  # Each BM25 variant acts as a separate ranker in the RRF formula.
+  defp hybrid_fuse_expanded(seed_entries, bm25_results, cfg) do
+    # Collect all successful BM25 hit lists
+    bm25_hit_lists =
+      bm25_results
+      |> Enum.flat_map(fn
+        {_variant, {:ok, hits}} when hits != [] -> [hits]
+        _ -> []
+      end)
 
-    case BM25Index.search(query, limit: bm25_limit) do
+    case bm25_hit_lists do
+      [] ->
+        {:ok, seed_entries}
+
+      [single] ->
+        # Only one BM25 result — fall back to standard 2-source fusion
+        hybrid_fuse_bm25(seed_entries, {:ok, single}, cfg)
+
+      _multiple ->
+        # Multi-source RRF: ANN is ranker 0, each BM25 variant is ranker 1..N
+        fused = rrf_fuse_multi(seed_entries, bm25_hit_lists)
+        {:ok, fused}
+    end
+  rescue
+    _ -> {:ok, seed_entries}
+  end
+
+  defp hybrid_fuse_bm25(seed_entries, bm25_result, _cfg) do
+    case bm25_result do
       {:ok, bm25_hits} when bm25_hits != [] ->
         fused = rrf_fuse(seed_entries, bm25_hits)
         {:ok, fused}
@@ -234,6 +372,79 @@ defmodule Graphonomous.Retriever do
   rescue
     _ -> {:ok, seed_entries}
   end
+
+  defp safe_bm25_search(query, limit) do
+    try do
+      BM25Index.search(query, limit: limit, timeout: 15_000)
+    catch
+      :exit, {:timeout, _} -> {:error, :bm25_timeout}
+      :exit, reason -> {:error, {:bm25_exit, reason}}
+    rescue
+      _ -> {:error, :bm25_crashed}
+    end
+  end
+
+  defp await_bm25_task(task, timeout_ms) do
+    case Task.yield(task, timeout_ms) || Task.shutdown(task, :brutal_kill) do
+      {:ok, result} ->
+        result
+
+      nil ->
+        {:error, :bm25_timeout}
+
+      {:exit, reason} ->
+        {:error, {:bm25_task_exit, reason}}
+    end
+  end
+
+  # P3-Q3: Programmatic query expansion — generate reformulations for broader recall.
+  # Returns a list of 1-3 query variants (always includes the original).
+  # Variants: concept-only (stop words stripped), entity-focused (proper nouns + key terms).
+  defp expand_query(query) when is_binary(query) do
+    words = String.split(query, ~r/\s+/, trim: true)
+    variants = [query]
+
+    # Variant 1: Concept-only — strip stop words, keep content words
+    content_words =
+      words
+      |> Enum.reject(fn w -> MapSet.member?(@stop_words, String.downcase(w)) end)
+      |> Enum.reject(fn w -> String.length(w) < 2 end)
+
+    concept_query = Enum.join(content_words, " ")
+
+    variants =
+      if concept_query != "" and concept_query != query and length(content_words) >= 2,
+        do: variants ++ [concept_query],
+        else: variants
+
+    # Variant 2: Entity-focused — extract proper nouns, acronyms, and quoted terms
+    entities =
+      Enum.filter(words, fn w ->
+        clean = String.replace(w, ~r/[^\w]/, "")
+
+        String.match?(clean, ~r/^[A-Z]/) or
+          String.match?(clean, ~r/^[A-Z]{2,}$/) or
+          String.match?(clean, ~r/\d{4}/)
+      end)
+
+    # Also extract quoted phrases
+    quoted =
+      Regex.scan(~r/"([^"]+)"/, query)
+      |> Enum.map(fn [_, phrase] -> phrase end)
+
+    entity_terms = (entities ++ quoted) |> Enum.uniq()
+
+    entity_query = Enum.join(entity_terms, " ")
+
+    variants =
+      if entity_query != "" and entity_query != query and length(entity_terms) >= 2,
+        do: variants ++ [entity_query],
+        else: variants
+
+    Enum.uniq(variants)
+  end
+
+  defp expand_query(_), do: []
 
   defp rrf_fuse(ann_entries, bm25_hits) do
     # Build ANN rank map (rank by descending score)
@@ -274,7 +485,7 @@ defmodule Graphonomous.Retriever do
       MapSet.difference(MapSet.new(Map.keys(bm25_ranked)), MapSet.new(Map.keys(ann_ranked)))
 
     Enum.reduce(bm25_only_ids, updated_entries, fn node_id, acc ->
-      case Store.get_node(node_id) do
+      case cached_get_node(node_id) do
         {:ok, %Node{forgotten_at: nil} = node} ->
           rrf = Map.get(rrf_scores, node_id, 0.0)
 
@@ -296,6 +507,192 @@ defmodule Graphonomous.Retriever do
           acc
       end
     end)
+  end
+
+  # P3-Q3: Multi-source RRF fusion — ANN as one ranker, each BM25 variant as additional rankers.
+  # score(d) = Σ 1/(k + rank_i(d)) for each retrieval system
+  defp rrf_fuse_multi(ann_entries, bm25_hit_lists) do
+    # Ranker 0: ANN (rank by descending score)
+    ann_ranked =
+      ann_entries
+      |> Map.values()
+      |> Enum.sort_by(& &1.score, :desc)
+      |> Enum.with_index(1)
+      |> Map.new(fn {entry, rank} -> {entry.node_id, rank} end)
+
+    # Rankers 1..N: each BM25 variant
+    bm25_rank_maps =
+      Enum.map(bm25_hit_lists, fn hits ->
+        hits
+        |> Enum.with_index(1)
+        |> Map.new(fn {{node_id, _score}, rank} -> {node_id, rank} end)
+      end)
+
+    # All candidate node IDs across all rankers
+    all_bm25_ids =
+      bm25_rank_maps
+      |> Enum.flat_map(&Map.keys/1)
+      |> MapSet.new()
+
+    all_ids = MapSet.union(MapSet.new(Map.keys(ann_ranked)), all_bm25_ids)
+
+    # Compute RRF score: sum across all rankers (no normalization).
+    # Normalization by num_rankers penalizes ANN-only results by ~30% when
+    # BM25 variants miss — catastrophic for semantic-only queries (e.g. preferences)
+    # where ANN is the only useful signal. Plain summation matches rrf_fuse/2 behavior.
+    absent_rank = 1000
+
+    rrf_scores =
+      Map.new(all_ids, fn id ->
+        ann_score = 1.0 / (@rrf_k + Map.get(ann_ranked, id, absent_rank))
+
+        bm25_score =
+          Enum.reduce(bm25_rank_maps, 0.0, fn rank_map, sum ->
+            sum + 1.0 / (@rrf_k + Map.get(rank_map, id, absent_rank))
+          end)
+
+        {id, ann_score + bm25_score}
+      end)
+
+    # Update existing ANN entries with fused scores
+    updated =
+      Enum.reduce(ann_entries, %{}, fn {node_id, entry}, acc ->
+        rrf = Map.get(rrf_scores, node_id, entry.score)
+        Map.put(acc, node_id, %{entry | score: rrf})
+      end)
+
+    # Add BM25-only hits not in ANN results
+    bm25_only_ids = MapSet.difference(all_bm25_ids, MapSet.new(Map.keys(ann_ranked)))
+
+    Enum.reduce(bm25_only_ids, updated, fn node_id, acc ->
+      case cached_get_node(node_id) do
+        {:ok, %Node{forgotten_at: nil} = node} ->
+          rrf = Map.get(rrf_scores, node_id, 0.0)
+
+          entry = %{
+            node_id: node.id,
+            content: node.content,
+            node_type: node.node_type,
+            confidence: clamp01(to_float(node.confidence)),
+            similarity: 0.0,
+            score: rrf,
+            source: :bm25,
+            hops: 0,
+            via: nil
+          }
+
+          Map.put(acc, node_id, entry)
+
+        _ ->
+          acc
+      end
+    end)
+  end
+
+  ## P4-Q11: Chain-of-retrieval (multi-pass)
+  #
+  # If the first retrieval pass yields weak results (low top score or few results),
+  # extract key entities and context from top results and run a supplementary BM25
+  # search. New results are merged with existing ones, keeping best scores.
+  # This helps for questions where the query phrasing differs from stored content.
+
+  # Post-reranking scores are blended: 0.4*RRF + 0.6*reranker_score.
+  # A mediocre result (reranker ~0.2) scores ~0.13. Threshold must be in this
+  # domain to actually trigger chain retrieval for weak first-pass results.
+  @chain_score_threshold 0.15
+  @chain_min_results 3
+
+  defp maybe_chain_retrieval(ranked, query, cfg, temporal_intent) do
+    top_score =
+      case ranked do
+        [first | _] -> first.score
+        [] -> 0.0
+      end
+
+    needs_chain? = top_score < @chain_score_threshold or length(ranked) < @chain_min_results
+
+    if needs_chain? and length(ranked) > 0 do
+      chain_retrieval(ranked, query, cfg, temporal_intent)
+    else
+      ranked
+    end
+  end
+
+  defp chain_retrieval(ranked, _query, cfg, temporal_intent) do
+    # Extract entities and key terms from top-5 results to form a refined query
+    top_contents =
+      ranked
+      |> Enum.take(5)
+      |> Enum.map(fn entry -> entry.content || "" end)
+
+    # Build refined query from unique content words in top results
+    refined_terms =
+      top_contents
+      |> Enum.flat_map(fn content ->
+        content
+        |> String.split(~r/\s+/, trim: true)
+        |> Enum.reject(fn w -> MapSet.member?(@stop_words, String.downcase(w)) end)
+        |> Enum.filter(fn w ->
+          # Keep proper nouns, acronyms, and substantive words
+          String.match?(w, ~r/^[A-Z]/) or
+            String.match?(w, ~r/^[A-Z]{2,}$/) or
+            String.length(w) >= 5
+        end)
+      end)
+      |> Enum.frequencies()
+      |> Enum.sort_by(fn {_w, freq} -> freq end, :desc)
+      |> Enum.take(8)
+      |> Enum.map(fn {w, _} -> w end)
+
+    refined_query = Enum.join(refined_terms, " ")
+
+    if refined_query != "" and String.length(refined_query) >= 5 do
+      bm25_limit = Map.get(cfg, :similarity_limit, @default_similarity_limit) * 2
+
+      case safe_bm25_search(refined_query, bm25_limit) do
+        {:ok, bm25_hits} when bm25_hits != [] ->
+          # Convert BM25 hits to entries and merge
+          existing_ids = MapSet.new(Enum.map(ranked, & &1.node_id))
+
+          new_entries =
+            bm25_hits
+            |> Enum.reject(fn {node_id, _} -> MapSet.member?(existing_ids, node_id) end)
+            |> Enum.take(10)
+            |> Enum.flat_map(fn {node_id, bm25_score} ->
+              case cached_get_node(node_id) do
+                {:ok, %Node{forgotten_at: nil} = node} ->
+                  turn_boost = temporal_turn_boost(node_id, temporal_intent)
+
+                  [
+                    %{
+                      node_id: node.id,
+                      content: node.content,
+                      node_type: node.node_type,
+                      confidence: clamp01(to_float(node.confidence)),
+                      similarity: 0.0,
+                      score: bm25_score * 0.7 * turn_boost,
+                      source: :chain_bm25,
+                      hops: 0,
+                      via: nil
+                    }
+                  ]
+
+                _ ->
+                  []
+              end
+            end)
+
+          (ranked ++ new_entries)
+          |> Enum.sort_by(& &1.score, :desc)
+
+        _ ->
+          ranked
+      end
+    else
+      ranked
+    end
+  rescue
+    _ -> ranked
   end
 
   ## Neighborhood expansion
@@ -348,8 +745,15 @@ defmodule Graphonomous.Retriever do
   end
 
   defp expand_from_edges(node_id, hop, parent_score, edges, acc, cfg) do
+    # P3-Q4: Identify superseded_by edges for special handling
+    {supersedes_edges, regular_edges} =
+      Enum.split_with(edges, fn edge ->
+        edge_type = Map.get(edge, :edge_type) || Map.get(edge, :type)
+        to_string(edge_type) == "superseded_by"
+      end)
+
     neighbors =
-      edges
+      regular_edges
       |> Enum.map(fn edge ->
         neighbor_id =
           if edge.source_id == node_id do
@@ -363,6 +767,16 @@ defmodule Graphonomous.Retriever do
       |> Enum.uniq_by(fn {nid, _} -> nid end)
       |> Enum.sort_by(fn {_nid, w} -> w end, :desc)
       |> Enum.take(cfg.neighbors_per_node)
+
+    # P3-Q4: Always follow superseded_by edges with boosted weight.
+    # The superseding node gets a 1.3x boost; the superseded node (current) gets 0.3x penalty.
+    supersedes_neighbors =
+      Enum.map(supersedes_edges, fn edge ->
+        target = if edge.source_id == node_id, do: edge.target_id, else: edge.source_id
+        {target, 1.3}
+      end)
+
+    neighbors = neighbors ++ supersedes_neighbors
 
     Enum.reduce(neighbors, {acc, []}, fn {neighbor_id, edge_weight}, {acc_map, frontier_acc} ->
       if not is_binary(neighbor_id) or neighbor_id == node_id do
@@ -472,13 +886,12 @@ defmodule Graphonomous.Retriever do
     # Extract domain from node metadata (filesystem traversal nodes have relative_path)
     node_id = Map.get(entry, :node_id)
 
-    case node_id && Graphonomous.get_node(node_id) do
-      %{metadata: meta} when is_map(meta) ->
-        path = Map.get(meta, "relative_path", "") |> to_string()
-        extract_domain_from_path(path)
-
-      _ ->
-        "unknown"
+    with true <- is_binary(node_id),
+         {:ok, %{metadata: meta}} when is_map(meta) <- cached_get_node(node_id) do
+      path = Map.get(meta, "relative_path", "") |> to_string()
+      extract_domain_from_path(path)
+    else
+      _ -> "unknown"
     end
   end
 
@@ -491,14 +904,17 @@ defmodule Graphonomous.Retriever do
 
   # S5: Session-aware diversity — penalize results clustering in one session
   # to spread retrieval across sessions for multi-session questions.
-  defp maybe_diversify_sessions(results, _cfg) do
+  defp maybe_diversify_sessions(results, _cfg, query) do
     if length(results) > 3 do
+      # P3-Q6: Relax session diversity penalty for multi-session queries
+      base = if multi_session_query?(query), do: 0.95, else: 0.90
+
       {reranked, _} =
         results
         |> Enum.reduce({[], %{}}, fn entry, {acc, seen} ->
           sid = session_id_for_entry(entry)
           count = Map.get(seen, sid, 0)
-          penalty = :math.pow(0.90, count)
+          penalty = :math.pow(base, count)
           adjusted = %{entry | score: entry.score * penalty}
           {[adjusted | acc], Map.put(seen, sid, count + 1)}
         end)
@@ -509,11 +925,30 @@ defmodule Graphonomous.Retriever do
     end
   end
 
+  # P3-Q6: Detect queries that likely need results from multiple sessions
+  defp multi_session_query?(query) do
+    q = String.downcase(query)
+
+    multi_session_markers =
+      ~w(both also and besides additionally compare different sessions conversations times)
+
+    entity_count =
+      Regex.scan(~r/\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b/, query)
+      |> length()
+
+    has_marker = Enum.any?(multi_session_markers, &String.contains?(q, &1))
+    has_multiple_entities = entity_count >= 2
+
+    has_marker or has_multiple_entities
+  end
+
   defp session_id_for_entry(entry) do
     node_id = Map.get(entry, :node_id)
 
-    case node_id && Graphonomous.get_node(node_id) do
-      %{metadata: meta} when is_map(meta) -> Map.get(meta, "session_id", "unknown")
+    with true <- is_binary(node_id),
+         {:ok, %{metadata: meta}} when is_map(meta) <- cached_get_node(node_id) do
+      Map.get(meta, "session_id", "unknown")
+    else
       _ -> "unknown"
     end
   end
@@ -599,19 +1034,14 @@ defmodule Graphonomous.Retriever do
   # K8: Query-time edge impact — check top disconnected result pairs to see if
   # linking them would change κ. If so, they're semantically related but not yet
   # connected in the graph → answer likely requires bridging them.
-  defp detect_edge_impact_opportunities(ranked, topology) do
-    dag_nodes = Map.get(topology, :dag_nodes, [])
-    # Only check DAG nodes (not already in SCCs) — top 5 pairs
-    top_dag =
-      ranked
-      |> Enum.filter(fn e -> e.node_id in dag_nodes end)
-      |> Enum.take(6)
+  defp detect_edge_impact_opportunities(ranked, adjacency) when is_map(adjacency) do
+    # Infer DAG nodes from ranked results not in any SCC
+    # (adjacency is pre-computed, no need to re-fetch edges)
+    top_dag = Enum.take(ranked, 6)
 
     if length(top_dag) < 2 do
       []
     else
-      adjacency = build_adjacency_from_topology(ranked, topology)
-
       top_dag
       |> pairs()
       |> Enum.take(5)
@@ -638,28 +1068,6 @@ defmodule Graphonomous.Retriever do
     _ -> []
   end
 
-  defp build_adjacency_from_topology(ranked, _topology) do
-    node_ids = Enum.map(ranked, & &1.node_id) |> Enum.filter(&is_binary/1) |> Enum.uniq()
-
-    edges =
-      node_ids
-      |> Enum.flat_map(fn id ->
-        case Store.list_edges_for_node(id) do
-          {:ok, list} -> list
-          _ -> []
-        end
-      end)
-      |> Enum.uniq_by(& &1.id)
-
-    neighbor_ids =
-      edges
-      |> Enum.flat_map(fn e -> [e.source_id, e.target_id] end)
-      |> Enum.filter(&is_binary/1)
-      |> Enum.uniq()
-
-    Topology.build_adjacency(Enum.uniq(node_ids ++ neighbor_ids), edges)
-  end
-
   defp pairs(list) do
     for {a, i} <- Enum.with_index(list),
         {b, j} <- Enum.with_index(list),
@@ -669,7 +1077,8 @@ defmodule Graphonomous.Retriever do
 
   # K2+K4: After initial topology analysis, if κ > 0, re-expand from top
   # results with deeper hops and gentler decay to follow cyclic paths.
-  defp maybe_kappa_expand(ranked, topology, cfg) do
+  # P2-L6: Accepts pre-computed adjacency to avoid redundant edge fetches.
+  defp maybe_kappa_expand(ranked, topology, existing_adjacency, cfg) do
     max_kappa = Map.get(topology, :max_kappa, 0)
 
     if max_kappa > 0 do
@@ -705,10 +1114,60 @@ defmodule Graphonomous.Retriever do
         |> Enum.sort_by(& &1.score, :desc)
         |> Enum.take(cfg.final_limit)
 
-      new_topology = analyze_topology(re_ranked)
+      # P2-L6: Incrementally update adjacency — only fetch edges for new nodes
+      new_topology = incremental_topology(re_ranked, existing_adjacency)
       {re_ranked, new_topology}
     else
       {ranked, topology}
+    end
+  end
+
+  # P2-L6: Recompute topology by extending existing adjacency with edges
+  # from newly-added nodes, avoiding redundant edge fetches for known nodes.
+  defp incremental_topology(ranked_results, existing_adjacency) do
+    new_ids =
+      ranked_results
+      |> Enum.map(&Map.get(&1, :node_id))
+      |> Enum.filter(&is_binary/1)
+      |> Enum.uniq()
+
+    known_ids = MapSet.new(Map.keys(existing_adjacency))
+    truly_new = Enum.reject(new_ids, &MapSet.member?(known_ids, &1))
+
+    if truly_new == [] do
+      # No new nodes — reanalyze existing adjacency (cheap, no edge fetches)
+      Topology.analyze(existing_adjacency)
+    else
+      # Fetch edges only for new nodes
+      new_edges =
+        truly_new
+        |> Enum.flat_map(fn id ->
+          case Store.list_edges_for_node_direct(id) do
+            {:ok, edges} -> edges
+            _ -> []
+          end
+        end)
+        |> Enum.uniq_by(& &1.id)
+
+      new_neighbor_ids =
+        new_edges
+        |> Enum.flat_map(fn edge -> [edge.source_id, edge.target_id] end)
+        |> Enum.filter(&is_binary/1)
+        |> Enum.uniq()
+
+      expanded_ids = Enum.uniq(new_ids ++ new_neighbor_ids)
+
+      # Merge new edges into existing adjacency
+      new_adjacency = Topology.build_adjacency(expanded_ids, new_edges)
+
+      merged_adjacency =
+        Map.merge(existing_adjacency, new_adjacency, fn _k, old_targets, new_targets ->
+          Enum.uniq(old_targets ++ new_targets)
+        end)
+
+      topology = Topology.analyze(merged_adjacency)
+      _ = Topology.emit_retrieve_route_telemetry(topology)
+      topology
     end
   end
 
@@ -761,7 +1220,7 @@ defmodule Graphonomous.Retriever do
     # Check if any candidate has Q-value outcome data
     has_outcome_data? =
       Enum.any?(ranked, fn entry ->
-        case Store.get_node(entry.node_id) do
+        case cached_get_node(entry.node_id) do
           {:ok, %Node{q_update_count: count}} when count > 0 -> true
           _ -> false
         end
@@ -771,7 +1230,7 @@ defmodule Graphonomous.Retriever do
       ranked
       |> Enum.map(fn entry ->
         {q, q_count} =
-          case Store.get_node(entry.node_id) do
+          case cached_get_node(entry.node_id) do
             {:ok, %Node{q_value: q, q_update_count: c}} -> {q, c}
             _ -> {0.5, 0}
           end
@@ -789,7 +1248,7 @@ defmodule Graphonomous.Retriever do
     end
   end
 
-  defp analyze_topology(ranked_results) when is_list(ranked_results) do
+  defp analyze_topology_with_adjacency(ranked_results) when is_list(ranked_results) do
     retrieved_ids =
       ranked_results
       |> Enum.map(&Map.get(&1, :node_id))
@@ -809,7 +1268,7 @@ defmodule Graphonomous.Retriever do
           all_edges =
             ids
             |> Enum.flat_map(fn id ->
-              case Store.list_edges_for_node(id) do
+              case Store.list_edges_for_node_direct(id) do
                 {:ok, edges} -> edges
                 _ -> []
               end
@@ -829,7 +1288,7 @@ defmodule Graphonomous.Retriever do
 
     topology = Topology.analyze(adjacency)
     _ = Topology.emit_retrieve_route_telemetry(topology)
-    topology
+    {topology, adjacency}
   end
 
   defp maybe_enrich_or_deliberate(result, query, opts) when is_map(result) and is_binary(query) do
@@ -978,16 +1437,32 @@ defmodule Graphonomous.Retriever do
   @temporal_half_life_hours 24.0
   @temporal_max_boost 1.15
 
-  defp temporal_recency_boost(node_id) do
-    case Store.get_node(node_id) do
+  defp temporal_recency_boost(node_id, temporal_intent) do
+    case cached_get_node(node_id) do
       {:ok, %Node{} = node} ->
         now = DateTime.utc_now()
 
-        # Use the most recent timestamp (last_accessed_at or updated_at)
+        # P4-Q8: For temporal queries, prefer event_date from metadata (when the
+        # referenced event actually happened), fall back to created_at
         latest =
-          [node.last_accessed_at, node.updated_at]
-          |> Enum.filter(&is_struct(&1, DateTime))
-          |> Enum.max(DateTime, fn -> nil end)
+          if temporal_intent != :normal do
+            event_date = parse_event_date(node.metadata)
+
+            case event_date do
+              %DateTime{} = ts ->
+                ts
+
+              _ ->
+                case node.created_at do
+                  %DateTime{} = ts -> ts
+                  _ -> nil
+                end
+            end
+          else
+            [node.last_accessed_at, node.updated_at]
+            |> Enum.filter(&is_struct(&1, DateTime))
+            |> Enum.max(DateTime, fn -> nil end)
+          end
 
         case latest do
           nil ->
@@ -1007,10 +1482,97 @@ defmodule Graphonomous.Retriever do
     _ -> 1.0
   end
 
+  # P4-Q8: Parse event_date from node metadata for dual-timestamp temporal boosting
+  defp parse_event_date(metadata) when is_map(metadata) do
+    case Map.get(metadata, "event_date") do
+      date_str when is_binary(date_str) and date_str != "" ->
+        case DateTime.from_iso8601(date_str) do
+          {:ok, dt, _} ->
+            dt
+
+          _ ->
+            case Date.from_iso8601(date_str) do
+              {:ok, date} -> DateTime.new!(date, ~T[12:00:00], "Etc/UTC")
+              _ -> nil
+            end
+        end
+
+      _ ->
+        nil
+    end
+  end
+
+  defp parse_event_date(_), do: nil
+
+  # P3-Q2: Temporal intent detection — classify queries for temporal-aware retrieval
+  @temporal_earliest ~r/\b(first|earliest|initial|originally|began|started|beginning)\b/i
+  @temporal_latest ~r/\b(last|latest|most recent|currently|now|recent|newest|updated)\b/i
+  @temporal_before ~r/\b(before|prior to|until|up to|preceding)\b/i
+  @temporal_after ~r/\b(after|since|following|subsequent)\b/i
+
+  defp detect_temporal_intent(query) when is_binary(query) do
+    cond do
+      Regex.match?(@temporal_earliest, query) -> :earliest
+      Regex.match?(@temporal_latest, query) -> :latest
+      Regex.match?(@temporal_before, query) -> :before
+      Regex.match?(@temporal_after, query) -> :after
+      true -> :normal
+    end
+  end
+
+  defp detect_temporal_intent(_), do: :normal
+
+  # P3-Q2: Turn-index boost — for temporal queries, boost nodes based on
+  # their position within a session (turn_index in metadata).
+  # "earliest/first" → boost low turn_index; "latest/last" → boost high turn_index
+  @temporal_turn_max_boost 1.4
+
+  defp temporal_turn_boost(_node_id, :normal), do: 1.0
+
+  defp temporal_turn_boost(node_id, intent) do
+    with {:ok, %Node{metadata: meta}} when is_map(meta) <- cached_get_node(node_id),
+         turn_idx when is_integer(turn_idx) <- meta_int(meta, "turn_index") do
+      # Normalize turn_index: assume typical sessions are 5-50 turns
+      # Use a sigmoid-like mapping: low index → high boost for :earliest, inverse for :latest
+      normalized = min(turn_idx / 30.0, 1.0)
+
+      factor =
+        case intent do
+          :earliest -> 1.0 - normalized
+          :before -> 1.0 - normalized * 0.7
+          :latest -> normalized
+          :after -> normalized * 0.7
+          _ -> 0.5
+        end
+
+      1.0 + (@temporal_turn_max_boost - 1.0) * factor
+    else
+      _ -> 1.0
+    end
+  rescue
+    _ -> 1.0
+  end
+
+  defp meta_int(meta, key) do
+    case Map.get(meta, key) do
+      v when is_integer(v) ->
+        v
+
+      v when is_binary(v) ->
+        case Integer.parse(v) do
+          {n, _} -> n
+          :error -> nil
+        end
+
+      _ ->
+        nil
+    end
+  end
+
   ## Config + utils
 
   defp merge_opts(state, opts) do
-    %{
+    base = %{
       similarity_limit:
         normalize_positive_int(
           Keyword.get(opts, :similarity_limit, state.similarity_limit),
@@ -1043,6 +1605,28 @@ defmodule Graphonomous.Retriever do
           @default_similarity_timeout_ms
         )
     }
+
+    maybe_scale_for_graph_size(base)
+  end
+
+  # Scale retrieval limits based on graph density. Fixed limits that work at
+  # 265 sessions fail at 940+ because ANN/BM25 top-K samples a smaller fraction
+  # of the relevant space. Scale factor: sqrt(node_count / 1000), capped at 3x.
+  defp maybe_scale_for_graph_size(cfg) do
+    node_count = Store.count_nodes()
+
+    if node_count > 1000 do
+      scale = min(:math.sqrt(node_count / 1000), 3.0)
+
+      %{
+        cfg
+        | similarity_limit: round(cfg.similarity_limit * scale),
+          final_limit: round(cfg.final_limit * scale),
+          neighbors_per_node: round(cfg.neighbors_per_node * scale)
+      }
+    else
+      cfg
+    end
   end
 
   defp normalize_positive_int(v, _fallback) when is_integer(v) and v > 0, do: v
@@ -1094,4 +1678,26 @@ defmodule Graphonomous.Retriever do
   defp clamp(v, min_v, _max_v) when v < min_v, do: min_v
   defp clamp(v, _min_v, max_v) when v > max_v, do: max_v
   defp clamp(v, _min_v, _max_v), do: v
+
+  # Per-query node cache using process dictionary (scoped to GenServer handle_call).
+  # Eliminates 150-200 redundant ETS lookups per query where the same node is
+  # fetched 3-5x across pipeline stages.
+  defp init_node_cache, do: Process.put(@node_cache_key, %{})
+  defp clear_node_cache, do: Process.delete(@node_cache_key)
+
+  defp cached_get_node(node_id) when is_binary(node_id) do
+    cache = Process.get(@node_cache_key, %{})
+
+    case Map.fetch(cache, node_id) do
+      {:ok, result} ->
+        result
+
+      :error ->
+        result = Store.get_node_direct(node_id)
+        Process.put(@node_cache_key, Map.put(cache, node_id, result))
+        result
+    end
+  end
+
+  defp cached_get_node(_), do: {:error, :not_found}
 end

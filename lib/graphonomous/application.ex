@@ -40,7 +40,8 @@ defmodule Graphonomous.Application do
         ),
       dimension: Application.get_env(:graphonomous, :embedding_dimension, 384),
       task_prefixes: Application.get_env(:graphonomous, :embedding_task_prefixes, nil),
-      backend: Application.get_env(:graphonomous, :embedder_backend, :auto)
+      backend: Application.get_env(:graphonomous, :embedder_backend, :auto),
+      onnx_sequence_length: Application.get_env(:graphonomous, :onnx_sequence_length, 64)
     ]
   end
 
