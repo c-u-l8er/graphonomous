@@ -112,6 +112,22 @@ defmodule Graphonomous.Retriever do
   @impl true
   def handle_call({:retrieve, query, call_opts}, _from, state) do
     cfg = merge_opts(state, call_opts)
+    # R3-P1: Preference queries need wider candidate pools because the correct
+    # session is often absent from the default top-K ANN candidates.
+    pref_query? = preference_query?(query)
+
+    cfg =
+      if pref_query? do
+        %{
+          cfg
+          | similarity_limit: round(cfg.similarity_limit * 2.5),
+            final_limit: round(cfg.final_limit * 1.5),
+            neighbors_per_node: round(cfg.neighbors_per_node * 1.5)
+        }
+      else
+        cfg
+      end
+
     init_node_cache()
     timings = %{}
 
@@ -142,7 +158,7 @@ defmodule Graphonomous.Retriever do
            # Fix 1: Capture max ANN similarity BEFORE any boosting/fusion (observe-only)
            max_ann_similarity = extract_max_ann_similarity(seed_hits),
            {seed_us, {:ok, seed_entries}} <-
-             :timer.tc(fn -> seed_entries(seed_hits, temporal_intent) end),
+             :timer.tc(fn -> seed_entries(seed_hits, temporal_intent, pref_query?) end),
            timings = Map.put(timings, :seed_entries, seed_us),
            {bm25_await_us, bm25_results} <-
              :timer.tc(fn ->
@@ -175,6 +191,12 @@ defmodule Graphonomous.Retriever do
         # extract entities from top results and run a supplementary BM25 pass
         {chain_us, ranked} =
           :timer.tc(fn -> maybe_chain_retrieval(ranked, query, cfg, temporal_intent) end)
+
+        # R2-P2: Temporal filter — for temporal queries, filter results by session_rank
+        # to remove results from the wrong time range (e.g., keep only early sessions
+        # for "first" queries). Applied after reranking but before final_limit.
+        {temporal_filter_us, ranked} =
+          :timer.tc(fn -> maybe_temporal_filter(ranked, temporal_intent) end)
 
         ranked = Enum.take(ranked, cfg.final_limit)
 
@@ -280,6 +302,7 @@ defmodule Graphonomous.Retriever do
           |> Map.put(:diversify_sessions, diversify_session_us)
           |> Map.put(:cross_encoder_rerank, rerank_us)
           |> Map.put(:chain_retrieval, chain_us)
+          |> Map.put(:temporal_filter, temporal_filter_us)
           |> Map.put(:topology, topology_us)
           |> Map.put(:kappa_expand, kappa_expand_us)
           |> Map.put(:fault_line_boost, fault_line_us)
@@ -317,7 +340,7 @@ defmodule Graphonomous.Retriever do
 
   ## Build seed entries (from similarity search)
 
-  defp seed_entries(hits, temporal_intent) when is_list(hits) do
+  defp seed_entries(hits, temporal_intent, pref_query?) when is_list(hits) do
     entries =
       Enum.reduce(hits, %{}, fn hit, acc ->
         node_id = Map.get(hit, :node_id)
@@ -338,13 +361,17 @@ defmodule Graphonomous.Retriever do
           # P3-Q2: Turn-index boost for temporal queries
           turn_boost = temporal_turn_boost(node_id, temporal_intent)
 
+          # R3-P1: Profile-node boost — preference queries have no keyword overlap
+          # with answers, so summary/fact-bearing nodes should surface first.
+          profile_boost = if pref_query?, do: profile_node_boost(node_id), else: 1.0
+
           entry = %{
             node_id: node_id,
             content: Map.get(hit, :content, ""),
             node_type: Map.get(hit, :node_type, :semantic),
             confidence: clamp01(to_float(Map.get(hit, :confidence, 0.5))),
             similarity: to_float(Map.get(hit, :similarity, 0.0)),
-            score: base_score * temporal_boost * turn_boost,
+            score: base_score * temporal_boost * turn_boost * profile_boost,
             source: :seed,
             hops: 0,
             via: nil
@@ -373,6 +400,31 @@ defmodule Graphonomous.Retriever do
   end
 
   ## Fix 1: ANN score statistics for learned abstention (observe-only)
+
+  # R3-P1: Boost nodes whose metadata carries bm25_facts or is_summary=true.
+  # These are dense fact aggregates — exactly what preference queries need.
+  defp profile_node_boost(node_id) do
+    with {:ok, %Node{metadata: meta}} when is_map(meta) <- cached_get_node(node_id) do
+      has_facts =
+        case Map.get(meta, "bm25_facts") do
+          [_ | _] -> true
+          _ -> false
+        end
+
+      is_summary =
+        case Map.get(meta, "is_summary") do
+          true -> true
+          "true" -> true
+          _ -> false
+        end
+
+      if has_facts or is_summary, do: 1.25, else: 1.0
+    else
+      _ -> 1.0
+    end
+  rescue
+    _ -> 1.0
+  end
 
   defp extract_max_ann_similarity(seed_hits) when is_list(seed_hits) do
     seed_hits
@@ -461,11 +513,11 @@ defmodule Graphonomous.Retriever do
   defp safe_bm25_search(query, limit) do
     try do
       BM25Index.search(query, limit: limit, timeout: 15_000)
+    rescue
+      _ -> {:error, :bm25_crashed}
     catch
       :exit, {:timeout, _} -> {:error, :bm25_timeout}
       :exit, reason -> {:error, {:bm25_exit, reason}}
-    rescue
-      _ -> {:error, :bm25_crashed}
     end
   end
 
@@ -684,7 +736,9 @@ defmodule Graphonomous.Retriever do
   # Post-reranking scores are blended: 0.4*RRF + 0.6*reranker_score.
   # A mediocre result (reranker ~0.2) scores ~0.13. Threshold must be in this
   # domain to actually trigger chain retrieval for weak first-pass results.
-  @chain_score_threshold 0.15
+  # R2-P4: Raised threshold 0.15→0.20 to trigger chain retrieval more aggressively
+  # for borderline queries where first pass misses the right session.
+  @chain_score_threshold 0.20
   @chain_min_results 3
 
   defp maybe_chain_retrieval(ranked, query, cfg, temporal_intent) do
@@ -992,7 +1046,15 @@ defmodule Graphonomous.Retriever do
   defp maybe_diversify_sessions(results, _cfg, query) do
     if length(results) > 3 do
       # P3-Q6: Relax session diversity penalty for multi-session queries
-      base = if multi_session_query?(query), do: 0.95, else: 0.90
+      # R2-P1/P3: Single-session queries (esp. preference) get near-zero penalty (0.98)
+      # because ALL correct results come from one session. Multi-session relaxed to 0.97.
+      base =
+        cond do
+          # R3-P1: preference queries concentrate in one session — nearly no penalty
+          preference_query?(query) -> 0.998
+          multi_session_query?(query) -> 0.97
+          true -> 0.98
+        end
 
       {reranked, _} =
         results
@@ -1011,11 +1073,13 @@ defmodule Graphonomous.Retriever do
   end
 
   # P3-Q6: Detect queries that likely need results from multiple sessions
+  # R2-P3: Extended markers + plural references for better multi-session detection
   defp multi_session_query?(query) do
     q = String.downcase(query)
 
     multi_session_markers =
-      ~w(both also and besides additionally compare different sessions conversations times)
+      ~w(both also besides additionally compare different sessions conversations times
+         all every each across various multiple several)
 
     entity_count =
       Regex.scan(~r/\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b/, query)
@@ -1023,8 +1087,10 @@ defmodule Graphonomous.Retriever do
 
     has_marker = Enum.any?(multi_session_markers, &String.contains?(q, &1))
     has_multiple_entities = entity_count >= 2
+    # R2-P3: "and" between entities suggests multi-session (e.g., "X and Y")
+    has_conjunction_entities = entity_count >= 2 and String.contains?(q, " and ")
 
-    has_marker or has_multiple_entities
+    has_marker or has_multiple_entities or has_conjunction_entities
   end
 
   defp session_id_for_entry(entry) do
@@ -1589,6 +1655,67 @@ defmodule Graphonomous.Retriever do
 
   defp parse_event_date(_), do: nil
 
+  # R2-P2: Temporal filter — for temporal queries, filter results by session_rank to
+  # remove results from the wrong time range. Uses a soft approach: keep 70% of the
+  # session_rank range aligned with intent, demote (not remove) the rest by 0.5x.
+  defp maybe_temporal_filter(ranked, :normal), do: ranked
+  defp maybe_temporal_filter(ranked, _intent) when length(ranked) <= 5, do: ranked
+
+  defp maybe_temporal_filter(ranked, intent) do
+    # Collect session_ranks from all results
+    ranks =
+      ranked
+      |> Enum.map(fn entry ->
+        case cached_get_node(entry.node_id) do
+          {:ok, %Node{metadata: meta}} when is_map(meta) ->
+            meta_int(meta, "session_rank")
+
+          _ ->
+            nil
+        end
+      end)
+
+    valid_ranks = Enum.reject(ranks, &is_nil/1)
+
+    if valid_ranks == [] do
+      ranked
+    else
+      min_rank = Enum.min(valid_ranks)
+      max_rank = Enum.max(valid_ranks)
+      range = max_rank - min_rank
+
+      if range == 0 do
+        ranked
+      else
+        # 30% cutoff: for :earliest/:before, keep bottom 70%; for :latest/:after, keep top 70%
+        cutoff_frac = 0.30
+
+        Enum.zip(ranked, ranks)
+        |> Enum.map(fn {entry, rank} ->
+          if is_nil(rank) do
+            entry
+          else
+            normalized = (rank - min_rank) / range
+
+            in_range? =
+              case intent do
+                :earliest -> normalized <= 1.0 - cutoff_frac
+                :before -> normalized <= 1.0 - cutoff_frac
+                :latest -> normalized >= cutoff_frac
+                :after -> normalized >= cutoff_frac
+                _ -> true
+              end
+
+            if in_range?, do: entry, else: %{entry | score: entry.score * 0.5}
+          end
+        end)
+        |> Enum.sort_by(& &1.score, :desc)
+      end
+    end
+  rescue
+    _ -> ranked
+  end
+
   # P3-Q2: Temporal intent detection — classify queries for temporal-aware retrieval
   @temporal_earliest ~r/\b(first|earliest|initial|originally|began|started|beginning)\b/i
   @temporal_latest ~r/\b(last|latest|most recent|currently|now|recent|newest|updated)\b/i
@@ -1606,6 +1733,18 @@ defmodule Graphonomous.Retriever do
   end
 
   defp detect_temporal_intent(_), do: :normal
+
+  # R3-P1: Preference query detection — targets vocabulary-mismatch queries
+  # that ask for advice/recommendations/opinions. These queries have near-zero
+  # keyword overlap with answer content and need aggressive candidate expansion
+  # plus profile-node boosting to surface densely-packed fact summaries.
+  @preference_query_re ~r/recommend|suggest|any tips|should i|what would you|any advice|help me with|any ideas|thinking about|what to\b/i
+
+  defp preference_query?(query) when is_binary(query) do
+    Regex.match?(@preference_query_re, query)
+  end
+
+  defp preference_query?(_), do: false
 
   # P3-Q2: Turn-index boost — for temporal queries, boost nodes based on
   # their position within a session (turn_index in metadata).

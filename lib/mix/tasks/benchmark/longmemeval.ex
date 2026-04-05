@@ -449,81 +449,89 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
         if embedding, do: Map.put(attrs, :embedding, embedding), else: attrs
       end)
 
-    nodes = Graphonomous.store_nodes_batch(all_attrs)
+    nodes =
+      case Graphonomous.store_nodes_batch(all_attrs) do
+        result when is_list(result) -> result
+        _error -> []
+      end
 
-    {node_ids, entities_by_node} =
-      turns
-      |> Enum.zip(nodes)
-      |> Enum.reduce({[], []}, fn {turn, node}, {id_acc, ent_acc} ->
-        content = Map.get(turn, "content", "")
-        entities = extract_entities(content)
-        {[node.id | id_acc], [{node.id, entities} | ent_acc]}
-      end)
-      |> then(fn {ids, ents} -> {Enum.reverse(ids), Enum.reverse(ents)} end)
+    if nodes == [] do
+      {[], []}
+    else
+      {node_ids, entities_by_node} =
+        turns
+        |> Enum.zip(nodes)
+        |> Enum.reduce({[], []}, fn {turn, node}, {id_acc, ent_acc} ->
+          content = Map.get(turn, "content", "")
+          entities = extract_entities(content)
+          {[node.id | id_acc], [{node.id, entities} | ent_acc]}
+        end)
+        |> then(fn {ids, ents} -> {Enum.reverse(ids), Enum.reverse(ents)} end)
 
-    # P3-Q4: Detect knowledge updates within the session.
-    # When a user turn contains correction markers, create :superseded_by edge
-    # from the previous assistant turn to the corrected version, and reduce confidence.
-    detect_knowledge_updates(turns, node_ids)
+      # P3-Q4: Detect knowledge updates within the session.
+      # When a user turn contains correction markers, create :superseded_by edge
+      # from the previous assistant turn to the corrected version, and reduce confidence.
+      detect_knowledge_updates(turns, node_ids)
 
-    # S1: Sequential :follows edges between consecutive turns
-    node_ids
-    |> Enum.chunk_every(2, 1, :discard)
-    |> Enum.each(fn [prev, curr] ->
-      Graphonomous.link_nodes(prev, curr, %{
-        edge_type: :follows,
-        weight: 0.9,
-        metadata: %{"session_id" => session_id, "link_type" => "intra_session"}
-      })
-    end)
-
-    # S3: Session-level summary node (two-level hierarchy like LiCoMemory)
-    summary_content =
-      turns
-      |> Enum.map(fn t ->
-        "[#{Map.get(t, "role", "?")}] #{String.slice(Map.get(t, "content", ""), 0, 200)}"
-      end)
-      |> Enum.join(" | ")
-
-    # P4-Q7: Collect all facts from session turns for summary-level BM25 indexing
-    all_session_facts =
-      turns
-      |> Enum.flat_map(fn t ->
-        extract_facts(Map.get(t, "content", ""), Map.get(t, "role", ""))
-      end)
-      |> Enum.uniq()
-      |> Enum.take(20)
-
-    summary_meta =
-      %{
-        "session_id" => session_id,
-        "is_summary" => true,
-        "turn_count" => length(turns),
-        "session_rank" => session_rank,
-        "benchmark" => "longmemeval"
-      }
-      |> then(fn m ->
-        if all_session_facts != [], do: Map.put(m, "bm25_facts", all_session_facts), else: m
+      # S1: Sequential :follows edges between consecutive turns
+      node_ids
+      |> Enum.chunk_every(2, 1, :discard)
+      |> Enum.each(fn [prev, curr] ->
+        Graphonomous.link_nodes(prev, curr, %{
+          edge_type: :follows,
+          weight: 0.9,
+          metadata: %{"session_id" => session_id, "link_type" => "intra_session"}
+        })
       end)
 
-    summary =
-      Graphonomous.store_node(%{
-        content: "Session #{session_id} summary: #{String.slice(summary_content, 0, 4096)}",
-        node_type: :semantic,
-        confidence: 0.80,
-        source: "longmemeval",
-        metadata: summary_meta
-      })
+      # S3: Session-level summary node (two-level hierarchy like LiCoMemory)
+      summary_content =
+        turns
+        |> Enum.map(fn t ->
+          "[#{Map.get(t, "role", "?")}] #{String.slice(Map.get(t, "content", ""), 0, 200)}"
+        end)
+        |> Enum.join(" | ")
 
-    Enum.each(node_ids, fn nid ->
-      Graphonomous.link_nodes(summary.id, nid, %{
-        edge_type: :part_of,
-        weight: 0.85,
-        metadata: %{"session_id" => session_id}
-      })
-    end)
+      # P4-Q7: Collect all facts from session turns for summary-level BM25 indexing
+      all_session_facts =
+        turns
+        |> Enum.flat_map(fn t ->
+          extract_facts(Map.get(t, "content", ""), Map.get(t, "role", ""))
+        end)
+        |> Enum.uniq()
+        |> Enum.take(30)
 
-    {node_ids, entities_by_node}
+      summary_meta =
+        %{
+          "session_id" => session_id,
+          "is_summary" => true,
+          "turn_count" => length(turns),
+          "session_rank" => session_rank,
+          "benchmark" => "longmemeval"
+        }
+        |> then(fn m ->
+          if all_session_facts != [], do: Map.put(m, "bm25_facts", all_session_facts), else: m
+        end)
+
+      summary =
+        Graphonomous.store_node(%{
+          content: "Session #{session_id} summary: #{String.slice(summary_content, 0, 4096)}",
+          node_type: :semantic,
+          confidence: 0.80,
+          source: "longmemeval",
+          metadata: summary_meta
+        })
+
+      Enum.each(node_ids, fn nid ->
+        Graphonomous.link_nodes(summary.id, nid, %{
+          edge_type: :part_of,
+          weight: 0.85,
+          metadata: %{"session_id" => session_id}
+        })
+      end)
+
+      {node_ids, entities_by_node}
+    end
   end
 
   defp ingest_session(_session_id, _, _session_rank), do: {[], []}
@@ -648,6 +656,18 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
   @fact_possession_re ~r/(?:my |I have a |I own a )(.{3,40}?)(?:\.|,|$|\band\b|\bbut\b|\bnamed\b|\bcalled\b)/i
   @fact_name_re ~r/(?:my name is|I'm called|call me|I go by)\s+(.{2,30}?)(?:\.|,|$|\band\b)/i
 
+  # R2-P1: Extended preference/interest extraction — captures implicit preferences
+  # that don't use explicit preference verbs but indicate user interests, activities, and equipment.
+  @fact_interest_re ~r/(?:I'm trying to|I'm looking for|I'm interested in|I want to learn|I need help with|I'm curious about)\s+(.{3,60}?)(?:\.|,|$|\band\b|\bbut\b)/i
+  @fact_experience_re ~r/(?:I recently|I've been|I figured out how to|I've been experimenting with|I started|I've started)\s+(.{3,60}?)(?:\.|,|$|\band\b|\bbut\b)/i
+  @fact_equipment_re ~r/(?:compatible with my|I use|I'm using|I work with|I have a|my)\s+([A-Z][\w\s-]{2,40}?)(?:\.|,|$|\band\b|\bbut\b)/
+  @fact_selection_re ~r/(?:I'll go with|I decided on|I'm leaning towards|I think I'll|I chose|I went with|I picked)\s+(.{3,40}?)(?:\.|,|$|\band\b|\bbut\b)/i
+  @fact_aspiration_re ~r/(?:as an aspiring|I want to become|I'm training to be|I aspire to)\s+(.{3,40}?)(?:\.|,|$|\band\b|\bbut\b)/i
+  @fact_planning_re ~r/(?:I'm planning|I'm preparing for|I'm working on|I'm building|I'm organizing)\s+(.{3,50}?)(?:\.|,|$|\band\b|\bbut\b)/i
+  @fact_opinion_re ~r/(?:I think|I believe|I feel that|in my opinion|I find that)\s+(.{3,50}?)(?:\.|,|$|\band\b|\bbut\b)/i
+  @fact_habit_re ~r/(?:I always|I never|I tend to|I usually|every day I|every morning I|every night I)\s+(.{3,50}?)(?:\.|,|$|\band\b|\bbut\b)/i
+  @fact_struggle_re ~r/(?:I'm struggling with|I'm having trouble with|I can't seem to|I need to improve)\s+(.{3,50}?)(?:\.|,|$|\band\b|\bbut\b)/i
+
   defp extract_facts(content, _role) when is_binary(content) do
     facts = []
 
@@ -722,14 +742,87 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
           _ -> []
         end)
 
-    facts |> Enum.uniq() |> Enum.take(10)
+    # R2-P1: Extended implicit preference extraction
+    facts =
+      facts ++
+        Enum.flat_map(Regex.scan(@fact_interest_re, content), fn
+          [_, obj] -> ["interest: #{String.trim(obj)}"]
+          _ -> []
+        end)
+
+    facts =
+      facts ++
+        Enum.flat_map(Regex.scan(@fact_experience_re, content), fn
+          [_, obj] -> ["experience: #{String.trim(obj)}"]
+          _ -> []
+        end)
+
+    facts =
+      facts ++
+        Enum.flat_map(Regex.scan(@fact_equipment_re, content), fn
+          [_, obj] ->
+            trimmed = String.trim(obj)
+            ["equipment: #{trimmed}", "uses #{trimmed}"]
+
+          _ ->
+            []
+        end)
+
+    facts =
+      facts ++
+        Enum.flat_map(Regex.scan(@fact_selection_re, content), fn
+          [_, obj] -> ["preference: #{String.trim(obj)}", "chose #{String.trim(obj)}"]
+          _ -> []
+        end)
+
+    facts =
+      facts ++
+        Enum.flat_map(Regex.scan(@fact_aspiration_re, content), fn
+          [_, obj] -> ["aspiration: #{String.trim(obj)}"]
+          _ -> []
+        end)
+
+    facts =
+      facts ++
+        Enum.flat_map(Regex.scan(@fact_planning_re, content), fn
+          [_, obj] -> ["planning: #{String.trim(obj)}"]
+          _ -> []
+        end)
+
+    facts =
+      facts ++
+        Enum.flat_map(Regex.scan(@fact_opinion_re, content), fn
+          [_, obj] -> ["opinion: #{String.trim(obj)}"]
+          _ -> []
+        end)
+
+    facts =
+      facts ++
+        Enum.flat_map(Regex.scan(@fact_habit_re, content), fn
+          [_, obj] -> ["habit: #{String.trim(obj)}"]
+          _ -> []
+        end)
+
+    facts =
+      facts ++
+        Enum.flat_map(Regex.scan(@fact_struggle_re, content), fn
+          [_, obj] -> ["struggle: #{String.trim(obj)}"]
+          _ -> []
+        end)
+
+    # R2-P1: Raise fact limit from 10→20 — more facts = better BM25 coverage
+    facts |> Enum.uniq() |> Enum.take(20)
   end
 
   defp extract_facts(_, _), do: []
 
   # P4-Q8: Extract event dates from turn content for dual timestamp storage
+  # R2-P2: Extended date patterns for better temporal coverage
   @date_iso_re ~r/\b(\d{4}-\d{2}-\d{2})\b/
   @date_month_day_re ~r/\b(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{1,2})(?:st|nd|rd|th)?,?\s*(\d{4})?\b/i
+  @date_abbrev_month_re ~r/\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\.?\s+(\d{1,2})(?:st|nd|rd|th)?,?\s*(\d{4})?\b/
+  @date_day_month_re ~r/\b(\d{1,2})(?:st|nd|rd|th)?\s+(January|February|March|April|May|June|July|August|September|October|November|December),?\s*(\d{4})?\b/i
+  @date_slash_re ~r/\b(\d{1,2})\/(\d{1,2})\/(\d{2,4})\b/
 
   defp extract_event_date(content) when is_binary(content) do
     cond do
@@ -740,6 +833,18 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
       # Month Day Year: "January 15, 2024" or "January 15th"
       match = Regex.run(@date_month_day_re, content) ->
         format_month_date(match)
+
+      # R2-P2: Abbreviated months: "Jan 15, 2024"
+      match = Regex.run(@date_abbrev_month_re, content) ->
+        format_abbrev_month_date(match)
+
+      # R2-P2: Day Month Year: "15th January 2024"
+      match = Regex.run(@date_day_month_re, content) ->
+        format_day_month_date(match)
+
+      # R2-P2: Slash dates: "1/15/2024" or "01/15/24"
+      match = Regex.run(@date_slash_re, content) ->
+        format_slash_date(match)
 
       true ->
         nil
@@ -785,6 +890,65 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
   end
 
   defp format_month_date(_), do: nil
+
+  # R2-P2: Abbreviated month map
+  @abbrev_month_map %{
+    "jan" => "01",
+    "feb" => "02",
+    "mar" => "03",
+    "apr" => "04",
+    "may" => "05",
+    "jun" => "06",
+    "jul" => "07",
+    "aug" => "08",
+    "sep" => "09",
+    "oct" => "10",
+    "nov" => "11",
+    "dec" => "12"
+  }
+
+  defp format_abbrev_month_date([_, month, day | rest]) do
+    month_num = Map.get(@abbrev_month_map, String.downcase(String.replace(month, ".", "")))
+
+    year =
+      case rest do
+        [y] when is_binary(y) and y != "" -> y
+        _ -> "2024"
+      end
+
+    if month_num do
+      day_padded = String.pad_leading(day, 2, "0")
+      validate_date_string("#{year}-#{month_num}-#{day_padded}")
+    end
+  end
+
+  defp format_abbrev_month_date(_), do: nil
+
+  defp format_day_month_date([_, day, month | rest]) do
+    month_num = Map.get(@month_map, String.downcase(month))
+
+    year =
+      case rest do
+        [y] when is_binary(y) and y != "" -> y
+        _ -> "2024"
+      end
+
+    if month_num do
+      day_padded = String.pad_leading(day, 2, "0")
+      validate_date_string("#{year}-#{month_num}-#{day_padded}")
+    end
+  end
+
+  defp format_day_month_date(_), do: nil
+
+  defp format_slash_date([_, month, day, year]) do
+    y = if String.length(year) == 2, do: "20#{year}", else: year
+    m = String.pad_leading(month, 2, "0")
+    d = String.pad_leading(day, 2, "0")
+    validate_date_string("#{y}-#{m}-#{d}")
+  end
+
+  defp format_slash_date(_), do: nil
 
   # P3-Q4: Detect knowledge updates within a session during ingestion.
   # When a user turn contains correction markers ("actually", "I changed my mind", etc.),
@@ -855,11 +1019,14 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
     if is_abstention, do: :abstention, else: ability
 
     # S4+S6: Adaptive retrieval limits — multi-session needs wider net
+    # R2-P3: Multi-session 50→60 final_limit, 2→2 hops, 25→30 sim_limit
+    # R2-P2: Temporal 40→50 final_limit for more temporal range coverage
+    # R2-P4: Info extraction 15→18 sim_limit for better recall on edge cases
     {sim_limit, final_limit, exp_hops} =
       case question_type do
-        "multi-session" -> {25, 50, 2}
-        "temporal-reasoning" -> {20, 40, 1}
-        _ -> {15, 30, 1}
+        "multi-session" -> {30, 60, 2}
+        "temporal-reasoning" -> {22, 50, 1}
+        _ -> {18, 35, 1}
       end
 
     # Retrieve from Graphonomous

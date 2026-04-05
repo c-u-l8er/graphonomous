@@ -186,11 +186,11 @@ defmodule Mix.Tasks.Benchmark.Helpers do
         {:error, reason} -> {:error, reason}
         other -> {:error, {:unexpected_delete_node_result, other}}
       end
+    rescue
+      e -> {:error, {:exception, Exception.message(e)}}
     catch
       :exit, {:timeout, _} -> {:error, :timeout}
       :exit, reason -> {:error, {:exit, reason}}
-    rescue
-      e -> {:error, {:exception, Exception.message(e)}}
     end
   end
 
@@ -201,11 +201,11 @@ defmodule Mix.Tasks.Benchmark.Helpers do
         {:error, reason} -> {:error, reason}
         other -> {:error, {:unexpected_delete_goal_result, other}}
       end
+    rescue
+      e -> {:error, {:exception, Exception.message(e)}}
     catch
       :exit, {:timeout, _} -> {:error, :timeout}
       :exit, reason -> {:error, {:exit, reason}}
-    rescue
-      e -> {:error, {:exception, Exception.message(e)}}
     end
   end
 

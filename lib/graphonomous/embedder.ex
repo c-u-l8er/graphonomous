@@ -852,8 +852,6 @@ defmodule Graphonomous.Embedder do
   # The original sparse MoE export used Expand/ScatterElements with data-dependent
   # shapes which failed in every ORT version. Re-exported with dense computation
   # that produces identical embeddings (cosine sim 1.0 vs original).
-  defp unstable_onnx_model?(_model_id), do: false
-
   defp onnx_force_sequential?(_model_id), do: false
 
   defp fixed_length_onnx_inputs(encoding, seq_len) do
