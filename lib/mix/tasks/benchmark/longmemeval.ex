@@ -82,7 +82,8 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
           skip_ingest: :boolean,
           skip_topology: :boolean,
           judge: :boolean,
-          reflect: :boolean
+          reflect: :boolean,
+          diagnose: :boolean
         ]
       )
 
@@ -93,6 +94,9 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
     skip_topology = Keyword.get(opts, :skip_topology, false)
     judge = Keyword.get(opts, :judge, false)
     reflect = Keyword.get(opts, :reflect, false)
+    diagnose = Keyword.get(opts, :diagnose, false)
+
+    if diagnose, do: Application.put_env(:graphonomous, :benchmark_diagnose, true)
 
     if opts[:neural], do: Application.put_env(:graphonomous, :benchmark_neural, true)
     if judge, do: Application.put_env(:graphonomous, :benchmark_judge, true)
@@ -1142,12 +1146,13 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
     # P4-Q9: Session-level NDCG — measures ranking quality, not just hit/miss.
     # A result is "relevant" (gain=1) if its session_id is in answer_session_ids.
     # Ideal ranking would place all relevant results at the top.
-    session_ndcg =
+    {session_ndcg, first_correct_rank, correct_session_ranks} =
       if answer_session_ids == [] do
-        if is_abstention, do: 1.0, else: 0.0
+        ndcg = if is_abstention, do: 1.0, else: 0.0
+        {ndcg, nil, []}
       else
         answer_set = MapSet.new(answer_session_ids)
-        compute_session_ndcg(results, answer_set)
+        compute_ndcg_and_ranks(results, answer_set)
       end
 
     # Composite QA proxy score (weighted combination)
@@ -1201,6 +1206,8 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
       keyword_recall: Float.round(keyword_recall, 4),
       keyword_f1: Float.round(keyword_f1, 4),
       session_ndcg: Float.round(session_ndcg, 4),
+      first_correct_rank: first_correct_rank,
+      correct_session_ranks: correct_session_ranks,
       abstention_correct: abstention_correct,
       qa_proxy_score: Float.round(qa_proxy, 4),
       topology_routing: Map.get(topology, :routing),
@@ -1269,7 +1276,11 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
   # A result at rank i is relevant (gain=1) if its session_id ∈ answer_session_ids.
   # DCG = Σ gain_i / log2(i+1), NDCG = DCG / ideal_DCG
 
-  defp compute_session_ndcg(results, answer_set) when is_list(results) do
+  # Returns {ndcg, first_correct_rank, correct_session_ranks} in a single pass.
+  # first_correct_rank is the 1-indexed position of the first result whose
+  # session_id is in answer_set, or nil if none. correct_session_ranks is the
+  # full list of 1-indexed positions of correct-session results.
+  defp compute_ndcg_and_ranks(results, answer_set) when is_list(results) do
     relevance =
       Enum.map(results, fn r ->
         node_id = Map.get(r, :node_id)
@@ -1285,8 +1296,15 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
 
     dcg = compute_dcg(relevance)
     ideal = relevance |> Enum.sort(:desc) |> compute_dcg()
+    ndcg = if ideal > 0.0, do: min(dcg / ideal, 1.0), else: 0.0
 
-    if ideal > 0.0, do: min(dcg / ideal, 1.0), else: 0.0
+    ranks =
+      relevance
+      |> Enum.with_index(1)
+      |> Enum.flat_map(fn {gain, rank} -> if gain > 0.0, do: [rank], else: [] end)
+
+    first = List.first(ranks)
+    {ndcg, first, ranks}
   end
 
   defp compute_dcg(gains) do
@@ -1461,13 +1479,79 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
       |> Enum.reject(&is_nil/1)
       |> aggregate_stage_timings()
 
+    rank_diag = compute_rank_diagnostics(question_results)
+
     %{
       overall: overall,
       abstention: abstention_metrics,
       by_ability: by_ability,
       by_question_type: by_type,
-      stage_timings: stage_timing_agg
+      stage_timings: stage_timing_agg,
+      rank_diagnostics: rank_diag
     }
+  end
+
+  # STEP A diagnostic: per-category rank distribution of correct-session hits.
+  # Low session_ndcg with high session_hit means correct sessions land deep in
+  # the result list. This shows where they land.
+  defp compute_rank_diagnostics(question_results) do
+    by_type =
+      question_results
+      |> Enum.reject(& &1.is_abstention)
+      |> Enum.group_by(& &1.question_type)
+      |> Enum.map(fn {type, items} ->
+        firsts =
+          items
+          |> Enum.map(& &1.first_correct_rank)
+          |> Enum.reject(&is_nil/1)
+
+        all_ranks =
+          items
+          |> Enum.flat_map(fn it -> Map.get(it, :correct_session_ranks, []) || [] end)
+
+        mean_first =
+          if firsts == [], do: nil, else: Float.round(Enum.sum(firsts) / length(firsts), 2)
+
+        median_first =
+          if firsts == [] do
+            nil
+          else
+            sorted = Enum.sort(firsts)
+            Enum.at(sorted, div(length(sorted), 2))
+          end
+
+        top3_rate =
+          if firsts == [],
+            do: 0.0,
+            else:
+              Float.round(
+                Enum.count(firsts, &(&1 <= 3)) / length(firsts) * 100,
+                1
+              )
+
+        top5_rate =
+          if firsts == [],
+            do: 0.0,
+            else:
+              Float.round(
+                Enum.count(firsts, &(&1 <= 5)) / length(firsts) * 100,
+                1
+              )
+
+        {type,
+         %{
+           count: length(items),
+           with_hit: length(firsts),
+           mean_first_rank: mean_first,
+           median_first_rank: median_first,
+           top3_rate_pct: top3_rate,
+           top5_rate_pct: top5_rate,
+           all_correct_rank_count: length(all_ranks)
+         }}
+      end)
+      |> Map.new()
+
+    %{by_question_type: by_type}
   end
 
   defp aggregate_stage_timings([]), do: %{}
@@ -1628,10 +1712,36 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
       end)
     end
 
+    if Application.get_env(:graphonomous, :benchmark_diagnose, false) do
+      print_rank_diagnostics(metrics.rank_diagnostics)
+    end
+
     Mix.shell().info("""
     ╠══════════════════════════════════════════════════════════╣
     ║  Output: #{String.pad_trailing(path, 48)}║
     ╚══════════════════════════════════════════════════════════╝
     """)
+  end
+
+  defp print_rank_diagnostics(%{by_question_type: by_type}) do
+    Mix.shell().info("""
+    ╠══════════════════════════════════════════════════════════╣
+    ║  STEP-A DIAGNOSTIC: rank of first correct-session hit    ║
+    ║  (low mean_rank = good; top3 >= 80% = healthy)           ║
+    ║  ─────────────────────────────────────                   ║
+    """)
+
+    by_type
+    |> Enum.sort_by(fn {type, _} -> type end)
+    |> Enum.each(fn {type, v} ->
+      label = "#{type} (#{v.with_hit}/#{v.count})"
+
+      stats =
+        "mean=#{v.mean_first_rank || "-"} med=#{v.median_first_rank || "-"} top3=#{v.top3_rate_pct}% top5=#{v.top5_rate_pct}%"
+
+      Mix.shell().info(
+        "    ║  #{String.pad_trailing(label, 28)} #{String.pad_trailing(stats, 27)}║"
+      )
+    end)
   end
 end
