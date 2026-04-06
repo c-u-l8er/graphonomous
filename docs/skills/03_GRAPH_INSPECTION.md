@@ -390,6 +390,11 @@ After an outcome, trace what knowledge led to the decision:
    C is isolated (no edges, confidence 0.5)."
 ```
 
+**Shortcut:** For tracing the path between two specific nodes, use
+`trace_evidence_path(from: "<source_id>", to: "<target_id>", k: 3)` instead
+of manual hop-by-hop `get_edges` traversal. It returns the K lowest-cost paths
+with per-edge cost breakdown, considering confidence, recency, and edge type.
+
 ### Pattern 4 — Duplicate Prevention
 
 Before storing a new node, check for near-duplicates:

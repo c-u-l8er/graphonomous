@@ -22,7 +22,8 @@
 9. [Workflow I — End-of-Session Cleanup](#workflow-i--end-of-session-cleanup)
 10. [Workflow J — Teach Graphonomous About a New Domain](#workflow-j--teach-graphonomous-about-a-new-domain)
 11. [Workflow K — Multi-Agent Handoff](#workflow-k--multi-agent-handoff)
-12. [Workflow Composition — Combining Recipes](#workflow-composition--combining-recipes)
+12. [Workflow L — Trace Evidence for Decision Explainability](#workflow-l--trace-evidence-for-decision-explainability)
+13. [Workflow Composition — Combining Recipes](#workflow-composition--combining-recipes)
 
 ---
 
@@ -1261,6 +1262,75 @@ Proceed with whatever workflow matches the current objective.
 
 ---
 
+## Workflow L — Trace Evidence for Decision Explainability
+
+> **When:** Before high-stakes actions, after deliberation, when the user asks
+> "why did you conclude X?", or when auditing reasoning chains.
+>
+> **Tools used:** `retrieve_context`, `trace_evidence_path`, `query_graph`, `store_node`
+
+```
+# 1. Identify the two endpoints to trace between
+retrieve_context(query: "the decision or conclusion in question")
+→ Find the conclusion node ID and the source evidence node ID
+
+# 2. Trace the evidence path
+trace_evidence_path(from: "<source_id>", to: "<conclusion_id>", k: 3)
+→ Returns K lowest-cost paths with per-edge cost breakdown
+
+# 3. Interpret the results
+For each path:
+  - total_cost < 1.0 → strong, direct evidence chain ✓
+  - total_cost > 3.0 → weak or indirect — investigate
+  - any "contradicts" edge → the chain passes through a known conflict ⚠
+  - multiple diverse paths → conclusion has robust multi-source support ✓
+
+# 4. If a contradicts edge appears in the path:
+query_graph(operation: "get_node", node_id: "<node_before_contradiction>")
+query_graph(operation: "get_node", node_id: "<node_after_contradiction>")
+→ Inspect both sides of the contradiction
+
+# 5. Report the chain to the user in natural language
+"Node A → B → C → D, cost 0.42: A -[causal, conf 0.9]→ B -[supports, conf 0.8]→ C -[causal, conf 0.7]→ D"
+
+# 6. Optionally store the audit as episodic knowledge
+store_node(
+  content: "Evidence trace from <source> to <conclusion>: 3 hops, total cost 0.42, no contradictions",
+  node_type: "episodic",
+  confidence: 0.8,
+  source: "trace_evidence_path audit"
+)
+```
+
+### Variations
+
+**Post-deliberation verification:**
+```
+deliberate(query: "...", write_back: true)
+→ Get conclusion node ID from response
+trace_evidence_path(from: "<original_evidence>", to: "<conclusion_id>")
+→ Verify the crystallized conclusion connects back to source
+topology_analyze(query: "...")
+→ Confirm κ dropped after crystallization
+```
+
+**Bidirectional vs directed tracing:**
+```
+# Default: bidirectional (follows edges in both directions)
+trace_evidence_path(from: "<a>", to: "<b>")
+
+# Strict causal direction only (A caused B, not B caused A)
+trace_evidence_path(from: "<a>", to: "<b>", bidirectional: false)
+```
+
+**Recency-weighted tracing:**
+```
+# Strongly prefer recent evidence (24h half-life)
+trace_evidence_path(from: "<a>", to: "<b>", half_life_hours: 24.0)
+```
+
+---
+
 ## Workflow Composition — Combining Recipes
 
 These workflows are designed to compose. Here are common compositions:
@@ -1363,6 +1433,7 @@ How often to call each tool during a typical productive session:
 | `manage_goal` | **Per project-level action** | Create/transition/progress at natural milestones |
 | `review_goal` | **At decision points** | Before high-stakes actions, after learning phases |
 | `topology_analyze` | **On suspicion** | When retrieval shows deliberate routing or contradictions |
+| `trace_evidence_path` | **Before high-stakes actions / on demand** | When auditing reasoning chains, after deliberation, or for explainability |
 | `deliberate` | **Rarely** | Only when κ > 0 and stakes are high |
 | `run_consolidation` | **End of session / every ~5 iterations** | Periodic maintenance |
 | `attention_survey` | **Session start / periodically** | To check what needs focus |

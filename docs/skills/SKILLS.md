@@ -85,6 +85,7 @@ Every interaction should follow this rhythm:
 | `retrieve_episodic` | Time-range filtered episodic node retrieval | `since`, `until`, `limit` |
 | `retrieve_procedural` | Semantic search scoped to procedural nodes with precondition matching | `query` (required), `limit`, `min_confidence` |
 | `coverage_query` | Standalone epistemic coverage assessment (act/learn/escalate) | `query` (required), `limit`, `expansion_hops` |
+| `trace_evidence_path` | Weighted Dijkstra / Yen's K-shortest paths for evidence provenance tracing | `from` + `to` (required), `k`, `half_life_hours`, `bidirectional`, `max_hops` |
 | `epistemic_frontier` | Identify highest-uncertainty nodes where evidence would most reduce uncertainty | `min_gap` (default 0.3), `limit` (default 10) |
 | `attention_survey` | Read current attention priority map | `include_idle` |
 

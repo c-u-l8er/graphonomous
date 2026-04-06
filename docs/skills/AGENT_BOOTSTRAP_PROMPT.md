@@ -102,6 +102,7 @@ For multi-step tasks:
 - Read topology from retrieval outputs.
 - If routing indicates cyclic complexity (`deliberate` / κ > 0), use topology analysis and deliberation for high-stakes decisions.
 - Avoid unnecessary deliberation when routing is `fast`.
+- Use `trace_evidence_path` to verify reasoning chains between nodes — especially after deliberation or before high-stakes actions.
 
 ---
 

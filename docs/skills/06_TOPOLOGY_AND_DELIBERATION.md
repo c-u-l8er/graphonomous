@@ -573,6 +573,55 @@ deliberation budget from topology analysis to understand how hard the problem wa
 
 ---
 
+## Evidence Path Tracing
+
+After deliberation resolves cycles, or before high-stakes actions, you can trace
+the evidence chain between any two nodes using weighted Dijkstra:
+
+```
+trace_evidence_path(from: "<source_id>", to: "<target_id>", k: 3)
+```
+
+This returns the K lowest-cost paths through the knowledge graph, where cost =
+`-log(confidence) + recency_decay + type_cost`. Causal edges are free (0.0),
+`supports` edges cost 0.1, and `contradicts` edges are penalized (2.0).
+
+### When to trace evidence paths
+
+| Scenario | Why |
+|----------|-----|
+| After `deliberate(write_back: true)` | Verify the crystallized conclusion connects back to source evidence |
+| Before high-stakes action | Audit the reasoning chain — check for `contradicts` edges in the path |
+| After `belief_revise` | Confirm the revised knowledge still has valid provenance |
+| Investigating contradictions | Trace the path between two contradicting nodes to find the divergence point |
+| Goal provenance | Show how evidence nodes connect to a goal's linked knowledge |
+
+### Interpreting results
+
+- **Low total cost** (< 1.0) → strong, direct evidence chain
+- **High total cost** (> 3.0) → weak or indirect connection
+- **`contradicts` edge in path** → the chain passes through a known conflict; investigate
+- **Multiple paths with different intermediate nodes** → the conclusion has diverse supporting evidence
+- **Empty result** → the nodes are not connected; the relationship may be assumed but not evidenced
+
+### Combining with topology analysis
+
+```
+# 1. Analyze topology — find cyclic regions
+topology_analyze(query: "deployment strategy")
+
+# 2. Deliberate through the cycle
+deliberate(query: "Which deployment approach?", write_back: true)
+
+# 3. Verify the conclusion's provenance
+trace_evidence_path(from: "<source_evidence_id>", to: "<conclusion_id>", k: 2)
+
+# 4. Confirm κ dropped
+topology_analyze(query: "deployment strategy")
+```
+
+---
+
 ## Quick Reference
 
 ```
@@ -587,11 +636,15 @@ deliberate(query: "...", node_ids: [...], write_back: false)
 
 deliberate(query: "...", write_back: true)
 → Auto-scope via retrieval, reason through cycles, store conclusions.
+
+trace_evidence_path(from: "<id_a>", to: "<id_b>", k: 3)
+→ Find K lowest-cost evidence paths between two nodes via weighted Dijkstra.
 ```
 
 **Decision framework:**
 - `retrieve_context` says `routing: "fast"` → proceed normally
 - `retrieve_context` says `routing: "deliberate"` → run `topology_analyze` for detail, then `deliberate` to resolve
+- After deliberation → `trace_evidence_path` to verify provenance
 - κ = 0 → no cycles, fast path
 - κ = 1 → simple cycle, straightforward deliberation
 - κ ≥ 2 → complex entanglement, may need multiple deliberation passes or scope narrowing
@@ -608,5 +661,6 @@ deliberate(query: "...", write_back: true)
 | Diagnose before treating | Use `topology_analyze` to understand structure before `deliberate` |
 | Crystallization closes cycles | `write_back: true` stores conclusions that break circular dependencies |
 | Verify resolution | Re-run `topology_analyze` after deliberation to confirm κ dropped |
+| Trace provenance | Use `trace_evidence_path` to show the reasoning chain between any two nodes |
 | Not every cycle needs deliberation | For low-stakes questions with `routing: "deliberate"`, acknowledging uncertainty may suffice |
 | The graph self-heals over time | Deliberation + consolidation gradually eliminate circular reasoning artifacts |
