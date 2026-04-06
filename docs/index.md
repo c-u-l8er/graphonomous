@@ -97,6 +97,12 @@ skills/07_CONSOLIDATION
 skills/08_ATTENTION
 skills/09_WORKFLOWS
 skills/10_ANTI_PATTERNS
+skills/11_BELIEF_REVISION
+skills/12_FORGETTING
+skills/13_EPISTEMIC_FRONTIER
+skills/14_SYNC
+skills/15_WATCH
+skills/16_TRACE_EVIDENCE_PATH
 :::
 
 ## Recommended Reading Path
