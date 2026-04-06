@@ -2,7 +2,7 @@
 
 Continual learning engine for AI agents, implemented as an Elixir OTP application with a durable SQLite-backed knowledge graph, confidence-updating learning loop, GoalGraph orchestration, κ-aware topology routing, and MCP tools/resources.
 
-**v0.3.2** — Full spec compliance: 6 node types, 16 edge types, 8-stage consolidation pipeline, 29 MCP tools, 5 MCP resources. κ-aware topology routing, AGM-rational belief revision, intentional forgetting (soft/hard/cascade/GDPR), Wilson score epistemic frontier, Q-value outcome-weighted retrieval, multi-agent scoping via `agent_id`, and graph algorithm suite (Dijkstra, toposort, Louvain, Hopcroft-Karp, incremental SCC, triangle counting). 455 tests, 0 failures.
+**v0.3.3** — Full spec compliance: 6 node types, 16 edge types, 8-stage consolidation pipeline, 29 MCP tools, 5 MCP resources. κ-aware topology routing, AGM-rational belief revision, intentional forgetting (soft/hard/cascade/GDPR), Wilson score epistemic frontier, Q-value outcome-weighted retrieval, multi-agent scoping via `agent_id`, nomic-embed-text-v2-moe 768D embedder, and graph algorithm suite (Dijkstra, toposort, Louvain, Hopcroft-Karp, incremental SCC, triangle counting). LongMemEval: 92.6% QA proxy, 98.7% session hit rate. 455 tests, 0 failures.
 
 > **TL;DR**
 > - Install: `npm i -g graphonomous` or `npx -y graphonomous`
@@ -247,7 +247,7 @@ npm i -g graphonomous
 **Uncertainty quantification (v0.3):**
 - `epistemic_frontier` — Wilson score intervals, information gain ranking
 
-**Graph algorithms (v0.3.2):**
+**Graph algorithms (v0.3.3):**
 - `trace_evidence_path` — weighted Dijkstra/Yen's K-shortest paths for evidence provenance
 
 **Learning loop:**
@@ -383,7 +383,7 @@ cd ProjectAmp2/graphonomous/npm
 npm pack
 mkdir -p /tmp/graphonomous-npm-smoke && cd /tmp/graphonomous-npm-smoke
 npm init -y
-npm i /home/travis/ProjectAmp2/graphonomous/npm/graphonomous-0.3.2.tgz
+npm i /home/travis/ProjectAmp2/graphonomous/npm/graphonomous-0.3.3.tgz
 npx graphonomous --help
 ```
 

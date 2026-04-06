@@ -1,5 +1,41 @@
 # Changelog
 
+## [0.3.3] — 2026-04-06
+
+### Added
+
+- **Embedder upgrade**: Switched from all-MiniLM-L6-v2 (384D) to nomic-embed-text-v2-moe (768D, 500M params) — improved semantic recall across all retrieval paths
+- **MCP tool: `trace_evidence_path`** — weighted Dijkstra / Yen's K-shortest evidence paths with time-decay edge weighting and bidirectional search
+- **Graph algorithms library** (6 algorithms, 72 new tests):
+  - Dijkstra weighted shortest path (`Graphonomous.Graph.Algorithms.Dijkstra`)
+  - DAG detection + topological sort (`Graphonomous.Graph.Algorithms.DAG`)
+  - Bipartite matching: Hopcroft-Karp maximum + Hungarian optimal assignment (`Graphonomous.Graph.Algorithms.Matching`)
+  - Louvain community detection with modularity scoring (`Graphonomous.Graph.Algorithms.Louvain`)
+  - Incremental SCC maintenance (`Graphonomous.Graph.Algorithms.IncrementalSCC`)
+  - Triangle counting with clustering coefficient (`Graphonomous.Graph.Algorithms.TriangleCounting`)
+- **GraphMemBench v2**: κ-sensitive synthetic benchmark with 8 tiers (T1–T6 κ-topology, T7–T8 graph algorithms), difficulty knobs, and mixed-κ scenarios
+- **LongMemEval full evaluation** (ICLR 2025, 500 questions, oracle split):
+  - 92.6% QA proxy accuracy, 98.7% session hit rate, 1.4s mean latency
+  - Topology ablation: ON = 92.6%/98.7% SHR vs OFF = 92.3%/97.9% SHR (+0.3pp QA, +0.8pp SHR)
+  - Abstention accuracy: 96.7% (29/30 correct) via learned ANN-statistics threshold
+- **LMStudio judge backend** for automated LongMemEval scoring
+- **PPR experiment**: Personalized PageRank tested at w=0.18 and w=0.10; net negative on LongMemEval, flag-gated off (`enable_ppr`)
+- **455 tests** (up from 309), 0 failures
+
+### Changed
+
+- MCP tool count: 28 → 29 (+ `trace_evidence_path`)
+- Embedder dimensionality: 384D → 768D (retrieval, consolidation, and all similarity operations)
+- Retriever: added `skip_topology` option for ablation testing; tuned SCC limit
+- LongMemEval retrieval fixes: session-aggregate ranking boost, relative-date parser, preference query handling
+- Graph algorithms attributed to v0.3.2 in README were actually shipped in v0.3.3
+
+### Fixed
+
+- Preference-type queries returning wrong sessions (query-type routing fix)
+- Relative date references ("last Monday") not resolving correctly in temporal retrieval
+- Session-aggregate ranking not boosting multi-turn conversation context
+
 ## [0.3.2] — 2026-04-03
 
 ### Added

@@ -47,6 +47,9 @@ Every interaction should follow this rhythm:
 | [11_BELIEF_REVISION.md](11_BELIEF_REVISION.md) | AGM-style belief management — `belief_revise`, `belief_contradictions`, self-correcting knowledge |
 | [12_FORGETTING.md](12_FORGETTING.md) | Memory lifecycle — `forget_node`, `forget_by_policy`, `gdpr_erase`, active memory management |
 | [13_EPISTEMIC_FRONTIER.md](13_EPISTEMIC_FRONTIER.md) | Uncertainty-driven exploration — `epistemic_frontier`, Wilson intervals, information gain |
+| [14_SYNC.md](14_SYNC.md) | Filesystem sync — batch-ingest changed files, extract edges, optional consolidation |
+| [15_WATCH.md](15_WATCH.md) | Filesystem watch — continuous polling-based monitoring with live sync to graph |
+| [16_TRACE_EVIDENCE_PATH.md](16_TRACE_EVIDENCE_PATH.md) | Evidence provenance — `trace_evidence_path`, weighted Dijkstra, Yen's K-shortest paths |
 
 ---
 
