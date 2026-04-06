@@ -1,4 +1,4 @@
-# 15. Filesystem Watch
+# Skill 15 — Filesystem Watch
 
 Continuous polling-based filesystem monitoring that syncs changes to Graphonomous in real-time.
 

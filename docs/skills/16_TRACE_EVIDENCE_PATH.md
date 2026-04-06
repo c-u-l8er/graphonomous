@@ -1,4 +1,4 @@
-# 16. Trace Evidence Path
+# Skill 16 — Trace Evidence Path
 
 Find provenance chains between knowledge nodes using weighted Dijkstra shortest-path traversal.
 

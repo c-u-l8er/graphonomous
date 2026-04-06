@@ -1,4 +1,4 @@
-# 14. Filesystem Sync
+# Skill 14 — Filesystem Sync
 
 Batch-ingest changed files into Graphonomous, extract edges, and optionally consolidate.
 
