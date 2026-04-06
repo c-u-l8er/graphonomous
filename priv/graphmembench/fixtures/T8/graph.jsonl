@@ -1,0 +1,98 @@
+{"type":"node","domain":"circadian_rhythm","key":"t8_dag_001_L1_n1","role":"source","layer":1,"content":"Step 1 at depth 1 in the circadian rhythm pipeline (marker t8_dag_001_L1_n1): this source stage feeds into depth 2 of the circadian rhythm process.","dag_id":"t8_dag_001"}
+{"type":"node","domain":"circadian_rhythm","key":"t8_dag_001_L1_n2","role":"source","layer":1,"content":"Step 2 at depth 1 in the circadian rhythm pipeline (marker t8_dag_001_L1_n2): this source stage feeds into depth 2 of the circadian rhythm process.","dag_id":"t8_dag_001"}
+{"type":"node","domain":"circadian_rhythm","key":"t8_dag_001_L2_n1","role":"intermediate","layer":2,"content":"Step 1 at depth 2 in the circadian rhythm pipeline (marker t8_dag_001_L2_n1): this intermediate stage feeds into depth 3 of the circadian rhythm process.","dag_id":"t8_dag_001"}
+{"type":"node","domain":"circadian_rhythm","key":"t8_dag_001_L2_n2","role":"intermediate","layer":2,"content":"Step 2 at depth 2 in the circadian rhythm pipeline (marker t8_dag_001_L2_n2): this intermediate stage feeds into depth 3 of the circadian rhythm process.","dag_id":"t8_dag_001"}
+{"type":"node","domain":"circadian_rhythm","key":"t8_dag_001_L3_n1","role":"intermediate","layer":3,"content":"Step 1 at depth 3 in the circadian rhythm pipeline (marker t8_dag_001_L3_n1): this intermediate stage feeds into depth 4 of the circadian rhythm process.","dag_id":"t8_dag_001"}
+{"type":"node","domain":"circadian_rhythm","key":"t8_dag_001_L3_n2","role":"intermediate","layer":3,"content":"Step 2 at depth 3 in the circadian rhythm pipeline (marker t8_dag_001_L3_n2): this intermediate stage feeds into depth 4 of the circadian rhythm process.","dag_id":"t8_dag_001"}
+{"type":"node","domain":"circadian_rhythm","key":"t8_dag_001_L4_n1","role":"sink","layer":4,"content":"Step 1 at depth 4 in the circadian rhythm pipeline (marker t8_dag_001_L4_n1): this sink stage is the final output of the circadian rhythm process.","dag_id":"t8_dag_001"}
+{"type":"node","domain":"circadian_rhythm","key":"t8_dag_001_L4_n2","role":"sink","layer":4,"content":"Step 2 at depth 4 in the circadian rhythm pipeline (marker t8_dag_001_L4_n2): this sink stage is the final output of the circadian rhythm process.","dag_id":"t8_dag_001"}
+{"type":"edge","source":"t8_dag_001_L1_n1","target":"t8_dag_001_L2_n1","edge_type":"causal","weight":0.8}
+{"type":"edge","source":"t8_dag_001_L1_n1","target":"t8_dag_001_L2_n2","edge_type":"causal","weight":0.8}
+{"type":"edge","source":"t8_dag_001_L1_n2","target":"t8_dag_001_L2_n1","edge_type":"causal","weight":0.8}
+{"type":"edge","source":"t8_dag_001_L1_n2","target":"t8_dag_001_L2_n2","edge_type":"causal","weight":0.8}
+{"type":"edge","source":"t8_dag_001_L2_n1","target":"t8_dag_001_L3_n1","edge_type":"causal","weight":0.8}
+{"type":"edge","source":"t8_dag_001_L2_n1","target":"t8_dag_001_L3_n2","edge_type":"causal","weight":0.8}
+{"type":"edge","source":"t8_dag_001_L2_n2","target":"t8_dag_001_L3_n1","edge_type":"causal","weight":0.8}
+{"type":"edge","source":"t8_dag_001_L2_n2","target":"t8_dag_001_L3_n2","edge_type":"causal","weight":0.8}
+{"type":"edge","source":"t8_dag_001_L3_n1","target":"t8_dag_001_L4_n1","edge_type":"causal","weight":0.8}
+{"type":"edge","source":"t8_dag_001_L3_n1","target":"t8_dag_001_L4_n2","edge_type":"causal","weight":0.8}
+{"type":"edge","source":"t8_dag_001_L3_n2","target":"t8_dag_001_L4_n1","edge_type":"causal","weight":0.8}
+{"type":"edge","source":"t8_dag_001_L3_n2","target":"t8_dag_001_L4_n2","edge_type":"causal","weight":0.8}
+{"type":"edge","source":"t8_dag_001_L1_n1","target":"t8_dag_001_L4_n1","edge_type":"supports","weight":0.5}
+{"type":"gold","dag_id":"t8_dag_001","sink_keys":["t8_dag_001_L4_n1","t8_dag_001_L4_n2"],"source_keys":["t8_dag_001_L1_n1","t8_dag_001_L1_n2"],"critical_depth":3,"topo_layers":[["t8_dag_001_L1_n1","t8_dag_001_L1_n2"],["t8_dag_001_L2_n1","t8_dag_001_L2_n2"],["t8_dag_001_L3_n1","t8_dag_001_L3_n2"],["t8_dag_001_L4_n1","t8_dag_001_L4_n2"]]}
+{"type":"node","domain":"photosynthesis_cycle","key":"t8_dag_002_L1_n1","role":"source","layer":1,"content":"Step 1 at depth 1 in the photosynthesis cycle pipeline (marker t8_dag_002_L1_n1): this source stage feeds into depth 2 of the photosynthesis cycle process.","dag_id":"t8_dag_002"}
+{"type":"node","domain":"photosynthesis_cycle","key":"t8_dag_002_L1_n2","role":"source","layer":1,"content":"Step 2 at depth 1 in the photosynthesis cycle pipeline (marker t8_dag_002_L1_n2): this source stage feeds into depth 2 of the photosynthesis cycle process.","dag_id":"t8_dag_002"}
+{"type":"node","domain":"photosynthesis_cycle","key":"t8_dag_002_L2_n1","role":"intermediate","layer":2,"content":"Step 1 at depth 2 in the photosynthesis cycle pipeline (marker t8_dag_002_L2_n1): this intermediate stage feeds into depth 3 of the photosynthesis cycle process.","dag_id":"t8_dag_002"}
+{"type":"node","domain":"photosynthesis_cycle","key":"t8_dag_002_L2_n2","role":"intermediate","layer":2,"content":"Step 2 at depth 2 in the photosynthesis cycle pipeline (marker t8_dag_002_L2_n2): this intermediate stage feeds into depth 3 of the photosynthesis cycle process.","dag_id":"t8_dag_002"}
+{"type":"node","domain":"photosynthesis_cycle","key":"t8_dag_002_L3_n1","role":"sink","layer":3,"content":"Step 1 at depth 3 in the photosynthesis cycle pipeline (marker t8_dag_002_L3_n1): this sink stage is the final output of the photosynthesis cycle process.","dag_id":"t8_dag_002"}
+{"type":"node","domain":"photosynthesis_cycle","key":"t8_dag_002_L3_n2","role":"sink","layer":3,"content":"Step 2 at depth 3 in the photosynthesis cycle pipeline (marker t8_dag_002_L3_n2): this sink stage is the final output of the photosynthesis cycle process.","dag_id":"t8_dag_002"}
+{"type":"edge","source":"t8_dag_002_L1_n1","target":"t8_dag_002_L2_n1","edge_type":"causal","weight":0.8}
+{"type":"edge","source":"t8_dag_002_L1_n1","target":"t8_dag_002_L2_n2","edge_type":"causal","weight":0.8}
+{"type":"edge","source":"t8_dag_002_L1_n2","target":"t8_dag_002_L2_n1","edge_type":"causal","weight":0.8}
+{"type":"edge","source":"t8_dag_002_L1_n2","target":"t8_dag_002_L2_n2","edge_type":"causal","weight":0.8}
+{"type":"edge","source":"t8_dag_002_L2_n1","target":"t8_dag_002_L3_n1","edge_type":"causal","weight":0.8}
+{"type":"edge","source":"t8_dag_002_L2_n1","target":"t8_dag_002_L3_n2","edge_type":"causal","weight":0.8}
+{"type":"edge","source":"t8_dag_002_L2_n2","target":"t8_dag_002_L3_n1","edge_type":"causal","weight":0.8}
+{"type":"edge","source":"t8_dag_002_L2_n2","target":"t8_dag_002_L3_n2","edge_type":"causal","weight":0.8}
+{"type":"edge","source":"t8_dag_002_L1_n1","target":"t8_dag_002_L3_n1","edge_type":"supports","weight":0.5}
+{"type":"gold","dag_id":"t8_dag_002","sink_keys":["t8_dag_002_L3_n1","t8_dag_002_L3_n2"],"source_keys":["t8_dag_002_L1_n1","t8_dag_002_L1_n2"],"critical_depth":2,"topo_layers":[["t8_dag_002_L1_n1","t8_dag_002_L1_n2"],["t8_dag_002_L2_n1","t8_dag_002_L2_n2"],["t8_dag_002_L3_n1","t8_dag_002_L3_n2"]]}
+{"type":"node","domain":"krebs_cycle","key":"t8_dag_003_L1_n1","role":"source","layer":1,"content":"Step 1 at depth 1 in the krebs cycle pipeline (marker t8_dag_003_L1_n1): this source stage feeds into depth 2 of the krebs cycle process.","dag_id":"t8_dag_003"}
+{"type":"node","domain":"krebs_cycle","key":"t8_dag_003_L1_n2","role":"source","layer":1,"content":"Step 2 at depth 1 in the krebs cycle pipeline (marker t8_dag_003_L1_n2): this source stage feeds into depth 2 of the krebs cycle process.","dag_id":"t8_dag_003"}
+{"type":"node","domain":"krebs_cycle","key":"t8_dag_003_L2_n1","role":"intermediate","layer":2,"content":"Step 1 at depth 2 in the krebs cycle pipeline (marker t8_dag_003_L2_n1): this intermediate stage feeds into depth 3 of the krebs cycle process.","dag_id":"t8_dag_003"}
+{"type":"node","domain":"krebs_cycle","key":"t8_dag_003_L2_n2","role":"intermediate","layer":2,"content":"Step 2 at depth 2 in the krebs cycle pipeline (marker t8_dag_003_L2_n2): this intermediate stage feeds into depth 3 of the krebs cycle process.","dag_id":"t8_dag_003"}
+{"type":"node","domain":"krebs_cycle","key":"t8_dag_003_L3_n1","role":"intermediate","layer":3,"content":"Step 1 at depth 3 in the krebs cycle pipeline (marker t8_dag_003_L3_n1): this intermediate stage feeds into depth 4 of the krebs cycle process.","dag_id":"t8_dag_003"}
+{"type":"node","domain":"krebs_cycle","key":"t8_dag_003_L3_n2","role":"intermediate","layer":3,"content":"Step 2 at depth 3 in the krebs cycle pipeline (marker t8_dag_003_L3_n2): this intermediate stage feeds into depth 4 of the krebs cycle process.","dag_id":"t8_dag_003"}
+{"type":"node","domain":"krebs_cycle","key":"t8_dag_003_L4_n1","role":"sink","layer":4,"content":"Step 1 at depth 4 in the krebs cycle pipeline (marker t8_dag_003_L4_n1): this sink stage is the final output of the krebs cycle process.","dag_id":"t8_dag_003"}
+{"type":"node","domain":"krebs_cycle","key":"t8_dag_003_L4_n2","role":"sink","layer":4,"content":"Step 2 at depth 4 in the krebs cycle pipeline (marker t8_dag_003_L4_n2): this sink stage is the final output of the krebs cycle process.","dag_id":"t8_dag_003"}
+{"type":"edge","source":"t8_dag_003_L1_n1","target":"t8_dag_003_L2_n1","edge_type":"causal","weight":0.8}
+{"type":"edge","source":"t8_dag_003_L1_n1","target":"t8_dag_003_L2_n2","edge_type":"causal","weight":0.8}
+{"type":"edge","source":"t8_dag_003_L1_n2","target":"t8_dag_003_L2_n1","edge_type":"causal","weight":0.8}
+{"type":"edge","source":"t8_dag_003_L1_n2","target":"t8_dag_003_L2_n2","edge_type":"causal","weight":0.8}
+{"type":"edge","source":"t8_dag_003_L2_n1","target":"t8_dag_003_L3_n1","edge_type":"causal","weight":0.8}
+{"type":"edge","source":"t8_dag_003_L2_n1","target":"t8_dag_003_L3_n2","edge_type":"causal","weight":0.8}
+{"type":"edge","source":"t8_dag_003_L2_n2","target":"t8_dag_003_L3_n1","edge_type":"causal","weight":0.8}
+{"type":"edge","source":"t8_dag_003_L2_n2","target":"t8_dag_003_L3_n2","edge_type":"causal","weight":0.8}
+{"type":"edge","source":"t8_dag_003_L3_n1","target":"t8_dag_003_L4_n1","edge_type":"causal","weight":0.8}
+{"type":"edge","source":"t8_dag_003_L3_n1","target":"t8_dag_003_L4_n2","edge_type":"causal","weight":0.8}
+{"type":"edge","source":"t8_dag_003_L3_n2","target":"t8_dag_003_L4_n1","edge_type":"causal","weight":0.8}
+{"type":"edge","source":"t8_dag_003_L3_n2","target":"t8_dag_003_L4_n2","edge_type":"causal","weight":0.8}
+{"type":"edge","source":"t8_dag_003_L1_n1","target":"t8_dag_003_L4_n1","edge_type":"supports","weight":0.5}
+{"type":"gold","dag_id":"t8_dag_003","sink_keys":["t8_dag_003_L4_n1","t8_dag_003_L4_n2"],"source_keys":["t8_dag_003_L1_n1","t8_dag_003_L1_n2"],"critical_depth":3,"topo_layers":[["t8_dag_003_L1_n1","t8_dag_003_L1_n2"],["t8_dag_003_L2_n1","t8_dag_003_L2_n2"],["t8_dag_003_L3_n1","t8_dag_003_L3_n2"],["t8_dag_003_L4_n1","t8_dag_003_L4_n2"]]}
+{"type":"node","domain":"water_cycle","key":"t8_dag_004_L1_n1","role":"source","layer":1,"content":"Step 1 at depth 1 in the water cycle pipeline (marker t8_dag_004_L1_n1): this source stage feeds into depth 2 of the water cycle process.","dag_id":"t8_dag_004"}
+{"type":"node","domain":"water_cycle","key":"t8_dag_004_L1_n2","role":"source","layer":1,"content":"Step 2 at depth 1 in the water cycle pipeline (marker t8_dag_004_L1_n2): this source stage feeds into depth 2 of the water cycle process.","dag_id":"t8_dag_004"}
+{"type":"node","domain":"water_cycle","key":"t8_dag_004_L2_n1","role":"intermediate","layer":2,"content":"Step 1 at depth 2 in the water cycle pipeline (marker t8_dag_004_L2_n1): this intermediate stage feeds into depth 3 of the water cycle process.","dag_id":"t8_dag_004"}
+{"type":"node","domain":"water_cycle","key":"t8_dag_004_L2_n2","role":"intermediate","layer":2,"content":"Step 2 at depth 2 in the water cycle pipeline (marker t8_dag_004_L2_n2): this intermediate stage feeds into depth 3 of the water cycle process.","dag_id":"t8_dag_004"}
+{"type":"node","domain":"water_cycle","key":"t8_dag_004_L3_n1","role":"intermediate","layer":3,"content":"Step 1 at depth 3 in the water cycle pipeline (marker t8_dag_004_L3_n1): this intermediate stage feeds into depth 4 of the water cycle process.","dag_id":"t8_dag_004"}
+{"type":"node","domain":"water_cycle","key":"t8_dag_004_L3_n2","role":"intermediate","layer":3,"content":"Step 2 at depth 3 in the water cycle pipeline (marker t8_dag_004_L3_n2): this intermediate stage feeds into depth 4 of the water cycle process.","dag_id":"t8_dag_004"}
+{"type":"node","domain":"water_cycle","key":"t8_dag_004_L4_n1","role":"sink","layer":4,"content":"Step 1 at depth 4 in the water cycle pipeline (marker t8_dag_004_L4_n1): this sink stage is the final output of the water cycle process.","dag_id":"t8_dag_004"}
+{"type":"node","domain":"water_cycle","key":"t8_dag_004_L4_n2","role":"sink","layer":4,"content":"Step 2 at depth 4 in the water cycle pipeline (marker t8_dag_004_L4_n2): this sink stage is the final output of the water cycle process.","dag_id":"t8_dag_004"}
+{"type":"edge","source":"t8_dag_004_L1_n1","target":"t8_dag_004_L2_n1","edge_type":"causal","weight":0.8}
+{"type":"edge","source":"t8_dag_004_L1_n1","target":"t8_dag_004_L2_n2","edge_type":"causal","weight":0.8}
+{"type":"edge","source":"t8_dag_004_L1_n2","target":"t8_dag_004_L2_n1","edge_type":"causal","weight":0.8}
+{"type":"edge","source":"t8_dag_004_L1_n2","target":"t8_dag_004_L2_n2","edge_type":"causal","weight":0.8}
+{"type":"edge","source":"t8_dag_004_L2_n1","target":"t8_dag_004_L3_n1","edge_type":"causal","weight":0.8}
+{"type":"edge","source":"t8_dag_004_L2_n1","target":"t8_dag_004_L3_n2","edge_type":"causal","weight":0.8}
+{"type":"edge","source":"t8_dag_004_L2_n2","target":"t8_dag_004_L3_n1","edge_type":"causal","weight":0.8}
+{"type":"edge","source":"t8_dag_004_L2_n2","target":"t8_dag_004_L3_n2","edge_type":"causal","weight":0.8}
+{"type":"edge","source":"t8_dag_004_L3_n1","target":"t8_dag_004_L4_n1","edge_type":"causal","weight":0.8}
+{"type":"edge","source":"t8_dag_004_L3_n1","target":"t8_dag_004_L4_n2","edge_type":"causal","weight":0.8}
+{"type":"edge","source":"t8_dag_004_L3_n2","target":"t8_dag_004_L4_n1","edge_type":"causal","weight":0.8}
+{"type":"edge","source":"t8_dag_004_L3_n2","target":"t8_dag_004_L4_n2","edge_type":"causal","weight":0.8}
+{"type":"edge","source":"t8_dag_004_L1_n1","target":"t8_dag_004_L4_n1","edge_type":"supports","weight":0.5}
+{"type":"gold","dag_id":"t8_dag_004","sink_keys":["t8_dag_004_L4_n1","t8_dag_004_L4_n2"],"source_keys":["t8_dag_004_L1_n1","t8_dag_004_L1_n2"],"critical_depth":3,"topo_layers":[["t8_dag_004_L1_n1","t8_dag_004_L1_n2"],["t8_dag_004_L2_n1","t8_dag_004_L2_n2"],["t8_dag_004_L3_n1","t8_dag_004_L3_n2"],["t8_dag_004_L4_n1","t8_dag_004_L4_n2"]]}
+{"type":"node","domain":"carbon_cycle","key":"t8_dag_005_L1_n1","role":"source","layer":1,"content":"Step 1 at depth 1 in the carbon cycle pipeline (marker t8_dag_005_L1_n1): this source stage feeds into depth 2 of the carbon cycle process.","dag_id":"t8_dag_005"}
+{"type":"node","domain":"carbon_cycle","key":"t8_dag_005_L1_n2","role":"source","layer":1,"content":"Step 2 at depth 1 in the carbon cycle pipeline (marker t8_dag_005_L1_n2): this source stage feeds into depth 2 of the carbon cycle process.","dag_id":"t8_dag_005"}
+{"type":"node","domain":"carbon_cycle","key":"t8_dag_005_L2_n1","role":"intermediate","layer":2,"content":"Step 1 at depth 2 in the carbon cycle pipeline (marker t8_dag_005_L2_n1): this intermediate stage feeds into depth 3 of the carbon cycle process.","dag_id":"t8_dag_005"}
+{"type":"node","domain":"carbon_cycle","key":"t8_dag_005_L2_n2","role":"intermediate","layer":2,"content":"Step 2 at depth 2 in the carbon cycle pipeline (marker t8_dag_005_L2_n2): this intermediate stage feeds into depth 3 of the carbon cycle process.","dag_id":"t8_dag_005"}
+{"type":"node","domain":"carbon_cycle","key":"t8_dag_005_L3_n1","role":"sink","layer":3,"content":"Step 1 at depth 3 in the carbon cycle pipeline (marker t8_dag_005_L3_n1): this sink stage is the final output of the carbon cycle process.","dag_id":"t8_dag_005"}
+{"type":"node","domain":"carbon_cycle","key":"t8_dag_005_L3_n2","role":"sink","layer":3,"content":"Step 2 at depth 3 in the carbon cycle pipeline (marker t8_dag_005_L3_n2): this sink stage is the final output of the carbon cycle process.","dag_id":"t8_dag_005"}
+{"type":"edge","source":"t8_dag_005_L1_n1","target":"t8_dag_005_L2_n1","edge_type":"causal","weight":0.8}
+{"type":"edge","source":"t8_dag_005_L1_n1","target":"t8_dag_005_L2_n2","edge_type":"causal","weight":0.8}
+{"type":"edge","source":"t8_dag_005_L1_n2","target":"t8_dag_005_L2_n1","edge_type":"causal","weight":0.8}
+{"type":"edge","source":"t8_dag_005_L1_n2","target":"t8_dag_005_L2_n2","edge_type":"causal","weight":0.8}
+{"type":"edge","source":"t8_dag_005_L2_n1","target":"t8_dag_005_L3_n1","edge_type":"causal","weight":0.8}
+{"type":"edge","source":"t8_dag_005_L2_n1","target":"t8_dag_005_L3_n2","edge_type":"causal","weight":0.8}
+{"type":"edge","source":"t8_dag_005_L2_n2","target":"t8_dag_005_L3_n1","edge_type":"causal","weight":0.8}
+{"type":"edge","source":"t8_dag_005_L2_n2","target":"t8_dag_005_L3_n2","edge_type":"causal","weight":0.8}
+{"type":"edge","source":"t8_dag_005_L1_n1","target":"t8_dag_005_L3_n1","edge_type":"supports","weight":0.5}
+{"type":"gold","dag_id":"t8_dag_005","sink_keys":["t8_dag_005_L3_n1","t8_dag_005_L3_n2"],"source_keys":["t8_dag_005_L1_n1","t8_dag_005_L1_n2"],"critical_depth":2,"topo_layers":[["t8_dag_005_L1_n1","t8_dag_005_L1_n2"],["t8_dag_005_L2_n1","t8_dag_005_L2_n2"],["t8_dag_005_L3_n1","t8_dag_005_L3_n2"]]}

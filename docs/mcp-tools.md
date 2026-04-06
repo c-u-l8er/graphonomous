@@ -11,6 +11,7 @@ This page is a practical reference for using the current tool surface.
 - **Knowledge graph write**: `store_node`, `store_edge`, `delete_node`, `manage_edge`
 - **Knowledge graph read/query**: `retrieve_context`, `query_graph`, `topology_analyze`, `graph_traverse`, `graph_stats`
 - **Specialized retrieval**: `retrieve_episodic`, `retrieve_procedural`, `coverage_query`
+- **Graph algorithms**: `trace_evidence_path`
 - **Learning loop**: `learn_from_outcome`, `learn_from_feedback`, `learn_detect_novelty`, `learn_from_interaction`, `deliberate`
 - **Goal orchestration**: `manage_goal`, `review_goal`
 - **Maintenance**: `run_consolidation`
@@ -508,6 +509,49 @@ Edge lifecycle management: list, update, and delete edges.
   "co_activation_count": 5
 }
 ```
+
+---
+
+## 23) `trace_evidence_path`
+
+Find the lowest-cost evidence path between two knowledge nodes using weighted Dijkstra.
+
+### Purpose
+Trace provenance chains ("why did the system conclude X from Y?"), find delegation paths, or discover the strongest reasoning route between any two nodes. Optionally returns K alternate paths via Yen's algorithm.
+
+### Cost function
+`cost(edge) = -log(confidence) + recency_decay(age_hours / half_life) + type_cost(edge_type)`
+
+Type costs: `causal` = 0.0, `supports` = 0.1, `related_to` = 0.5, `contradicts` = 2.0, other = 1.0.
+
+### Required
+- `from` (string) — source node ID
+- `to` (string) — target node ID
+
+### Optional
+- `k` (number, default 1, max 10) — number of alternate paths to return
+- `half_life_hours` (number, default 168.0) — recency decay half-life
+- `bidirectional` (boolean, default true) — search edges in both directions
+- `max_hops` (number, default 10) — BFS expansion limit for subgraph construction
+
+### Example
+```json
+{
+  "from": "node_abc123",
+  "to": "node_def456",
+  "k": 3,
+  "half_life_hours": 72.0
+}
+```
+
+### Response
+Returns an array of paths, each with `path` (ordered node IDs), `total_cost`, and `edges` (with per-edge cost breakdown). If no path exists, returns an empty array with a message.
+
+### Portfolio reuse
+- **Delegatic**: delegation chain tracing
+- **Deliberatic**: reasoning plan visualization
+- **GeoFleetic**: spatial routing through knowledge regions
+- **AgenTroMatic**: orchestration path planning
 
 ---
 

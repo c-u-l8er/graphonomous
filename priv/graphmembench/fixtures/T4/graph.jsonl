@@ -1,8 +1,8 @@
-{"type":"node","key":"t4_scc_001_n1","role":1,"content":"In the densely connected circadian rhythm process, stage 1 of 5 (marker t4_scc_001_n1): this stage is part of a multi-cycle structure with several redundant feedback paths — it is not a simple root.","scc_id":"t4_scc_001","observed_kappa":2,"fault_line":true}
-{"type":"node","key":"t4_scc_001_n2","role":2,"content":"In the densely connected circadian rhythm process, stage 2 of 5 (marker t4_scc_001_n2): this stage is part of a multi-cycle structure with several redundant feedback paths — it is not a simple root.","scc_id":"t4_scc_001","observed_kappa":2,"fault_line":true}
-{"type":"node","key":"t4_scc_001_n3","role":3,"content":"In the densely connected circadian rhythm process, stage 3 of 5 (marker t4_scc_001_n3): this stage is part of a multi-cycle structure with several redundant feedback paths — it is not a simple root.","scc_id":"t4_scc_001","observed_kappa":2,"fault_line":false}
-{"type":"node","key":"t4_scc_001_n4","role":4,"content":"In the densely connected circadian rhythm process, stage 4 of 5 (marker t4_scc_001_n4): this stage is part of a multi-cycle structure with several redundant feedback paths — it is not a simple root.","scc_id":"t4_scc_001","observed_kappa":2,"fault_line":false}
-{"type":"node","key":"t4_scc_001_n5","role":5,"content":"In the densely connected circadian rhythm process, stage 5 of 5 (marker t4_scc_001_n5): this stage is part of a multi-cycle structure with several redundant feedback paths — it is not a simple root.","scc_id":"t4_scc_001","observed_kappa":2,"fault_line":true}
+{"type":"node","key":"t4_scc_001_n1","role":1,"content":"In the densely connected system-1 process, stage 1 of 5 (marker t4_scc_001_n1): this stage is part of a multi-cycle structure with several redundant feedback paths — it is not a simple root.","scc_id":"t4_scc_001","observed_kappa":2,"fault_line":true}
+{"type":"node","key":"t4_scc_001_n2","role":2,"content":"In the densely connected system-1 process, stage 2 of 5 (marker t4_scc_001_n2): this stage is part of a multi-cycle structure with several redundant feedback paths — it is not a simple root.","scc_id":"t4_scc_001","observed_kappa":2,"fault_line":true}
+{"type":"node","key":"t4_scc_001_n3","role":3,"content":"In the densely connected system-1 process, stage 3 of 5 (marker t4_scc_001_n3): this stage is part of a multi-cycle structure with several redundant feedback paths — it is not a simple root.","scc_id":"t4_scc_001","observed_kappa":2,"fault_line":false}
+{"type":"node","key":"t4_scc_001_n4","role":4,"content":"In the densely connected system-1 process, stage 4 of 5 (marker t4_scc_001_n4): this stage is part of a multi-cycle structure with several redundant feedback paths — it is not a simple root.","scc_id":"t4_scc_001","observed_kappa":2,"fault_line":false}
+{"type":"node","key":"t4_scc_001_n5","role":5,"content":"In the densely connected system-1 process, stage 5 of 5 (marker t4_scc_001_n5): this stage is part of a multi-cycle structure with several redundant feedback paths — it is not a simple root.","scc_id":"t4_scc_001","observed_kappa":2,"fault_line":true}
 {"type":"edge","source":"t4_scc_001_n1","target":"t4_scc_001_n2","edge_type":"causal"}
 {"type":"edge","source":"t4_scc_001_n2","target":"t4_scc_001_n3","edge_type":"causal"}
 {"type":"edge","source":"t4_scc_001_n3","target":"t4_scc_001_n4","edge_type":"causal"}
@@ -16,12 +16,12 @@
 {"type":"edge","source":"t4_scc_001_n1","target":"t4_scc_001_n3","edge_type":"causal"}
 {"type":"edge","source":"t4_scc_001_n3","target":"t4_scc_001_n5","edge_type":"causal"}
 {"type":"edge","source":"t4_scc_001_n5","target":"t4_scc_001_n2","edge_type":"causal"}
-{"type":"node","key":"t4_scc_002_n1","role":1,"content":"In the densely connected photosynthesis cycle process, stage 1 of 6 (marker t4_scc_002_n1): this stage is part of a multi-cycle structure with several redundant feedback paths — it is not a simple root.","scc_id":"t4_scc_002","observed_kappa":2,"fault_line":true}
-{"type":"node","key":"t4_scc_002_n2","role":2,"content":"In the densely connected photosynthesis cycle process, stage 2 of 6 (marker t4_scc_002_n2): this stage is part of a multi-cycle structure with several redundant feedback paths — it is not a simple root.","scc_id":"t4_scc_002","observed_kappa":2,"fault_line":true}
-{"type":"node","key":"t4_scc_002_n3","role":3,"content":"In the densely connected photosynthesis cycle process, stage 3 of 6 (marker t4_scc_002_n3): this stage is part of a multi-cycle structure with several redundant feedback paths — it is not a simple root.","scc_id":"t4_scc_002","observed_kappa":2,"fault_line":false}
-{"type":"node","key":"t4_scc_002_n4","role":4,"content":"In the densely connected photosynthesis cycle process, stage 4 of 6 (marker t4_scc_002_n4): this stage is part of a multi-cycle structure with several redundant feedback paths — it is not a simple root.","scc_id":"t4_scc_002","observed_kappa":2,"fault_line":false}
-{"type":"node","key":"t4_scc_002_n5","role":5,"content":"In the densely connected photosynthesis cycle process, stage 5 of 6 (marker t4_scc_002_n5): this stage is part of a multi-cycle structure with several redundant feedback paths — it is not a simple root.","scc_id":"t4_scc_002","observed_kappa":2,"fault_line":false}
-{"type":"node","key":"t4_scc_002_n6","role":6,"content":"In the densely connected photosynthesis cycle process, stage 6 of 6 (marker t4_scc_002_n6): this stage is part of a multi-cycle structure with several redundant feedback paths — it is not a simple root.","scc_id":"t4_scc_002","observed_kappa":2,"fault_line":true}
+{"type":"node","key":"t4_scc_002_n1","role":1,"content":"In the densely connected system-2 process, stage 1 of 6 (marker t4_scc_002_n1): this stage is part of a multi-cycle structure with several redundant feedback paths — it is not a simple root.","scc_id":"t4_scc_002","observed_kappa":2,"fault_line":true}
+{"type":"node","key":"t4_scc_002_n2","role":2,"content":"In the densely connected system-2 process, stage 2 of 6 (marker t4_scc_002_n2): this stage is part of a multi-cycle structure with several redundant feedback paths — it is not a simple root.","scc_id":"t4_scc_002","observed_kappa":2,"fault_line":true}
+{"type":"node","key":"t4_scc_002_n3","role":3,"content":"In the densely connected system-2 process, stage 3 of 6 (marker t4_scc_002_n3): this stage is part of a multi-cycle structure with several redundant feedback paths — it is not a simple root.","scc_id":"t4_scc_002","observed_kappa":2,"fault_line":true}
+{"type":"node","key":"t4_scc_002_n4","role":4,"content":"In the densely connected system-2 process, stage 4 of 6 (marker t4_scc_002_n4): this stage is part of a multi-cycle structure with several redundant feedback paths — it is not a simple root.","scc_id":"t4_scc_002","observed_kappa":2,"fault_line":false}
+{"type":"node","key":"t4_scc_002_n5","role":5,"content":"In the densely connected system-2 process, stage 5 of 6 (marker t4_scc_002_n5): this stage is part of a multi-cycle structure with several redundant feedback paths — it is not a simple root.","scc_id":"t4_scc_002","observed_kappa":2,"fault_line":false}
+{"type":"node","key":"t4_scc_002_n6","role":6,"content":"In the densely connected system-2 process, stage 6 of 6 (marker t4_scc_002_n6): this stage is part of a multi-cycle structure with several redundant feedback paths — it is not a simple root.","scc_id":"t4_scc_002","observed_kappa":2,"fault_line":false}
 {"type":"edge","source":"t4_scc_002_n1","target":"t4_scc_002_n2","edge_type":"causal"}
 {"type":"edge","source":"t4_scc_002_n2","target":"t4_scc_002_n3","edge_type":"causal"}
 {"type":"edge","source":"t4_scc_002_n3","target":"t4_scc_002_n4","edge_type":"causal"}
@@ -37,25 +37,32 @@
 {"type":"edge","source":"t4_scc_002_n1","target":"t4_scc_002_n4","edge_type":"causal"}
 {"type":"edge","source":"t4_scc_002_n3","target":"t4_scc_002_n6","edge_type":"causal"}
 {"type":"edge","source":"t4_scc_002_n5","target":"t4_scc_002_n2","edge_type":"causal"}
-{"type":"node","key":"t4_scc_003_n1","role":1,"content":"In the densely connected krebs cycle process, stage 1 of 4 (marker t4_scc_003_n1): this stage is part of a multi-cycle structure with several redundant feedback paths — it is not a simple root.","scc_id":"t4_scc_003","observed_kappa":2,"fault_line":true}
-{"type":"node","key":"t4_scc_003_n2","role":2,"content":"In the densely connected krebs cycle process, stage 2 of 4 (marker t4_scc_003_n2): this stage is part of a multi-cycle structure with several redundant feedback paths — it is not a simple root.","scc_id":"t4_scc_003","observed_kappa":2,"fault_line":true}
-{"type":"node","key":"t4_scc_003_n3","role":3,"content":"In the densely connected krebs cycle process, stage 3 of 4 (marker t4_scc_003_n3): this stage is part of a multi-cycle structure with several redundant feedback paths — it is not a simple root.","scc_id":"t4_scc_003","observed_kappa":2,"fault_line":true}
-{"type":"node","key":"t4_scc_003_n4","role":4,"content":"In the densely connected krebs cycle process, stage 4 of 4 (marker t4_scc_003_n4): this stage is part of a multi-cycle structure with several redundant feedback paths — it is not a simple root.","scc_id":"t4_scc_003","observed_kappa":2,"fault_line":false}
+{"type":"edge","source":"t4_scc_002_n1","target":"t4_scc_002_n3","edge_type":"causal"}
+{"type":"edge","source":"t4_scc_002_n3","target":"t4_scc_002_n5","edge_type":"causal"}
+{"type":"edge","source":"t4_scc_002_n5","target":"t4_scc_002_n1","edge_type":"causal"}
+{"type":"node","key":"t4_scc_003_n1","role":1,"content":"In the densely connected system-3 process, stage 1 of 5 (marker t4_scc_003_n1): this stage is part of a multi-cycle structure with several redundant feedback paths — it is not a simple root.","scc_id":"t4_scc_003","observed_kappa":2,"fault_line":true}
+{"type":"node","key":"t4_scc_003_n2","role":2,"content":"In the densely connected system-3 process, stage 2 of 5 (marker t4_scc_003_n2): this stage is part of a multi-cycle structure with several redundant feedback paths — it is not a simple root.","scc_id":"t4_scc_003","observed_kappa":2,"fault_line":true}
+{"type":"node","key":"t4_scc_003_n3","role":3,"content":"In the densely connected system-3 process, stage 3 of 5 (marker t4_scc_003_n3): this stage is part of a multi-cycle structure with several redundant feedback paths — it is not a simple root.","scc_id":"t4_scc_003","observed_kappa":2,"fault_line":false}
+{"type":"node","key":"t4_scc_003_n4","role":4,"content":"In the densely connected system-3 process, stage 4 of 5 (marker t4_scc_003_n4): this stage is part of a multi-cycle structure with several redundant feedback paths — it is not a simple root.","scc_id":"t4_scc_003","observed_kappa":2,"fault_line":false}
+{"type":"node","key":"t4_scc_003_n5","role":5,"content":"In the densely connected system-3 process, stage 5 of 5 (marker t4_scc_003_n5): this stage is part of a multi-cycle structure with several redundant feedback paths — it is not a simple root.","scc_id":"t4_scc_003","observed_kappa":2,"fault_line":true}
 {"type":"edge","source":"t4_scc_003_n1","target":"t4_scc_003_n2","edge_type":"causal"}
 {"type":"edge","source":"t4_scc_003_n2","target":"t4_scc_003_n3","edge_type":"causal"}
 {"type":"edge","source":"t4_scc_003_n3","target":"t4_scc_003_n4","edge_type":"causal"}
-{"type":"edge","source":"t4_scc_003_n4","target":"t4_scc_003_n1","edge_type":"causal"}
+{"type":"edge","source":"t4_scc_003_n4","target":"t4_scc_003_n5","edge_type":"causal"}
+{"type":"edge","source":"t4_scc_003_n5","target":"t4_scc_003_n1","edge_type":"causal"}
 {"type":"edge","source":"t4_scc_003_n2","target":"t4_scc_003_n1","edge_type":"feedback"}
 {"type":"edge","source":"t4_scc_003_n3","target":"t4_scc_003_n2","edge_type":"feedback"}
 {"type":"edge","source":"t4_scc_003_n4","target":"t4_scc_003_n3","edge_type":"feedback"}
-{"type":"edge","source":"t4_scc_003_n1","target":"t4_scc_003_n4","edge_type":"feedback"}
+{"type":"edge","source":"t4_scc_003_n5","target":"t4_scc_003_n4","edge_type":"feedback"}
+{"type":"edge","source":"t4_scc_003_n1","target":"t4_scc_003_n5","edge_type":"feedback"}
 {"type":"edge","source":"t4_scc_003_n1","target":"t4_scc_003_n3","edge_type":"causal"}
-{"type":"edge","source":"t4_scc_003_n3","target":"t4_scc_003_n1","edge_type":"causal"}
-{"type":"node","key":"t4_scc_004_n1","role":1,"content":"In the densely connected water cycle process, stage 1 of 5 (marker t4_scc_004_n1): this stage is part of a multi-cycle structure with several redundant feedback paths — it is not a simple root.","scc_id":"t4_scc_004","observed_kappa":2,"fault_line":true}
-{"type":"node","key":"t4_scc_004_n2","role":2,"content":"In the densely connected water cycle process, stage 2 of 5 (marker t4_scc_004_n2): this stage is part of a multi-cycle structure with several redundant feedback paths — it is not a simple root.","scc_id":"t4_scc_004","observed_kappa":2,"fault_line":true}
-{"type":"node","key":"t4_scc_004_n3","role":3,"content":"In the densely connected water cycle process, stage 3 of 5 (marker t4_scc_004_n3): this stage is part of a multi-cycle structure with several redundant feedback paths — it is not a simple root.","scc_id":"t4_scc_004","observed_kappa":2,"fault_line":false}
-{"type":"node","key":"t4_scc_004_n4","role":4,"content":"In the densely connected water cycle process, stage 4 of 5 (marker t4_scc_004_n4): this stage is part of a multi-cycle structure with several redundant feedback paths — it is not a simple root.","scc_id":"t4_scc_004","observed_kappa":2,"fault_line":false}
-{"type":"node","key":"t4_scc_004_n5","role":5,"content":"In the densely connected water cycle process, stage 5 of 5 (marker t4_scc_004_n5): this stage is part of a multi-cycle structure with several redundant feedback paths — it is not a simple root.","scc_id":"t4_scc_004","observed_kappa":2,"fault_line":true}
+{"type":"edge","source":"t4_scc_003_n3","target":"t4_scc_003_n5","edge_type":"causal"}
+{"type":"edge","source":"t4_scc_003_n5","target":"t4_scc_003_n2","edge_type":"causal"}
+{"type":"node","key":"t4_scc_004_n1","role":1,"content":"In the densely connected system-4 process, stage 1 of 5 (marker t4_scc_004_n1): this stage is part of a multi-cycle structure with several redundant feedback paths — it is not a simple root.","scc_id":"t4_scc_004","observed_kappa":2,"fault_line":true}
+{"type":"node","key":"t4_scc_004_n2","role":2,"content":"In the densely connected system-4 process, stage 2 of 5 (marker t4_scc_004_n2): this stage is part of a multi-cycle structure with several redundant feedback paths — it is not a simple root.","scc_id":"t4_scc_004","observed_kappa":2,"fault_line":true}
+{"type":"node","key":"t4_scc_004_n3","role":3,"content":"In the densely connected system-4 process, stage 3 of 5 (marker t4_scc_004_n3): this stage is part of a multi-cycle structure with several redundant feedback paths — it is not a simple root.","scc_id":"t4_scc_004","observed_kappa":2,"fault_line":false}
+{"type":"node","key":"t4_scc_004_n4","role":4,"content":"In the densely connected system-4 process, stage 4 of 5 (marker t4_scc_004_n4): this stage is part of a multi-cycle structure with several redundant feedback paths — it is not a simple root.","scc_id":"t4_scc_004","observed_kappa":2,"fault_line":false}
+{"type":"node","key":"t4_scc_004_n5","role":5,"content":"In the densely connected system-4 process, stage 5 of 5 (marker t4_scc_004_n5): this stage is part of a multi-cycle structure with several redundant feedback paths — it is not a simple root.","scc_id":"t4_scc_004","observed_kappa":2,"fault_line":true}
 {"type":"edge","source":"t4_scc_004_n1","target":"t4_scc_004_n2","edge_type":"causal"}
 {"type":"edge","source":"t4_scc_004_n2","target":"t4_scc_004_n3","edge_type":"causal"}
 {"type":"edge","source":"t4_scc_004_n3","target":"t4_scc_004_n4","edge_type":"causal"}
@@ -69,12 +76,12 @@
 {"type":"edge","source":"t4_scc_004_n1","target":"t4_scc_004_n3","edge_type":"causal"}
 {"type":"edge","source":"t4_scc_004_n3","target":"t4_scc_004_n5","edge_type":"causal"}
 {"type":"edge","source":"t4_scc_004_n5","target":"t4_scc_004_n2","edge_type":"causal"}
-{"type":"node","key":"t4_scc_005_n1","role":1,"content":"In the densely connected carbon cycle process, stage 1 of 6 (marker t4_scc_005_n1): this stage is part of a multi-cycle structure with several redundant feedback paths — it is not a simple root.","scc_id":"t4_scc_005","observed_kappa":2,"fault_line":true}
-{"type":"node","key":"t4_scc_005_n2","role":2,"content":"In the densely connected carbon cycle process, stage 2 of 6 (marker t4_scc_005_n2): this stage is part of a multi-cycle structure with several redundant feedback paths — it is not a simple root.","scc_id":"t4_scc_005","observed_kappa":2,"fault_line":true}
-{"type":"node","key":"t4_scc_005_n3","role":3,"content":"In the densely connected carbon cycle process, stage 3 of 6 (marker t4_scc_005_n3): this stage is part of a multi-cycle structure with several redundant feedback paths — it is not a simple root.","scc_id":"t4_scc_005","observed_kappa":2,"fault_line":false}
-{"type":"node","key":"t4_scc_005_n4","role":4,"content":"In the densely connected carbon cycle process, stage 4 of 6 (marker t4_scc_005_n4): this stage is part of a multi-cycle structure with several redundant feedback paths — it is not a simple root.","scc_id":"t4_scc_005","observed_kappa":2,"fault_line":false}
-{"type":"node","key":"t4_scc_005_n5","role":5,"content":"In the densely connected carbon cycle process, stage 5 of 6 (marker t4_scc_005_n5): this stage is part of a multi-cycle structure with several redundant feedback paths — it is not a simple root.","scc_id":"t4_scc_005","observed_kappa":2,"fault_line":false}
-{"type":"node","key":"t4_scc_005_n6","role":6,"content":"In the densely connected carbon cycle process, stage 6 of 6 (marker t4_scc_005_n6): this stage is part of a multi-cycle structure with several redundant feedback paths — it is not a simple root.","scc_id":"t4_scc_005","observed_kappa":2,"fault_line":true}
+{"type":"node","key":"t4_scc_005_n1","role":1,"content":"In the densely connected system-5 process, stage 1 of 6 (marker t4_scc_005_n1): this stage is part of a multi-cycle structure with several redundant feedback paths — it is not a simple root.","scc_id":"t4_scc_005","observed_kappa":2,"fault_line":true}
+{"type":"node","key":"t4_scc_005_n2","role":2,"content":"In the densely connected system-5 process, stage 2 of 6 (marker t4_scc_005_n2): this stage is part of a multi-cycle structure with several redundant feedback paths — it is not a simple root.","scc_id":"t4_scc_005","observed_kappa":2,"fault_line":true}
+{"type":"node","key":"t4_scc_005_n3","role":3,"content":"In the densely connected system-5 process, stage 3 of 6 (marker t4_scc_005_n3): this stage is part of a multi-cycle structure with several redundant feedback paths — it is not a simple root.","scc_id":"t4_scc_005","observed_kappa":2,"fault_line":true}
+{"type":"node","key":"t4_scc_005_n4","role":4,"content":"In the densely connected system-5 process, stage 4 of 6 (marker t4_scc_005_n4): this stage is part of a multi-cycle structure with several redundant feedback paths — it is not a simple root.","scc_id":"t4_scc_005","observed_kappa":2,"fault_line":false}
+{"type":"node","key":"t4_scc_005_n5","role":5,"content":"In the densely connected system-5 process, stage 5 of 6 (marker t4_scc_005_n5): this stage is part of a multi-cycle structure with several redundant feedback paths — it is not a simple root.","scc_id":"t4_scc_005","observed_kappa":2,"fault_line":false}
+{"type":"node","key":"t4_scc_005_n6","role":6,"content":"In the densely connected system-5 process, stage 6 of 6 (marker t4_scc_005_n6): this stage is part of a multi-cycle structure with several redundant feedback paths — it is not a simple root.","scc_id":"t4_scc_005","observed_kappa":2,"fault_line":false}
 {"type":"edge","source":"t4_scc_005_n1","target":"t4_scc_005_n2","edge_type":"causal"}
 {"type":"edge","source":"t4_scc_005_n2","target":"t4_scc_005_n3","edge_type":"causal"}
 {"type":"edge","source":"t4_scc_005_n3","target":"t4_scc_005_n4","edge_type":"causal"}
@@ -90,3 +97,6 @@
 {"type":"edge","source":"t4_scc_005_n1","target":"t4_scc_005_n4","edge_type":"causal"}
 {"type":"edge","source":"t4_scc_005_n3","target":"t4_scc_005_n6","edge_type":"causal"}
 {"type":"edge","source":"t4_scc_005_n5","target":"t4_scc_005_n2","edge_type":"causal"}
+{"type":"edge","source":"t4_scc_005_n1","target":"t4_scc_005_n3","edge_type":"causal"}
+{"type":"edge","source":"t4_scc_005_n3","target":"t4_scc_005_n5","edge_type":"causal"}
+{"type":"edge","source":"t4_scc_005_n5","target":"t4_scc_005_n1","edge_type":"causal"}

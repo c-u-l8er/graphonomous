@@ -1,0 +1,77 @@
+{"type":"node","domain":"circadian_rhythm","key":"t7_graph_001_n1","role":"source","content":"Evidence node 1 of 7 in circadian rhythm analysis (marker t7_graph_001_n1): source node with strong evidential support for the circadian rhythm conclusion.","graph_id":"t7_graph_001"}
+{"type":"node","domain":"circadian_rhythm","key":"t7_graph_001_n2","role":"main_path","content":"Evidence node 2 of 7 in circadian rhythm analysis (marker t7_graph_001_n2): main_path node with strong evidential support for the circadian rhythm conclusion.","graph_id":"t7_graph_001"}
+{"type":"node","domain":"circadian_rhythm","key":"t7_graph_001_n3","role":"main_path","content":"Evidence node 3 of 7 in circadian rhythm analysis (marker t7_graph_001_n3): main_path node with strong evidential support for the circadian rhythm conclusion.","graph_id":"t7_graph_001"}
+{"type":"node","domain":"circadian_rhythm","key":"t7_graph_001_n4","role":"main_path","content":"Evidence node 4 of 7 in circadian rhythm analysis (marker t7_graph_001_n4): main_path node with strong evidential support for the circadian rhythm conclusion.","graph_id":"t7_graph_001"}
+{"type":"node","domain":"circadian_rhythm","key":"t7_graph_001_n5","role":"alt_path","content":"Evidence node 5 of 7 in circadian rhythm analysis (marker t7_graph_001_n5): alt_path node with weak evidential support for the circadian rhythm conclusion.","graph_id":"t7_graph_001"}
+{"type":"node","domain":"circadian_rhythm","key":"t7_graph_001_n6","role":"alt_path","content":"Evidence node 6 of 7 in circadian rhythm analysis (marker t7_graph_001_n6): alt_path node with weak evidential support for the circadian rhythm conclusion.","graph_id":"t7_graph_001"}
+{"type":"node","domain":"circadian_rhythm","key":"t7_graph_001_n7","role":"target","content":"Evidence node 7 of 7 in circadian rhythm analysis (marker t7_graph_001_n7): target node with weak evidential support for the circadian rhythm conclusion.","graph_id":"t7_graph_001"}
+{"type":"edge","source":"t7_graph_001_n1","target":"t7_graph_001_n2","edge_type":"causal","weight":0.9}
+{"type":"edge","source":"t7_graph_001_n2","target":"t7_graph_001_n3","edge_type":"causal","weight":0.9}
+{"type":"edge","source":"t7_graph_001_n3","target":"t7_graph_001_n4","edge_type":"causal","weight":0.9}
+{"type":"edge","source":"t7_graph_001_n4","target":"t7_graph_001_n7","edge_type":"causal","weight":0.9}
+{"type":"edge","source":"t7_graph_001_n1","target":"t7_graph_001_n5","edge_type":"supports","weight":0.3}
+{"type":"edge","source":"t7_graph_001_n5","target":"t7_graph_001_n6","edge_type":"supports","weight":0.3}
+{"type":"edge","source":"t7_graph_001_n6","target":"t7_graph_001_n7","edge_type":"supports","weight":0.3}
+{"type":"gold","graph_id":"t7_graph_001","source_key":"t7_graph_001_n1","target_key":"t7_graph_001_n7","alt_path":["t7_graph_001_n1","t7_graph_001_n5","t7_graph_001_n6","t7_graph_001_n7"],"hop_count":4,"shortest_path":["t7_graph_001_n1","t7_graph_001_n2","t7_graph_001_n3","t7_graph_001_n4","t7_graph_001_n7"]}
+{"type":"node","domain":"photosynthesis_cycle","key":"t7_graph_002_n1","role":"source","content":"Evidence node 1 of 7 in photosynthesis cycle analysis (marker t7_graph_002_n1): source node with strong evidential support for the photosynthesis cycle conclusion.","graph_id":"t7_graph_002"}
+{"type":"node","domain":"photosynthesis_cycle","key":"t7_graph_002_n2","role":"main_path","content":"Evidence node 2 of 7 in photosynthesis cycle analysis (marker t7_graph_002_n2): main_path node with strong evidential support for the photosynthesis cycle conclusion.","graph_id":"t7_graph_002"}
+{"type":"node","domain":"photosynthesis_cycle","key":"t7_graph_002_n3","role":"main_path","content":"Evidence node 3 of 7 in photosynthesis cycle analysis (marker t7_graph_002_n3): main_path node with strong evidential support for the photosynthesis cycle conclusion.","graph_id":"t7_graph_002"}
+{"type":"node","domain":"photosynthesis_cycle","key":"t7_graph_002_n4","role":"main_path","content":"Evidence node 4 of 7 in photosynthesis cycle analysis (marker t7_graph_002_n4): main_path node with strong evidential support for the photosynthesis cycle conclusion.","graph_id":"t7_graph_002"}
+{"type":"node","domain":"photosynthesis_cycle","key":"t7_graph_002_n5","role":"alt_path","content":"Evidence node 5 of 7 in photosynthesis cycle analysis (marker t7_graph_002_n5): alt_path node with weak evidential support for the photosynthesis cycle conclusion.","graph_id":"t7_graph_002"}
+{"type":"node","domain":"photosynthesis_cycle","key":"t7_graph_002_n6","role":"alt_path","content":"Evidence node 6 of 7 in photosynthesis cycle analysis (marker t7_graph_002_n6): alt_path node with weak evidential support for the photosynthesis cycle conclusion.","graph_id":"t7_graph_002"}
+{"type":"node","domain":"photosynthesis_cycle","key":"t7_graph_002_n7","role":"target","content":"Evidence node 7 of 7 in photosynthesis cycle analysis (marker t7_graph_002_n7): target node with weak evidential support for the photosynthesis cycle conclusion.","graph_id":"t7_graph_002"}
+{"type":"edge","source":"t7_graph_002_n1","target":"t7_graph_002_n2","edge_type":"causal","weight":0.9}
+{"type":"edge","source":"t7_graph_002_n2","target":"t7_graph_002_n3","edge_type":"causal","weight":0.9}
+{"type":"edge","source":"t7_graph_002_n3","target":"t7_graph_002_n4","edge_type":"causal","weight":0.9}
+{"type":"edge","source":"t7_graph_002_n4","target":"t7_graph_002_n7","edge_type":"causal","weight":0.9}
+{"type":"edge","source":"t7_graph_002_n1","target":"t7_graph_002_n5","edge_type":"supports","weight":0.3}
+{"type":"edge","source":"t7_graph_002_n5","target":"t7_graph_002_n6","edge_type":"supports","weight":0.3}
+{"type":"edge","source":"t7_graph_002_n6","target":"t7_graph_002_n7","edge_type":"supports","weight":0.3}
+{"type":"gold","graph_id":"t7_graph_002","source_key":"t7_graph_002_n1","target_key":"t7_graph_002_n7","alt_path":["t7_graph_002_n1","t7_graph_002_n5","t7_graph_002_n6","t7_graph_002_n7"],"hop_count":4,"shortest_path":["t7_graph_002_n1","t7_graph_002_n2","t7_graph_002_n3","t7_graph_002_n4","t7_graph_002_n7"]}
+{"type":"node","domain":"krebs_cycle","key":"t7_graph_003_n1","role":"source","content":"Evidence node 1 of 7 in krebs cycle analysis (marker t7_graph_003_n1): source node with strong evidential support for the krebs cycle conclusion.","graph_id":"t7_graph_003"}
+{"type":"node","domain":"krebs_cycle","key":"t7_graph_003_n2","role":"main_path","content":"Evidence node 2 of 7 in krebs cycle analysis (marker t7_graph_003_n2): main_path node with strong evidential support for the krebs cycle conclusion.","graph_id":"t7_graph_003"}
+{"type":"node","domain":"krebs_cycle","key":"t7_graph_003_n3","role":"main_path","content":"Evidence node 3 of 7 in krebs cycle analysis (marker t7_graph_003_n3): main_path node with strong evidential support for the krebs cycle conclusion.","graph_id":"t7_graph_003"}
+{"type":"node","domain":"krebs_cycle","key":"t7_graph_003_n4","role":"main_path","content":"Evidence node 4 of 7 in krebs cycle analysis (marker t7_graph_003_n4): main_path node with strong evidential support for the krebs cycle conclusion.","graph_id":"t7_graph_003"}
+{"type":"node","domain":"krebs_cycle","key":"t7_graph_003_n5","role":"alt_path","content":"Evidence node 5 of 7 in krebs cycle analysis (marker t7_graph_003_n5): alt_path node with weak evidential support for the krebs cycle conclusion.","graph_id":"t7_graph_003"}
+{"type":"node","domain":"krebs_cycle","key":"t7_graph_003_n6","role":"alt_path","content":"Evidence node 6 of 7 in krebs cycle analysis (marker t7_graph_003_n6): alt_path node with weak evidential support for the krebs cycle conclusion.","graph_id":"t7_graph_003"}
+{"type":"node","domain":"krebs_cycle","key":"t7_graph_003_n7","role":"target","content":"Evidence node 7 of 7 in krebs cycle analysis (marker t7_graph_003_n7): target node with weak evidential support for the krebs cycle conclusion.","graph_id":"t7_graph_003"}
+{"type":"edge","source":"t7_graph_003_n1","target":"t7_graph_003_n2","edge_type":"causal","weight":0.9}
+{"type":"edge","source":"t7_graph_003_n2","target":"t7_graph_003_n3","edge_type":"causal","weight":0.9}
+{"type":"edge","source":"t7_graph_003_n3","target":"t7_graph_003_n4","edge_type":"causal","weight":0.9}
+{"type":"edge","source":"t7_graph_003_n4","target":"t7_graph_003_n7","edge_type":"causal","weight":0.9}
+{"type":"edge","source":"t7_graph_003_n1","target":"t7_graph_003_n5","edge_type":"supports","weight":0.3}
+{"type":"edge","source":"t7_graph_003_n5","target":"t7_graph_003_n6","edge_type":"supports","weight":0.3}
+{"type":"edge","source":"t7_graph_003_n6","target":"t7_graph_003_n7","edge_type":"supports","weight":0.3}
+{"type":"gold","graph_id":"t7_graph_003","source_key":"t7_graph_003_n1","target_key":"t7_graph_003_n7","alt_path":["t7_graph_003_n1","t7_graph_003_n5","t7_graph_003_n6","t7_graph_003_n7"],"hop_count":4,"shortest_path":["t7_graph_003_n1","t7_graph_003_n2","t7_graph_003_n3","t7_graph_003_n4","t7_graph_003_n7"]}
+{"type":"node","domain":"water_cycle","key":"t7_graph_004_n1","role":"source","content":"Evidence node 1 of 8 in water cycle analysis (marker t7_graph_004_n1): source node with strong evidential support for the water cycle conclusion.","graph_id":"t7_graph_004"}
+{"type":"node","domain":"water_cycle","key":"t7_graph_004_n2","role":"main_path","content":"Evidence node 2 of 8 in water cycle analysis (marker t7_graph_004_n2): main_path node with strong evidential support for the water cycle conclusion.","graph_id":"t7_graph_004"}
+{"type":"node","domain":"water_cycle","key":"t7_graph_004_n3","role":"main_path","content":"Evidence node 3 of 8 in water cycle analysis (marker t7_graph_004_n3): main_path node with strong evidential support for the water cycle conclusion.","graph_id":"t7_graph_004"}
+{"type":"node","domain":"water_cycle","key":"t7_graph_004_n4","role":"main_path","content":"Evidence node 4 of 8 in water cycle analysis (marker t7_graph_004_n4): main_path node with strong evidential support for the water cycle conclusion.","graph_id":"t7_graph_004"}
+{"type":"node","domain":"water_cycle","key":"t7_graph_004_n5","role":"main_path","content":"Evidence node 5 of 8 in water cycle analysis (marker t7_graph_004_n5): main_path node with strong evidential support for the water cycle conclusion.","graph_id":"t7_graph_004"}
+{"type":"node","domain":"water_cycle","key":"t7_graph_004_n6","role":"alt_path","content":"Evidence node 6 of 8 in water cycle analysis (marker t7_graph_004_n6): alt_path node with weak evidential support for the water cycle conclusion.","graph_id":"t7_graph_004"}
+{"type":"node","domain":"water_cycle","key":"t7_graph_004_n7","role":"alt_path","content":"Evidence node 7 of 8 in water cycle analysis (marker t7_graph_004_n7): alt_path node with weak evidential support for the water cycle conclusion.","graph_id":"t7_graph_004"}
+{"type":"node","domain":"water_cycle","key":"t7_graph_004_n8","role":"target","content":"Evidence node 8 of 8 in water cycle analysis (marker t7_graph_004_n8): target node with weak evidential support for the water cycle conclusion.","graph_id":"t7_graph_004"}
+{"type":"edge","source":"t7_graph_004_n1","target":"t7_graph_004_n2","edge_type":"causal","weight":0.9}
+{"type":"edge","source":"t7_graph_004_n2","target":"t7_graph_004_n3","edge_type":"causal","weight":0.9}
+{"type":"edge","source":"t7_graph_004_n3","target":"t7_graph_004_n4","edge_type":"causal","weight":0.9}
+{"type":"edge","source":"t7_graph_004_n4","target":"t7_graph_004_n5","edge_type":"causal","weight":0.9}
+{"type":"edge","source":"t7_graph_004_n5","target":"t7_graph_004_n8","edge_type":"causal","weight":0.9}
+{"type":"edge","source":"t7_graph_004_n1","target":"t7_graph_004_n6","edge_type":"supports","weight":0.3}
+{"type":"edge","source":"t7_graph_004_n6","target":"t7_graph_004_n7","edge_type":"supports","weight":0.3}
+{"type":"edge","source":"t7_graph_004_n7","target":"t7_graph_004_n8","edge_type":"supports","weight":0.3}
+{"type":"gold","graph_id":"t7_graph_004","source_key":"t7_graph_004_n1","target_key":"t7_graph_004_n8","alt_path":["t7_graph_004_n1","t7_graph_004_n6","t7_graph_004_n7","t7_graph_004_n8"],"hop_count":5,"shortest_path":["t7_graph_004_n1","t7_graph_004_n2","t7_graph_004_n3","t7_graph_004_n4","t7_graph_004_n5","t7_graph_004_n8"]}
+{"type":"node","domain":"carbon_cycle","key":"t7_graph_005_n1","role":"source","content":"Evidence node 1 of 7 in carbon cycle analysis (marker t7_graph_005_n1): source node with strong evidential support for the carbon cycle conclusion.","graph_id":"t7_graph_005"}
+{"type":"node","domain":"carbon_cycle","key":"t7_graph_005_n2","role":"main_path","content":"Evidence node 2 of 7 in carbon cycle analysis (marker t7_graph_005_n2): main_path node with strong evidential support for the carbon cycle conclusion.","graph_id":"t7_graph_005"}
+{"type":"node","domain":"carbon_cycle","key":"t7_graph_005_n3","role":"main_path","content":"Evidence node 3 of 7 in carbon cycle analysis (marker t7_graph_005_n3): main_path node with strong evidential support for the carbon cycle conclusion.","graph_id":"t7_graph_005"}
+{"type":"node","domain":"carbon_cycle","key":"t7_graph_005_n4","role":"main_path","content":"Evidence node 4 of 7 in carbon cycle analysis (marker t7_graph_005_n4): main_path node with strong evidential support for the carbon cycle conclusion.","graph_id":"t7_graph_005"}
+{"type":"node","domain":"carbon_cycle","key":"t7_graph_005_n5","role":"alt_path","content":"Evidence node 5 of 7 in carbon cycle analysis (marker t7_graph_005_n5): alt_path node with weak evidential support for the carbon cycle conclusion.","graph_id":"t7_graph_005"}
+{"type":"node","domain":"carbon_cycle","key":"t7_graph_005_n6","role":"alt_path","content":"Evidence node 6 of 7 in carbon cycle analysis (marker t7_graph_005_n6): alt_path node with weak evidential support for the carbon cycle conclusion.","graph_id":"t7_graph_005"}
+{"type":"node","domain":"carbon_cycle","key":"t7_graph_005_n7","role":"target","content":"Evidence node 7 of 7 in carbon cycle analysis (marker t7_graph_005_n7): target node with weak evidential support for the carbon cycle conclusion.","graph_id":"t7_graph_005"}
+{"type":"edge","source":"t7_graph_005_n1","target":"t7_graph_005_n2","edge_type":"causal","weight":0.9}
+{"type":"edge","source":"t7_graph_005_n2","target":"t7_graph_005_n3","edge_type":"causal","weight":0.9}
+{"type":"edge","source":"t7_graph_005_n3","target":"t7_graph_005_n4","edge_type":"causal","weight":0.9}
+{"type":"edge","source":"t7_graph_005_n4","target":"t7_graph_005_n7","edge_type":"causal","weight":0.9}
+{"type":"edge","source":"t7_graph_005_n1","target":"t7_graph_005_n5","edge_type":"supports","weight":0.3}
+{"type":"edge","source":"t7_graph_005_n5","target":"t7_graph_005_n6","edge_type":"supports","weight":0.3}
+{"type":"edge","source":"t7_graph_005_n6","target":"t7_graph_005_n7","edge_type":"supports","weight":0.3}
+{"type":"gold","graph_id":"t7_graph_005","source_key":"t7_graph_005_n1","target_key":"t7_graph_005_n7","alt_path":["t7_graph_005_n1","t7_graph_005_n5","t7_graph_005_n6","t7_graph_005_n7"],"hop_count":4,"shortest_path":["t7_graph_005_n1","t7_graph_005_n2","t7_graph_005_n3","t7_graph_005_n4","t7_graph_005_n7"]}

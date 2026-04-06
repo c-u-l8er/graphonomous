@@ -25,6 +25,8 @@ defmodule Graphonomous.Retriever do
     Topology
   }
 
+  alias Graphonomous.Algorithms.PPR
+
   alias Graphonomous.Types.Node
 
   @default_similarity_limit 10
@@ -255,6 +257,17 @@ defmodule Graphonomous.Retriever do
             if skip_topology, do: ranked, else: propagate_scc_confidence(ranked, topology)
           end)
 
+        # PPR: Seeded Personalized PageRank additive boost on the retrieval
+        # subgraph adjacency. Flag-gated (default off) — enable via :ppr=true.
+        {ppr_us, ranked} =
+          :timer.tc(fn ->
+            if skip_topology or not Keyword.get(call_opts, :ppr, false) do
+              ranked
+            else
+              apply_ppr_boost(ranked, adjacency, call_opts)
+            end
+          end)
+
         # K8: Query-time edge impact
         {edge_impact_us, edge_impact_notes} =
           :timer.tc(fn ->
@@ -335,6 +348,7 @@ defmodule Graphonomous.Retriever do
           |> Map.put(:kappa_expand, kappa_expand_us)
           |> Map.put(:fault_line_boost, fault_line_us)
           |> Map.put(:scc_confidence, scc_conf_us)
+          |> Map.put(:ppr_boost, ppr_us)
           |> Map.put(:edge_impact, edge_impact_us)
           |> Map.put(:utility_rerank, utility_us)
           |> Map.put(:enrich_deliberate, enrich_us)
@@ -1473,6 +1487,79 @@ defmodule Graphonomous.Retriever do
       end)
       |> Enum.sort_by(& &1.score, :desc)
     end
+  end
+
+  # PPR: Seeded Personalized PageRank boost. Runs a random-walk-with-restart
+  # over the already-computed retrieval subgraph adjacency, seeded by the
+  # top-K post-K7 entries. Adds a log-compressed stationary-probability term
+  # to each entry's score. Purely additive — no score-formula rewrites.
+  #
+  # Default weight 0.18 (per agentmemory), tunable via :ppr_weight opt.
+  @ppr_default_weight 0.18
+  @ppr_seed_k 5
+
+  defp apply_ppr_boost(ranked, adjacency, _opts)
+       when is_map(adjacency) and map_size(adjacency) == 0,
+       do: ranked
+
+  defp apply_ppr_boost(ranked, _adjacency, _opts) when length(ranked) < 2, do: ranked
+
+  defp apply_ppr_boost(ranked, adjacency, opts) do
+    weight = clamp(to_float(Keyword.get(opts, :ppr_weight, @ppr_default_weight)), 0.0, 1.0)
+
+    if weight <= 0.0 do
+      ranked
+    else
+      seed_k = Keyword.get(opts, :ppr_seed_k, @ppr_seed_k)
+      seeds = build_ppr_seeds(ranked, seed_k)
+
+      case map_size(seeds) do
+        0 ->
+          ranked
+
+        _ ->
+          probs = PPR.compute(adjacency, seeds)
+          apply_ppr_probs(ranked, probs, weight)
+      end
+    end
+  end
+
+  # Softmax top-K scores as seed restart distribution.
+  defp build_ppr_seeds(ranked, k) do
+    top =
+      ranked
+      |> Enum.filter(&is_binary(Map.get(&1, :node_id)))
+      |> Enum.take(k)
+
+    case top do
+      [] ->
+        %{}
+
+      entries ->
+        scores = Enum.map(entries, & &1.score)
+        m = Enum.max(scores)
+        exps = Enum.map(scores, fn s -> :math.exp(s - m) end)
+        total = Enum.sum(exps)
+
+        entries
+        |> Enum.zip(exps)
+        |> Map.new(fn {e, ex} -> {e.node_id, ex / total} end)
+    end
+  end
+
+  defp apply_ppr_probs(ranked, probs, _weight) when map_size(probs) == 0, do: ranked
+
+  defp apply_ppr_probs(ranked, probs, weight) do
+    n = map_size(probs)
+    scale = n * 1.0
+
+    ranked
+    |> Enum.map(fn entry ->
+      prob = Map.get(probs, entry.node_id, 0.0)
+      boost = weight * :math.log(1.0 + prob * scale)
+      %{entry | score: entry.score + boost}
+    end)
+    |> Enum.sort_by(& &1.score, :desc)
   end
 
   # P1: Two-phase retrieval — after semantic + topology scoring, re-rank by

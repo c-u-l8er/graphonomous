@@ -83,7 +83,9 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
           skip_topology: :boolean,
           judge: :boolean,
           reflect: :boolean,
-          diagnose: :boolean
+          diagnose: :boolean,
+          ppr: :boolean,
+          ppr_weight: :float
         ]
       )
 
@@ -95,6 +97,8 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
     judge = Keyword.get(opts, :judge, false)
     reflect = Keyword.get(opts, :reflect, false)
     diagnose = Keyword.get(opts, :diagnose, false)
+    ppr_enabled = Keyword.get(opts, :ppr, false)
+    ppr_weight = Keyword.get(opts, :ppr_weight, 0.18)
 
     if diagnose, do: Application.put_env(:graphonomous, :benchmark_diagnose, true)
 
@@ -208,7 +212,7 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
           if rem(idx, 50) == 0 or idx == 1,
             do: Mix.shell().info("  Progress: #{idx}/#{total}...")
 
-          evaluate_question(q, skip_topology)
+          evaluate_question(q, skip_topology, ppr_enabled, ppr_weight)
         end)
       end)
 
@@ -257,7 +261,17 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
       questions: question_results
     }
 
-    path = Helpers.write_results("longmemeval", results)
+    ts = DateTime.utc_now() |> Calendar.strftime("%Y%m%d_%H%M%S")
+
+    suffix =
+      cond do
+        ppr_enabled -> "_ppr#{ppr_weight}"
+        true -> ""
+      end
+
+    result_name = "longmemeval_#{ts}#{suffix}_L#{limit}"
+    _ = Helpers.write_results("longmemeval", results)
+    path = Helpers.write_results(result_name, results)
 
     # Print competitive comparison
     print_results(metrics, split, total, path)
@@ -1048,7 +1062,7 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
 
   # ── Question Evaluation ──────────────────────────────────────────
 
-  defp evaluate_question(q, skip_topology) do
+  defp evaluate_question(q, skip_topology, ppr_enabled, ppr_weight) do
     question_id = Map.get(q, "question_id", "unknown")
     question_type = Map.get(q, "question_type", "unknown")
     question_text = Map.get(q, "question", "")
@@ -1084,7 +1098,9 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
           expansion_hops: exp_hops,
           neighbors_per_node: 8,
           skip_topology: skip_topology,
-          reference_date: question_ref_date
+          reference_date: question_ref_date,
+          ppr: ppr_enabled,
+          ppr_weight: ppr_weight
         )
       end)
 

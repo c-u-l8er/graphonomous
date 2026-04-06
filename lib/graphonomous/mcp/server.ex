@@ -40,6 +40,7 @@ defmodule Graphonomous.MCP.Server do
   component(Graphonomous.MCP.ForgetByPolicy)
   component(Graphonomous.MCP.GdprErase)
   component(Graphonomous.MCP.EpistemicFrontier)
+  component(Graphonomous.MCP.TraceEvidencePath)
 
   # MCP resource components
   component(Graphonomous.MCP.Resources.HealthSnapshot)

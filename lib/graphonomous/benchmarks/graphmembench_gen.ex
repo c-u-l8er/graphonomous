@@ -296,6 +296,74 @@ defmodule Graphonomous.Benchmarks.GraphMemBenchGen do
     }
   end
 
+  # Tier 7 — Evidence path tracing (Dijkstra / shortest path)
+  def generate(7, opts) do
+    tier = 7
+    seed = Keyword.get(opts, :seed, 42)
+    sanity = Keyword.get(opts, :sanity, false)
+    distractors = Keyword.get(opts, :distractors, 0)
+
+    :rand.seed(:exsss, {seed, seed * 7 + 1, seed * 13 + 3})
+
+    n_graphs = if sanity, do: 5, else: 15
+    n_questions = if sanity, do: 10, else: 100
+
+    graphs =
+      @domains
+      |> Enum.take(n_graphs)
+      |> Enum.with_index(1)
+      |> Enum.map(fn {domain, idx} ->
+        build_evidence_graph(domain, idx)
+      end)
+
+    distractor_chains = build_distractors(distractors, n_graphs)
+    questions = build_t7_questions(graphs, n_questions)
+
+    %{
+      tier: tier,
+      seed: seed,
+      sanity: sanity,
+      distractors: distractors,
+      evidence_graphs: graphs,
+      distractor_chains: distractor_chains,
+      questions: questions
+    }
+  end
+
+  # Tier 8 — Causal ordering (toposort + longest-path DAG)
+  def generate(8, opts) do
+    tier = 8
+    seed = Keyword.get(opts, :seed, 42)
+    sanity = Keyword.get(opts, :sanity, false)
+    distractors = Keyword.get(opts, :distractors, 0)
+
+    :rand.seed(:exsss, {seed, seed * 7 + 1, seed * 13 + 3})
+
+    n_dags = if sanity, do: 5, else: 15
+    n_questions = if sanity, do: 10, else: 100
+
+    dags =
+      @domains
+      |> Enum.take(n_dags)
+      |> Enum.with_index(1)
+      |> Enum.map(fn {domain, idx} ->
+        build_causal_dag(domain, idx)
+      end)
+
+    distractor_chains = build_distractors(distractors, n_dags)
+    questions = build_t8_questions(dags, n_questions)
+
+    %{
+      tier: tier,
+      seed: seed,
+      sanity: sanity,
+      distractors: distractors,
+      causal_dags: dags,
+      distractor_chains: distractor_chains,
+      questions: questions
+    }
+  end
+
   defp build_contradiction_pair(idx, cyclic?, turn_offset) do
     pair_id = "t5_pair_#{String.pad_leading(Integer.to_string(idx), 3, "0")}"
     subject = Enum.at(@t5_subjects, rem(idx - 1, length(@t5_subjects)))
@@ -636,6 +704,7 @@ defmodule Graphonomous.Benchmarks.GraphMemBenchGen do
     n_memb = round(n * 0.25)
     n_oracle = n - n_faultline - n_memb
     scc_count = length(sccs)
+
     pretty_of = fn scc ->
       if homogenize do
         idx = scc.scc_id |> String.split("_") |> List.last() |> String.to_integer()
@@ -780,6 +849,300 @@ defmodule Graphonomous.Benchmarks.GraphMemBenchGen do
     discrim_qs ++ memb_qs ++ routing_qs
   end
 
+  # ── T7: Evidence graph builder ─────────────────────────────
+
+  # Builds a DAG with weighted edges and known shortest paths.
+  # Structure: source → hub1 → hub2 → target (main path, high confidence)
+  #            source → alt1 → alt2 → target (alternate path, lower confidence)
+  #            plus some cross-edges and dead ends.
+  defp build_evidence_graph(domain, idx) do
+    graph_id = "t7_graph_#{String.pad_leading(Integer.to_string(idx), 3, "0")}"
+    pretty = String.replace(domain, "_", " ")
+
+    # 6-8 nodes with known shortest path
+    n_nodes = 5 + :rand.uniform(3)
+
+    # Build: source → n1 → n2 → ... → target (main path with high-weight edges)
+    # and: source → alt1 → target (shortcut with lower weight)
+    nodes =
+      for i <- 1..n_nodes do
+        key = "#{graph_id}_n#{i}"
+
+        role =
+          cond do
+            i == 1 -> "source"
+            i == n_nodes -> "target"
+            i <= div(n_nodes, 2) + 1 -> "main_path"
+            true -> "alt_path"
+          end
+
+        content =
+          "Evidence node #{i} of #{n_nodes} in #{pretty} analysis (marker #{key}): " <>
+            "#{role} node with #{if role in ["source", "main_path"], do: "strong", else: "weak"} " <>
+            "evidential support for the #{pretty} conclusion."
+
+        %{key: key, content: content, role: role, graph_id: graph_id, domain: domain}
+      end
+
+    source = hd(nodes)
+    target = List.last(nodes)
+    mid = div(n_nodes, 2)
+
+    # Main path: source → n2 → n3 → ... → n(mid+1) → target (high weight)
+    main_path_nodes = [source | Enum.slice(nodes, 1..mid)] ++ [target]
+
+    main_edges =
+      main_path_nodes
+      |> Enum.chunk_every(2, 1, :discard)
+      |> Enum.map(fn [from, to] ->
+        %{source_key: from.key, target_key: to.key, edge_type: "causal", weight: 0.9}
+      end)
+
+    # Alt path: source → n(mid+2) → ... → n(n-1) → target (lower weight)
+    alt_path_nodes = [source | Enum.slice(nodes, (mid + 1)..(n_nodes - 2))] ++ [target]
+
+    alt_edges =
+      alt_path_nodes
+      |> Enum.chunk_every(2, 1, :discard)
+      |> Enum.map(fn [from, to] ->
+        %{source_key: from.key, target_key: to.key, edge_type: "supports", weight: 0.3}
+      end)
+
+    edges = main_edges ++ alt_edges
+
+    # Gold: main path is shorter (higher confidence = lower cost)
+    gold_path_keys = Enum.map(main_path_nodes, & &1.key)
+    alt_path_keys = Enum.map(alt_path_nodes, & &1.key)
+
+    %{
+      graph_id: graph_id,
+      domain: domain,
+      size: n_nodes,
+      nodes: nodes,
+      edges: edges,
+      gold_shortest_path: gold_path_keys,
+      gold_alt_path: alt_path_keys,
+      gold_hop_count: length(gold_path_keys) - 1,
+      source_key: source.key,
+      target_key: target.key
+    }
+  end
+
+  defp build_t7_questions(graphs, n) do
+    n_path = round(n * 0.4)
+    n_hop = round(n * 0.3)
+    n_alt = n - n_path - n_hop
+    graph_count = length(graphs)
+
+    path_qs =
+      for i <- 1..n_path do
+        graph = Enum.at(graphs, rem(i - 1, graph_count))
+        pretty = String.replace(graph.domain, "_", " ")
+
+        %{
+          q_id: "t7_path_#{i}",
+          pattern: "evidence_path",
+          query:
+            "Trace the strongest evidence chain from the origin to the conclusion " <>
+              "of the #{pretty} analysis. What is the most direct causal path?",
+          gold: %{
+            graph_id: graph.graph_id,
+            source_key: graph.source_key,
+            target_key: graph.target_key,
+            expected_path: graph.gold_shortest_path,
+            expected_hop_count: graph.gold_hop_count
+          }
+        }
+      end
+
+    hop_qs =
+      for i <- 1..n_hop do
+        graph = Enum.at(graphs, rem(i - 1, graph_count))
+        pretty = String.replace(graph.domain, "_", " ")
+
+        %{
+          q_id: "t7_hop_#{i}",
+          pattern: "hop_count",
+          query:
+            "How many evidential steps separate the origin from the conclusion " <>
+              "in the #{pretty} analysis? Count the shortest chain.",
+          gold: %{
+            graph_id: graph.graph_id,
+            source_key: graph.source_key,
+            target_key: graph.target_key,
+            expected_hop_count: graph.gold_hop_count
+          }
+        }
+      end
+
+    alt_qs =
+      for i <- 1..n_alt do
+        graph = Enum.at(graphs, rem(i - 1, graph_count))
+        pretty = String.replace(graph.domain, "_", " ")
+
+        %{
+          q_id: "t7_alt_#{i}",
+          pattern: "alternate_path",
+          query:
+            "Are there multiple evidence routes from origin to conclusion " <>
+              "in the #{pretty} analysis? Describe an alternative path.",
+          gold: %{
+            graph_id: graph.graph_id,
+            source_key: graph.source_key,
+            target_key: graph.target_key,
+            expected_alt_path: graph.gold_alt_path,
+            has_alternate: true
+          }
+        }
+      end
+
+    path_qs ++ hop_qs ++ alt_qs
+  end
+
+  # ── T8: Causal DAG builder ────────────────────────────────
+
+  # Builds a DAG with known topological order and critical path depth.
+  # Structure: wide + deep DAG. Source(s) → layers → sink(s).
+  defp build_causal_dag(domain, idx) do
+    dag_id = "t8_dag_#{String.pad_leading(Integer.to_string(idx), 3, "0")}"
+    pretty = String.replace(domain, "_", " ")
+
+    # Build a 3-4 layer DAG with 2-3 nodes per layer
+    n_layers = 3 + :rand.uniform(2) - 1
+    nodes_per_layer = 2 + :rand.uniform(1) - 1
+
+    # Build nodes
+    layers =
+      for l <- 1..n_layers do
+        for n <- 1..nodes_per_layer do
+          key = "#{dag_id}_L#{l}_n#{n}"
+
+          role =
+            cond do
+              l == 1 -> "source"
+              l == n_layers -> "sink"
+              true -> "intermediate"
+            end
+
+          content =
+            "Step #{n} at depth #{l} in the #{pretty} pipeline (marker #{key}): " <>
+              "this #{role} stage #{if l < n_layers, do: "feeds into depth #{l + 1}", else: "is the final output"} " <>
+              "of the #{pretty} process."
+
+          %{key: key, content: content, role: role, dag_id: dag_id, domain: domain, layer: l}
+        end
+      end
+
+    nodes = List.flatten(layers)
+
+    # Edges: each node in layer L connects to all nodes in layer L+1
+    edges =
+      for l <- 0..(n_layers - 2),
+          from <- Enum.at(layers, l),
+          to <- Enum.at(layers, l + 1) do
+        %{source_key: from.key, target_key: to.key, edge_type: "causal", weight: 0.8}
+      end
+
+    # Also add one "skip edge" from layer 1 to last layer for shorter alternate path
+    skip_edges =
+      if n_layers > 2 do
+        from = hd(Enum.at(layers, 0))
+        to = hd(Enum.at(layers, n_layers - 1))
+        [%{source_key: from.key, target_key: to.key, edge_type: "supports", weight: 0.5}]
+      else
+        []
+      end
+
+    all_edges = edges ++ skip_edges
+
+    source_keys = Enum.at(layers, 0) |> Enum.map(& &1.key) |> Enum.sort()
+    sink_keys = Enum.at(layers, n_layers - 1) |> Enum.map(& &1.key) |> Enum.sort()
+
+    # Gold: toposort should place layer 1 before 2 before 3...
+    # Critical path depth = n_layers - 1 (longest path through all layers)
+    gold_topo_layers =
+      Enum.map(layers, fn layer -> Enum.map(layer, & &1.key) |> Enum.sort() end)
+
+    %{
+      dag_id: dag_id,
+      domain: domain,
+      size: length(nodes),
+      n_layers: n_layers,
+      nodes_per_layer: nodes_per_layer,
+      nodes: nodes,
+      edges: all_edges,
+      source_keys: source_keys,
+      sink_keys: sink_keys,
+      gold_critical_depth: n_layers - 1,
+      gold_topo_layers: gold_topo_layers
+    }
+  end
+
+  defp build_t8_questions(dags, n) do
+    n_order = round(n * 0.4)
+    n_depth = round(n * 0.3)
+    n_source_sink = n - n_order - n_depth
+    dag_count = length(dags)
+
+    order_qs =
+      for i <- 1..n_order do
+        dag = Enum.at(dags, rem(i - 1, dag_count))
+        pretty = String.replace(dag.domain, "_", " ")
+
+        %{
+          q_id: "t8_order_#{i}",
+          pattern: "causal_ordering",
+          query:
+            "What is the correct execution order for the #{pretty} pipeline? " <>
+              "List the stages from first to last, respecting all causal dependencies.",
+          gold: %{
+            dag_id: dag.dag_id,
+            expected_topo_layers: dag.gold_topo_layers,
+            expected_n_layers: dag.n_layers
+          }
+        }
+      end
+
+    depth_qs =
+      for i <- 1..n_depth do
+        dag = Enum.at(dags, rem(i - 1, dag_count))
+        pretty = String.replace(dag.domain, "_", " ")
+
+        %{
+          q_id: "t8_depth_#{i}",
+          pattern: "critical_depth",
+          query:
+            "What is the longest dependency chain in the #{pretty} pipeline? " <>
+              "How many sequential steps must complete before the final output?",
+          gold: %{
+            dag_id: dag.dag_id,
+            expected_critical_depth: dag.gold_critical_depth
+          }
+        }
+      end
+
+    source_sink_qs =
+      for i <- 1..n_source_sink do
+        dag = Enum.at(dags, rem(i - 1, dag_count))
+        pretty = String.replace(dag.domain, "_", " ")
+
+        %{
+          q_id: "t8_srcsink_#{i}",
+          pattern: "source_sink",
+          query:
+            "What are the entry points and final outputs of the #{pretty} pipeline? " <>
+              "Identify all sources (no incoming dependencies) and sinks (no outgoing steps).",
+          gold: %{
+            dag_id: dag.dag_id,
+            expected_sources: dag.source_keys,
+            expected_sinks: dag.sink_keys
+          }
+        }
+      end
+
+    order_qs ++ depth_qs ++ source_sink_qs
+  end
+
   defp build_scc(domain, idx, size) do
     scc_id = "t3_scc_#{String.pad_leading(Integer.to_string(idx), 3, "0")}"
     pretty = String.replace(domain, "_", " ")
@@ -922,6 +1285,8 @@ defmodule Graphonomous.Benchmarks.GraphMemBenchGen do
         4 -> dump_t4_graph_lines(plan)
         5 -> dump_t5_graph_lines(plan)
         6 -> dump_t4_graph_lines(plan)
+        7 -> dump_t7_graph_lines(plan)
+        8 -> dump_t8_graph_lines(plan)
       end
 
     File.write!(
@@ -1033,6 +1398,114 @@ defmodule Graphonomous.Benchmarks.GraphMemBenchGen do
         node_lines =
           Enum.map(chain.nodes, fn n ->
             %{type: "node", key: n.key, scc_id: nil, role: n.role, content: n.content}
+          end)
+
+        edge_lines =
+          Enum.map(chain.edges, fn e ->
+            %{type: "edge", source: e.source_key, target: e.target_key, edge_type: e.edge_type}
+          end)
+
+        node_lines ++ edge_lines
+      end)
+  end
+
+  defp dump_t7_graph_lines(plan) do
+    Enum.flat_map(plan.evidence_graphs, fn graph ->
+      node_lines =
+        Enum.map(graph.nodes, fn n ->
+          %{
+            type: "node",
+            key: n.key,
+            graph_id: graph.graph_id,
+            role: n.role,
+            domain: n.domain,
+            content: n.content
+          }
+        end)
+
+      edge_lines =
+        Enum.map(graph.edges, fn e ->
+          %{
+            type: "edge",
+            source: e.source_key,
+            target: e.target_key,
+            edge_type: e.edge_type,
+            weight: e.weight
+          }
+        end)
+
+      gold_line = [
+        %{
+          type: "gold",
+          graph_id: graph.graph_id,
+          shortest_path: graph.gold_shortest_path,
+          alt_path: graph.gold_alt_path,
+          hop_count: graph.gold_hop_count,
+          source_key: graph.source_key,
+          target_key: graph.target_key
+        }
+      ]
+
+      node_lines ++ edge_lines ++ gold_line
+    end) ++
+      Enum.flat_map(plan.distractor_chains, fn chain ->
+        node_lines =
+          Enum.map(chain.nodes, fn n ->
+            %{type: "node", key: n.key, role: n.role, content: n.content}
+          end)
+
+        edge_lines =
+          Enum.map(chain.edges, fn e ->
+            %{type: "edge", source: e.source_key, target: e.target_key, edge_type: e.edge_type}
+          end)
+
+        node_lines ++ edge_lines
+      end)
+  end
+
+  defp dump_t8_graph_lines(plan) do
+    Enum.flat_map(plan.causal_dags, fn dag ->
+      node_lines =
+        Enum.map(dag.nodes, fn n ->
+          %{
+            type: "node",
+            key: n.key,
+            dag_id: dag.dag_id,
+            role: n.role,
+            layer: n.layer,
+            domain: n.domain,
+            content: n.content
+          }
+        end)
+
+      edge_lines =
+        Enum.map(dag.edges, fn e ->
+          %{
+            type: "edge",
+            source: e.source_key,
+            target: e.target_key,
+            edge_type: e.edge_type,
+            weight: e.weight
+          }
+        end)
+
+      gold_line = [
+        %{
+          type: "gold",
+          dag_id: dag.dag_id,
+          critical_depth: dag.gold_critical_depth,
+          topo_layers: dag.gold_topo_layers,
+          source_keys: dag.source_keys,
+          sink_keys: dag.sink_keys
+        }
+      ]
+
+      node_lines ++ edge_lines ++ gold_line
+    end) ++
+      Enum.flat_map(plan.distractor_chains, fn chain ->
+        node_lines =
+          Enum.map(chain.nodes, fn n ->
+            %{type: "node", key: n.key, role: n.role, content: n.content}
           end)
 
         edge_lines =

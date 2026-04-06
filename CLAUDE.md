@@ -221,6 +221,9 @@ Specialized retrieval:
 - `retrieve_procedural` — semantic search scoped to procedural nodes
 - `coverage_query` — standalone epistemic coverage (act/learn/escalate)
 
+Graph algorithms:
+- `trace_evidence_path` — weighted Dijkstra / Yen's K-shortest evidence paths
+
 Learning loop:
 - `learn_from_outcome` — causal confidence updates
 - `learn_from_feedback` — positive/negative/correction feedback

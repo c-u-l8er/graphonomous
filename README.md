@@ -2,7 +2,7 @@
 
 Continual learning engine for AI agents, implemented as an Elixir OTP application with a durable SQLite-backed knowledge graph, confidence-updating learning loop, GoalGraph orchestration, κ-aware topology routing, and MCP tools/resources.
 
-**v0.3.2** — Full spec compliance: 6 node types, 16 edge types, 8-stage consolidation pipeline, 28 MCP tools, 5 MCP resources. κ-aware topology routing, AGM-rational belief revision, intentional forgetting (soft/hard/cascade/GDPR), Wilson score epistemic frontier, Q-value outcome-weighted retrieval, and multi-agent scoping via `agent_id`. 309 tests, 0 failures.
+**v0.3.2** — Full spec compliance: 6 node types, 16 edge types, 8-stage consolidation pipeline, 29 MCP tools, 5 MCP resources. κ-aware topology routing, AGM-rational belief revision, intentional forgetting (soft/hard/cascade/GDPR), Wilson score epistemic frontier, Q-value outcome-weighted retrieval, multi-agent scoping via `agent_id`, and graph algorithm suite (Dijkstra, toposort, Louvain, Hopcroft-Karp, incremental SCC, triangle counting). 455 tests, 0 failures.
 
 > **TL;DR**
 > - Install: `npm i -g graphonomous` or `npx -y graphonomous`
@@ -218,7 +218,7 @@ npm i -g graphonomous
 
 ---
 
-### 5) MCP tools (28 total)
+### 5) MCP tools (29 total)
 
 **Knowledge graph write:**
 - `store_node`, `store_edge`, `delete_node`, `manage_edge`
@@ -246,6 +246,9 @@ npm i -g graphonomous
 
 **Uncertainty quantification (v0.3):**
 - `epistemic_frontier` — Wilson score intervals, information gain ranking
+
+**Graph algorithms (v0.3.2):**
+- `trace_evidence_path` — weighted Dijkstra/Yen's K-shortest paths for evidence provenance
 
 **Learning loop:**
 - `learn_from_outcome` — causal confidence + Q-value updates

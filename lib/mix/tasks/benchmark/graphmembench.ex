@@ -79,8 +79,8 @@ defmodule Mix.Tasks.Benchmark.Graphmembench do
         other -> Mix.raise("--topology must be 'on' or 'off', got: #{inspect(other)}")
       end
 
-    if tier not in [1, 2, 3, 4, 5, 6] do
-      Mix.raise("Only tiers 1–6 are implemented. Got --tier #{tier}.")
+    if tier not in [1, 2, 3, 4, 5, 6, 7, 8] do
+      Mix.raise("Only tiers 1–8 are implemented. Got --tier #{tier}.")
     end
 
     Helpers.ensure_started()
@@ -93,6 +93,8 @@ defmodule Mix.Tasks.Benchmark.Graphmembench do
         4 -> "κ≥2 multi-SCC fault-line"
         5 -> "κ=0-1 adversarial contradiction"
         6 -> "mixed-κ discrimination"
+        7 -> "evidence path tracing"
+        8 -> "causal DAG ordering"
       end
 
     Mix.shell().info("""
@@ -157,6 +159,7 @@ defmodule Mix.Tasks.Benchmark.Graphmembench do
         |> Enum.with_index(1)
         |> Enum.map(fn {q, idx} ->
           if rem(idx, 10) == 0, do: Mix.shell().info("  #{idx}/#{length(questions)}")
+
           evaluate_question(
             q,
             skip_topology,
@@ -257,6 +260,31 @@ defmodule Mix.Tasks.Benchmark.Graphmembench do
     """
   end
 
+  defp summary_text(7, mode, m, path) do
+    """
+
+    === GraphMemBench T7 Complete (topology=#{mode}) — evidence path tracing ===
+    path_node_recall:     #{fmt(m.path_node_recall)}
+    path_order_accuracy:  #{fmt(m.path_order_accuracy)}
+    hop_count_mae:        #{fmt(m.hop_count_mae)}
+    alt_path_detected:    #{fmt(m.alt_path_detected)}
+    latency p50/p95:      #{m.latency_ms_p50}ms / #{m.latency_ms_p95}ms
+    Output:               #{path}
+    """
+  end
+
+  defp summary_text(8, mode, m, path) do
+    """
+
+    === GraphMemBench T8 Complete (topology=#{mode}) — causal DAG ordering ===
+    ordering_accuracy:    #{fmt(m.ordering_accuracy)}
+    critical_depth_mae:   #{fmt(m.critical_depth_mae)}
+    source_sink_recall:   #{fmt(m.source_sink_recall)}
+    latency p50/p95:      #{m.latency_ms_p50}ms / #{m.latency_ms_p95}ms
+    Output:               #{path}
+    """
+  end
+
   defp summary_text(5, mode, m, path) do
     """
 
@@ -275,6 +303,8 @@ defmodule Mix.Tasks.Benchmark.Graphmembench do
 
   defp group_count(%{sccs: sccs}) when is_list(sccs), do: length(sccs)
   defp group_count(%{contradiction_pairs: pairs}) when is_list(pairs), do: length(pairs)
+  defp group_count(%{evidence_graphs: graphs}) when is_list(graphs), do: length(graphs)
+  defp group_count(%{causal_dags: dags}) when is_list(dags), do: length(dags)
   defp group_count(%{chains: chains}) when is_list(chains), do: length(chains)
 
   defp fault_line_map_for_plan(%{tier: 4} = plan, key_to_id) do
@@ -405,6 +435,62 @@ defmodule Mix.Tasks.Benchmark.Graphmembench do
     %{key_to_id: key_to_id, gold_groups: gold_groups}
   end
 
+  defp ingest_plan(%{tier: 7} = plan) do
+    all_nodes =
+      Enum.flat_map(plan.evidence_graphs, & &1.nodes) ++
+        Enum.flat_map(plan.distractor_chains, & &1.nodes)
+
+    key_to_id = store_nodes(all_nodes, 7, 0.9)
+
+    # Create edges with weight from the plan
+    Enum.each(plan.evidence_graphs, fn graph ->
+      Enum.each(graph.edges, fn e ->
+        Graphonomous.link_nodes(key_to_id[e.source_key], key_to_id[e.target_key], %{
+          edge_type: e.edge_type,
+          weight: e.weight
+        })
+      end)
+    end)
+
+    create_edges(plan.distractor_chains, key_to_id)
+
+    gold_groups =
+      Enum.reduce(plan.evidence_graphs, %{}, fn graph, acc ->
+        ids = graph.nodes |> Enum.map(&key_to_id[&1.key]) |> MapSet.new()
+        Map.put(acc, graph.graph_id, %{node_ids: ids, kappa: 0})
+      end)
+
+    %{key_to_id: key_to_id, gold_groups: gold_groups}
+  end
+
+  defp ingest_plan(%{tier: 8} = plan) do
+    all_nodes =
+      Enum.flat_map(plan.causal_dags, & &1.nodes) ++
+        Enum.flat_map(plan.distractor_chains, & &1.nodes)
+
+    key_to_id = store_nodes(all_nodes, 8, 0.9)
+
+    # Create edges with weight from the plan
+    Enum.each(plan.causal_dags, fn dag ->
+      Enum.each(dag.edges, fn e ->
+        Graphonomous.link_nodes(key_to_id[e.source_key], key_to_id[e.target_key], %{
+          edge_type: e.edge_type,
+          weight: e.weight
+        })
+      end)
+    end)
+
+    create_edges(plan.distractor_chains, key_to_id)
+
+    gold_groups =
+      Enum.reduce(plan.causal_dags, %{}, fn dag, acc ->
+        ids = dag.nodes |> Enum.map(&key_to_id[&1.key]) |> MapSet.new()
+        Map.put(acc, dag.dag_id, %{node_ids: ids, kappa: 0})
+      end)
+
+    %{key_to_id: key_to_id, gold_groups: gold_groups}
+  end
+
   defp store_nodes(nodes, tier, confidence) do
     Enum.reduce(nodes, %{}, fn n, acc ->
       stored =
@@ -462,6 +548,16 @@ defmodule Mix.Tasks.Benchmark.Graphmembench do
 
   defp edge_count(%{tier: 5} = plan) do
     Enum.sum(Enum.map(plan.contradiction_pairs, &length(&1.edges))) +
+      Enum.sum(Enum.map(plan.distractor_chains, &length(&1.edges)))
+  end
+
+  defp edge_count(%{tier: 7} = plan) do
+    Enum.sum(Enum.map(plan.evidence_graphs, &length(&1.edges))) +
+      Enum.sum(Enum.map(plan.distractor_chains, &length(&1.edges)))
+  end
+
+  defp edge_count(%{tier: 8} = plan) do
+    Enum.sum(Enum.map(plan.causal_dags, &length(&1.edges))) +
       Enum.sum(Enum.map(plan.distractor_chains, &length(&1.edges)))
   end
 
@@ -566,7 +662,7 @@ defmodule Mix.Tasks.Benchmark.Graphmembench do
 
     fault_line_size = MapSet.size(fault_line_ids)
 
-    %{
+    base = %{
       q_id: q.q_id,
       pattern: q.pattern,
       group_id: group_id,
@@ -588,6 +684,166 @@ defmodule Mix.Tasks.Benchmark.Graphmembench do
       fault_line_size: fault_line_size,
       expected_kappa_exact: Map.get(q.gold, :expected_kappa_exact)
     }
+
+    # T7/T8 algorithm-specific metrics — map node_ids back to benchmark keys
+    id_to_key = Map.new(key_to_id, fn {k, v} -> {v, k} end)
+
+    result_keys =
+      result_ids
+      |> Enum.map(&Map.get(id_to_key, &1))
+      |> Enum.reject(&is_nil/1)
+
+    algo_metrics = evaluate_algo_metrics(q.pattern, q.gold, result_keys)
+    Map.merge(base, algo_metrics)
+  end
+
+  defp evaluate_algo_metrics("evidence_path", gold, result_keys) do
+    expected_path = Map.get(gold, :expected_path, [])
+
+    # Node recall: fraction of gold path nodes in results
+    found = Enum.count(expected_path, &(&1 in result_keys))
+    recall = if expected_path == [], do: 0.0, else: found / length(expected_path)
+
+    # Order accuracy: for pairs of gold path nodes both in results,
+    # fraction that appear in correct relative order
+    order_acc = path_order_accuracy(expected_path, result_keys)
+
+    %{path_node_recall: recall, path_order_accuracy: order_acc}
+  end
+
+  defp evaluate_algo_metrics("hop_count", gold, result_keys) do
+    expected_hop = Map.get(gold, :expected_hop_count, 0)
+    expected_path = Map.get(gold, :expected_path, [])
+
+    # Infer hop count from how many gold path nodes appear sequentially in results
+    found = Enum.count(expected_path, &(&1 in result_keys))
+    inferred_hops = max(found - 1, 0)
+    error = abs(inferred_hops - expected_hop) * 1.0
+
+    %{hop_count_error: error}
+  end
+
+  defp evaluate_algo_metrics("alternate_path", gold, result_keys) do
+    expected_alt = Map.get(gold, :expected_alt_path, [])
+
+    # Check if any alt path nodes appear in results (at least 2 for "detected")
+    found = Enum.count(expected_alt, &(&1 in result_keys))
+    detected = if found >= 2, do: 1.0, else: 0.0
+
+    %{alt_path_detected: detected}
+  end
+
+  defp evaluate_algo_metrics("causal_ordering", gold, result_keys) do
+    expected_layers = Map.get(gold, :expected_topo_layers, [])
+
+    # For each pair of layers (i, j) where i < j, check that
+    # nodes from layer i appear before nodes from layer j in results
+    order_acc = layer_order_accuracy(expected_layers, result_keys)
+
+    %{ordering_accuracy: order_acc}
+  end
+
+  defp evaluate_algo_metrics("critical_depth", gold, result_keys) do
+    expected_depth = Map.get(gold, :expected_critical_depth, 0)
+    expected_layers = Map.get(gold, :expected_topo_layers, [])
+
+    # Infer depth from distinct layers represented in results
+    layers_found =
+      expected_layers
+      |> Enum.with_index()
+      |> Enum.count(fn {layer_keys, _idx} ->
+        Enum.any?(layer_keys, &(&1 in result_keys))
+      end)
+
+    inferred_depth = max(layers_found - 1, 0)
+    error = abs(inferred_depth - expected_depth) * 1.0
+
+    %{depth_error: error}
+  end
+
+  defp evaluate_algo_metrics("source_sink", gold, result_keys) do
+    expected_sources = Map.get(gold, :expected_sources, [])
+    expected_sinks = Map.get(gold, :expected_sinks, [])
+    all_expected = expected_sources ++ expected_sinks
+
+    found = Enum.count(all_expected, &(&1 in result_keys))
+    recall = if all_expected == [], do: 0.0, else: found / length(all_expected)
+
+    %{source_sink_recall: recall}
+  end
+
+  defp evaluate_algo_metrics(_pattern, _gold, _result_keys), do: %{}
+
+  defp path_order_accuracy([], _result_keys), do: 0.0
+
+  defp path_order_accuracy(expected_path, result_keys) do
+    # Build position map from result_keys
+    pos_map =
+      result_keys
+      |> Enum.with_index()
+      |> Map.new()
+
+    # Filter to gold path nodes that appear in results
+    present = Enum.filter(expected_path, &Map.has_key?(pos_map, &1))
+
+    if length(present) < 2 do
+      0.0
+    else
+      pairs =
+        for i <- 0..(length(present) - 2),
+            j <- (i + 1)..(length(present) - 1) do
+          a = Enum.at(present, i)
+          b = Enum.at(present, j)
+          if pos_map[a] < pos_map[b], do: 1, else: 0
+        end
+
+      Enum.sum(pairs) / length(pairs)
+    end
+  end
+
+  defp layer_order_accuracy([], _result_keys), do: 0.0
+
+  defp layer_order_accuracy(layers, result_keys) do
+    pos_map =
+      result_keys
+      |> Enum.with_index()
+      |> Map.new()
+
+    # For each pair of layers, check ordering
+    layer_pairs =
+      for i <- 0..(length(layers) - 2),
+          j <- (i + 1)..(length(layers) - 1) do
+        layer_i = Enum.at(layers, i)
+        layer_j = Enum.at(layers, j)
+
+        # Get min position of any node from each layer in results
+        min_pos_i =
+          layer_i
+          |> Enum.map(&Map.get(pos_map, &1))
+          |> Enum.reject(&is_nil/1)
+          |> case do
+            [] -> nil
+            positions -> Enum.min(positions)
+          end
+
+        min_pos_j =
+          layer_j
+          |> Enum.map(&Map.get(pos_map, &1))
+          |> Enum.reject(&is_nil/1)
+          |> case do
+            [] -> nil
+            positions -> Enum.min(positions)
+          end
+
+        cond do
+          is_nil(min_pos_i) or is_nil(min_pos_j) -> nil
+          min_pos_i < min_pos_j -> 1
+          true -> 0
+        end
+      end
+      |> Enum.reject(&is_nil/1)
+
+    if layer_pairs == [], do: 0.0, else: Enum.sum(layer_pairs) / length(layer_pairs)
   end
 
   # ---------- Metrics aggregation ----------
@@ -656,6 +912,12 @@ defmodule Mix.Tasks.Benchmark.Graphmembench do
       tier == 5 ->
         Map.merge(base, t5_extra_metrics(per_question))
 
+      tier == 7 ->
+        Map.merge(base, t7_extra_metrics(per_question))
+
+      tier == 8 ->
+        Map.merge(base, t8_extra_metrics(per_question))
+
       true ->
         base
     end
@@ -710,7 +972,9 @@ defmodule Mix.Tasks.Benchmark.Graphmembench do
       mean(discrim_qs, fn r -> abs(r.max_kappa - r.expected_kappa_exact) * 1.0 end)
 
     max_observed_kappa =
-      per_question |> Enum.map(& &1.max_kappa) |> case do
+      per_question
+      |> Enum.map(& &1.max_kappa)
+      |> case do
         [] -> 0
         l -> Enum.max(l)
       end
@@ -752,6 +1016,59 @@ defmodule Mix.Tasks.Benchmark.Graphmembench do
       fresh_belief_top1_rate: fresh_belief_top1_rate,
       fresh_belief_mrr: fresh_belief_mrr,
       belief_revision_rank_mean: belief_revision_rank_mean
+    }
+  end
+
+  defp t7_extra_metrics(per_question) do
+    path_qs = Enum.filter(per_question, fn r -> r.pattern == "evidence_path" end)
+    hop_qs = Enum.filter(per_question, fn r -> r.pattern == "hop_count" end)
+    alt_qs = Enum.filter(per_question, fn r -> r.pattern == "alternate_path" end)
+
+    # Path node recall: what fraction of gold path nodes appeared in retrieval results
+    path_node_recall =
+      mean(path_qs, fn r -> Map.get(r, :path_node_recall, 0.0) end)
+
+    # Path ordering: fraction of gold path pairs in correct order in results
+    path_order_accuracy =
+      mean(path_qs, fn r -> Map.get(r, :path_order_accuracy, 0.0) end)
+
+    # Hop count MAE
+    hop_count_mae =
+      mean(hop_qs, fn r -> Map.get(r, :hop_count_error, 0.0) end)
+
+    # Alt path detection rate
+    alt_path_detected =
+      mean(alt_qs, fn r -> Map.get(r, :alt_path_detected, 0.0) end)
+
+    %{
+      path_node_recall: path_node_recall,
+      path_order_accuracy: path_order_accuracy,
+      hop_count_mae: hop_count_mae,
+      alt_path_detected: alt_path_detected
+    }
+  end
+
+  defp t8_extra_metrics(per_question) do
+    order_qs = Enum.filter(per_question, fn r -> r.pattern == "causal_ordering" end)
+    depth_qs = Enum.filter(per_question, fn r -> r.pattern == "critical_depth" end)
+    srcsink_qs = Enum.filter(per_question, fn r -> r.pattern == "source_sink" end)
+
+    # Ordering accuracy: fraction of layer-pair orderings correct in results
+    ordering_accuracy =
+      mean(order_qs, fn r -> Map.get(r, :ordering_accuracy, 0.0) end)
+
+    # Critical depth MAE
+    critical_depth_mae =
+      mean(depth_qs, fn r -> Map.get(r, :depth_error, 0.0) end)
+
+    # Source/sink recall: fraction of gold sources+sinks found in results
+    source_sink_recall =
+      mean(srcsink_qs, fn r -> Map.get(r, :source_sink_recall, 0.0) end)
+
+    %{
+      ordering_accuracy: ordering_accuracy,
+      critical_depth_mae: critical_depth_mae,
+      source_sink_recall: source_sink_recall
     }
   end
 
