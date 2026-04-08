@@ -315,6 +315,13 @@ defmodule Graphonomous.Forgetter do
       _ ->
         :ok
     end
+
+    # Also clean up entity_node_links for this node
+    try do
+      Graphonomous.Store.delete_entity_links_for_node(node_id)
+    rescue
+      _ -> :ok
+    end
   end
 
   defp find_orphan_dependents(node_id) do

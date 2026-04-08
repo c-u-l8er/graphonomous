@@ -122,6 +122,50 @@ causal knowledge.
 
 ---
 
+## Fact Versioning and Provenance
+
+When you discover that a previously stored fact is **outdated or corrected**,
+use `store_edge` with `superseded_by` to create a version chain:
+
+```
+// 1. Store the updated fact
+store_node(
+  content: "User now prefers Italian food (changed from Thai)",
+  node_type: "episodic",
+  confidence: 0.85,
+  metadata: '{"document_date": "2023-04-01", "role": "user"}'
+)
+→ node_id: "new-pref-node"
+
+// 2. Link old → new with superseded_by
+store_edge(
+  source_id: "old-pref-node",
+  target_id: "new-pref-node",
+  edge_type: "superseded_by",
+  weight: 0.9,
+  metadata: '{"source": "fact_versioning"}'
+)
+```
+
+**What happens automatically:**
+- The old node's retrieval score gets a **0.3x penalty**
+- Future retrievals for "food preference" will rank the new node higher
+- The version chain is preserved — you can still trace the history via graph traversal
+- Cross-session fact versioning detects overlapping entity-attribute pairs and
+  creates these edges automatically during benchmark ingestion
+
+**When to create superseded_by edges:**
+- User corrects a previous statement ("actually, I changed my mind...")
+- New information updates an earlier fact (same entity, different value)
+- A decision or plan is revised based on new evidence
+
+**When NOT to create superseded_by edges:**
+- Facts that complement each other (use `related` instead)
+- Different perspectives on the same topic (use `contradicts`)
+- Additional detail about an existing fact (use `supports`)
+
+---
+
 ## Practical Examples
 
 ### Example 1: Code Fix Succeeded

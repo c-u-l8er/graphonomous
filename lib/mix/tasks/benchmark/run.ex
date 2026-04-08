@@ -2,7 +2,7 @@ defmodule Mix.Tasks.Benchmark.Run do
   @moduledoc """
   OS-E001 Benchmark: Full Suite Runner
 
-  Orchestrates all 9 benchmark phases covering all 20 MCP tools:
+  Orchestrates all 10 benchmark phases covering all 20 MCP tools:
 
   1. Ingest (scan_directory) — FilesystemTraversal on full codebase
   2. Retrieval — cross-domain precision/recall/F1
@@ -14,6 +14,7 @@ defmodule Mix.Tasks.Benchmark.Run do
   7. Consolidation — decay curves, survival analysis
   8. Attention — survey, dispatch, prioritization
   9. LongMemEval — competitive memory benchmark (ICLR 2025)
+  10. BEAM — Beyond a Million Tokens (ICLR 2026)
 
   Usage:
       mix benchmark.run [--cycles 5]
@@ -26,7 +27,7 @@ defmodule Mix.Tasks.Benchmark.Run do
 
   alias Mix.Tasks.Benchmark.Helpers
 
-  @shortdoc "Run the full OS-E001 benchmark suite (all 20 MCP tools)"
+  @shortdoc "Run the full OS-E001 benchmark suite (all 20 MCP tools, 10 phases)"
 
   @impl Mix.Task
   def run(args) do
@@ -97,11 +98,29 @@ defmodule Mix.Tasks.Benchmark.Run do
       ])
 
     if File.exists?(longmemeval_data) do
-      Mix.shell().info("\n━━━ Phase 9/9: LongMemEval Competitive Benchmark ━━━")
+      Mix.shell().info("\n━━━ Phase 9/10: LongMemEval Competitive Benchmark ━━━")
       Mix.Tasks.Benchmark.Longmemeval.run(["--split", "oracle", "--purge"])
     else
-      Mix.shell().info("\n━━━ Phase 9/9: LongMemEval — SKIPPED (data not downloaded) ━━━")
+      Mix.shell().info("\n━━━ Phase 9/10: LongMemEval — SKIPPED (data not downloaded) ━━━")
       Mix.shell().info("  Run: cd graphonomous/priv/longmemeval && bash download.sh")
+    end
+
+    # Phase 10: BEAM competitive benchmark
+    beam_data =
+      Path.join([
+        Helpers.portfolio_root(),
+        "graphonomous",
+        "priv",
+        "beam",
+        "100K"
+      ])
+
+    if File.dir?(beam_data) do
+      Mix.shell().info("\n━━━ Phase 10/10: BEAM Competitive Benchmark (100K) ━━━")
+      Mix.Tasks.Benchmark.Beam.run(["--tier", "100k", "--purge"])
+    else
+      Mix.shell().info("\n━━━ Phase 10/10: BEAM — SKIPPED (data not downloaded) ━━━")
+      Mix.shell().info("  Run: cd graphonomous/priv/beam && bash download.sh")
     end
 
     total_us = System.monotonic_time(:microsecond) - total_start
@@ -183,7 +202,8 @@ defmodule Mix.Tasks.Benchmark.Run do
       "graph_ops",
       "consolidation",
       "attention",
-      "longmemeval"
+      "longmemeval",
+      "beam_128k"
     ]
 
     Enum.reduce(phases, %{}, fn phase, acc ->

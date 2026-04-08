@@ -167,6 +167,9 @@ defmodule Graphonomous.Consolidator do
     # Skip merging nodes that have :contradicts edges — route to BeliefRevision instead
     merged = stage_merge_similar_nodes(state.merge_similarity)
 
+    # Stage 5b: deduplicate entities — merge entities with same canonical name
+    entities_merged = stage_deduplicate_entities()
+
     # Stage 6: promote timescale
     promoted = stage_promote_timescale(state.promotion_access_threshold)
 
@@ -189,6 +192,7 @@ defmodule Graphonomous.Consolidator do
         conflicts_resolved: resolved,
         unresolved_contradictions: unresolved_contradictions,
         merged: merged,
+        entities_merged: entities_merged,
         promoted: promoted,
         abstracted: abstracted,
         composition_candidates: composition_candidates,
@@ -616,6 +620,13 @@ defmodule Graphonomous.Consolidator do
       _ ->
         :ok
     end
+
+    # Also repoint entity_node_links from old node to new node
+    try do
+      Store.repoint_entity_links(old_node_id, new_node_id)
+    rescue
+      _ -> :ok
+    end
   end
 
   ## Stage 6: Promote timescale
@@ -927,4 +938,49 @@ defmodule Graphonomous.Consolidator do
   defp clamp(v, min_v, _max_v) when v < min_v, do: min_v
   defp clamp(v, _min_v, max_v) when v > max_v, do: max_v
   defp clamp(v, _min_v, _max_v), do: v
+
+  # Stage 5b: Deduplicate entities with matching canonical names.
+  # When multiple entities share the same canonical_name, merge aliases and
+  # re-link all node links to the surviving entity (oldest by created_at).
+  defp stage_deduplicate_entities do
+    entities = Store.list_entities()
+
+    # Group by canonical_name, find groups with >1 entity
+    groups =
+      entities
+      |> Enum.group_by(& &1.canonical_name)
+      |> Enum.filter(fn {_canonical, group} -> length(group) > 1 end)
+
+    Enum.reduce(groups, 0, fn {_canonical, group}, acc ->
+      # Keep the oldest entity as the survivor
+      [survivor | duplicates] = Enum.sort_by(group, & &1.created_at, DateTime)
+
+      # Merge aliases from duplicates into survivor
+      all_aliases =
+        Enum.flat_map([survivor | duplicates], fn e -> [e.name | e.aliases] end)
+        |> Enum.uniq_by(&String.downcase/1)
+        |> Enum.reject(fn a -> String.downcase(a) == survivor.canonical_name end)
+
+      # Update survivor with merged aliases
+      _ = Store.update_entity(survivor.id, %{aliases: all_aliases})
+
+      # Re-link all node links from duplicates to survivor, then delete duplicates
+      Enum.each(duplicates, fn dup ->
+        links = Store.links_for_entity(dup.id)
+
+        Enum.each(links, fn link ->
+          _ = Store.insert_entity_node_link(survivor.id, link.node_id, link.relationship)
+        end)
+
+        # Delete the duplicate entity and its links
+        _ = Store.delete_entity(dup.id)
+      end)
+
+      acc + length(duplicates)
+    end)
+  rescue
+    error ->
+      Logger.warning("Entity dedup failed: #{inspect(error)}")
+      0
+  end
 end

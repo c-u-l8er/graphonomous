@@ -180,10 +180,10 @@ end
 
 ```elixir
 defmodule Graphonomous.Schema.Edge do
-  @type relationship :: 
-    :causes | :resolves | :related_to | :part_of | :follows |
-    :contradicts | :supersedes | :depends_on | :similar_to |
-    :temporal_before | :temporal_after | :co_occurs
+  @type relationship ::
+    :causal | :causes | :resolves | :related | :related_to | :part_of | :follows |
+    :contradicts | :supersedes | :superseded_by | :depends_on | :similar_to |
+    :supports | :derived_from | :temporal_before | :temporal_after | :co_occurs
 
   @type t :: %__MODULE__{
     id: binary(),

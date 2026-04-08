@@ -109,6 +109,34 @@ The response includes several important fields:
 | `results[].hops` | 0 = direct match, 1+ = graph neighbor | Hop-0 results are most relevant. Hop-1+ provide context. |
 | `topology.routing` | `"fast"` or `"deliberate"` | If `"deliberate"`, the knowledge region has circular dependencies (κ > 0). Consider using the `deliberate` tool. |
 
+### Provenance-Aware Retrieval
+
+Retrieval automatically handles **fact versioning and provenance**:
+
+- **Superseded nodes** (nodes with a `superseded_by` edge) receive a 0.3x score penalty,
+  pushing outdated information lower in results
+- **Knowledge-update queries** ("what is my current X?", "how many do I have?") automatically
+  widen the BM25 candidate pool by 2.5x to find entity-attribute matches across sessions
+- **Preference queries** ("recommend me X", "suggest Y") also get wider candidate pools
+  and profile-node boosting
+- **Fact-prefix BM25 variants** are generated at query time to bridge vocabulary gaps
+  between questions and stored facts (e.g., "How many bikes?" generates
+  `"possession: bike bikes own"` matching ingested `bm25_facts`)
+
+When storing knowledge that **updates or corrects** earlier information, create a
+`superseded_by` edge from the old node to the new one. The retriever will then
+automatically deprioritize the outdated version:
+
+```json
+{
+  "source_id": "old-fact-node-id",
+  "target_id": "new-fact-node-id",
+  "edge_type": "superseded_by",
+  "weight": 0.9,
+  "metadata": "{\"source\": \"fact_versioning\"}"
+}
+```
+
 ### Tips for Good Queries
 
 **Do:** Write natural-language questions or topic descriptions.
@@ -212,6 +240,26 @@ The response includes several important fields:
   "confidence": 0.5
 }
 ```
+
+### Temporal Validity Metadata
+
+When storing facts that may change over time, include temporal metadata:
+
+```json
+{
+  "content": "User prefers Italian food for dinner.",
+  "node_type": "episodic",
+  "confidence": 0.85,
+  "source": "conversation",
+  "metadata": "{\"document_date\": \"2023-04-01\", \"role\": \"user\", \"valid_until\": null}"
+}
+```
+
+Key temporal metadata fields:
+- `document_date` — when this fact was stated
+- `event_date` — when the described event occurred (may differ from document_date)
+- `valid_until` — set when this fact is superseded by a newer version (null = still current)
+- `superseded` — boolean flag set to `true` when a newer version exists
 
 ### Setting Confidence Correctly
 

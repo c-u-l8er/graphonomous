@@ -25,6 +25,11 @@ defmodule Graphonomous.Store do
   @edges_by_target :graphonomous_edges_by_target
   @outcomes_table :graphonomous_outcomes
   @goals_table :graphonomous_goals
+  @entities_table :graphonomous_entities
+  @entities_by_canonical :graphonomous_entities_by_canonical
+  @entity_node_links_table :graphonomous_entity_node_links
+  @entity_links_by_entity :graphonomous_entity_links_by_entity
+  @entity_links_by_node :graphonomous_entity_links_by_node
   @write_timeout_ms 30_000
 
   @type state :: %{
@@ -121,6 +126,79 @@ defmodule Graphonomous.Store do
 
   def list_revisions_for_node(node_id) when is_binary(node_id),
     do: GenServer.call(__MODULE__, {:list_revisions_for_node, node_id})
+
+  ## Entity API
+
+  def insert_entity(attrs) when is_map(attrs),
+    do: GenServer.call(__MODULE__, {:insert_entity, attrs}, @write_timeout_ms)
+
+  def get_entity(entity_id) when is_binary(entity_id) do
+    case :ets.lookup(@entities_table, entity_id) do
+      [{^entity_id, entity}] -> {:ok, entity}
+      _ -> {:error, :not_found}
+    end
+  end
+
+  def update_entity(entity_id, attrs) when is_binary(entity_id) and is_map(attrs),
+    do: GenServer.call(__MODULE__, {:update_entity, entity_id, attrs}, @write_timeout_ms)
+
+  @doc "Look up entities by canonical name (case-folded). Returns from ETS bag index."
+  def lookup_entities_by_canonical(canonical_name) when is_binary(canonical_name) do
+    :ets.lookup(@entities_by_canonical, canonical_name)
+    |> Enum.map(fn {_key, entity} -> entity end)
+  end
+
+  @doc "List all entities from ETS."
+  def list_entities do
+    @entities_table
+    |> :ets.tab2list()
+    |> Enum.map(fn {_id, entity} -> entity end)
+  end
+
+  def insert_entity_node_link(entity_id, node_id, relationship \\ "mentions"),
+    do:
+      GenServer.call(
+        __MODULE__,
+        {:insert_entity_node_link, entity_id, node_id, relationship},
+        @write_timeout_ms
+      )
+
+  @doc "Get all node links for an entity. Direct ETS read."
+  def links_for_entity(entity_id) when is_binary(entity_id) do
+    :ets.lookup(@entity_links_by_entity, entity_id)
+    |> Enum.map(fn {_key, link} -> link end)
+  end
+
+  @doc "Get all entity links for a node. Direct ETS read."
+  def entities_for_node(node_id) when is_binary(node_id) do
+    :ets.lookup(@entity_links_by_node, node_id)
+    |> Enum.map(fn {_key, link} -> link end)
+  end
+
+  @doc "Get node IDs linked to an entity, ordered by link creation time (newest first)."
+  def node_ids_for_entity(entity_id) when is_binary(entity_id) do
+    links_for_entity(entity_id)
+    |> Enum.sort_by(& &1.created_at, {:desc, DateTime})
+    |> Enum.map(& &1.node_id)
+  end
+
+  @doc "Remove all entity_node_links for a node (called on delete/forget/GDPR erase)."
+  def delete_entity_links_for_node(node_id) when is_binary(node_id),
+    do: GenServer.call(__MODULE__, {:delete_entity_links_for_node, node_id}, @write_timeout_ms)
+
+  @doc "Repoint entity links from one node to another (called during node merge)."
+  def repoint_entity_links(from_node_id, to_node_id)
+      when is_binary(from_node_id) and is_binary(to_node_id),
+      do:
+        GenServer.call(
+          __MODULE__,
+          {:repoint_entity_links, from_node_id, to_node_id},
+          @write_timeout_ms
+        )
+
+  @doc "Delete an entity and all its node links."
+  def delete_entity(entity_id) when is_binary(entity_id),
+    do: GenServer.call(__MODULE__, {:delete_entity, entity_id}, @write_timeout_ms)
 
   def count_nodes do
     @nodes_table
@@ -247,6 +325,8 @@ defmodule Graphonomous.Store do
     :ets.delete(@nodes_table, node_id)
     # Remove from BM25 FTS index
     maybe_bm25_delete(node_id)
+    # Clean up entity_node_links referencing this node
+    cleanup_entity_links_for_node(state.conn, node_id)
 
     case execute_prepared(state.conn, "DELETE FROM nodes WHERE id = ?;", [node_id]) do
       :ok -> {:reply, :ok, state}
@@ -547,6 +627,146 @@ defmodule Graphonomous.Store do
     end
   end
 
+  ## Entity handle_call clauses
+
+  def handle_call({:insert_entity, attrs}, _from, state) do
+    entity = build_entity(attrs)
+
+    with :ok <- persist_entity(state.conn, entity) do
+      true = :ets.insert(@entities_table, {entity.id, entity})
+      true = :ets.insert(@entities_by_canonical, {entity.canonical_name, entity})
+      {:reply, {:ok, entity}, state}
+    else
+      {:error, reason} -> {:reply, {:error, reason}, state}
+    end
+  end
+
+  def handle_call({:update_entity, entity_id, attrs}, _from, state) do
+    case :ets.lookup(@entities_table, entity_id) do
+      [{^entity_id, %Graphonomous.Types.Entity{} = existing}] ->
+        now = DateTime.utc_now()
+
+        updated = %Graphonomous.Types.Entity{
+          existing
+          | name: map_get(attrs, :name, existing.name),
+            canonical_name: map_get(attrs, :canonical_name, existing.canonical_name),
+            entity_type:
+              normalize_entity_type(map_get(attrs, :entity_type, existing.entity_type)),
+            aliases: normalize_string_list(map_get(attrs, :aliases, existing.aliases)),
+            metadata: normalize_map(map_get(attrs, :metadata, existing.metadata)),
+            updated_at: now
+        }
+
+        with :ok <- persist_entity(state.conn, updated) do
+          # Re-index canonical name
+          :ets.match_delete(@entities_by_canonical, {existing.canonical_name, %{id: entity_id}})
+          true = :ets.insert(@entities_table, {updated.id, updated})
+          true = :ets.insert(@entities_by_canonical, {updated.canonical_name, updated})
+          {:reply, {:ok, updated}, state}
+        else
+          {:error, reason} -> {:reply, {:error, reason}, state}
+        end
+
+      _ ->
+        {:reply, {:error, :not_found}, state}
+    end
+  end
+
+  def handle_call({:insert_entity_node_link, entity_id, node_id, relationship}, _from, state) do
+    now = DateTime.utc_now()
+
+    link = %{
+      entity_id: entity_id,
+      node_id: node_id,
+      relationship: to_string(relationship),
+      created_at: now
+    }
+
+    with :ok <-
+           execute_prepared(
+             state.conn,
+             """
+             INSERT OR IGNORE INTO entity_node_links (entity_id, node_id, relationship, created_at)
+             VALUES (?, ?, ?, ?);
+             """,
+             [entity_id, node_id, to_string(relationship), iso8601(now)]
+           ) do
+      key = {entity_id, node_id}
+      true = :ets.insert(@entity_node_links_table, {key, link})
+      true = :ets.insert(@entity_links_by_entity, {entity_id, link})
+      true = :ets.insert(@entity_links_by_node, {node_id, link})
+      {:reply, {:ok, link}, state}
+    else
+      {:error, reason} -> {:reply, {:error, reason}, state}
+    end
+  end
+
+  def handle_call({:delete_entity_links_for_node, node_id}, _from, state) do
+    cleanup_entity_links_for_node(state.conn, node_id)
+    {:reply, :ok, state}
+  end
+
+  def handle_call({:repoint_entity_links, from_node_id, to_node_id}, _from, state) do
+    # Get all links for the source node
+    links = :ets.lookup(@entity_links_by_node, from_node_id) |> Enum.map(&elem(&1, 1))
+
+    Enum.each(links, fn link ->
+      # Insert new link for target node (ignore if already exists)
+      _ =
+        execute_prepared(
+          state.conn,
+          """
+          INSERT OR IGNORE INTO entity_node_links (entity_id, node_id, relationship, created_at)
+          VALUES (?, ?, ?, ?);
+          """,
+          [link.entity_id, to_node_id, link.relationship, iso8601(link.created_at)]
+        )
+
+      new_link = %{link | node_id: to_node_id}
+      key = {link.entity_id, to_node_id}
+      true = :ets.insert(@entity_node_links_table, {key, new_link})
+      true = :ets.insert(@entity_links_by_entity, {link.entity_id, new_link})
+      true = :ets.insert(@entity_links_by_node, {to_node_id, new_link})
+    end)
+
+    # Remove old links
+    cleanup_entity_links_for_node(state.conn, from_node_id)
+
+    {:reply, {:ok, length(links)}, state}
+  end
+
+  def handle_call({:delete_entity, entity_id}, _from, state) do
+    # Remove all links for this entity
+    links = :ets.lookup(@entity_links_by_entity, entity_id) |> Enum.map(&elem(&1, 1))
+
+    Enum.each(links, fn link ->
+      key = {entity_id, link.node_id}
+      :ets.delete(@entity_node_links_table, key)
+      :ets.match_delete(@entity_links_by_node, {link.node_id, %{entity_id: entity_id}})
+    end)
+
+    :ets.match_delete(@entity_links_by_entity, {entity_id, :_})
+
+    _ =
+      execute_prepared(state.conn, "DELETE FROM entity_node_links WHERE entity_id = ?;", [
+        entity_id
+      ])
+
+    # Remove entity itself
+    case :ets.lookup(@entities_table, entity_id) do
+      [{_, entity}] ->
+        :ets.match_delete(@entities_by_canonical, {entity.canonical_name, %{id: entity_id}})
+
+      _ ->
+        :ok
+    end
+
+    :ets.delete(@entities_table, entity_id)
+    _ = execute_prepared(state.conn, "DELETE FROM entities WHERE id = ?;", [entity_id])
+
+    {:reply, :ok, state}
+  end
+
   # P2-L8: Batch increment_access — update ETS immediately, defer SQLite persist
   @impl true
   def handle_cast({:increment_access, node_id}, state) do
@@ -662,11 +882,23 @@ defmodule Graphonomous.Store do
            select_all(conn, """
            SELECT id, title, description, status, timescale, source_type, priority, confidence, progress, owner, tags, constraints, success_criteria, metadata, linked_node_ids, parent_goal_id, created_at, updated_at, due_at, completed_at, last_reviewed_at
            FROM goals;
-           """) do
+           """),
+         {:ok, entity_rows} <-
+           safe_select_all(
+             conn,
+             "SELECT id, name, canonical_name, entity_type, aliases, metadata, created_at, updated_at FROM entities;"
+           ),
+         {:ok, enl_rows} <-
+           safe_select_all(
+             conn,
+             "SELECT entity_id, node_id, relationship, created_at FROM entity_node_links;"
+           ) do
       Enum.each(node_rows, &cache_node_row/1)
       Enum.each(edge_rows, &cache_edge_row/1)
       Enum.each(outcome_rows, &cache_outcome_row/1)
       Enum.each(goal_rows, &cache_goal_row/1)
+      Enum.each(entity_rows, &cache_entity_row/1)
+      Enum.each(enl_rows, &cache_entity_node_link_row/1)
       :ok
     end
   end
@@ -678,6 +910,11 @@ defmodule Graphonomous.Store do
     :ets.delete_all_objects(@edges_by_target)
     :ets.delete_all_objects(@outcomes_table)
     :ets.delete_all_objects(@goals_table)
+    :ets.delete_all_objects(@entities_table)
+    :ets.delete_all_objects(@entities_by_canonical)
+    :ets.delete_all_objects(@entity_node_links_table)
+    :ets.delete_all_objects(@entity_links_by_entity)
+    :ets.delete_all_objects(@entity_links_by_node)
   end
 
   defp cache_node_row([
@@ -848,6 +1085,90 @@ defmodule Graphonomous.Store do
     }
 
     true = :ets.insert(@goals_table, {goal.id, goal})
+  end
+
+  defp cache_entity_row([
+         id,
+         name,
+         canonical_name,
+         entity_type,
+         aliases,
+         metadata,
+         created_at,
+         updated_at
+       ]) do
+    now = DateTime.utc_now()
+
+    entity = %Graphonomous.Types.Entity{
+      id: id,
+      name: to_string(name || ""),
+      canonical_name: to_string(canonical_name || ""),
+      entity_type: normalize_entity_type(entity_type),
+      aliases: normalize_db_json_list(aliases),
+      metadata: normalize_db_json_map(metadata),
+      created_at: normalize_datetime(created_at, now),
+      updated_at: normalize_datetime(updated_at, now)
+    }
+
+    true = :ets.insert(@entities_table, {entity.id, entity})
+    true = :ets.insert(@entities_by_canonical, {entity.canonical_name, entity})
+  end
+
+  defp cache_entity_node_link_row([entity_id, node_id, relationship, created_at]) do
+    now = DateTime.utc_now()
+
+    link = %{
+      entity_id: entity_id,
+      node_id: node_id,
+      relationship: to_string(relationship || "mentions"),
+      created_at: normalize_datetime(created_at, now)
+    }
+
+    key = {entity_id, node_id}
+    true = :ets.insert(@entity_node_links_table, {key, link})
+    true = :ets.insert(@entity_links_by_entity, {entity_id, link})
+    true = :ets.insert(@entity_links_by_node, {node_id, link})
+  end
+
+  # Safe select that returns empty list if table doesn't exist yet (pre-migration)
+  defp safe_select_all(conn, sql) do
+    case select_all(conn, sql) do
+      {:ok, rows} -> {:ok, rows}
+      {:error, _} -> {:ok, []}
+    end
+  end
+
+  defp normalize_entity_type(type) when is_binary(type) do
+    case String.downcase(String.trim(type)) do
+      "person" -> :person
+      "project" -> :project
+      "tool" -> :tool
+      "organization" -> :organization
+      "concept" -> :concept
+      "place" -> :place
+      _ -> :other
+    end
+  end
+
+  defp normalize_entity_type(type) when is_atom(type), do: type
+  defp normalize_entity_type(_), do: :other
+
+  # Remove all entity_node_links for a given node from both ETS and SQLite
+  defp cleanup_entity_links_for_node(conn, node_id) do
+    links = :ets.lookup(@entity_links_by_node, node_id) |> Enum.map(&elem(&1, 1))
+
+    Enum.each(links, fn link ->
+      key = {link.entity_id, node_id}
+      :ets.delete(@entity_node_links_table, key)
+      :ets.match_delete(@entity_links_by_entity, {link.entity_id, %{node_id: node_id}})
+    end)
+
+    :ets.match_delete(@entity_links_by_node, {node_id, :_})
+
+    _ = execute_prepared(conn, "DELETE FROM entity_node_links WHERE node_id = ?;", [node_id])
+    :ok
+  rescue
+    _ -> :ok
   end
 
   defp select_all(conn, sql) when is_binary(sql) do
@@ -1086,6 +1407,34 @@ defmodule Graphonomous.Store do
          "ALTER TABLE edges ADD COLUMN agent_id TEXT DEFAULT 'default';",
          "CREATE INDEX IF NOT EXISTS idx_nodes_agent ON nodes(agent_id);",
          "CREATE INDEX IF NOT EXISTS idx_edges_agent ON edges(agent_id);"
+       ]},
+      {"2026_04_07_entity_resolution",
+       [
+         """
+         CREATE TABLE IF NOT EXISTS entities (
+           id TEXT PRIMARY KEY,
+           name TEXT NOT NULL,
+           canonical_name TEXT NOT NULL,
+           entity_type TEXT NOT NULL DEFAULT 'other',
+           aliases TEXT NOT NULL DEFAULT '[]',
+           metadata TEXT NOT NULL DEFAULT '{}',
+           created_at TEXT NOT NULL,
+           updated_at TEXT NOT NULL
+         );
+         """,
+         "CREATE INDEX IF NOT EXISTS idx_entities_canonical ON entities(canonical_name);",
+         "CREATE INDEX IF NOT EXISTS idx_entities_type ON entities(entity_type);",
+         """
+         CREATE TABLE IF NOT EXISTS entity_node_links (
+           entity_id TEXT NOT NULL REFERENCES entities(id),
+           node_id TEXT NOT NULL REFERENCES nodes(id),
+           relationship TEXT NOT NULL DEFAULT 'mentions',
+           created_at TEXT NOT NULL,
+           PRIMARY KEY (entity_id, node_id)
+         );
+         """,
+         "CREATE INDEX IF NOT EXISTS idx_enl_entity ON entity_node_links(entity_id);",
+         "CREATE INDEX IF NOT EXISTS idx_enl_node ON entity_node_links(node_id);"
        ]}
     ]
   end
@@ -1566,6 +1915,44 @@ defmodule Graphonomous.Store do
     )
   end
 
+  defp build_entity(attrs) do
+    now = DateTime.utc_now()
+    name = map_get(attrs, :name, "")
+    canonical = map_get(attrs, :canonical_name, String.downcase(String.trim(name)))
+
+    %Graphonomous.Types.Entity{
+      id: map_get(attrs, :id, id("entity")),
+      name: name,
+      canonical_name: canonical,
+      entity_type: normalize_entity_type(map_get(attrs, :entity_type, :other)),
+      aliases: normalize_string_list(map_get(attrs, :aliases, [])),
+      metadata: normalize_map(map_get(attrs, :metadata, %{})),
+      created_at: map_get(attrs, :created_at, now) |> normalize_datetime(now),
+      updated_at: map_get(attrs, :updated_at, now) |> normalize_datetime(now)
+    }
+  end
+
+  defp persist_entity(conn, entity) do
+    execute_prepared(
+      conn,
+      """
+      INSERT OR REPLACE INTO entities
+      (id, name, canonical_name, entity_type, aliases, metadata, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+      """,
+      [
+        entity.id,
+        entity.name,
+        entity.canonical_name,
+        to_string(entity.entity_type),
+        json_encode(entity.aliases),
+        json_encode(entity.metadata),
+        iso8601(entity.created_at),
+        iso8601(entity.updated_at)
+      ]
+    )
+  end
+
   ## Filters
 
   defp filter_nodes(nodes, filters) do
@@ -1646,6 +2033,11 @@ defmodule Graphonomous.Store do
     ensure_bag_table(@edges_by_target)
     ensure_table(@outcomes_table)
     ensure_table(@goals_table)
+    ensure_table(@entities_table)
+    ensure_bag_table(@entities_by_canonical)
+    ensure_table(@entity_node_links_table)
+    ensure_bag_table(@entity_links_by_entity)
+    ensure_bag_table(@entity_links_by_node)
     :ok
   end
 

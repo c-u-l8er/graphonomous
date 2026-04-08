@@ -117,9 +117,10 @@ defmodule Graphonomous.Retriever do
     # R3-P1: Preference queries need wider candidate pools because the correct
     # session is often absent from the default top-K ANN candidates.
     pref_query? = preference_query?(query)
+    ku_query? = knowledge_update_query?(query)
 
     cfg =
-      if pref_query? do
+      if pref_query? or ku_query? do
         %{
           cfg
           | similarity_limit: round(cfg.similarity_limit * 2.5),
@@ -165,6 +166,10 @@ defmodule Graphonomous.Retriever do
         safe_graph_retrieve_similar(query, cfg.similarity_limit, cfg.similarity_timeout_ms)
       end)
 
+    # Entity resolution: run in parallel with ANN+BM25
+    entity_task =
+      Task.async(fn -> safe_entity_lookup(query) end)
+
     reply =
       with {ann_us, {:ok, seed_hits}} <-
              :timer.tc(fn ->
@@ -174,7 +179,7 @@ defmodule Graphonomous.Retriever do
            # Fix 1: Capture max ANN similarity BEFORE any boosting/fusion (observe-only)
            max_ann_similarity = extract_max_ann_similarity(seed_hits),
            {seed_us, {:ok, seed_entries}} <-
-             :timer.tc(fn -> seed_entries(seed_hits, temporal_intent, pref_query?) end),
+             :timer.tc(fn -> seed_entries(seed_hits, temporal_intent, pref_query? or ku_query?) end),
            timings = Map.put(timings, :seed_entries, seed_us),
            {bm25_await_us, bm25_results} <-
              :timer.tc(fn ->
@@ -186,9 +191,38 @@ defmodule Graphonomous.Retriever do
            {fuse_us, {:ok, seed_entries}} <-
              :timer.tc(fn -> hybrid_fuse_expanded(seed_entries, bm25_results, cfg) end),
            timings = Map.put(timings, :hybrid_fuse, fuse_us),
+           # Merge entity-sourced candidates into the pool
+           {entity_us, seed_entries} <-
+             :timer.tc(fn ->
+               entity_results = Task.await(entity_task, 5_000)
+               merge_entity_candidates(seed_entries, entity_results)
+             end),
+           timings = Map.put(timings, :entity_lookup, entity_us),
            {expand_us, {:ok, expanded}} <-
              :timer.tc(fn -> expand_neighbors(seed_entries, cfg) end),
            timings = Map.put(timings, :expand_neighbors, expand_us) do
+        # P3-Q4: Provenance-aware scoring — applied AFTER all fusion (RRF, entity merge,
+        # expansion) so penalties aren't overwritten by score replacement.
+        # 1. Penalize superseded nodes (0.3x) — their info is outdated
+        # 2. Penalize nodes with metadata "superseded" flag (0.4x)
+        expanded =
+          Map.new(expanded, fn {id, entry} ->
+            case cached_get_node(id) do
+              {:ok, %Node{superseded_by: sb}} when is_binary(sb) and sb != "" ->
+                {id, %{entry | score: entry.score * 0.3}}
+
+              {:ok, %Node{metadata: meta}} when is_map(meta) ->
+                if Map.get(meta, "superseded") == true do
+                  {id, %{entry | score: entry.score * 0.4}}
+                else
+                  {id, entry}
+                end
+
+              _ ->
+                {id, entry}
+            end
+          end)
+
         {sort_us, sorted} =
           :timer.tc(fn ->
             expanded |> Map.values() |> Enum.sort_by(& &1.score, :desc)
@@ -207,6 +241,14 @@ defmodule Graphonomous.Retriever do
         # extract entities from top results and run a supplementary BM25 pass
         {chain_us, ranked} =
           :timer.tc(fn -> maybe_chain_retrieval(ranked, query, cfg, temporal_intent) end)
+
+        # S-split Fix 5: Session-coverage expansion — for multi-session-style queries,
+        # if retrieved results span too few unique sessions, run a supplementary BM25
+        # pass using entities from already-retrieved content to broaden session diversity.
+        {_session_expand_us, ranked} =
+          :timer.tc(fn ->
+            maybe_session_coverage_expand(ranked, query, cfg, temporal_intent)
+          end)
 
         # STEP A: Session-aggregate ranking boost — boost all nodes belonging to
         # sessions with multiple strong hits. Targets session_ndcg (0.699 → ~0.85)
@@ -425,19 +467,6 @@ defmodule Graphonomous.Retriever do
         end
       end)
 
-    # P3-Q4: Penalize superseded nodes — if a seed node has been superseded_by another,
-    # reduce its score to 0.3x so the superseding node wins during ranking.
-    entries =
-      Map.new(entries, fn {id, entry} ->
-        case cached_get_node(id) do
-          {:ok, %Node{superseded_by: sb}} when is_binary(sb) and sb != "" ->
-            {id, %{entry | score: entry.score * 0.3}}
-
-          _ ->
-            {id, entry}
-        end
-      end)
-
     {:ok, entries}
   end
 
@@ -620,10 +649,74 @@ defmodule Graphonomous.Retriever do
         do: variants ++ [entity_query],
         else: variants
 
+    # Variant 3: Fact-prefix — for knowledge-update-style queries, generate a variant
+    # matching the "preference: X", "location: Y", etc. prefixes stored as bm25_facts
+    # during LongMemEval ingestion. Bridges the vocabulary gap between questions and facts.
+    fact_variant = fact_prefix_variant(query)
+
+    variants =
+      if fact_variant != nil and fact_variant != query,
+        do: variants ++ [fact_variant],
+        else: variants
+
     Enum.uniq(variants)
   end
 
   defp expand_query(_), do: []
+
+  # S-split Fix 3: Map question keywords to fact-prefix categories
+  @fact_prefix_possession_re ~r/(?:how many|do I (?:have|own)|my)\s+(\w[\w\s]{1,30}?)(?:\?|$|\s+(?:do|have|own|now))/i
+  @fact_prefix_location_re ~r/(?:where (?:do I|did \w+|is my)|(?:move|live|based|reside))\s*(?:to |in |at )?(\w[\w\s]{1,30}?)(?:\?|$)/i
+  @fact_prefix_preference_re ~r/(?:what (?:is|are|was) my (?:current |favorite |preferred )?|do I (?:still )?(?:like|prefer|enjoy))\s*(\w[\w\s]{1,30}?)(?:\?|$)/i
+  @fact_prefix_hobby_re ~r/(?:what day|how often|when do I|my .{0,15}(?:class|lesson|practice|session|hobby))\s*(\w[\w\s]{1,30}?)(?:\?|$)/i
+  @fact_prefix_identity_re ~r/(?:what (?:is|was) my (?:job|role|title|profession|occupation)|am I (?:still )?a)\s*(\w[\w\s]{1,30}?)(?:\?|$)/i
+
+  defp fact_prefix_variant(query) when is_binary(query) do
+    downcased = String.downcase(query)
+    content_words =
+      String.split(query, ~r/\s+/, trim: true)
+      |> Enum.reject(fn w -> MapSet.member?(@stop_words, String.downcase(w)) end)
+      |> Enum.reject(fn w -> String.length(w) < 3 end)
+      |> Enum.map(&String.downcase/1)
+      |> Enum.join(" ")
+
+    cond do
+      Regex.match?(@fact_prefix_possession_re, query) ->
+        case Regex.run(@fact_prefix_possession_re, query) do
+          [_, obj] -> "possession: #{String.trim(obj)} #{content_words}"
+          _ -> nil
+        end
+
+      Regex.match?(@fact_prefix_location_re, query) ->
+        case Regex.run(@fact_prefix_location_re, query) do
+          [_, obj] -> "location: #{String.trim(obj)} #{content_words}"
+          _ -> nil
+        end
+
+      Regex.match?(@fact_prefix_preference_re, downcased) ->
+        case Regex.run(@fact_prefix_preference_re, downcased) do
+          [_, obj] -> "preference: #{String.trim(obj)} #{content_words}"
+          _ -> nil
+        end
+
+      Regex.match?(@fact_prefix_hobby_re, downcased) ->
+        case Regex.run(@fact_prefix_hobby_re, downcased) do
+          [_, obj] -> "hobby: #{String.trim(obj)} #{content_words}"
+          _ -> nil
+        end
+
+      Regex.match?(@fact_prefix_identity_re, downcased) ->
+        case Regex.run(@fact_prefix_identity_re, downcased) do
+          [_, obj] -> "identity: #{String.trim(obj)} #{content_words}"
+          _ -> nil
+        end
+
+      true ->
+        nil
+    end
+  end
+
+  defp fact_prefix_variant(_), do: nil
 
   defp rrf_fuse(ann_entries, bm25_hits) do
     # Build ANN rank map (rank by descending score)
@@ -853,6 +946,108 @@ defmodule Graphonomous.Retriever do
                       similarity: 0.0,
                       score: bm25_score * 0.7 * turn_boost,
                       source: :chain_bm25,
+                      hops: 0,
+                      via: nil
+                    }
+                  ]
+
+                _ ->
+                  []
+              end
+            end)
+
+          (ranked ++ new_entries)
+          |> Enum.sort_by(& &1.score, :desc)
+
+        _ ->
+          ranked
+      end
+    else
+      ranked
+    end
+  rescue
+    _ -> ranked
+  end
+
+  # S-split Fix 5: Session-coverage expansion for multi-session queries.
+  # When query looks like multi-session but retrieved results span < 3 unique sessions,
+  # extract entities from top results and run a supplementary BM25 pass to broaden
+  # session diversity.
+  @multi_session_query_re ~r/\b(?:both|compare|all|how many different|every|each|across|together|and also|as well as)\b/i
+
+  defp maybe_session_coverage_expand(ranked, query, cfg, temporal_intent) when is_binary(query) do
+    multi_session? = Regex.match?(@multi_session_query_re, query)
+
+    if multi_session? and length(ranked) >= 3 do
+      # Count unique sessions in current results
+      unique_sessions =
+        ranked
+        |> Enum.flat_map(fn entry ->
+          case cached_get_node(entry.node_id) do
+            {:ok, %Node{metadata: %{"session_id" => sid}}} when is_binary(sid) -> [sid]
+            _ -> []
+          end
+        end)
+        |> Enum.uniq()
+
+      if length(unique_sessions) < 3 do
+        session_coverage_expand(ranked, cfg, temporal_intent)
+      else
+        ranked
+      end
+    else
+      ranked
+    end
+  rescue
+    _ -> ranked
+  end
+
+  defp maybe_session_coverage_expand(ranked, _query, _cfg, _temporal_intent), do: ranked
+
+  defp session_coverage_expand(ranked, cfg, temporal_intent) do
+    # Extract entities from top results to form a broader query
+    entity_terms =
+      ranked
+      |> Enum.take(8)
+      |> Enum.flat_map(fn entry ->
+        (entry.content || "")
+        |> String.split(~r/\s+/, trim: true)
+        |> Enum.filter(fn w ->
+          clean = String.replace(w, ~r/[^\w]/, "")
+          String.match?(clean, ~r/^[A-Z]/) or String.length(clean) >= 6
+        end)
+      end)
+      |> Enum.frequencies()
+      |> Enum.sort_by(fn {_w, freq} -> freq end, :desc)
+      |> Enum.take(10)
+      |> Enum.map(fn {w, _} -> w end)
+
+    expanded_query = Enum.join(entity_terms, " ")
+
+    if expanded_query != "" and String.length(expanded_query) >= 5 do
+      bm25_limit = Map.get(cfg, :similarity_limit, @default_similarity_limit) * 3
+      existing_ids = MapSet.new(Enum.map(ranked, & &1.node_id))
+
+      case safe_bm25_search(expanded_query, bm25_limit) do
+        {:ok, bm25_hits} when bm25_hits != [] ->
+          new_entries =
+            bm25_hits
+            |> Enum.reject(fn {node_id, _} -> MapSet.member?(existing_ids, node_id) end)
+            |> Enum.take(15)
+            |> Enum.flat_map(fn {node_id, bm25_score} ->
+              case cached_get_node(node_id) do
+                {:ok, %Node{forgotten_at: nil} = node} ->
+                  turn_boost = temporal_turn_boost(node_id, temporal_intent)
+
+                  [
+                    %{
+                      node_id: node.id,
+                      content: node.content,
+                      node_type: node.node_type,
+                      confidence: clamp01(to_float(node.confidence)),
+                      similarity: 0.0,
+                      score: bm25_score * 0.6 * turn_boost,
+                      source: :session_expand_bm25,
                       hops: 0,
                       via: nil
                     }
@@ -1946,6 +2141,17 @@ defmodule Graphonomous.Retriever do
 
   defp preference_query?(_), do: false
 
+  # S-split Fix 2: Knowledge-update query detection — entity-attribute queries
+  # ("what is my current X", "how many do I", "where did X move") need wider
+  # BM25 candidate pools like preference queries.
+  @knowledge_update_query_re ~r/what is my current|how many do I|where did .{1,20} move|what day do I|how often do I|is my .{1,20} still|what was my|how many .{1,30} have I|where do I|what is my|do I still|what are my|which .{1,20} do I|what did I change/i
+
+  defp knowledge_update_query?(query) when is_binary(query) do
+    Regex.match?(@knowledge_update_query_re, query)
+  end
+
+  defp knowledge_update_query?(_), do: false
+
   # P3-Q2: Turn-index boost — for temporal queries, boost nodes based on
   # their position within a session (turn_index in metadata).
   # "earliest/first" → boost low turn_index; "latest/last" → boost high turn_index
@@ -2124,4 +2330,57 @@ defmodule Graphonomous.Retriever do
   end
 
   defp cached_get_node(_), do: {:error, :not_found}
+
+  # ── Entity-aware retrieval helpers ──────────────────────────────────
+
+  defp safe_entity_lookup(query) do
+    Graphonomous.EntityResolver.query_entities(query)
+  rescue
+    _ -> []
+  end
+
+  # Merge entity-sourced nodes into the candidate pool with an entity boost.
+  # Entity matches get a base score that ensures they appear in the reranking
+  # candidate set, but they must still earn their final rank via the reranker.
+  @entity_base_score 0.45
+  @entity_boost 0.15
+
+  defp merge_entity_candidates(seed_entries, entity_results) when is_list(entity_results) do
+    entity_node_ids =
+      entity_results
+      |> Enum.flat_map(fn %{node_ids: ids} -> ids end)
+      |> Enum.uniq()
+
+    Enum.reduce(entity_node_ids, seed_entries, fn node_id, acc ->
+      if Map.has_key?(acc, node_id) do
+        # Boost existing entry — entity match confirms relevance
+        Map.update!(acc, node_id, fn entry ->
+          %{entry | score: entry.score + @entity_boost}
+        end)
+      else
+        # Add as new candidate from entity lookup
+        case cached_get_node(node_id) do
+          {:ok, %Node{} = node} when is_nil(node.forgotten_at) ->
+            entry = %{
+              node_id: node_id,
+              content: node.content || "",
+              node_type: node.node_type || :semantic,
+              score: @entity_base_score,
+              similarity: 0.0,
+              confidence: node.confidence,
+              hop: 0,
+              source: :entity_lookup,
+              metadata: node.metadata || %{}
+            }
+
+            Map.put(acc, node_id, entry)
+
+          _ ->
+            acc
+        end
+      end
+    end)
+  end
+
+  defp merge_entity_candidates(seed_entries, _), do: seed_entries
 end

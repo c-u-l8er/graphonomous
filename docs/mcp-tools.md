@@ -56,7 +56,7 @@ Create a directed relationship between two nodes.
 - `target_id` (string)
 
 ### Optional
-- `edge_type` (`causes | resolves | related_to | part_of | follows | contradicts | supersedes | depends_on | similar_to | supports | derived_from | temporal_before | temporal_after | co_occurs` — also accepts legacy: `causal`, `related`)
+- `edge_type` (`causal | causes | resolves | related | related_to | part_of | follows | contradicts | supersedes | superseded_by | depends_on | similar_to | supports | derived_from | temporal_before | temporal_after | co_occurs`)
 - `weight` (`0.0..1.0`, default 0.3)
 - `metadata` (JSON object string)
 

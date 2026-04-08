@@ -152,6 +152,11 @@ defmodule Graphonomous.Graph do
     with {:ok, enriched} <- maybe_attach_embedding(attrs),
          {:ok, node} <- Store.insert_node(enriched) do
       hnsw_sync_add(node)
+      # Post-store hook: entity resolution (async, best-effort)
+      if is_binary(node.id) and is_binary(node.content) and node.content != "" do
+        Task.start(fn -> safe_entity_resolve(node.id, node.content) end)
+      end
+
       {:reply, {:ok, node}, state}
     else
       {:error, _} = err ->
@@ -180,6 +185,20 @@ defmodule Graphonomous.Graph do
 
     if hnsw_items != [] do
       HNSWIndex.batch_add(hnsw_items)
+    end
+
+    # Post-store hook: entity resolution for all batch nodes (async)
+    entity_candidates =
+      for %Node{id: id, content: content} <- nodes,
+          is_binary(id) and is_binary(content) and content != "",
+          do: {id, content}
+
+    if entity_candidates != [] do
+      Task.start(fn ->
+        Enum.each(entity_candidates, fn {id, content} ->
+          safe_entity_resolve(id, content)
+        end)
+      end)
     end
 
     {:reply, {:ok, nodes}, state}
@@ -316,9 +335,23 @@ defmodule Graphonomous.Graph do
         {:ok, Map.put(attrs, :embedding, nil)}
 
       true ->
-        case Embedder.embed_binary(content, task: :document) do
-          {:ok, embedding_blob} -> {:ok, Map.put(attrs, :embedding, embedding_blob)}
-          {:error, _reason} -> {:ok, Map.put(attrs, :embedding, nil)}
+        # Truncate content for embedding — models have token limits anyway,
+        # and very long texts can cause embedder timeouts during batch ingestion.
+        embed_text = String.slice(content, 0, 2048)
+
+        try do
+          case Embedder.embed_binary(embed_text, task: :document) do
+            {:ok, embedding_blob} -> {:ok, Map.put(attrs, :embedding, embedding_blob)}
+            {:error, _reason} -> {:ok, Map.put(attrs, :embedding, nil)}
+          end
+        catch
+          :exit, {:timeout, _} ->
+            # Embedder busy or overloaded — proceed without embedding rather than
+            # crashing the Graph GenServer (which would kill all concurrent ingestion).
+            {:ok, Map.put(attrs, :embedding, nil)}
+
+          :exit, _reason ->
+            {:ok, Map.put(attrs, :embedding, nil)}
         end
     end
   end
@@ -638,4 +671,13 @@ defmodule Graphonomous.Graph do
   end
 
   defp hnsw_sync_add(_), do: :ok
+
+  defp safe_entity_resolve(node_id, content) do
+    Graphonomous.EntityResolver.resolve_and_link(node_id, content)
+  rescue
+    error ->
+      require Logger
+      Logger.debug("Entity resolution failed for node #{node_id}: #{inspect(error)}")
+      :ok
+  end
 end

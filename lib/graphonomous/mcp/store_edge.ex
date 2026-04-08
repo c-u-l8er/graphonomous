@@ -95,6 +95,7 @@ defmodule Graphonomous.MCP.StoreEdge do
       "follows" -> "follows"
       "contradicts" -> "contradicts"
       "supersedes" -> "supersedes"
+      "superseded_by" -> "superseded_by"
       "depends_on" -> "depends_on"
       "similar_to" -> "similar_to"
       "supports" -> "supports"

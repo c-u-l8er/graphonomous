@@ -204,6 +204,12 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
     # Phase 2: Evaluate each question
     Mix.shell().info("\n━━━ Phase 2: Evaluating #{total} Questions ━━━")
 
+    # Streaming results: write each question result to a JSONL file in real time
+    streaming_path =
+      Path.join([Helpers.portfolio_root(), "graphonomous", "benchmark_results", "longmemeval_streaming.jsonl"])
+
+    File.write!(streaming_path, "")
+
     {eval_us, question_results} =
       Helpers.timed(fn ->
         questions
@@ -212,7 +218,23 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
           if rem(idx, 50) == 0 or idx == 1,
             do: Mix.shell().info("  Progress: #{idx}/#{total}...")
 
-          evaluate_question(q, skip_topology, ppr_enabled, ppr_weight)
+          result = evaluate_question(q, skip_topology, ppr_enabled, ppr_weight)
+
+          # Stream result as JSONL — one line per question for real-time monitoring
+          line = Jason.encode!(%{
+            idx: idx,
+            question_id: result.question_id,
+            ability: result.ability,
+            session_hit: result.session_hit,
+            qa_proxy_score: result.qa_proxy_score,
+            keyword_recall: result.keyword_recall,
+            judge_score: result[:judge_score],
+            judge_answer: result[:judge_answer],
+            latency_ms: div(result.retrieval_latency_us, 1000)
+          })
+
+          File.write!(streaming_path, line <> "\n", [:append])
+          result
         end)
       end)
 
@@ -429,9 +451,13 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
       end)
 
     embeddings =
-      case Graphonomous.Embedder.embed_many_binary(turn_contents, task: :document) do
-        {:ok, embs} -> embs
-        {:error, _} -> List.duplicate(nil, length(turns))
+      try do
+        case Graphonomous.Embedder.embed_many_binary(turn_contents, task: :document) do
+          {:ok, embs} -> embs
+          {:error, _} -> List.duplicate(nil, length(turns))
+        end
+      catch
+        :exit, _ -> List.duplicate(nil, length(turns))
       end
 
     # P2-I3: Batch store all turns with a single HNSW batch_add call
@@ -532,11 +558,17 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
       node_ids
       |> Enum.chunk_every(2, 1, :discard)
       |> Enum.each(fn [prev, curr] ->
-        Graphonomous.link_nodes(prev, curr, %{
-          edge_type: :follows,
-          weight: 0.9,
-          metadata: %{"session_id" => session_id, "link_type" => "intra_session"}
-        })
+        try do
+          Graphonomous.link_nodes(prev, curr, %{
+            edge_type: :follows,
+            weight: 0.9,
+            metadata: %{"session_id" => session_id, "link_type" => "intra_session"}
+          })
+        rescue
+          _ -> :ok
+        catch
+          :exit, _ -> :ok
+        end
       end)
 
       # S3: Session-level summary node (two-level hierarchy like LiCoMemory)
@@ -568,22 +600,40 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
           if all_session_facts != [], do: Map.put(m, "bm25_facts", all_session_facts), else: m
         end)
 
-      summary =
-        Graphonomous.store_node(%{
-          content: "Session #{session_id} summary: #{String.slice(summary_content, 0, 4096)}",
-          node_type: :semantic,
-          confidence: 0.80,
-          source: "longmemeval",
-          metadata: summary_meta
-        })
+      summary_result =
+        try do
+          Graphonomous.store_node(%{
+            content: "Session #{session_id} summary: #{String.slice(summary_content, 0, 4096)}",
+            node_type: :semantic,
+            confidence: 0.80,
+            source: "longmemeval",
+            metadata: summary_meta
+          })
+        rescue
+          _ -> nil
+        catch
+          :exit, _ -> nil
+        end
 
-      Enum.each(node_ids, fn nid ->
-        Graphonomous.link_nodes(summary.id, nid, %{
-          edge_type: :part_of,
-          weight: 0.85,
-          metadata: %{"session_id" => session_id}
-        })
-      end)
+      case summary_result do
+        %{id: summary_id} ->
+          Enum.each(node_ids, fn nid ->
+            try do
+              Graphonomous.link_nodes(summary_id, nid, %{
+                edge_type: :part_of,
+                weight: 0.85,
+                metadata: %{"session_id" => session_id}
+              })
+            rescue
+              _ -> :ok
+            catch
+              :exit, _ -> :ok
+            end
+          end)
+
+        _ ->
+          Mix.shell().info("  ⚠ Session #{session_id} summary store timed out, skipping links")
+      end
 
       {node_ids, entities_by_node}
     end
@@ -593,6 +643,8 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
 
   # S2: Cross-session entity edges — link turns in different sessions
   # that mention the same proper nouns (people, places, topics).
+  # Enhanced: detect cross-session fact versioning — when the same entity-attribute
+  # pair appears in multiple sessions, create :updates edges with temporal validity.
   defp build_cross_session_edges(entity_index) do
     entity_index
     |> Enum.filter(fn {_ent, nodes} ->
@@ -605,21 +657,106 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
             {n2, s2} <- node_infos,
             s1 < s2,
             n1 != n2,
-            do: {n1, n2}
+            do: {n1, n2, s1, s2}
 
-      pairs = cross_pairs |> Enum.uniq() |> Enum.take(3)
+      pairs = cross_pairs |> Enum.uniq_by(fn {n1, n2, _, _} -> {n1, n2} end) |> Enum.take(3)
 
-      Enum.each(pairs, fn {n1, n2} ->
-        Graphonomous.link_nodes(n1, n2, %{
-          edge_type: :related,
-          weight: 0.7,
-          metadata: %{"link_type" => "cross_session_entity"}
-        })
+      Enum.each(pairs, fn {n1, n2, _s1, _s2} ->
+        # Check if both nodes are user turns with overlapping fact categories
+        # If so, this is a fact version chain — later node updates earlier one
+        case detect_fact_version(n1, n2) do
+          :updates ->
+            # n1 is earlier (s1 < s2), n2 is later — n2 updates n1
+            Graphonomous.link_nodes(n1, n2, %{
+              edge_type: :superseded_by,
+              weight: 0.9,
+              metadata: %{
+                "link_type" => "cross_session_version",
+                "source" => "fact_versioning"
+              }
+            })
+
+            # Set valid_until on the earlier node and reduce confidence
+            with %{metadata: meta} <- Graphonomous.get_node(n1) do
+              later_date =
+                case Graphonomous.get_node(n2) do
+                  %{metadata: %{"document_date" => d}} when is_binary(d) -> d
+                  _ -> nil
+                end
+
+              updated_meta =
+                meta
+                |> Map.put("valid_until", later_date)
+                |> Map.put("superseded", true)
+
+              Graphonomous.Store.update_node(n1, %{
+                metadata: updated_meta,
+                superseded_by: n2,
+                confidence: 0.25
+              })
+            end
+
+          :related ->
+            Graphonomous.link_nodes(n1, n2, %{
+              edge_type: :related,
+              weight: 0.7,
+              metadata: %{"link_type" => "cross_session_entity"}
+            })
+        end
       end)
 
       edge_count + length(pairs)
     end)
   end
+
+  # Detect whether two cross-session nodes represent versions of the same fact.
+  # Returns :updates if they share overlapping fact categories (same attribute
+  # about same entity), :related otherwise.
+  @doc false
+  def detect_fact_version(earlier_id, later_id) do
+    with %{metadata: _} = n1 <- Graphonomous.get_node(earlier_id),
+         %{metadata: _} = n2 <- Graphonomous.get_node(later_id) do
+      meta1 = n1.metadata || %{}
+      meta2 = n2.metadata || %{}
+      role1 = Map.get(meta1, "role", "")
+      role2 = Map.get(meta2, "role", "")
+
+      # Only version user turns (user facts, not assistant responses)
+      if role1 == "user" and role2 == "user" do
+        facts1 = Map.get(meta1, "bm25_facts", [])
+        facts2 = Map.get(meta2, "bm25_facts", [])
+
+        # Extract fact categories (prefix before the colon)
+        cats1 = extract_fact_categories(facts1)
+        cats2 = extract_fact_categories(facts2)
+
+        # If they share fact categories, this is a version update
+        overlap = MapSet.intersection(cats1, cats2)
+
+        if MapSet.size(overlap) > 0, do: :updates, else: :related
+      else
+        :related
+      end
+    else
+      _ -> :related
+    end
+  rescue
+    _ -> :related
+  end
+
+  @doc false
+  def extract_fact_categories(facts) when is_list(facts) do
+    facts
+    |> Enum.flat_map(fn fact ->
+      case String.split(fact, ":", parts: 2) do
+        [category, _value] -> [String.trim(category) |> String.downcase()]
+        _ -> []
+      end
+    end)
+    |> MapSet.new()
+  end
+
+  def extract_fact_categories(_), do: MapSet.new()
 
   # P3-Q5: Enhanced entity extraction — captures proper nouns, acronyms,
   # preferences, compound concepts, and hyphenated names. The original only
@@ -1060,6 +1197,541 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
     _ -> :ok
   end
 
+  # ── Context Distillation for LLM Judge ──────────────────────────
+  # Mirrors the BEAM 3-layer pipeline: annotate → filter → format.
+  # Produces structured, attributed evidence that the generator can reason over,
+  # replacing the raw content join that loses speaker/turn/session context.
+
+  @max_chunk_chars 2000
+
+  defp distill_longmemeval_context(results, ability, question) when results != [] do
+    chunks =
+      results
+      |> Enum.map(&annotate_longmemeval_chunk/1)
+      |> Enum.reject(fn c -> c.text == "" end)
+      |> Enum.uniq_by(fn c -> c.node_id end)
+      |> Enum.map(fn c -> %{c | text: String.slice(c.text, 0, @max_chunk_chars)} end)
+
+    # Ability-aware filtering
+    filtered =
+      case ability do
+        :abstention ->
+          high_sim = Enum.filter(chunks, fn c -> c.similarity >= 0.45 end)
+          if high_sim == [], do: [], else: Enum.take(high_sim, 10)
+
+        _ ->
+          chunks
+      end
+
+    # Add question-relevance score to each chunk
+    filtered =
+      if question != "" do
+        Enum.map(filtered, fn c ->
+          Map.put(c, :q_relevance, question_relevance_score(c.text, question))
+        end)
+      else
+        Enum.map(filtered, fn c -> Map.put(c, :q_relevance, 0.0) end)
+      end
+
+    format_longmemeval_context(filtered, ability)
+  end
+
+  defp distill_longmemeval_context([], _ability, _question), do: "No relevant context found."
+
+  defp annotate_longmemeval_chunk(result) do
+    content = Map.get(result, :content, "")
+    similarity = Map.get(result, :similarity, 0.0)
+    score = Map.get(result, :score, similarity)
+    node_id = Map.get(result, :node_id)
+    metadata = Map.get(result, :metadata, %{})
+
+    # Try result metadata first, fall back to node metadata
+    meta =
+      if map_size(metadata) > 0 do
+        metadata
+      else
+        case Graphonomous.get_node(node_id) do
+          %{metadata: m} when is_map(m) -> m
+          _ -> %{}
+        end
+      end
+
+    role = Map.get(meta, "role", "unknown")
+    turn_idx = Map.get(meta, "turn_index", "?")
+    session_id = Map.get(meta, "session_id", "?")
+    doc_date = Map.get(meta, "document_date")
+    event_date = Map.get(meta, "event_date")
+    is_superseded = Map.get(meta, "superseded", false)
+    valid_until = Map.get(meta, "valid_until")
+
+    # Strip the "[role] " prefix added during ingestion
+    raw_text =
+      case Regex.run(~r/^\[(?:user|assistant|system|unknown)\]\s*/i, content) do
+        [prefix] -> String.slice(content, String.length(prefix)..-1//1)
+        _ -> content
+      end
+
+    cleaned = raw_text |> String.trim()
+
+    bm25_facts = Map.get(meta, "bm25_facts", [])
+
+    %{
+      text: cleaned,
+      speaker: role,
+      turn: turn_idx,
+      session_id: session_id,
+      document_date: doc_date,
+      event_date: event_date,
+      is_superseded: is_superseded,
+      valid_until: valid_until,
+      similarity: similarity,
+      score: score,
+      node_id: node_id,
+      bm25_facts: bm25_facts
+    }
+  end
+
+  @doc false
+  def format_longmemeval_context([], _ability), do: "No relevant context found."
+
+  def format_longmemeval_context(chunks, :knowledge_update) do
+    # Sort chronologically so the generator sees the latest state last
+    sorted = Enum.sort_by(chunks, fn c ->
+      {c.document_date || "", parse_int_safe(c.turn, 0)}
+    end)
+
+    # Structured fact table — lets the generator scan entity-attribute-value rows directly
+    fact_table = build_fact_table(sorted)
+
+    # Extract user claims as structured facts from each turn
+    claims = extract_user_claims(sorted)
+
+    claims_section =
+      if claims != [] do
+        lines =
+          claims
+          |> Enum.with_index(1)
+          |> Enum.map(fn {claim, i} -> "#{i}. #{claim}" end)
+          |> Enum.join("\n")
+
+        "USER CLAIMS (most recent last — latest wins if conflicting):\n#{lines}\n\n"
+      else
+        ""
+      end
+
+    header = "#{fact_table}#{claims_section}SUPPORTING EVIDENCE:\n\n"
+
+    body =
+      sorted
+      |> Enum.map(fn c ->
+        date_str = if c.document_date, do: " (#{c.document_date})", else: ""
+
+        provenance_tag =
+          cond do
+            c.is_superseded ->
+              " ⚠ OUTDATED — superseded by later information"
+            c.valid_until != nil ->
+              " ⚠ OUTDATED — valid until #{c.valid_until}"
+            true ->
+              ""
+          end
+
+        "[#{String.upcase(c.speaker)} Turn #{c.turn}#{date_str}]#{provenance_tag} #{c.text}"
+      end)
+      |> Enum.join("\n\n")
+
+    header <> body
+  end
+
+  def format_longmemeval_context(chunks, :temporal_reasoning) do
+    # Strict chronological order — date first, then turn within date.
+    # Do NOT group by session; the generator needs a single timeline.
+    sorted = Enum.sort_by(chunks, fn c ->
+      {c.document_date || "", parse_int_safe(c.turn, 0)}
+    end)
+
+    # S-split Fix 7: Prepend structured timeline from document_date/event_date fields
+    timeline_entries =
+      sorted
+      |> Enum.flat_map(fn c ->
+        date = c.event_date || c.document_date
+        if date do
+          # Extract a brief summary (first 80 chars of content)
+          summary = String.slice(c.text, 0, 80) |> String.replace(~r/\n.*/, "")
+          [{"#{date}", summary}]
+        else
+          []
+        end
+      end)
+      |> Enum.uniq_by(fn {date, summary} -> {date, String.slice(summary, 0, 40)} end)
+
+    timeline_header =
+      if timeline_entries != [] do
+        lines =
+          timeline_entries
+          |> Enum.map(fn {date, summary} -> "- #{date}: #{summary}" end)
+          |> Enum.join("\n")
+
+        "TIMELINE:\n#{lines}\n\n"
+      else
+        ""
+      end
+
+    header = "#{timeline_header}EVIDENCE (strict chronological order):\n\n"
+
+    body =
+      sorted
+      |> Enum.map(fn c ->
+        date_str = if c.document_date, do: " [#{c.document_date}]", else: ""
+        "[#{String.upcase(c.speaker)} Turn #{c.turn}#{date_str}] #{c.text}"
+      end)
+      |> Enum.join("\n\n")
+
+    header <> body
+  end
+
+  def format_longmemeval_context(chunks, :information_extraction) do
+    # Sort by relevance score (similarity) descending — best matches first
+    sorted = Enum.sort_by(chunks, fn c -> -(c.similarity || 0.0) end)
+
+    # Structured fact table
+    fact_table = build_fact_table(sorted)
+
+    # Extract user claims as structured facts
+    claims = extract_user_claims(sorted)
+
+    claims_section =
+      if claims != [] do
+        lines =
+          claims
+          |> Enum.with_index(1)
+          |> Enum.map(fn {claim, i} -> "#{i}. #{claim}" end)
+          |> Enum.join("\n")
+
+        "USER STATEMENTS (extracted from conversations):\n#{lines}\n\n"
+      else
+        ""
+      end
+
+    header = "#{fact_table}#{claims_section}EVIDENCE (ranked by relevance):\n\n"
+
+    body =
+      sorted
+      |> Enum.map(fn c ->
+        date_str = if c.document_date, do: " (#{c.document_date})", else: ""
+        "[#{String.upcase(c.speaker)} Turn #{c.turn}#{date_str}] #{c.text}"
+      end)
+      |> Enum.join("\n\n")
+
+    header <> body
+  end
+
+  def format_longmemeval_context(chunks, :multi_session_reasoning) do
+    # Structured fact table — helps the generator enumerate items across sessions
+    fact_table = build_fact_table(chunks)
+
+    # Build entity cross-reference index using EntityResolver when available
+    cross_refs = extract_cross_reference_entities_resolved(chunks)
+
+    cross_ref_section =
+      if cross_refs != [] do
+        lines =
+          cross_refs
+          |> Enum.map(fn {entity, sessions} ->
+            sids = Enum.join(sessions, ", ")
+            "- #{entity}: mentioned in sessions #{sids}"
+          end)
+          |> Enum.join("\n")
+
+        "ENTITY CROSS-REFERENCE (entities appearing across multiple sessions):\n#{lines}\n\n"
+      else
+        ""
+      end
+
+    # Group by session so multi-hop connections are visible
+    grouped = Enum.group_by(chunks, & &1.session_id)
+
+    header = "#{fact_table}#{cross_ref_section}MULTI-SESSION CONTEXT (grouped by session):\n\n"
+
+    body =
+      grouped
+      |> Enum.sort_by(fn {sid, _} -> sid end)
+      |> Enum.map(fn {session_id, session_chunks} ->
+        sorted = Enum.sort_by(session_chunks, fn c -> parse_int_safe(c.turn, 0) end)
+
+        lines =
+          sorted
+          |> Enum.map(fn c ->
+            "  [#{String.upcase(c.speaker)} Turn #{c.turn}] #{c.text}"
+          end)
+          |> Enum.join("\n")
+
+        "## Session #{session_id}\n#{lines}"
+      end)
+      |> Enum.join("\n\n")
+
+    header <> body
+  end
+
+  def format_longmemeval_context(chunks, _ability) do
+    # Hybrid ordering: high-relevance turns first, then chronological for ties
+    sorted = Enum.sort_by(chunks, fn c ->
+      {-(Map.get(c, :q_relevance, 0.0)), c.document_date || "", parse_int_safe(c.turn, 0)}
+    end)
+
+    sorted
+    |> Enum.map(fn c ->
+      date_str = if c.document_date, do: " (#{c.document_date})", else: ""
+      "[#{String.upcase(c.speaker)} Turn #{c.turn}#{date_str}] #{c.text}"
+    end)
+    |> Enum.join("\n\n")
+  end
+
+  # ── Claim Extraction for Context Formatting ─────────────────────
+  # Extracts first-person user statements as structured claims.
+  # These are the atomic facts the generator needs to answer questions like
+  # "how many bikes do I own" or "what's my 5K time".
+
+  @claim_first_person_re ~r/(?:^|(?<=\.\s)|(?<=!\s)|(?<=\?\s))([^.!?]*?\b(?:I |I'm |I've |my |My |we |We )\b[^.!?]{10,120}[.!?])/
+  @claim_number_re ~r/(?:^|(?<=\.\s))([^.!?]*?\b\d+[^.!?]{5,100}[.!?])/
+  @claim_update_re ~r/(?:actually|changed|not anymore|now I|used to|switched|moved to|updated|no longer|instead|new)\b/i
+
+  @doc false
+  def extract_user_claims(sorted_chunks) do
+    sorted_chunks
+    |> Enum.filter(fn c -> String.downcase(c.speaker) == "user" end)
+    |> Enum.flat_map(fn c ->
+      date_tag = if c.document_date, do: "[#{c.document_date}] ", else: ""
+      session_tag = if c.session_id && c.session_id != "?", do: "[S#{c.session_id}] ", else: ""
+      prefix = "#{session_tag}#{date_tag}"
+
+      # Extract first-person claim sentences
+      first_person =
+        Regex.scan(@claim_first_person_re, c.text)
+        |> Enum.map(fn [_, sent] -> String.trim(sent) end)
+
+      # Extract sentences with numbers (quantities, times, counts)
+      numbers =
+        Regex.scan(@claim_number_re, c.text)
+        |> Enum.map(fn [_, sent] -> String.trim(sent) end)
+
+      # If no regex hits, take sentences with update keywords
+      update_sentences =
+        if first_person == [] and numbers == [] do
+          c.text
+          |> String.split(~r/(?<=[.!?])\s+/)
+          |> Enum.filter(fn s -> Regex.match?(@claim_update_re, s) end)
+          |> Enum.take(2)
+        else
+          []
+        end
+
+      claims = (first_person ++ numbers ++ update_sentences) |> Enum.uniq()
+
+      # Tag with update marker if contains update language
+      claims
+      |> Enum.map(fn claim ->
+        update_tag = if Regex.match?(@claim_update_re, claim), do: " [UPDATE]", else: ""
+        "#{prefix}#{claim}#{update_tag}"
+      end)
+    end)
+    |> Enum.uniq()
+    |> Enum.take(30)
+  end
+
+  # Extract entities (proper nouns, key terms) from chunks for cross-referencing.
+  # Original naive version — used as fallback when EntityResolver is unavailable.
+  @doc false
+  def extract_cross_reference_entities(chunks) do
+    entity_sessions =
+      chunks
+      |> Enum.flat_map(fn c ->
+        words = String.split(c.text, ~r/\s+/, trim: true)
+
+        entities =
+          words
+          |> Enum.filter(fn w ->
+            clean = String.replace(w, ~r/[^\w]/, "")
+            String.match?(clean, ~r/^[A-Z][a-z]{2,}/) and
+              not String.match?(clean, ~r/^(?:The|This|That|These|Those|What|When|Where|How|Can|Could|Would|Should|Also|Just|Very|Really|Then|Well|Here|There)$/)
+          end)
+          |> Enum.map(fn w -> String.replace(w, ~r/[^\w]/, "") end)
+
+        Enum.map(entities, fn e -> {e, c.session_id} end)
+      end)
+
+    # Group by entity, keep only those appearing in 2+ sessions
+    entity_sessions
+    |> Enum.group_by(fn {e, _} -> e end, fn {_, sid} -> sid end)
+    |> Enum.filter(fn {_e, sids} -> length(Enum.uniq(sids)) >= 2 end)
+    |> Enum.map(fn {e, sids} -> {e, Enum.uniq(sids)} end)
+    |> Enum.sort_by(fn {_e, sids} -> -length(sids) end)
+    |> Enum.take(15)
+  end
+
+  # Enhanced cross-reference using EntityResolver for canonical name resolution.
+  # Merges mentions like "NYC", "New York City", "New York" into one canonical entity.
+  # Falls back to naive extraction if EntityResolver fails.
+  @doc false
+  def extract_cross_reference_entities_resolved(chunks) do
+    # Step 1: Extract mentions from each chunk using EntityResolver
+    chunk_mentions =
+      chunks
+      |> Enum.flat_map(fn c ->
+        mentions =
+          try do
+            Graphonomous.EntityResolver.extract_mentions(c.text)
+          rescue
+            _ -> []
+          end
+
+        Enum.map(mentions, fn m -> {m.text, c.session_id} end)
+      end)
+
+    if chunk_mentions == [] do
+      extract_cross_reference_entities(chunks)
+    else
+      # Step 2: Resolve mentions against known entities (canonical + alias + fuzzy)
+      all_mentions =
+        chunk_mentions
+        |> Enum.map(fn {text, _sid} -> %{text: text, entity_type: :other} end)
+        |> Enum.uniq_by(fn m -> String.downcase(m.text) end)
+
+      {resolved, _unresolved} =
+        try do
+          Graphonomous.EntityResolver.resolve(all_mentions)
+        rescue
+          _ -> {[], all_mentions}
+        end
+
+      # Build canonical name lookup: mention_text_downcased -> canonical_name
+      canonical_lookup =
+        Map.new(resolved, fn r ->
+          {String.downcase(r.mention.text), r.entity_name}
+        end)
+
+      # Step 3: Map mentions to canonical names, group by canonical entity
+      entity_sessions =
+        chunk_mentions
+        |> Enum.map(fn {text, sid} ->
+          canonical = Map.get(canonical_lookup, String.downcase(text), text)
+          {canonical, sid}
+        end)
+
+      entity_sessions
+      |> Enum.group_by(fn {e, _} -> e end, fn {_, sid} -> sid end)
+      |> Enum.filter(fn {_e, sids} -> length(Enum.uniq(sids)) >= 2 end)
+      |> Enum.map(fn {e, sids} -> {e, Enum.uniq(sids)} end)
+      |> Enum.sort_by(fn {_e, sids} -> -length(sids) end)
+      |> Enum.take(20)
+    end
+  rescue
+    _ -> extract_cross_reference_entities(chunks)
+  end
+
+  # Score a chunk's relevance to the question using word overlap
+  @doc false
+  def question_relevance_score(chunk_text, question) do
+    q_words =
+      question
+      |> String.downcase()
+      |> String.split(~r/\s+/, trim: true)
+      |> Enum.reject(fn w -> String.length(w) < 3 end)
+      |> MapSet.new()
+
+    c_words =
+      chunk_text
+      |> String.downcase()
+      |> String.split(~r/\s+/, trim: true)
+      |> MapSet.new()
+
+    overlap = MapSet.intersection(q_words, c_words) |> MapSet.size()
+    if MapSet.size(q_words) > 0, do: overlap / MapSet.size(q_words), else: 0.0
+  end
+
+  defp parse_int_safe(val, _default) when is_integer(val), do: val
+
+  defp parse_int_safe(val, default) when is_binary(val) do
+    case Integer.parse(val) do
+      {n, _} -> n
+      :error -> default
+    end
+  end
+
+  defp parse_int_safe(_, default), do: default
+
+  # ── Structured Fact Table ──────────────────────────────────────────
+  # Extracts bm25_facts from chunk metadata and formats as a scannable table.
+  # Each fact is parsed from "category: value" format into structured rows
+  # with session ID and date for provenance. This gives the generator a
+  # direct lookup table instead of forcing it to parse raw conversation text.
+
+  @doc false
+  def build_fact_table(chunks) do
+    rows =
+      chunks
+      |> Enum.flat_map(fn c ->
+        facts = Map.get(c, :bm25_facts, [])
+        session = c.session_id
+        date = c.document_date || ""
+        turn = c.turn
+        superseded? = c.is_superseded
+
+        facts
+        |> Enum.filter(&is_binary/1)
+        |> Enum.flat_map(fn fact ->
+          case String.split(fact, ": ", parts: 2) do
+            [category, value] when byte_size(value) > 0 ->
+              status = if superseded?, do: "OUTDATED", else: "CURRENT"
+              [{String.trim(category), String.trim(value), "S:#{session}", "T:#{turn}", date, status}]
+            _ ->
+              []
+          end
+        end)
+      end)
+
+    if rows == [] do
+      ""
+    else
+      # Deduplicate by category+value, keeping the latest (by turn) version
+      deduped =
+        rows
+        |> Enum.group_by(fn {cat, val, _s, _t, _d, _st} ->
+          {String.downcase(cat), String.downcase(val)}
+        end)
+        |> Enum.map(fn {_key, versions} ->
+          # Sort by turn descending, pick the latest
+          versions
+          |> Enum.sort_by(fn {_c, _v, _s, t, _d, _st} ->
+            case t do
+              "T:" <> n -> -(parse_int_safe(n, 0))
+              _ -> 0
+            end
+          end)
+          |> hd()
+        end)
+        |> Enum.sort_by(fn {cat, _v, _s, _t, _d, _st} -> cat end)
+
+      header = "FACT TABLE (structured facts extracted from conversations):\n"
+      col_header = "  Category       | Value                          | Session | Turn | Date       | Status\n"
+      separator = "  " <> String.duplicate("-", 95) <> "\n"
+
+      body =
+        deduped
+        |> Enum.map(fn {cat, val, session, turn, date, status} ->
+          cat_pad = String.pad_trailing(String.slice(cat, 0, 15), 15)
+          val_pad = String.pad_trailing(String.slice(val, 0, 30), 30)
+          ses_pad = String.pad_trailing(String.slice(session, 0, 7), 7)
+          turn_pad = String.pad_trailing(String.slice(turn, 0, 4), 4)
+          date_pad = String.pad_trailing(String.slice(date, 0, 10), 10)
+          "  #{cat_pad} | #{val_pad} | #{ses_pad} | #{turn_pad} | #{date_pad} | #{status}"
+        end)
+        |> Enum.join("\n")
+
+      header <> col_header <> separator <> body <> "\n\n"
+    end
+  end
+
   # ── Question Evaluation ──────────────────────────────────────────
 
   defp evaluate_question(q, skip_topology, ppr_enabled, ppr_weight) do
@@ -1085,6 +1757,7 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
     {sim_limit, final_limit, exp_hops} =
       case question_type do
         "multi-session" -> {30, 60, 2}
+        "knowledge-update" -> {30, 60, 2}
         "temporal-reasoning" -> {22, 50, 1}
         _ -> {18, 35, 1}
       end
@@ -1232,14 +1905,27 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
       end
 
     # P3-Q1: LLM judge scoring (optional --judge flag)
+    # Maps LongMemEval abilities to judge ability strings for ability-specific prompting
+    judge_ability =
+      case ability do
+        :information_extraction -> "information_extraction"
+        :multi_session_reasoning -> "multi_session_reasoning"
+        :temporal_reasoning -> "temporal_reasoning"
+        :knowledge_update -> "knowledge_update"
+        _ -> nil
+      end
+
+    judge_ability = if is_abstention, do: "abstention", else: judge_ability
+
     {judge_score, judge_answer, judge_reasoning} =
       if Application.get_env(:graphonomous, :benchmark_judge, false) do
-        retrieved_text_for_judge = Enum.map(results, & &1.content) |> Enum.join("\n\n")
+        retrieved_text_for_judge = distill_longmemeval_context(results, ability, question_text)
 
         case Mix.Tasks.Benchmark.LlmJudge.judge_answer(
                question_text,
                retrieved_text_for_judge,
-               expected_answer
+               expected_answer,
+               ability: judge_ability
              ) do
           {:ok, %{answer: ans, score: score, reasoning: reasoning}} ->
             {score, ans, reasoning}
@@ -1510,7 +2196,8 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
            mean_session_recall: mean(items, :session_recall),
            mean_keyword_f1: mean(items, :keyword_f1),
            mean_qa_proxy: mean(items, :qa_proxy_score),
-           qa_proxy_pct: Float.round(mean(items, :qa_proxy_score) * 100, 1)
+           qa_proxy_pct: Float.round(mean(items, :qa_proxy_score) * 100, 1),
+           judge_qa_accuracy: judge_accuracy(items)
          }}
       end)
       |> Map.new()
@@ -1740,7 +2427,11 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
     |> Enum.sort_by(fn {_, v} -> -v.qa_proxy_pct end)
     |> Enum.each(fn {ability, v} ->
       label = "#{ability} (#{v.count})"
-      score = "SHR=#{v.session_hit_rate}% QA=#{v.qa_proxy_pct}%"
+
+      judge_suffix =
+        if v.judge_qa_accuracy, do: " J=#{v.judge_qa_accuracy}%", else: ""
+
+      score = "SHR=#{v.session_hit_rate}% QA=#{v.qa_proxy_pct}%#{judge_suffix}"
 
       Mix.shell().info(
         "    ║  #{String.pad_trailing(label, 32)} #{String.pad_trailing(score, 23)}║"

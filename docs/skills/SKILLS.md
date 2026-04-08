@@ -80,7 +80,7 @@ Every interaction should follow this rhythm:
 ### Read Tools
 | Tool | Purpose | Key Params |
 |------|---------|------------|
-| `retrieve_context` | Hybrid search (nomic 768d + BM25 + cross-encoder reranking) with topology | `query` (required), `limit`, `expansion_hops`, `min_score`, `node_type` |
+| `retrieve_context` | Hybrid search (nomic 768d + BM25 + cross-encoder reranking) with topology and provenance-aware scoring. Superseded nodes penalized 0.3x. Knowledge-update and preference queries auto-widen candidate pools 2.5x. Fact-prefix BM25 variants bridge vocabulary gaps. | `query` (required), `limit`, `expansion_hops`, `min_score`, `node_type` |
 | `query_graph` | Inspect graph state (list, get, edges, similarity) | `operation` (required), varies by operation |
 | `topology_analyze` | Compute SCCs, κ values, routing decision | `node_ids`, `query` |
 | `graph_traverse` | BFS walk from a starting node with depth/relationship filters | `start_node_id` (required), `max_depth`, `relationship_types` |
@@ -124,7 +124,7 @@ Every interaction should follow this rhythm:
 | `contradicts` | A conflicts with B | "Doc says X, but code does Y" |
 | `related` | A is thematically connected to B | "Auth module ↔ User module" |
 | `derived_from` | A was derived or extracted from B | "Summary node ← source document node" |
-| `superseded_by` | A was replaced by B (created by belief revision) | "Old fact → revised fact" |
+| `superseded_by` | A was replaced by B (fact versioning or belief revision). Old node gets 0.3x retrieval penalty, `valid_until` set, confidence reduced to 0.25. Created automatically for cross-session fact versions or manually via `store_edge`. | "Old preference → updated preference", "v1 fact → v2 fact" |
 
 ---
 
