@@ -11,10 +11,14 @@ defmodule Mix.Tasks.Benchmark.LongmemevalContextTest do
     test "extracts first-person statements from user turns" do
       chunks = [
         chunk("I recently set a personal best of 25:50 in the 5K run.", "user",
-          session_id: "s1", document_date: "2023-03-01", turn: 5
+          session_id: "s1",
+          document_date: "2023-03-01",
+          turn: 5
         ),
         chunk("That's a great time! Keep training.", "assistant",
-          session_id: "s1", document_date: "2023-03-01", turn: 6
+          session_id: "s1",
+          document_date: "2023-03-01",
+          turn: 6
         )
       ]
 
@@ -28,7 +32,9 @@ defmodule Mix.Tasks.Benchmark.LongmemevalContextTest do
     test "tags claims with [UPDATE] when update language is present" do
       chunks = [
         chunk("I used to prefer Thai food but now I prefer Italian.", "user",
-          session_id: "s2", document_date: "2023-04-15", turn: 3
+          session_id: "s2",
+          document_date: "2023-04-15",
+          turn: 3
         )
       ]
 
@@ -41,7 +47,9 @@ defmodule Mix.Tasks.Benchmark.LongmemevalContextTest do
     test "extracts number-containing sentences" do
       chunks = [
         chunk("I currently own 4 bikes and ride them every weekend.", "user",
-          session_id: "s1", document_date: "2023-03-01", turn: 2
+          session_id: "s1",
+          document_date: "2023-03-01",
+          turn: 2
         )
       ]
 
@@ -53,7 +61,9 @@ defmodule Mix.Tasks.Benchmark.LongmemevalContextTest do
     test "skips assistant turns for claim extraction" do
       chunks = [
         chunk("You mentioned you have 3 cats.", "assistant",
-          session_id: "s1", document_date: "2023-03-01", turn: 4
+          session_id: "s1",
+          document_date: "2023-03-01",
+          turn: 4
         )
       ]
 
@@ -70,12 +80,18 @@ defmodule Mix.Tasks.Benchmark.LongmemevalContextTest do
     test "marks superseded chunks with OUTDATED tag" do
       chunks = [
         chunk("I own 2 bikes.", "user",
-          session_id: "s1", document_date: "2023-01-15", turn: 3,
-          is_superseded: true, valid_until: "2023-04-01"
+          session_id: "s1",
+          document_date: "2023-01-15",
+          turn: 3,
+          is_superseded: true,
+          valid_until: "2023-04-01"
         ),
         chunk("I just bought 2 more bikes, so I have 4 now.", "user",
-          session_id: "s2", document_date: "2023-04-01", turn: 2,
-          is_superseded: false, valid_until: nil
+          session_id: "s2",
+          document_date: "2023-04-01",
+          turn: 2,
+          is_superseded: false,
+          valid_until: nil
         )
       ]
 
@@ -88,8 +104,11 @@ defmodule Mix.Tasks.Benchmark.LongmemevalContextTest do
     test "non-superseded chunks have no OUTDATED tag" do
       chunks = [
         chunk("I attend yoga three times a week.", "user",
-          session_id: "s1", document_date: "2023-03-01", turn: 5,
-          is_superseded: false, valid_until: nil
+          session_id: "s1",
+          document_date: "2023-03-01",
+          turn: 5,
+          is_superseded: false,
+          valid_until: nil
         )
       ]
 
@@ -105,11 +124,15 @@ defmodule Mix.Tasks.Benchmark.LongmemevalContextTest do
     test "produces USER STATEMENTS section and ranks by relevance" do
       chunks = [
         chunk("I love hiking in the Pacific Northwest every summer.", "user",
-          session_id: "s1", document_date: "2023-02-10", turn: 3,
+          session_id: "s1",
+          document_date: "2023-02-10",
+          turn: 3,
           similarity: 0.9
         ),
         chunk("The weather has been great this week.", "user",
-          session_id: "s1", document_date: "2023-02-10", turn: 1,
+          session_id: "s1",
+          document_date: "2023-02-10",
+          turn: 1,
           similarity: 0.3
         )
       ]
@@ -127,15 +150,9 @@ defmodule Mix.Tasks.Benchmark.LongmemevalContextTest do
   describe "multi_session_reasoning entity cross-reference" do
     test "builds entity cross-reference for shared entities across sessions" do
       chunks = [
-        chunk("I started learning Python for data analysis.", "user",
-          session_id: "s1", turn: 2
-        ),
-        chunk("I'm using Python with pandas for my project.", "user",
-          session_id: "s2", turn: 3
-        ),
-        chunk("React is great for building UIs.", "user",
-          session_id: "s3", turn: 1
-        )
+        chunk("I started learning Python for data analysis.", "user", session_id: "s1", turn: 2),
+        chunk("I'm using Python with pandas for my project.", "user", session_id: "s2", turn: 3),
+        chunk("React is great for building UIs.", "user", session_id: "s3", turn: 1)
       ]
 
       context = format_multi_session(chunks)
@@ -165,11 +182,15 @@ defmodule Mix.Tasks.Benchmark.LongmemevalContextTest do
     test "prepends TIMELINE section from dated chunks" do
       chunks = [
         chunk("I started growing tomatoes indoors.", "user",
-          session_id: "s1", document_date: "2023-02-20", turn: 2,
+          session_id: "s1",
+          document_date: "2023-02-20",
+          turn: 2,
           event_date: "2023-02-20"
         ),
         chunk("My marigold seeds arrived today.", "user",
-          session_id: "s1", document_date: "2023-03-03", turn: 4,
+          session_id: "s1",
+          document_date: "2023-03-03",
+          turn: 4,
           event_date: "2023-03-03"
         )
       ]

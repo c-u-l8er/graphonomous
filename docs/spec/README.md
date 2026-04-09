@@ -256,76 +256,134 @@ CREATE INDEX idx_edges_relationship ON edges(relationship);
 
 ## 5. MCP Server Design
 
-Graphonomous exposes itself as a single MCP server via `hermes_mcp`. All operations — querying the graph, learning new knowledge, triggering consolidation, retrieving context — are MCP tools and resources.
+Graphonomous exposes itself as a single MCP server via Anubis. All operations — querying the graph, learning new knowledge, triggering consolidation, retrieving context — are MCP tools and resources.
 
-### 5.1 Server Registration
+### 5.1 Dual-Surface Architecture (v1 → v2)
+
+Graphonomous provides two MCP server surfaces:
+
+| Surface | Module | Version | Tools | Purpose |
+|---------|--------|---------|-------|---------|
+| **v1** (legacy) | `Graphonomous.MCP.Server` | 0.2.0 | 29 individual tools | Backward compatibility |
+| **v2** (machines) | `Graphonomous.MCP.Machines.Server` | 0.4.0 | 5 loop-phase machines | Production default |
+
+**Why machines?** Research shows tool selection accuracy degrades past ~30 tools. When Graphonomous (29 tools) runs alongside PRISM (47 tools) in the same session, the client sees 76 tools. At that scale, Opus-class models achieve only ~49% correct tool selection, and schema overhead burns 40–80K context tokens before conversation starts.
+
+The machine architecture groups tools by **which phase of the closed memory loop** the agent is in when it calls them — not by what they touch (graph write, graph read, etc.).
+
+```
+retrieve → route → act → learn → consolidate
+"What do   "What     "Do    "Did it   "Clean
+ I know?"  should     it"    work?"    up"
+            I do?"
+```
+
+**Impact:** 29 tools → 5 tools. ~85% reduction in schema tokens. Selection accuracy from ~49% to ~95%.
+
+### 5.2 Machine Architecture (v2 — Production Default)
 
 ```elixir
-defmodule Graphonomous.MCP.Server do
+defmodule Graphonomous.MCP.Machines.Server do
   use Anubis.Server,
     name: "graphonomous",
-    version: "0.2.0",
+    version: "0.4.0",
     capabilities: [:tools, :resources]
 
-  # 22 tool components + 5 resource components registered via component/1
+  component(Graphonomous.MCP.Machines.Retrieve)
+  component(Graphonomous.MCP.Machines.Route)
+  component(Graphonomous.MCP.Machines.Act)
+  component(Graphonomous.MCP.Machines.Learn)
+  component(Graphonomous.MCP.Machines.Consolidate)
+
+  # 5 resources (shared with v1)
 end
 ```
 
-### 5.2 MCP Tools (Implemented)
+Each machine module accepts an `action` parameter that dispatches to the existing v1 tool implementations internally. The v1 modules are preserved as the implementation layer — machines delegate to them.
 
-#### Knowledge Graph Write
+#### `retrieve` — "What do I know?"
 
-| Tool | Description | Key Inputs |
-|------|------------|------------|
-| `store_node` | Store an atomic knowledge node | `content`, `node_type?`, `confidence?`, `source?`, `metadata?` |
-| `store_edge` | Create a directed relationship | `source_id`, `target_id`, `edge_type?`, `weight?` |
-| `delete_node` | Remove a node and its connected edges | `node_id` |
-| `manage_edge` | Edge lifecycle: list, update, delete | `operation`, `edge_id?`, `node_id?`, `weight?`, `co_activation_count?` |
+The agent calls this when it needs context before reasoning or acting.
 
-#### Knowledge Graph Read/Query
+| Action | Replaces | Description |
+|--------|----------|-------------|
+| `context` | `retrieve_context` | κ-aware ranked retrieval with topology annotations |
+| `episodic` | `retrieve_episodic` | Time-range filtered episodic nodes |
+| `procedural` | `retrieve_procedural` | Semantic search scoped to procedural nodes |
+| `coverage` | `coverage_query` | Standalone epistemic coverage (act/learn/escalate) |
+| `trace_evidence` | `trace_evidence_path` | Weighted Dijkstra evidence path between nodes |
+| `frontier` | `epistemic_frontier` | Wilson interval uncertainty analysis |
 
-| Tool | Description | Key Inputs |
-|------|------------|------------|
-| `retrieve_context` | κ-aware ranked retrieval with topology annotations | `query`, `limit?`, `expansion_hops?`, `node_type?` |
-| `query_graph` | Operation-based graph inspection (list_nodes, get_node, get_edges, similarity_search) | `operation`, `node_id?`, `query?`, `limit?` |
-| `topology_analyze` | SCC/κ complexity analysis with routing recommendation | `node_ids?`, `query?` |
-| `graph_traverse` | BFS walk from a starting node with depth/relationship filters | `start_node_id`, `max_depth?`, `relationship_types?` |
-| `graph_stats` | Aggregate graph statistics (counts, distributions, confidence stats, orphans) | _(none required)_ |
+#### `route` — "What should I do?"
 
-#### Specialized Retrieval
+The agent calls this to decide whether to act, learn, deliberate, or escalate.
 
-| Tool | Description | Key Inputs |
-|------|------------|------------|
-| `retrieve_episodic` | Time-range filtered episodic node retrieval | `since?`, `until?`, `limit?` |
-| `retrieve_procedural` | Semantic search scoped to procedural nodes with step extraction | `query`, `limit?`, `min_confidence?` |
-| `coverage_query` | Standalone epistemic coverage assessment (act/learn/escalate) | `query`, `limit?`, `expansion_hops?` |
+| Action | Replaces | Description |
+|--------|----------|-------------|
+| `topology` | `topology_analyze` | SCC/κ analysis with routing recommendation |
+| `deliberate` | `deliberate` | κ-driven deliberation over cyclic regions |
+| `attention_survey` | `attention_survey` | Priority survey across active goals |
+| `attention_cycle` | `attention_run_cycle` | Full triage → dispatch attention cycle |
+| `review_goal` | `review_goal` | Coverage-driven act/learn/escalate gate |
 
-#### Continual Learning
+#### `act` — "Do it"
 
-| Tool | Description | Key Inputs |
-|------|------------|------------|
-| `learn_from_outcome` | Close feedback loop — update confidence on causal nodes | `action_id`, `status`, `confidence`, `causal_node_ids` |
-| `learn_from_feedback` | Process positive/negative/correction feedback on a node | `node_id`, `feedback_type`, `correction?` |
-| `learn_detect_novelty` | Similarity-based novelty scoring against existing knowledge | `query`, `threshold?` |
-| `learn_from_interaction` | Full pipeline: novelty → episodic store → semantic extraction → edges | `user_message`, `model_response`, `context?` |
-| `deliberate` | κ-driven deliberation over cyclic knowledge regions | `query`, `node_ids?`, `write_back?` |
+The agent calls this to mutate the knowledge graph.
 
-#### Goal Orchestration
+| Action | Replaces | Description |
+|--------|----------|-------------|
+| `store_node` | `store_node` | Store a knowledge node |
+| `store_edge` | `store_edge` | Store a relationship edge |
+| `delete_node` | `delete_node` | Remove a node |
+| `manage_edge` | `manage_edge` | CRUD on edges |
+| `manage_goal` | `manage_goal` | Goal CRUD + lifecycle transitions |
+| `belief_revise` | `belief_revise` | Expand/contract/replace beliefs |
+| `forget_node` | `forget_node` | Soft-hide from retrieval |
+| `forget_policy` | `forget_by_policy` | Budget-aware priority pruning |
+| `gdpr_erase` | `gdpr_erase` | Hard delete with audit trail |
 
-| Tool | Description | Key Inputs |
-|------|------------|------------|
-| `manage_goal` | GoalGraph CRUD + lifecycle (create, get, list, update, delete, transition, set_progress, link/unlink nodes, review) | `operation`, `goal_id?`, `payload?` |
-| `review_goal` | Coverage-driven decision gate (act/learn/escalate) | `goal_id`, `signal` |
+#### `learn` — "Did it work?"
 
-#### Maintenance & Autonomy
+The agent calls this after acting, to close the feedback loop.
 
-| Tool | Description | Key Inputs |
-|------|------------|------------|
-| `run_consolidation` | Trigger or inspect consolidation cycles | `action?` (run/status/run_and_status) |
-| `attention_survey` | Read current attention priority map | `include_idle?` |
-| `attention_run_cycle` | Execute one survey + triage + dispatch cycle | `autonomy_override?` |
+| Action | Replaces | Description |
+|--------|----------|-------------|
+| `from_outcome` | `learn_from_outcome` | Causal confidence updates from action results |
+| `from_feedback` | `learn_from_feedback` | Positive/negative/correction feedback |
+| `detect_novelty` | `learn_detect_novelty` | Similarity-based novelty scoring |
+| `from_interaction` | `learn_from_interaction` | Full pipeline: novelty → store → extract → link |
+| `contradictions` | `belief_contradictions` | Detect belief conflicts in the graph |
 
-### 5.3 MCP Resources (Implemented)
+#### `consolidate` — "Clean up"
+
+The agent calls this to maintain graph quality, typically at session boundaries.
+
+| Action | Replaces | Description |
+|--------|----------|-------------|
+| `run` | `run_consolidation` | Trigger a consolidation cycle |
+| `stats` | `graph_stats` | Aggregate counts, distributions, confidence |
+| `query` | `query_graph` | Operation-based graph inspection |
+| `traverse` | `graph_traverse` | BFS walk with depth/relationship filters |
+
+### 5.3 v1 Tools (Legacy — 29 Individual Tools)
+
+The v1 surface remains available for backward compatibility. Each tool is also callable via the v2 machine + action pattern above.
+
+| Category | Tools |
+|----------|-------|
+| Graph Write | `store_node`, `store_edge`, `delete_node`, `manage_edge` |
+| Graph Read | `retrieve_context`, `query_graph`, `topology_analyze`, `graph_traverse`, `graph_stats` |
+| Specialized Retrieval | `retrieve_episodic`, `retrieve_procedural`, `coverage_query` |
+| Graph Algorithms | `trace_evidence_path`, `epistemic_frontier` |
+| Continual Learning | `learn_from_outcome`, `learn_from_feedback`, `learn_detect_novelty`, `learn_from_interaction` |
+| Belief Management | `belief_revise`, `belief_contradictions` |
+| Goal Orchestration | `manage_goal`, `review_goal` |
+| Deliberation | `deliberate` |
+| Attention | `attention_survey`, `attention_run_cycle` |
+| Forgetting | `forget_node`, `forget_by_policy`, `gdpr_erase` |
+| Maintenance | `run_consolidation` |
+
+### 5.4 MCP Resources
 
 | URI | Description |
 |-----|------------|
@@ -335,7 +393,35 @@ end
 | `graphonomous://graph/recent` | Recently added/accessed nodes, sorted by recency |
 | `graphonomous://consolidation/log` | Consolidator state + orchestrator plasticity metrics |
 
-### 5.4 Example: Claude Desktop Integration
+### 5.5 Dual-Loop Interlocking with PRISM
+
+When PRISM (OS-009) benchmarks Graphonomous, both closed loops interlock:
+
+```
+PRISM compose ──→ PRISM interact ──→ PRISM observe ──→ PRISM reflect ──→ PRISM diagnose
+                       │
+                       ▼
+              ┌─── Graphonomous ───┐
+              │  retrieve → route  │
+              │  → act → learn     │
+              │  → consolidate     │
+              └────────────────────┘
+```
+
+PRISM's `interact` phase drives the system-under-test through its own closed loop. PRISM's `observe` phase judges how well that inner loop performed. PRISM's `reflect` phase evolves scenarios based on where the inner loop failed.
+
+**Combined tool count:** 5 (Graphonomous) + 6 (PRISM) = 11 tools in a shared session, down from 76.
+
+See `AmpersandBoxDesign/prompts/DUAL_LOOP_MACHINES.md` for the full architecture design.
+
+### 5.6 Migration Strategy
+
+1. **Phase 1 (current):** Both v1 and v2 servers available. v2 is the default.
+2. **Phase 2:** Skill prompts updated to reference machine verbs. PRISM benchmarks compare v1 vs v2 tool selection accuracy.
+3. **Phase 3:** Deprecate v1 tool names. Adapter layer translates legacy calls.
+4. **Phase 4:** Remove v1 server modules.
+
+### 5.7 Example: Claude Desktop Integration
 
 ```json
 {
@@ -351,12 +437,12 @@ end
 }
 ```
 
-Once configured, Claude (or any MCP client) can:
-1. **Before answering:** Call `retrieve_context` to get relevant domain knowledge
-2. **After answering:** Call `learn_from_interaction` to record new knowledge
-3. **On feedback:** Call `learn_from_feedback` to adjust confidence
-4. **On outcomes:** Call `learn_from_outcome` to close the causal feedback loop
-5. **On idle:** Call `run_consolidation` to maintain graph quality
+With the v2 machine surface, Claude (or any MCP client) uses the closed memory loop:
+1. **retrieve** (action: `context`) — gather relevant domain knowledge
+2. **route** (action: `topology`) — check for cycles, decide depth
+3. **act** (action: `store_node`) — mutate the graph
+4. **learn** (action: `from_outcome`) — close the causal feedback loop
+5. **consolidate** (action: `run`) — maintain graph quality
 
 ---
 
@@ -895,9 +981,10 @@ v0.3 delivers ten continual learning capabilities across four priority tiers, va
 
 ### 15.5 Benchmark Summary
 
-| Metric | v0.2 | v0.3 |
-|--------|------|------|
-| MCP tools | 22 | 28 |
+| Metric | v0.2 | v0.3 | v0.4 |
+|--------|------|------|------|
+| MCP tools (v1 individual) | 22 | 29 | 29 |
+| MCP machines (v2 loop-phase) | — | — | 5 |
 | Unit tests | ~240 | ~305 |
 | GraphMemBench scenarios | — | 120 (15 categories) |
 | LongMemEval SHR | — | >90.4% |

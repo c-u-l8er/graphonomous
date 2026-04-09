@@ -903,7 +903,9 @@ defmodule Mix.Tasks.Benchmark.Beam do
       |> MapSet.new()
 
     # Ungrouped chunks fall back to token-overlap clustering
-    ungrouped = Enum.reject(sorted, fn c -> MapSet.member?(entity_grouped_node_ids, c.node_id) end)
+    ungrouped =
+      Enum.reject(sorted, fn c -> MapSet.member?(entity_grouped_node_ids, c.node_id) end)
+
     fallback_clusters = cluster_by_topic(ungrouped)
 
     # Look up entity names

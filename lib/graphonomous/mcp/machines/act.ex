@@ -38,7 +38,9 @@ defmodule Graphonomous.MCP.Machines.Act do
     )
 
     # -- store_node --
-    field(:content, :string, description: "Knowledge content to store (store_node, belief_revise)")
+    field(:content, :string,
+      description: "Knowledge content to store (store_node, belief_revise)"
+    )
 
     field(:node_type, :string,
       description:
@@ -61,9 +63,7 @@ defmodule Graphonomous.MCP.Machines.Act do
     field(:weight, :number, description: "Edge weight 0.0-1.0 (store_edge, manage_edge)")
 
     # -- delete_node --
-    field(:node_id, :string,
-      description: "Node ID (delete_node, forget_node, belief_revise)"
-    )
+    field(:node_id, :string, description: "Node ID (delete_node, forget_node, belief_revise)")
 
     # -- manage_edge --
     field(:edge_operation, :string,

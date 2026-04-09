@@ -179,7 +179,9 @@ defmodule Graphonomous.Retriever do
            # Fix 1: Capture max ANN similarity BEFORE any boosting/fusion (observe-only)
            max_ann_similarity = extract_max_ann_similarity(seed_hits),
            {seed_us, {:ok, seed_entries}} <-
-             :timer.tc(fn -> seed_entries(seed_hits, temporal_intent, pref_query? or ku_query?) end),
+             :timer.tc(fn ->
+               seed_entries(seed_hits, temporal_intent, pref_query? or ku_query?)
+             end),
            timings = Map.put(timings, :seed_entries, seed_us),
            {bm25_await_us, bm25_results} <-
              :timer.tc(fn ->
@@ -673,6 +675,7 @@ defmodule Graphonomous.Retriever do
 
   defp fact_prefix_variant(query) when is_binary(query) do
     downcased = String.downcase(query)
+
     content_words =
       String.split(query, ~r/\s+/, trim: true)
       |> Enum.reject(fn w -> MapSet.member?(@stop_words, String.downcase(w)) end)

@@ -51,7 +51,8 @@ defmodule Graphonomous.CLI do
           optional(:consolidation_cadence) => non_neg_integer(),
           optional(:stop_file) => String.t(),
           optional(:traverse_prompt_path) => String.t(),
-          optional(:prompt) => String.t()
+          optional(:prompt) => String.t(),
+          optional(:server) => :v1 | :v2
         }
 
   @spec main([String.t()]) :: no_return()
@@ -144,7 +145,8 @@ defmodule Graphonomous.CLI do
           stop_file: :string,
           traverse_prompt_path: :string,
           transport: :string,
-          port: :integer
+          port: :integer,
+          server: :string
         ],
         aliases: [
           h: :help,
@@ -224,6 +226,7 @@ defmodule Graphonomous.CLI do
         |> maybe_put(:max_read_bytes, max_read_bytes)
         |> maybe_put(:transport, normalize_transport(parsed[:transport]))
         |> maybe_put(:port, parsed[:port])
+        |> maybe_put(:server, normalize_server(parsed[:server]))
 
       {:ok, opts}
     end
@@ -304,6 +307,13 @@ defmodule Graphonomous.CLI do
   defp start_mcp_server(opts) do
     timeout = Map.get(opts, :request_timeout, @default_request_timeout)
     transport = Map.get(opts, :transport, :stdio)
+    server = Map.get(opts, :server, :v2)
+
+    server_module =
+      case server do
+        :v1 -> Graphonomous.MCP.Server
+        _ -> Graphonomous.MCP.Machines.Server
+      end
 
     transport_config =
       case transport do
@@ -316,7 +326,7 @@ defmodule Graphonomous.CLI do
       end
 
     case Anubis.Server.Supervisor.start_link(
-           Graphonomous.MCP.Server,
+           server_module,
            transport: transport_config,
            request_timeout: timeout
          ) do
@@ -371,13 +381,26 @@ defmodule Graphonomous.CLI do
         _ -> :stdio
       end
 
-    case Anubis.Server.Registry.whereis_transport(Graphonomous.MCP.Server, transport_key) do
+    case resolve_any_server_transport(transport_key) do
       pid when is_pid(pid) ->
         pid
 
       _ ->
         Process.sleep(10)
         resolve_transport_pid(transport, attempts - 1)
+    end
+  end
+
+  defp resolve_any_server_transport(transport_key) do
+    case Anubis.Server.Registry.whereis_transport(
+           Graphonomous.MCP.Machines.Server,
+           transport_key
+         ) do
+      pid when is_pid(pid) ->
+        pid
+
+      _ ->
+        Anubis.Server.Registry.whereis_transport(Graphonomous.MCP.Server, transport_key)
     end
   end
 
@@ -581,6 +604,13 @@ defmodule Graphonomous.CLI do
   defp normalize_transport("streamable_http"), do: :streamable_http
   defp normalize_transport("http"), do: :streamable_http
   defp normalize_transport(_), do: :stdio
+
+  defp normalize_server(nil), do: :v2
+  defp normalize_server("v1"), do: :v1
+  defp normalize_server("v2"), do: :v2
+  defp normalize_server("machines"), do: :v2
+  defp normalize_server("legacy"), do: :v1
+  defp normalize_server(_), do: :v2
 
   @spec normalize_backend(nil | String.t()) ::
           {:ok, :auto | :fallback | nil} | {:error, String.t()}

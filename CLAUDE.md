@@ -205,44 +205,58 @@ mix run --no-halt -- --db ~/.graphonomous/knowledge.db --embedder-backend fallba
 
 ## 15) Core MCP Surface (Reference)
 
-Knowledge graph write:
-- `store_node`
-- `store_edge`
+### v2 Machine Surface (Production Default — 5 tools)
 
-Knowledge graph read/query:
-- `retrieve_context` — κ-aware ranked retrieval with topology annotations
-- `query_graph` — operation-based graph inspection
-- `topology_analyze` — SCC/κ analysis with routing recommendation
-- `graph_traverse` — BFS walk with depth/relationship filters
-- `graph_stats` — aggregate counts, distributions, confidence stats, orphans
+The v2 server groups 29 tools into 5 loop-phase machines. Each accepts an `action` parameter.
 
-Specialized retrieval:
-- `retrieve_episodic` — time-range filtered episodic nodes
-- `retrieve_procedural` — semantic search scoped to procedural nodes
-- `coverage_query` — standalone epistemic coverage (act/learn/escalate)
+**`retrieve`** — "What do I know?"
+- `context` (κ-aware ranked retrieval), `episodic`, `procedural`, `coverage`, `trace_evidence`, `frontier`
 
-Graph algorithms:
-- `trace_evidence_path` — weighted Dijkstra / Yen's K-shortest evidence paths
+**`route`** — "What should I do?"
+- `topology` (SCC/κ analysis), `deliberate`, `attention_survey`, `attention_cycle`, `review_goal`
 
-Learning loop:
-- `learn_from_outcome` — causal confidence updates
-- `learn_from_feedback` — positive/negative/correction feedback
-- `learn_detect_novelty` — similarity-based novelty scoring
-- `learn_from_interaction` — full pipeline (novelty → store → extract → link)
-- `deliberate` — κ-driven deliberation over cyclic regions
+**`act`** — "Do it"
+- `store_node`, `store_edge`, `delete_node`, `manage_edge`, `manage_goal`, `belief_revise`, `forget_node`, `forget_policy`, `gdpr_erase`
 
-Goal orchestration:
-- `manage_goal` — CRUD + lifecycle
-- `review_goal` — coverage-driven decision gate
+**`learn`** — "Did it work?"
+- `from_outcome`, `from_feedback`, `detect_novelty`, `from_interaction`, `contradictions`
 
-Maintenance & autonomy:
-- `run_consolidation`
-- `attention_survey`
-- `attention_run_cycle`
+**`consolidate`** — "Clean up"
+- `run`, `stats`, `query`, `traverse`
 
-Resources:
+### v1 Legacy Surface (29 individual tools)
+
+The v1 tools remain available for backward compatibility. Machines delegate to them internally.
+
+Knowledge graph write: `store_node`, `store_edge`, `delete_node`, `manage_edge`
+Graph read/query: `retrieve_context`, `query_graph`, `topology_analyze`, `graph_traverse`, `graph_stats`
+Specialized retrieval: `retrieve_episodic`, `retrieve_procedural`, `coverage_query`
+Graph algorithms: `trace_evidence_path`, `epistemic_frontier`
+Learning: `learn_from_outcome`, `learn_from_feedback`, `learn_detect_novelty`, `learn_from_interaction`
+Belief: `belief_revise`, `belief_contradictions`
+Deliberation: `deliberate`
+Goals: `manage_goal`, `review_goal`
+Attention: `attention_survey`, `attention_run_cycle`
+Forgetting: `forget_node`, `forget_by_policy`, `gdpr_erase`
+Maintenance: `run_consolidation`
+
+### Resources (shared across v1/v2)
+
 - `graphonomous://runtime/health`
 - `graphonomous://goals/snapshot`
 - `graphonomous://graph/node/{id}` — individual node details + edges
 - `graphonomous://graph/recent` — recently accessed nodes
 - `graphonomous://consolidation/log` — consolidator state + orchestrator metrics
+
+### Dual-Loop Architecture
+
+When PRISM benchmarks Graphonomous, the loops interlock (5 + 6 = 11 tools total, down from 76):
+
+```
+PRISM: compose → interact → observe → reflect → diagnose  (+ config)
+                     │
+                     ▼
+Graphonomous: retrieve → route → act → learn → consolidate
+```
+
+See `AmpersandBoxDesign/prompts/DUAL_LOOP_MACHINES.md` for the full architecture.

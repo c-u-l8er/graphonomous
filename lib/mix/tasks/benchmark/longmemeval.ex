@@ -206,7 +206,12 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
 
     # Streaming results: write each question result to a JSONL file in real time
     streaming_path =
-      Path.join([Helpers.portfolio_root(), "graphonomous", "benchmark_results", "longmemeval_streaming.jsonl"])
+      Path.join([
+        Helpers.portfolio_root(),
+        "graphonomous",
+        "benchmark_results",
+        "longmemeval_streaming.jsonl"
+      ])
 
     File.write!(streaming_path, "")
 
@@ -221,17 +226,18 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
           result = evaluate_question(q, skip_topology, ppr_enabled, ppr_weight)
 
           # Stream result as JSONL — one line per question for real-time monitoring
-          line = Jason.encode!(%{
-            idx: idx,
-            question_id: result.question_id,
-            ability: result.ability,
-            session_hit: result.session_hit,
-            qa_proxy_score: result.qa_proxy_score,
-            keyword_recall: result.keyword_recall,
-            judge_score: result[:judge_score],
-            judge_answer: result[:judge_answer],
-            latency_ms: div(result.retrieval_latency_us, 1000)
-          })
+          line =
+            Jason.encode!(%{
+              idx: idx,
+              question_id: result.question_id,
+              ability: result.ability,
+              session_hit: result.session_hit,
+              qa_proxy_score: result.qa_proxy_score,
+              keyword_recall: result.keyword_recall,
+              judge_score: result[:judge_score],
+              judge_answer: result[:judge_answer],
+              latency_ms: div(result.retrieval_latency_us, 1000)
+            })
 
           File.write!(streaming_path, line <> "\n", [:append])
           result
@@ -1296,9 +1302,10 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
 
   def format_longmemeval_context(chunks, :knowledge_update) do
     # Sort chronologically so the generator sees the latest state last
-    sorted = Enum.sort_by(chunks, fn c ->
-      {c.document_date || "", parse_int_safe(c.turn, 0)}
-    end)
+    sorted =
+      Enum.sort_by(chunks, fn c ->
+        {c.document_date || "", parse_int_safe(c.turn, 0)}
+      end)
 
     # Structured fact table — lets the generator scan entity-attribute-value rows directly
     fact_table = build_fact_table(sorted)
@@ -1330,8 +1337,10 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
           cond do
             c.is_superseded ->
               " ⚠ OUTDATED — superseded by later information"
+
             c.valid_until != nil ->
               " ⚠ OUTDATED — valid until #{c.valid_until}"
+
             true ->
               ""
           end
@@ -1346,15 +1355,17 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
   def format_longmemeval_context(chunks, :temporal_reasoning) do
     # Strict chronological order — date first, then turn within date.
     # Do NOT group by session; the generator needs a single timeline.
-    sorted = Enum.sort_by(chunks, fn c ->
-      {c.document_date || "", parse_int_safe(c.turn, 0)}
-    end)
+    sorted =
+      Enum.sort_by(chunks, fn c ->
+        {c.document_date || "", parse_int_safe(c.turn, 0)}
+      end)
 
     # S-split Fix 7: Prepend structured timeline from document_date/event_date fields
     timeline_entries =
       sorted
       |> Enum.flat_map(fn c ->
         date = c.event_date || c.document_date
+
         if date do
           # Extract a brief summary (first 80 chars of content)
           summary = String.slice(c.text, 0, 80) |> String.replace(~r/\n.*/, "")
@@ -1475,9 +1486,10 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
 
   def format_longmemeval_context(chunks, _ability) do
     # Hybrid ordering: high-relevance turns first, then chronological for ties
-    sorted = Enum.sort_by(chunks, fn c ->
-      {-(Map.get(c, :q_relevance, 0.0)), c.document_date || "", parse_int_safe(c.turn, 0)}
-    end)
+    sorted =
+      Enum.sort_by(chunks, fn c ->
+        {-Map.get(c, :q_relevance, 0.0), c.document_date || "", parse_int_safe(c.turn, 0)}
+      end)
 
     sorted
     |> Enum.map(fn c ->
@@ -1552,8 +1564,12 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
           words
           |> Enum.filter(fn w ->
             clean = String.replace(w, ~r/[^\w]/, "")
+
             String.match?(clean, ~r/^[A-Z][a-z]{2,}/) and
-              not String.match?(clean, ~r/^(?:The|This|That|These|Those|What|When|Where|How|Can|Could|Would|Should|Also|Just|Very|Really|Then|Well|Here|There)$/)
+              not String.match?(
+                clean,
+                ~r/^(?:The|This|That|These|Those|What|When|Where|How|Can|Could|Would|Should|Also|Just|Very|Really|Then|Well|Here|There)$/
+              )
           end)
           |> Enum.map(fn w -> String.replace(w, ~r/[^\w]/, "") end)
 
@@ -1683,7 +1699,12 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
           case String.split(fact, ": ", parts: 2) do
             [category, value] when byte_size(value) > 0 ->
               status = if superseded?, do: "OUTDATED", else: "CURRENT"
-              [{String.trim(category), String.trim(value), "S:#{session}", "T:#{turn}", date, status}]
+
+              [
+                {String.trim(category), String.trim(value), "S:#{session}", "T:#{turn}", date,
+                 status}
+              ]
+
             _ ->
               []
           end
@@ -1704,7 +1725,7 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
           versions
           |> Enum.sort_by(fn {_c, _v, _s, t, _d, _st} ->
             case t do
-              "T:" <> n -> -(parse_int_safe(n, 0))
+              "T:" <> n -> -parse_int_safe(n, 0)
               _ -> 0
             end
           end)
@@ -1713,7 +1734,10 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
         |> Enum.sort_by(fn {cat, _v, _s, _t, _d, _st} -> cat end)
 
       header = "FACT TABLE (structured facts extracted from conversations):\n"
-      col_header = "  Category       | Value                          | Session | Turn | Date       | Status\n"
+
+      col_header =
+        "  Category       | Value                          | Session | Turn | Date       | Status\n"
+
       separator = "  " <> String.duplicate("-", 95) <> "\n"
 
       body =

@@ -29,12 +29,11 @@ defmodule Graphonomous.MCP.Machines.Consolidate do
 
     # -- run (consolidation) --
     field(:consolidation_action, :string,
-      description: "Consolidation sub-action: run | status | run_and_status (run, default: run_and_status)"
+      description:
+        "Consolidation sub-action: run | status | run_and_status (run, default: run_and_status)"
     )
 
-    field(:wait_ms, :number,
-      description: "Delay before returning status in ms, 0-30000 (run)"
-    )
+    field(:wait_ms, :number, description: "Delay before returning status in ms, 0-30000 (run)")
 
     # -- query --
     field(:operation, :string,
@@ -47,9 +46,7 @@ defmodule Graphonomous.MCP.Machines.Consolidate do
     field(:start_id, :string, description: "Start node ID for BFS walk (traverse)")
     field(:depth, :number, description: "Max traversal depth (traverse, default: 2)")
 
-    field(:relationship, :string,
-      description: "Filter by relationship type (traverse)"
-    )
+    field(:relationship, :string, description: "Filter by relationship type (traverse)")
 
     field(:direction, :string,
       description: "Traversal direction: outgoing | incoming | both (traverse, default: both)"

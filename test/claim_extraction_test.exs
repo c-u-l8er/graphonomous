@@ -149,6 +149,7 @@ defmodule Mix.Tasks.Benchmark.ClaimExtractionTest do
       for text <- test_cases do
         chunks = [make_chunk(%{text: text})]
         result = Longmemeval.extract_user_claims(chunks)
+
         assert Enum.any?(result, &String.contains?(&1, "[UPDATE]")),
                "Expected [UPDATE] tag for: #{text}"
       end

@@ -30,11 +30,12 @@ defmodule Graphonomous.MCP.Machines.Learn do
     )
 
     # -- from_outcome --
-    field(:action_id, :string, description: "ID of the action that produced this outcome (from_outcome)")
+    field(:action_id, :string,
+      description: "ID of the action that produced this outcome (from_outcome)"
+    )
 
     field(:status, :string,
-      description:
-        "Outcome status: success | partial_success | failure | timeout (from_outcome)"
+      description: "Outcome status: success | partial_success | failure | timeout (from_outcome)"
     )
 
     field(:confidence, :number,
@@ -66,9 +67,7 @@ defmodule Graphonomous.MCP.Machines.Learn do
     )
 
     # -- from_feedback --
-    field(:node_id, :string,
-      description: "Target node ID (from_feedback, contradictions)"
-    )
+    field(:node_id, :string, description: "Target node ID (from_feedback, contradictions)")
 
     field(:feedback_type, :string,
       description: "Feedback type: positive | negative | correction (from_feedback)"
@@ -95,9 +94,7 @@ defmodule Graphonomous.MCP.Machines.Learn do
     )
 
     # -- contradictions --
-    field(:query, :string,
-      description: "Query to scope contradiction detection (contradictions)"
-    )
+    field(:query, :string, description: "Query to scope contradiction detection (contradictions)")
 
     field(:limit, :number,
       description: "Max contradictions to return (contradictions, default: 10)"

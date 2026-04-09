@@ -39,7 +39,8 @@ defmodule Graphonomous.MCP.Machines.Route do
 
     # -- deliberate action --
     field(:write_back, :boolean,
-      description: "Whether to crystallize deliberation results back to graph (deliberate, default: false)"
+      description:
+        "Whether to crystallize deliberation results back to graph (deliberate, default: false)"
     )
 
     # -- review_goal action --

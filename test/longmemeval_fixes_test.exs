@@ -141,6 +141,7 @@ defmodule Graphonomous.LongmemevalFixesTest do
     test "other abilities do not contain anti-IDK instruction" do
       for ability <- ["abstention", "temporal_reasoning"] do
         instruction = LlmJudge.ability_specific_instruction(ability)
+
         refute String.contains?(instruction, "Synthesize ALL retrieved evidence"),
                "#{ability} should NOT have anti-IDK instruction"
       end

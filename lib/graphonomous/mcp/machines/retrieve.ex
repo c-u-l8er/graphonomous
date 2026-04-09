@@ -48,7 +48,8 @@ defmodule Graphonomous.MCP.Machines.Retrieve do
     field(:min_score, :number, description: "Minimum score threshold 0.0-1.0 (context)")
 
     field(:node_type, :string,
-      description: "Filter by node type: episodic, semantic, procedural, temporal, outcome, goal (context)"
+      description:
+        "Filter by node type: episodic, semantic, procedural, temporal, outcome, goal (context)"
     )
 
     # -- episodic action --
@@ -69,12 +70,17 @@ defmodule Graphonomous.MCP.Machines.Retrieve do
       description: "Minimum confidence for relevant nodes (coverage, default: 0.3)"
     )
 
-    field(:top_k, :number, description: "Max retrieval results to evaluate (coverage, default: 10)")
+    field(:top_k, :number,
+      description: "Max retrieval results to evaluate (coverage, default: 10)"
+    )
 
     # -- trace_evidence action --
     field(:source_id, :string, description: "Start node ID (trace_evidence)")
     field(:target_id, :string, description: "End node ID (trace_evidence)")
-    field(:k, :number, description: "Number of shortest paths to return (trace_evidence, default: 3)")
+
+    field(:k, :number,
+      description: "Number of shortest paths to return (trace_evidence, default: 3)"
+    )
 
     # -- frontier action --
     field(:min_gap, :number,
@@ -89,7 +95,10 @@ defmodule Graphonomous.MCP.Machines.Retrieve do
     if action in @valid_actions do
       dispatch(action, params, frame)
     else
-      {:reply, error_response("Invalid action '#{inspect(p(params, :action))}'. Must be one of: #{Enum.join(@valid_actions, ", ")}"), frame}
+      {:reply,
+       error_response(
+         "Invalid action '#{inspect(p(params, :action))}'. Must be one of: #{Enum.join(@valid_actions, ", ")}"
+       ), frame}
     end
   end
 
