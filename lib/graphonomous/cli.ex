@@ -25,6 +25,7 @@ defmodule Graphonomous.CLI do
           optional(:consolidator_prune_threshold) => float(),
           optional(:consolidator_merge_similarity) => float(),
           optional(:learning_rate) => float(),
+          optional(:disable_learning) => boolean(),
           optional(:log_level) => Logger.level(),
           optional(:request_timeout) => pos_integer(),
           optional(:recursive) => boolean(),
@@ -118,6 +119,7 @@ defmodule Graphonomous.CLI do
           consolidator_prune_threshold: :float,
           consolidator_merge_similarity: :float,
           learning_rate: :float,
+          disable_learning: :boolean,
           log_level: :string,
           request_timeout: :integer,
           recursive: :boolean,
@@ -214,6 +216,7 @@ defmodule Graphonomous.CLI do
         |> maybe_put(:consolidator_prune_threshold, parsed[:consolidator_prune_threshold])
         |> maybe_put(:consolidator_merge_similarity, parsed[:consolidator_merge_similarity])
         |> maybe_put(:learning_rate, parsed[:learning_rate])
+        |> maybe_put(:disable_learning, parsed[:disable_learning])
         |> maybe_put(:log_level, level)
         |> maybe_put(:request_timeout, timeout)
         |> maybe_put(:recursive, parsed[:recursive])
@@ -261,6 +264,9 @@ defmodule Graphonomous.CLI do
 
       {:learning_rate, value} ->
         Application.put_env(:graphonomous, :learning_rate, value)
+
+      {:disable_learning, value} ->
+        Application.put_env(:graphonomous, :disable_learning, value)
 
       {:log_level, value} ->
         Logger.configure(level: value)

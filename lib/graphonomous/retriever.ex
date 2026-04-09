@@ -536,8 +536,10 @@ defmodule Graphonomous.Retriever do
   ## BM25 hybrid fusion via Reciprocal Rank Fusion (RRF)
   #
   # Runs a BM25 keyword search in parallel with ANN results, then fuses
-  # using RRF: score(d) = Σ 1/(k + rank_i(d)) for each retrieval system.
+  # using RRF: score(d) = Σ 1/(k + rank_i(d)) × confidence for each retrieval system.
   # k=60 is the standard RRF constant that balances high-ranked vs low-ranked items.
+  # Confidence weighting prevents low-confidence nodes from outranking high-confidence
+  # nodes via keyword-match alone (adversarial resistance).
 
   @rrf_k 60
 
@@ -748,11 +750,12 @@ defmodule Graphonomous.Retriever do
         {id, rrf_score}
       end)
 
-    # Update existing entries with RRF scores
+    # Update existing entries with confidence-weighted RRF scores
     updated_entries =
       Enum.reduce(ann_entries, %{}, fn {node_id, entry}, acc ->
         rrf = Map.get(rrf_scores, node_id, entry.score)
-        Map.put(acc, node_id, %{entry | score: rrf})
+        conf = clamp01(to_float(entry.confidence))
+        Map.put(acc, node_id, %{entry | score: rrf * conf})
       end)
 
     # Add BM25-only hits (not in ANN results) as new seed entries
@@ -763,14 +766,15 @@ defmodule Graphonomous.Retriever do
       case cached_get_node(node_id) do
         {:ok, %Node{forgotten_at: nil} = node} ->
           rrf = Map.get(rrf_scores, node_id, 0.0)
+          conf = clamp01(to_float(node.confidence))
 
           entry = %{
             node_id: node.id,
             content: node.content,
             node_type: node.node_type,
-            confidence: clamp01(to_float(node.confidence)),
+            confidence: conf,
             similarity: 0.0,
-            score: rrf,
+            score: rrf * conf,
             source: :bm25,
             hops: 0,
             via: nil
@@ -829,11 +833,12 @@ defmodule Graphonomous.Retriever do
         {id, ann_score + bm25_score}
       end)
 
-    # Update existing ANN entries with fused scores
+    # Update existing ANN entries with confidence-weighted fused scores
     updated =
       Enum.reduce(ann_entries, %{}, fn {node_id, entry}, acc ->
         rrf = Map.get(rrf_scores, node_id, entry.score)
-        Map.put(acc, node_id, %{entry | score: rrf})
+        conf = clamp01(to_float(entry.confidence))
+        Map.put(acc, node_id, %{entry | score: rrf * conf})
       end)
 
     # Add BM25-only hits not in ANN results
@@ -843,14 +848,15 @@ defmodule Graphonomous.Retriever do
       case cached_get_node(node_id) do
         {:ok, %Node{forgotten_at: nil} = node} ->
           rrf = Map.get(rrf_scores, node_id, 0.0)
+          conf = clamp01(to_float(node.confidence))
 
           entry = %{
             node_id: node.id,
             content: node.content,
             node_type: node.node_type,
-            confidence: clamp01(to_float(node.confidence)),
+            confidence: conf,
             similarity: 0.0,
-            score: rrf,
+            score: rrf * conf,
             source: :bm25,
             hops: 0,
             via: nil
@@ -931,6 +937,15 @@ defmodule Graphonomous.Retriever do
           # Convert BM25 hits to entries and merge
           existing_ids = MapSet.new(Enum.map(ranked, & &1.node_id))
 
+          # Chain results are supplementary — normalize raw BM25 scores to [0, 1]
+          # by dividing by the max BM25 score in this batch, then scale down.
+          max_bm25 =
+            bm25_hits
+            |> Enum.map(fn {_, s} -> s end)
+            |> Enum.max(fn -> 1.0 end)
+
+          max_bm25 = if max_bm25 > 0, do: max_bm25, else: 1.0
+
           new_entries =
             bm25_hits
             |> Enum.reject(fn {node_id, _} -> MapSet.member?(existing_ids, node_id) end)
@@ -940,14 +955,19 @@ defmodule Graphonomous.Retriever do
                 {:ok, %Node{forgotten_at: nil} = node} ->
                   turn_boost = temporal_turn_boost(node_id, temporal_intent)
 
+                  conf = clamp01(to_float(node.confidence))
+                  # Normalize BM25 to [0, 1], then apply confidence and a 0.7 chain discount
+                  normalized = bm25_score / max_bm25
+                  capped = normalized * 0.7 * turn_boost * conf
+
                   [
                     %{
                       node_id: node.id,
                       content: node.content,
                       node_type: node.node_type,
-                      confidence: clamp01(to_float(node.confidence)),
+                      confidence: conf,
                       similarity: 0.0,
-                      score: bm25_score * 0.7 * turn_boost,
+                      score: capped,
                       source: :chain_bm25,
                       hops: 0,
                       via: nil
@@ -1033,6 +1053,14 @@ defmodule Graphonomous.Retriever do
 
       case safe_bm25_search(expanded_query, bm25_limit) do
         {:ok, bm25_hits} when bm25_hits != [] ->
+          # Session-expand results are supplementary — normalize BM25 to [0, 1]
+          max_bm25 =
+            bm25_hits
+            |> Enum.map(fn {_, s} -> s end)
+            |> Enum.max(fn -> 1.0 end)
+
+          max_bm25 = if max_bm25 > 0, do: max_bm25, else: 1.0
+
           new_entries =
             bm25_hits
             |> Enum.reject(fn {node_id, _} -> MapSet.member?(existing_ids, node_id) end)
@@ -1041,15 +1069,19 @@ defmodule Graphonomous.Retriever do
               case cached_get_node(node_id) do
                 {:ok, %Node{forgotten_at: nil} = node} ->
                   turn_boost = temporal_turn_boost(node_id, temporal_intent)
+                  conf = clamp01(to_float(node.confidence))
+                  # Normalize BM25 to [0, 1], then apply confidence and a 0.6 session discount
+                  normalized = bm25_score / max_bm25
+                  capped = normalized * 0.6 * turn_boost * conf
 
                   [
                     %{
                       node_id: node.id,
                       content: node.content,
                       node_type: node.node_type,
-                      confidence: clamp01(to_float(node.confidence)),
+                      confidence: conf,
                       similarity: 0.0,
-                      score: bm25_score * 0.6 * turn_boost,
+                      score: capped,
                       source: :session_expand_bm25,
                       hops: 0,
                       via: nil
@@ -1458,8 +1490,10 @@ defmodule Graphonomous.Retriever do
               to_rerank
               |> Enum.map(fn entry ->
                 rerank_score = Map.get(score_map, entry.node_id, 0.0)
-                # Blend original score (0.4) with reranker score (0.6)
-                blended = 0.4 * entry.score + 0.6 * rerank_score
+                # Blend original score (0.4) with confidence-weighted reranker score (0.6)
+                # entry.score is already confidence-weighted from RRF; apply conf to reranker too
+                conf = clamp01(to_float(entry.confidence))
+                blended = 0.4 * entry.score + 0.6 * rerank_score * conf
                 %{entry | score: blended}
               end)
               |> Enum.sort_by(& &1.score, :desc)

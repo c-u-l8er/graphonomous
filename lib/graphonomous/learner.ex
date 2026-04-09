@@ -28,7 +28,8 @@ defmodule Graphonomous.Learner do
   @type status :: :success | :partial_success | :failure | :timeout
 
   @type state :: %{
-          learning_rate: float()
+          learning_rate: float(),
+          learning_disabled: boolean()
         }
 
   @type learn_result :: %{
@@ -79,10 +80,40 @@ defmodule Graphonomous.Learner do
       )
       |> normalize_probability()
 
-    {:ok, %{learning_rate: learning_rate}}
+    learning_disabled =
+      Keyword.get(
+        opts,
+        :disable_learning,
+        Application.get_env(:graphonomous, :disable_learning, false)
+      )
+
+    {:ok, %{learning_rate: learning_rate, learning_disabled: learning_disabled}}
   end
 
   @impl true
+  def handle_call({:learn_from_outcome, attrs}, _from, %{learning_disabled: true} = state) do
+    outcome = normalize_outcome(attrs)
+
+    Logger.info("Learning disabled — skipping confidence/Q-value updates for #{outcome.action_id}")
+
+    result = %{
+      action_id: outcome.action_id,
+      status: outcome.status,
+      retrieval_trace_id: outcome.retrieval_trace_id,
+      decision_trace_id: outcome.decision_trace_id,
+      action_linkage: outcome.action_linkage,
+      grounding: outcome.grounding,
+      processed: 0,
+      updated: 0,
+      skipped: length(outcome.causal_node_ids),
+      updates: [],
+      causal_edges_updated: 0,
+      learning_disabled: true
+    }
+
+    {:reply, {:ok, result}, state}
+  end
+
   def handle_call({:learn_from_outcome, attrs}, _from, state) do
     outcome = normalize_outcome(attrs)
 

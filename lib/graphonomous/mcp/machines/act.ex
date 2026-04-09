@@ -147,6 +147,23 @@ defmodule Graphonomous.MCP.Machines.Act do
         do: Map.put(params, :operation, p(params, :goal_operation)),
         else: params
 
+    # ManageGoal.execute reads from payload_map(params) which decodes a "payload"
+    # JSON string. The act machine schema exposes top-level fields instead, so we
+    # must build the payload map from them before delegating.
+    payload_fields =
+      [:title, :description, :status, :progress, :goal_id, :node_ids]
+      |> Enum.reduce(%{}, fn key, acc ->
+        case p(params, key) do
+          nil -> acc
+          val -> Map.put(acc, Atom.to_string(key), val)
+        end
+      end)
+
+    params =
+      if map_size(payload_fields) > 0,
+        do: Map.put(params, :payload, Jason.encode!(payload_fields)),
+        else: params
+
     Graphonomous.MCP.ManageGoal.execute(params, frame)
   end
 
