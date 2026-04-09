@@ -14,20 +14,21 @@ Adopt this internal policy at session start:
 
 ## 1) Mandatory Skills Pack (Load First)
 
-Before doing meaningful work, load and follow these files in order:
+Skills live in the [ampersand-plugins](https://github.com/c-u-l8er/ampersand-plugins) repo as Claude Code skills. Reference docs are mirrored in `docs/skills/`.
 
-1. `docs/skills/AGENT_BOOTSTRAP_PROMPT.md`
-2. `docs/skills/SKILLS.md`
-3. `docs/skills/01_RETRIEVE_AND_REMEMBER.md`
-4. `docs/skills/02_LEARNING_LOOP.md`
-5. `docs/skills/03_GRAPH_INSPECTION.md`
-6. `docs/skills/04_GOAL_MANAGEMENT.md`
-7. `docs/skills/05_COVERAGE_AND_REVIEW.md`
-8. `docs/skills/06_TOPOLOGY_AND_DELIBERATION.md`
-9. `docs/skills/07_CONSOLIDATION.md`
-10. `docs/skills/08_ATTENTION.md`
-11. `docs/skills/09_WORKFLOWS.md`
-12. `docs/skills/10_ANTI_PATTERNS.md`
+Before doing meaningful work, load and follow these files:
+
+1. `docs/skills/SKILLS.md` (index + machine architecture)
+2. `docs/skills/bootstrap.md` (session initialization)
+3. `docs/skills/retrieve.md` (foundational read/write loop)
+4. `docs/skills/learn.md` (closed-loop learning)
+5. `docs/skills/deliberate.md` (κ-aware routing)
+6. `docs/skills/consolidate.md` (memory maintenance)
+7. `docs/skills/goals.md` (durable intent tracking)
+8. `docs/skills/attention.md` (autonomous focus)
+9. `docs/skills/workflows.md` (end-to-end recipes)
+
+Extended skills (load for complex sessions): `store.md`, `belief.md`, `forgetting.md`, `epistemic-frontier.md`, `trace-evidence-path.md`, `review.md`, `inspect.md`, `graph-health.md`, `sync.md`, `watch.md`
 
 If some files are unavailable, proceed with best effort and explicitly lower certainty.
 
@@ -35,13 +36,13 @@ If some files are unavailable, proceed with best effort and explicitly lower cer
 
 ## 2) Always-On Default Loop
 
-For non-trivial user requests, run this loop:
+For non-trivial user requests, run the 5-machine loop:
 
-1. **Retrieve first** (`retrieve_context`)
-2. **Reason + act**
-3. **Store durable knowledge** (`store_node`, optional `store_edge`)
-4. **Close outcome loop** (`learn_from_outcome`) when signal exists
-5. **Maintain graph quality** (`run_consolidation`) periodically
+1. **Retrieve** — `retrieve(action: "context", query: "...")` before reasoning/acting
+2. **Route** — check `topology.routing`; if `"deliberate"`, run `route(action: "deliberate", ...)`
+3. **Act** — `act(action: "store_node", ...)` to mutate the graph
+4. **Learn** — `learn(action: "from_outcome", ...)` when outcome signal exists
+5. **Consolidate** — `consolidate(action: "run")` periodically and at session end
 
 Do not routinely skip retrieval on domain-heavy tasks.
 

@@ -34,7 +34,7 @@ From the `ProjectAmp2` root:
 Expected result:
 
 - Compile succeeds
-- Test suite passes (currently `31 tests, 0 failures`)
+- Test suite passes (currently `455+ tests, 0 failures`)
 - Executable `./graphonomous` is generated for standard MCP client launch
 
 ---
@@ -220,18 +220,27 @@ Before considering local bootstrap complete, verify the agent skills wiring is p
 
 ### Required files
 
-- `docs/skills/AGENT_BOOTSTRAP_PROMPT.md`
-- `docs/skills/SKILLS.md`
-- `docs/skills/01_RETRIEVE_AND_REMEMBER.md`
-- `docs/skills/02_LEARNING_LOOP.md`
-- `docs/skills/03_GRAPH_INSPECTION.md`
-- `docs/skills/04_GOAL_MANAGEMENT.md`
-- `docs/skills/05_COVERAGE_AND_REVIEW.md`
-- `docs/skills/06_TOPOLOGY_AND_DELIBERATION.md`
-- `docs/skills/07_CONSOLIDATION.md`
-- `docs/skills/08_ATTENTION.md`
-- `docs/skills/09_WORKFLOWS.md`
-- `docs/skills/10_ANTI_PATTERNS.md`
+Skills live in the [ampersand-plugins](https://github.com/c-u-l8er/ampersand-plugins) repo. Reference docs are mirrored in `docs/skills/`:
+
+- `docs/skills/SKILLS.md` (index + machine architecture)
+- `docs/skills/bootstrap.md`
+- `docs/skills/retrieve.md`
+- `docs/skills/store.md`
+- `docs/skills/learn.md`
+- `docs/skills/deliberate.md`
+- `docs/skills/consolidate.md`
+- `docs/skills/goals.md`
+- `docs/skills/belief.md`
+- `docs/skills/forgetting.md`
+- `docs/skills/epistemic-frontier.md`
+- `docs/skills/trace-evidence-path.md`
+- `docs/skills/attention.md`
+- `docs/skills/review.md`
+- `docs/skills/inspect.md`
+- `docs/skills/graph-health.md`
+- `docs/skills/workflows.md`
+- `docs/skills/sync.md`
+- `docs/skills/watch.md`
 
 ### Wiring checkpoints
 

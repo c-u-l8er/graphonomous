@@ -1,7 +1,7 @@
 # Graphonomous — Continual Learning Engine
-## Technical Specification v0.3
+## Technical Specification v0.4
 
-**Date:** April 2, 2026
+**Date:** April 9, 2026
 **Status:** Release Candidate  
 **Author:** [&] Ampersand Box Design  
 **License:** MIT (open core)

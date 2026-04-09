@@ -86,23 +86,24 @@ NPM_PUBLISH
 :caption: Skills
 
 skills/SKILLS
-skills/AGENT_BOOTSTRAP_PROMPT
-skills/01_RETRIEVE_AND_REMEMBER
-skills/02_LEARNING_LOOP
-skills/03_GRAPH_INSPECTION
-skills/04_GOAL_MANAGEMENT
-skills/05_COVERAGE_AND_REVIEW
-skills/06_TOPOLOGY_AND_DELIBERATION
-skills/07_CONSOLIDATION
-skills/08_ATTENTION
-skills/09_WORKFLOWS
-skills/10_ANTI_PATTERNS
-skills/11_BELIEF_REVISION
-skills/12_FORGETTING
-skills/13_EPISTEMIC_FRONTIER
-skills/14_SYNC
-skills/15_WATCH
-skills/16_TRACE_EVIDENCE_PATH
+skills/bootstrap
+skills/retrieve
+skills/store
+skills/learn
+skills/deliberate
+skills/consolidate
+skills/goals
+skills/belief
+skills/forgetting
+skills/epistemic-frontier
+skills/trace-evidence-path
+skills/attention
+skills/review
+skills/inspect
+skills/graph-health
+skills/workflows
+skills/sync
+skills/watch
 :::
 
 ## Recommended Reading Path

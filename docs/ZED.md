@@ -144,25 +144,24 @@ Use Option B while actively changing code; switch to Option A for daily/stable u
 
 To make Graphonomous usage consistent in every chat, load the skills pack into your agent prompt context at chat start.
 
+Skills live in the [ampersand-plugins](https://github.com/c-u-l8er/ampersand-plugins) repo. Reference docs are mirrored in `docs/skills/`.
+
 Minimum required context:
 
-1. `docs/skills/AGENT_BOOTSTRAP_PROMPT.md`
-2. `docs/skills/SKILLS.md`
+1. `docs/skills/SKILLS.md`
+2. `docs/skills/bootstrap.md`
 
 Recommended full context:
 
-- `docs/skills/01_RETRIEVE_AND_REMEMBER.md`
-- `docs/skills/02_LEARNING_LOOP.md`
-- `docs/skills/03_GRAPH_INSPECTION.md`
-- `docs/skills/04_GOAL_MANAGEMENT.md`
-- `docs/skills/05_COVERAGE_AND_REVIEW.md`
-- `docs/skills/06_TOPOLOGY_AND_DELIBERATION.md`
-- `docs/skills/07_CONSOLIDATION.md`
-- `docs/skills/08_ATTENTION.md`
-- `docs/skills/09_WORKFLOWS.md`
-- `docs/skills/10_ANTI_PATTERNS.md`
+- `docs/skills/retrieve.md`
+- `docs/skills/learn.md`
+- `docs/skills/deliberate.md`
+- `docs/skills/consolidate.md`
+- `docs/skills/goals.md`
+- `docs/skills/attention.md`
+- `docs/skills/workflows.md`
 
-If your Zed workflow supports per-assistant system/developer instructions, include the bootstrap prompt there so it is applied automatically each chat.
+If your Zed workflow supports per-assistant system/developer instructions, include the SKILLS.md and bootstrap.md there so they are applied automatically each chat.
 
 ---
 
@@ -172,21 +171,21 @@ If your Zed workflow supports per-assistant system/developer instructions, inclu
 2. Go to MCP/context server settings.
 3. Confirm `graphonomous` is active (running indicator).
 4. At the start of each new chat, load the prompt context from:
-   - `docs/skills/AGENT_BOOTSTRAP_PROMPT.md`
    - `docs/skills/SKILLS.md`
-5. For best results, also load the numbered skills files in `docs/skills/`.
+   - `docs/skills/bootstrap.md`
+5. For best results, also load additional skill files from `docs/skills/` (e.g., retrieve.md, learn.md, workflows.md).
 6. Start the prompt and ask it to use Graphonomous tools explicitly, e.g.:
-   - “Use `graphonomous` to retrieve context before answering.”
-   - “Use `graphonomous` to store this as semantic memory.”
-   - “Use `graphonomous` to report outcome feedback with `learn_from_outcome`.”
+   - “Use `graphonomous` to `retrieve(action: “context”, ...)` before answering.”
+   - “Use `graphonomous` to `act(action: “store_node”, ...)` for semantic memory.”
+   - “Use `graphonomous` to `learn(action: “from_outcome”, ...)` for outcome feedback.”
 
 ---
 
 ## 6) First-use workflow (fastest)
 
-1. Store a few nodes with `store_node`.
-2. Query them via `retrieve_context`.
-3. Feed outcomes via `learn_from_outcome`.
+1. Store a few nodes with `act(action: "store_node", ...)`.
+2. Query them via `retrieve(action: "context", ...)`.
+3. Feed outcomes via `learn(action: "from_outcome", ...)`.
 4. Inspect runtime with `query_graph` and resource snapshots.
 
 This gives you a full closed-loop memory flow without external integrations.

@@ -229,27 +229,33 @@ Runtime controls include:
 
 ## 10) MCP Interface
 
-`Graphonomous.MCP.Server` registers:
+`Graphonomous.MCP.Server` registers machines via `lib/graphonomous/mcp/machines/server.ex`.
 
-### Tools (12)
+### v2 Machine Surface (Production Default — 5 machines, 29 actions)
 
-- `store_node`
-- `store_edge`
-- `retrieve_context`
-- `learn_from_outcome`
-- `query_graph`
-- `manage_goal`
-- `review_goal`
-- `run_consolidation`
-- `topology_analyze`
-- `deliberate`
-- `attention_survey`
-- `attention_run_cycle`
+Each machine is an `Anubis.Server.Component` with `schema do` parameter validation and `execute/2` dispatch.
 
-### Resources (2)
+| Machine | Actions |
+|---------|---------|
+| `retrieve` | context, episodic, procedural, coverage, trace_evidence, frontier |
+| `route` | topology, deliberate, attention_survey, attention_cycle, review_goal |
+| `act` | store_node, store_edge, delete_node, manage_edge, manage_goal, belief_revise, forget_node, forget_policy, gdpr_erase |
+| `learn` | from_outcome, from_feedback, detect_novelty, from_interaction, contradictions |
+| `consolidate` | run, stats, query, traverse |
+
+### v1 Legacy Surface (29 individual tools)
+
+All v1 tool names remain available for backward compatibility. Machines delegate to them internally.
+
+### Resources (5)
 
 - `graphonomous://runtime/health`
 - `graphonomous://goals/snapshot`
+- `graphonomous://graph/node/{id}`
+- `graphonomous://graph/recent`
+- `graphonomous://consolidation/log`
+
+See `docs/mcp-tools.md` for full parameter reference.
 
 ---
 
@@ -338,9 +344,8 @@ This documentation was produced after directly inspecting code/spec/docs and run
 ### What was validated in this session
 
 1. Skills pack loaded from:
-   - `docs/skills/AGENT_BOOTSTRAP_PROMPT.md`
    - `docs/skills/SKILLS.md`
-   - `docs/skills/01` through `10`
+   - `docs/skills/bootstrap.md` through `docs/skills/workflows.md`
 
 2. Spec and architecture references inspected:
    - `graphonomous.com/docs/spec/README.md`

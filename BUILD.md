@@ -60,7 +60,7 @@ node -p "require('./npm/package.json').version"
 cd /home/travis/ProjectAmp2/graphonomous
 MIX_ENV=prod mix release --overwrite
 mkdir -p dist
-tar -czf "dist/${ASSET}" -C _build/prod/rel graphonomous
+tar -czf "dist/${ASSET}" --exclude='*/priv/beam' -C _build/prod/rel graphonomous
 ls -lh "dist/${ASSET}"
 ```
 
@@ -245,7 +245,7 @@ cd /home/travis/ProjectAmp2/graphonomous
 VERSION="0.1.10"; TAG="v${VERSION}"; TARGET="linux-x64"; ASSET="graphonomous-v${VERSION}-${TARGET}.tar.gz"
 MIX_ENV=prod mix release --overwrite
 mkdir -p dist
-tar -czf "dist/${ASSET}" -C _build/prod/rel graphonomous
+tar -czf "dist/${ASSET}" --exclude='*/priv/beam' -C _build/prod/rel graphonomous
 git tag "${TAG}" 2>/dev/null || true
 git push origin "${TAG}"
 gh release create "${TAG}" "dist/${ASSET}" --title "${TAG}" --notes "Manual release assets upload" || gh release upload "${TAG}" "dist/${ASSET}" --clobber

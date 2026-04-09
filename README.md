@@ -1,107 +1,145 @@
 # Graphonomous
 
-Continual learning engine for AI agents, implemented as an Elixir OTP application with a durable SQLite-backed knowledge graph, confidence-updating learning loop, GoalGraph orchestration, κ-aware topology routing, and MCP tools/resources.
+Continual learning engine for AI agents, implemented as an Elixir/OTP application with a durable SQLite-backed knowledge graph, confidence-updating learning loop, GoalGraph orchestration, κ-aware topology routing, and an MCP server exposing 5 loop-phase machines.
 
-**v0.3.3** — Full spec compliance: 6 node types, 16 edge types, 8-stage consolidation pipeline, 29 MCP tools, 5 MCP resources. κ-aware topology routing, AGM-rational belief revision, intentional forgetting (soft/hard/cascade/GDPR), Wilson score epistemic frontier, Q-value outcome-weighted retrieval, multi-agent scoping via `agent_id`, nomic-embed-text-v2-moe 768D embedder, and graph algorithm suite (Dijkstra, toposort, Louvain, Hopcroft-Karp, incremental SCC, triangle counting). LongMemEval: 92.6% QA proxy, 98.7% session hit rate. 455 tests, 0 failures.
+**v0.4.0** — Dual-loop machine architecture: 29 actions grouped into 5 machines (retrieve, route, act, learn, consolidate). κ-aware topology routing, AGM-rational belief revision, intentional forgetting (soft/hard/cascade/GDPR), Wilson score epistemic frontier, Q-value outcome-weighted retrieval, multi-agent scoping via `agent_id`, nomic-embed-text-v2-moe 768D embedder, and graph algorithm suite (Dijkstra, toposort, Louvain, Hopcroft-Karp, incremental SCC, triangle counting). LongMemEval: 92.6% QA proxy, 98.7% session hit rate. 455+ tests, 0 failures.
 
 > **TL;DR**
 > - Install: `npm i -g graphonomous` or `npx -y graphonomous`
-> - Use as an MCP server over stdio or HTTP
+> - MCP server over stdio or HTTP — works with Claude Code, Codex, Cursor, Zed, and any MCP client
+> - 5 machines with 29 actions (not 29 flat tools) — better tool selection accuracy
 > - κ-aware topology routing ships out of the box — no configuration needed
-> - 28 tools covering knowledge CRUD, retrieval, learning, belief revision, forgetting, goals, consolidation, and attention
-> - Works with Claude Code, Zed, and any MCP-compatible client
+> - Data stays local: SQLite at `~/.graphonomous/knowledge.db`
 
 ---
 
-## Always-On Agent Skills Wiring (Required)
+## Quick Start (60 seconds)
 
-To ensure Graphonomous MCP is used correctly **every chat**, this repo ships an always-on skills pack and bootstrap prompt.
+### 1) Install
 
-### Skills pack location
-
-- `docs/skills/SKILLS.md` (index)
-- `docs/skills/AGENT_BOOTSTRAP_PROMPT.md` (always-on bootstrap policy)
-- `docs/skills/01_RETRIEVE_AND_REMEMBER.md`
-- `docs/skills/02_LEARNING_LOOP.md`
-- `docs/skills/03_GRAPH_INSPECTION.md`
-- `docs/skills/04_GOAL_MANAGEMENT.md`
-- `docs/skills/05_COVERAGE_AND_REVIEW.md`
-- `docs/skills/06_TOPOLOGY_AND_DELIBERATION.md`
-- `docs/skills/07_CONSOLIDATION.md`
-- `docs/skills/08_ATTENTION.md`
-- `docs/skills/09_WORKFLOWS.md`
-- `docs/skills/10_ANTI_PATTERNS.md`
-
-### Prompt injection guidance (system/developer context)
-
-When configuring any agent/chat runtime, inject:
-
-1. `docs/skills/AGENT_BOOTSTRAP_PROMPT.md` (required)
-2. `docs/skills/SKILLS.md` (required)
-3. Relevant numbered skill files (or all files for general-purpose sessions)
-
-Minimum acceptable wiring: bootstrap prompt + skills index.
-
-### Repository wiring status
-
-This repository already wires these policies into:
-
-- `AGENTS.md`
-- `CLAUDE.md`
-
-That means local repo-aware agent sessions should default to a Graphonomous-first loop:
-retrieve → reason/act → store → learn_from_outcome → consolidate.
-
-## For Users (npm-first)
-
-### 1) Install and run
-
-Use whichever fits your workflow.
-
-#### Option A — One-off run with `npx` (no global install)
-
-```/dev/null/shell.sh#L1-5
+```sh
+# Option A — One-off (no global install)
 npx -y graphonomous --help
-npx -y graphonomous --db ~/.graphonomous/knowledge.db --embedder-backend fallback
-npx -y graphonomous scan ./docs --extensions .md,.txt
-npx -y graphonomous watch ./docs --poll-interval-ms 1500 --ingest-on-start
-```
 
-#### Option B — Global install
-
-```/dev/null/shell.sh#L1-6
+# Option B — Global install
 npm i -g graphonomous
 graphonomous --help
-graphonomous --db ~/.graphonomous/knowledge.db --embedder-backend fallback
-graphonomous scan ./docs --extensions .md,.txt
-graphonomous watch ./docs --poll-interval-ms 1500 --ingest-on-start
 ```
+
+**Requirements:** Node.js >= 18 · macOS or Linux · x64 or arm64
+
+### 2) Add to your MCP config
+
+Add to `~/.mcp.json` or your project's `.mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "graphonomous": {
+      "command": "npx",
+      "args": ["-y", "graphonomous", "--db", "~/.graphonomous/knowledge.db"]
+    }
+  }
+}
+```
+
+Restart your agent. Graphonomous is now your memory layer.
+
+### 3) Start a memory session
+
+Copy this into Claude Code, Codex, or any MCP-capable agent:
+
+```
+Start a Graphonomous memory session for this repo.
+1. retrieve(action: "context", query: "session context")
+2. Check active goals: act(action: "manage_goal", goal_operation: "list_goals")
+3. Survey attention: route(action: "attention_survey")
+Then proceed with my task, storing durable knowledge as we go.
+```
+
+Every session follows the closed loop: **retrieve → route → act → learn → consolidate**.
 
 ---
 
-### 2) First-time setup (2–5 minutes)
+## Machine Architecture (v0.4)
 
-1. Create a data directory:
-```/dev/null/shell.sh#L1-1
-mkdir -p ~/.graphonomous
+Tool selection accuracy degrades past ~30 tools. Instead of 29 individual tools, Graphonomous v0.4 exposes **5 loop-phase machines** — one per phase of the closed memory loop. Each machine dispatches via an `action` parameter.
+
+```
+retrieve → route → act → learn → consolidate
+"What do I know?" → "What should I do?" → "Do it" → "Did it work?" → "Clean up"
 ```
 
-2. Run Graphonomous:
-```/dev/null/shell.sh#L1-1
-npx -y graphonomous --db ~/.graphonomous/knowledge.db --embedder-backend fallback
+| Machine | Actions | Description |
+|---|---|---|
+| **retrieve** | `context`, `episodic`, `procedural`, `coverage`, `trace_evidence`, `frontier` | κ-aware ranked retrieval, time-filtered episodes, procedural search, epistemic coverage, Dijkstra evidence paths, Wilson interval uncertainty |
+| **route** | `topology`, `deliberate`, `attention_survey`, `attention_cycle`, `review_goal` | SCC/κ analysis, κ-driven deliberation, priority survey, triage → dispatch, coverage-driven gate |
+| **act** | `store_node`, `store_edge`, `delete_node`, `manage_edge`, `manage_goal`, `belief_revise`, `forget_node`, `forget_policy`, `gdpr_erase` | All graph mutations: node/edge CRUD, goal lifecycle, AGM belief revision, soft/hard/cascade forgetting, GDPR erasure |
+| **learn** | `from_outcome`, `from_feedback`, `detect_novelty`, `from_interaction`, `contradictions` | Causal confidence updates, feedback processing, novelty scoring, full ingestion pipeline, contradiction detection |
+| **consolidate** | `run`, `stats`, `query`, `traverse` | 8-stage consolidation, aggregate statistics, operation-based inspection, BFS traversal |
+
+### Backward compatibility
+
+All 29 legacy tools (`store_node`, `retrieve_context`, `learn_from_outcome`, etc.) remain available. Machines delegate to them internally, so existing integrations continue to work.
+
+### MCP resources (5 read-only)
+
+- `graphonomous://runtime/health` — runtime health + service status
+- `graphonomous://goals/snapshot` — goal totals, status breakdown
+- `graphonomous://graph/node/{id}` — individual node details + edges
+- `graphonomous://graph/recent` — recently accessed/modified nodes
+- `graphonomous://consolidation/log` — consolidator state + orchestrator plasticity metrics
+
+### Dual-loop architecture (PRISM)
+
+When PRISM (OS-009) benchmarks Graphonomous, both closed loops interlock:
+
+```
+PRISM:        compose → interact → observe → reflect → diagnose  (+ config)
+                            │
+                            ▼
+Graphonomous: retrieve → route → act → learn → consolidate
 ```
 
-3. Configure your MCP client to launch `graphonomous` (or `npx`) and pass the same args.
+5 + 6 = **11 tools** in a shared session, down from 76. The outer loop improves the benchmark. The inner loop improves the memory. Each makes the other sharper.
 
 ---
 
-### 3) Zed setup (custom context server)
+## Client Setup
 
-In Zed settings JSON, use either installed command, `npx`, or a local wrapper script (recommended for dev logging/debugging).
+### Claude Code
+
+Add to your project's `.mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "graphonomous": {
+      "command": "npx",
+      "args": ["-y", "graphonomous", "--db", "./.graphonomous/knowledge.db", "--embedder-backend", "fallback"]
+    }
+  }
+}
+```
+
+Or if installed globally:
+
+```json
+{
+  "mcpServers": {
+    "graphonomous": {
+      "command": "graphonomous",
+      "args": ["--db", "./.graphonomous/knowledge.db", "--embedder-backend", "fallback"]
+    }
+  }
+}
+```
+
+### Zed (custom context server)
 
 #### Installed command
 
-```/dev/null/settings.json#L1-14
+```json
 {
   "context_servers": {
     "graphonomous": {
@@ -117,7 +155,7 @@ In Zed settings JSON, use either installed command, `npx`, or a local wrapper sc
 
 #### `npx` command
 
-```/dev/null/settings.json#L1-12
+```json
 {
   "context_servers": {
     "graphonomous": {
@@ -131,13 +169,11 @@ In Zed settings JSON, use either installed command, `npx`, or a local wrapper sc
 
 #### Local wrapper script (recommended for local dev + logs)
 
-Use a wrapper that launches local source via `mix run` and writes stderr logs to `~/.graphonomous/logs`.
-
-```/dev/null/settings.json#L1-12
+```json
 {
   "context_servers": {
     "graphonomous": {
-      "command": "/home/travis/ProjectAmp2/graphonomous/scripts/graphonomous_mcp_wrapper.sh",
+      "command": "/path/to/graphonomous/scripts/graphonomous_mcp_wrapper.sh",
       "args": [],
       "env": {}
     }
@@ -148,225 +184,162 @@ Use a wrapper that launches local source via `mix run` and writes stderr logs to
 After saving:
 1. Open Zed Agent panel.
 2. Confirm server is active.
-3. Ask explicitly for Graphonomous tool usage (for example: “use `graphonomous` to retrieve context for …”).
+3. Ask explicitly for Graphonomous tool usage (e.g., "use `graphonomous` to retrieve context for …").
 
-### 3b) Claude Code setup
-
-Add to your project's `.mcp.json`:
-
-```json
-{
-  “mcpServers”: {
-    “graphonomous”: {
-      “command”: “npx”,
-      “args”: [“-y”, “graphonomous”, “--db”, “./.graphonomous/knowledge.db”, “--embedder-backend”, “fallback”]
-    }
-  }
-}
-```
-
-Or if installed globally:
-
-```json
-{
-  “mcpServers”: {
-    “graphonomous”: {
-      “command”: “graphonomous”,
-      “args”: [“--db”, “./.graphonomous/knowledge.db”, “--embedder-backend”, “fallback”]
-    }
-  }
-}
-```
-
-### 4) Zed timeout troubleshooting
+### Zed timeout troubleshooting
 
 If Zed shows `context server request timeout`:
 
-1. Confirm CLI works first:
-```/dev/null/shell.sh#L1-2
-graphonomous --version
-graphonomous --help
-```
-2. Start with fallback embedder and a longer request timeout:
-```/dev/null/shell.sh#L1-1
-graphonomous --db ~/.graphonomous/knowledge.db --embedder-backend fallback --request-timeout 180000
-```
-3. Prefer local wrapper-script mode for debugging to capture server stderr logs:
-```/dev/null/settings.json#L1-12
-{
-  "context_servers": {
-    "graphonomous": {
-      "command": "/home/travis/ProjectAmp2/graphonomous/scripts/graphonomous_mcp_wrapper.sh",
-      "args": [],
-      "env": {}
-    }
-  }
-}
-```
-4. After reproducing once, inspect wrapper logs:
-```/dev/null/shell.sh#L1-3
-ls -lt ~/.graphonomous/logs | head
-LATEST="$(ls -1t ~/.graphonomous/logs/zed-mcp-*.log | head -n1)"
-tail -n 200 "$LATEST"
-```
+1. Confirm CLI works: `graphonomous --version && graphonomous --help`
+2. Start with fallback embedder and longer timeout: `graphonomous --db ~/.graphonomous/knowledge.db --embedder-backend fallback --request-timeout 180000`
+3. Use the local wrapper script for debugging (captures stderr logs).
+4. Inspect logs: `ls -lt ~/.graphonomous/logs | head`
 5. Fully restart Zed after changing MCP config.
-6. Reinstall/upgrade your global package if needed:
-```/dev/null/shell.sh#L1-2
-npm uninstall -g graphonomous
-npm i -g graphonomous
+6. Reinstall if needed: `npm uninstall -g graphonomous && npm i -g graphonomous`
+
+---
+
+## Agent Skills (Claude Code Plugin)
+
+Graphonomous skills for Claude Code live in the **[ampersand-plugins](https://github.com/c-u-l8er/ampersand-plugins)** repository. Install the plugin to get 18 skills that wire the Graphonomous memory loop into every session automatically.
+
+### Installing the plugin
+
+```sh
+claude plugin add c-u-l8er/ampersand-plugins
 ```
 
----
+This registers the `graphonomous` plugin (18 skills) plus `prism` (8 skills), `spec-driven-dev` (3 skills), and `ampersand-protocol` (2 skills).
 
-### 5) MCP tools (29 total)
+### Graphonomous skills (18)
 
-**Knowledge graph write:**
-- `store_node`, `store_edge`, `delete_node`, `manage_edge`
+| Skill | Description |
+|---|---|
+| `/graphonomous:bootstrap` | Initialize session — retrieve context, check goals, survey attention |
+| `/graphonomous:retrieve` | Query knowledge graph by natural language (κ-aware ranked retrieval) |
+| `/graphonomous:store` | Save knowledge — atomic nodes with confidence calibration |
+| `/graphonomous:learn` | Close feedback loop — outcome, feedback, novelty, contradictions |
+| `/graphonomous:deliberate` | Topology analysis and κ-driven cyclic reasoning |
+| `/graphonomous:consolidate` | Graph maintenance — 7-stage pipeline, stats, query, traverse |
+| `/graphonomous:goals` | Durable intent tracking across sessions |
+| `/graphonomous:belief` | AGM-style belief revision — expand, revise, contract |
+| `/graphonomous:forgetting` | Structured removal — soft, hard, cascade, GDPR, policy pruning |
+| `/graphonomous:epistemic-frontier` | Wilson score uncertainty analysis + information gain ranking |
+| `/graphonomous:trace-evidence-path` | Weighted Dijkstra provenance paths between nodes |
+| `/graphonomous:attention` | Autonomous focus — survey, triage, dispatch |
+| `/graphonomous:review` | Coverage evaluation — act/learn/escalate routing |
+| `/graphonomous:inspect` | Read-only graph browsing — list, get, edges, search, traverse |
+| `/graphonomous:graph-health` | Combined diagnostics — weak nodes, orphans, staleness |
+| `/graphonomous:workflows` | End-to-end recipes — cold start, debug, Ralph loop, handoff |
+| `/graphonomous:sync` | Batch filesystem ingest to knowledge graph |
+| `/graphonomous:watch` | Continuous filesystem monitoring with change detection |
 
-**Knowledge graph read/query:**
-- `retrieve_context` — κ-aware ranked retrieval with topology annotations
-- `query_graph` — operation-based graph inspection
-- `topology_analyze` — SCC/κ analysis with routing recommendation
-- `graph_traverse` — BFS walk with depth/relationship filters
-- `graph_stats` — aggregate counts, distributions, confidence stats, orphan detection
+### PRISM skills (8)
 
-**Specialized retrieval:**
-- `retrieve_episodic` — time-range filtered episodic nodes
-- `retrieve_procedural` — semantic search scoped to procedural nodes
-- `coverage_query` — standalone epistemic coverage (act/learn/escalate)
+| Skill | Description |
+|---|---|
+| `/prism:bootstrap` | Initialize PRISM evaluation engine |
+| `/prism:compose` | Build/validate/manage test scenarios |
+| `/prism:interact` | Execute scenarios against memory systems |
+| `/prism:observe` | 3-layer judging across 9 CL dimensions |
+| `/prism:reflect` | Gap analysis, IRT recalibration, scenario evolution |
+| `/prism:diagnose` | Reports, failure patterns, leaderboards, fix suggestions |
+| `/prism:configure` | Register systems, set weights, create profiles |
+| `/prism:benchmark` | Full cycle orchestrator (compose → interact → observe → reflect → diagnose) |
 
-**Belief revision (v0.3):**
-- `belief_revise` — AGM-rational expand/revise/contract with contradiction detection
-- `belief_contradictions` — find contradicting nodes by embedding similarity
+### Skills reference docs
 
-**Intentional forgetting (v0.3):**
-- `forget_node` — soft/hard/cascade forgetting modes
-- `forget_by_policy` — budget-aware hybrid priority pruning with dry-run
-- `gdpr_erase` — GDPR Article 17 compliant permanent deletion with audit
+This repo also ships reference documentation in `docs/skills/` mirroring the plugin skills — useful for non-Claude-Code agents, manual prompt injection, or understanding the skill internals.
 
-**Uncertainty quantification (v0.3):**
-- `epistemic_frontier` — Wilson score intervals, information gain ranking
-
-**Graph algorithms (v0.3.3):**
-- `trace_evidence_path` — weighted Dijkstra/Yen's K-shortest paths for evidence provenance
-
-**Learning loop:**
-- `learn_from_outcome` — causal confidence + Q-value updates
-- `learn_from_feedback` — positive/negative/correction feedback
-- `learn_detect_novelty` — similarity-based novelty scoring
-- `learn_from_interaction` — full pipeline (novelty → store → extract → link)
-- `deliberate` — κ-driven deliberation over cyclic regions
-
-**Goal orchestration:**
-- `manage_goal`, `review_goal`
-
-**Maintenance & autonomy:**
-- `run_consolidation`, `attention_survey`, `attention_run_cycle`
-
-### MCP resources (5 read-only)
-
-- `graphonomous://runtime/health` — runtime health + service status
-- `graphonomous://goals/snapshot` — goal totals, status breakdown
-- `graphonomous://graph/node/{id}` — individual node details + edges
-- `graphonomous://graph/recent` — recently accessed/modified nodes
-- `graphonomous://consolidation/log` — consolidator state + orchestrator plasticity metrics
+- `docs/skills/SKILLS.md` — index and quick orientation
+- One file per skill matching the plugin names above
 
 ---
 
-### 6) Recommended laptop setting
+## CLI Reference
 
-Use:
+### Command modes
 
-- `--embedder-backend fallback`
-
-This avoids heavyweight backend friction and is the quickest reliable starting point on constrained machines.
-
----
-
-### 7) Common CLI flags
-
-Command modes:
-
-- `graphonomous` (start MCP server over stdio)
-- `graphonomous --transport streamable_http --port 4100` (start MCP server over HTTP)
-- `graphonomous scan <directory>` (one-shot traversal from scratch)
-- `graphonomous watch <directory>` (continuous change detection + traversal)
-
-Global options:
-
-- `--db PATH`
-- `-v, --version`
-- `--embedding-model MODEL`
-- `--embedder-backend auto|fallback`
-- `--sqlite-vec-extension-path PATH`
-- `--consolidator-interval-ms MS`
-- `--consolidator-decay-rate FLOAT`
-- `--consolidator-prune-threshold FLOAT`
-- `--consolidator-merge-similarity FLOAT`
-- `--learning-rate FLOAT`
-- `--log-level debug|info|warning|error`
-- `--request-timeout MS`
-
-Filesystem traversal options (`scan` / `watch`):
-
-- `--recursive`
-- `--include-hidden`
-- `--follow-symlinks`
-- `--extensions .ex,.md,.txt`
-- `--poll-interval-ms MS`
-- `--ingest-on-start`
-- `--max-file-size-bytes N`
-- `--max-read-bytes N`
-
-Help:
-
-```/dev/null/shell.sh#L1-2
-graphonomous --version
-graphonomous --help
+```sh
+graphonomous                                                    # MCP server over stdio (default)
+graphonomous --transport streamable_http --port 4100            # MCP server over HTTP
+graphonomous scan <directory>                                   # One-shot traversal
+graphonomous watch <directory>                                  # Continuous change detection + traversal
 ```
 
+### Global options
+
+| Flag | Description |
+|---|---|
+| `--db PATH` | SQLite database path |
+| `-v, --version` | Print version |
+| `--embedding-model MODEL` | Embedding model name |
+| `--embedder-backend auto\|fallback` | Embedding backend (`fallback` skips EXLA) |
+| `--sqlite-vec-extension-path PATH` | Custom sqlite-vec path |
+| `--consolidator-interval-ms MS` | Consolidation interval |
+| `--consolidator-decay-rate FLOAT` | Consolidation decay rate |
+| `--consolidator-prune-threshold FLOAT` | Pruning threshold |
+| `--consolidator-merge-similarity FLOAT` | Merge similarity threshold |
+| `--learning-rate FLOAT` | Learning rate |
+| `--log-level debug\|info\|warning\|error` | Log level |
+| `--request-timeout MS` | Request timeout |
+
+### Filesystem traversal options (`scan` / `watch`)
+
+`--recursive`, `--include-hidden`, `--follow-symlinks`, `--extensions .ex,.md,.txt`, `--poll-interval-ms MS`, `--ingest-on-start`, `--max-file-size-bytes N`, `--max-read-bytes N`
+
+### Environment variables
+
+| Variable | Default |
+|---|---|
+| `GRAPHONOMOUS_DB_PATH` | `priv/graphonomous.db` |
+| `GRAPHONOMOUS_EMBEDDING_MODEL` | `sentence-transformers/all-MiniLM-L6-v2` |
+| `GRAPHONOMOUS_EMBEDDER_BACKEND` | `auto` (options: `auto`, `fallback`) |
+| `GRAPHONOMOUS_SQLITE_VEC_EXTENSION_PATH` | (optional) |
+| `GRAPHONOMOUS_CONSOLIDATOR_INTERVAL_MS` | — |
+| `GRAPHONOMOUS_CONSOLIDATOR_DECAY_RATE` | — |
+| `GRAPHONOMOUS_CONSOLIDATOR_PRUNE_THRESHOLD` | — |
+| `GRAPHONOMOUS_CONSOLIDATOR_MERGE_SIMILARITY` | — |
+| `GRAPHONOMOUS_LEARNING_RATE` | — |
+| `LOG_LEVEL` | `info` (options: `debug`, `info`, `warning`, `error`) |
+
+**Recommended laptop setting:** Use `--embedder-backend fallback` to avoid heavyweight EXLA/CUDA friction on constrained machines.
+
 ---
 
-### 8) Runtime environment variables
+## Key Features
 
-- `GRAPHONOMOUS_DB_PATH` (default: `priv/graphonomous.db`)
-- `GRAPHONOMOUS_EMBEDDING_MODEL` (default: `sentence-transformers/all-MiniLM-L6-v2`)
-- `GRAPHONOMOUS_EMBEDDER_BACKEND` (`auto | fallback`)
-- `GRAPHONOMOUS_SQLITE_VEC_EXTENSION_PATH` (optional)
-- `GRAPHONOMOUS_CONSOLIDATOR_INTERVAL_MS`
-- `GRAPHONOMOUS_CONSOLIDATOR_DECAY_RATE`
-- `GRAPHONOMOUS_CONSOLIDATOR_PRUNE_THRESHOLD`
-- `GRAPHONOMOUS_CONSOLIDATOR_MERGE_SIMILARITY`
-- `GRAPHONOMOUS_LEARNING_RATE`
-- `LOG_LEVEL` (`debug | info | warning | error`)
-
-Example:
-
-```/dev/null/shell.sh#L1-3
-export GRAPHONOMOUS_DB_PATH="$HOME/.graphonomous/knowledge.db"
-export GRAPHONOMOUS_EMBEDDER_BACKEND="fallback"
-export LOG_LEVEL="info"
-```
+- **κ-Routing** — Tarjan SCC analysis detects circular dependencies; κ=0 regions get fast single-pass retrieval, κ>0 regions trigger deliberation with configurable budgets
+- **Belief Revision** — AGM-rational expand/revise/contract with automatic contradiction detection during consolidation
+- **Intentional Forgetting** — soft (hidden, reversible), hard (delete), cascade (delete + orphans), GDPR Article 17 compliant erase with audit
+- **Epistemic Frontier** — Wilson score confidence intervals at 95%, information-gain ranking for uncertainty-driven exploration
+- **Attention Engine** — proactive survey/triage/dispatch with autonomy override for multi-goal prioritization
+- **Q-Value Retrieval** — outcome-weighted ranking; nodes that led to successful actions rank higher
+- **Goal Graph** — durable intent tracking with status/progress lifecycle, coverage-driven routing (act/learn/escalate)
+- **Graph Algorithms** — Dijkstra shortest path, DAG detection + toposort, Hopcroft-Karp bipartite matching, Louvain community detection, incremental SCC, triangle counting + clustering coefficient
+- **Multi-Timescale Memory** — 4-tier decay (fast/medium/slow/glacial) with access-frequency promotion
+- **8-Stage Consolidation** — prune weak edges, strengthen co-activated, merge similar, promote timescale, generate abstractions, detect contradictions
+- **768D Neural Embeddings** — nomic-embed-text-v2-moe (500M params) with cross-encoder reranking, BM25+neural hybrid retrieval
+- **Multi-Agent Scoping** — `agent_id` metadata for per-agent attribution with cross-agent discovery
 
 ---
 
 ## For Maintainers
 
-### Local development verification
+### Local development
 
-```/dev/null/shell.sh#L1-4
+```sh
+source .envrc  # sets LD_LIBRARY_PATH for CUDA/EXLA
 MIX_ENV=test mix deps.get
 MIX_ENV=test mix format --check-formatted
 MIX_ENV=test mix compile --warnings-as-errors
 MIX_ENV=test mix test --color
 ```
 
----
-
 ### Source fallback run (no npm)
 
-```/dev/null/shell.sh#L1-6
-cd ProjectAmp2/graphonomous
+```sh
+cd graphonomous
 mix deps.get
 mix compile --warnings-as-errors
 mix test
@@ -374,51 +347,54 @@ MIX_ENV=prod mix release --overwrite
 _build/prod/rel/graphonomous/bin/graphonomous eval "Graphonomous.CLI.main(System.argv())" --help
 ```
 
----
-
 ### npm package pre-publish smoke test
 
-```/dev/null/shell.sh#L1-6
-cd ProjectAmp2/graphonomous/npm
+```sh
+cd graphonomous/npm
 npm pack
 mkdir -p /tmp/graphonomous-npm-smoke && cd /tmp/graphonomous-npm-smoke
 npm init -y
-npm i /home/travis/ProjectAmp2/graphonomous/npm/graphonomous-0.3.3.tgz
+npm i /path/to/graphonomous/npm/graphonomous-0.4.0.tgz
 npx graphonomous --help
 ```
 
----
-
-### Release + publish flow (high level, manual-first)
+### Release + publish flow
 
 1. Ensure versions align (`mix.exs`, `npm/package.json`, git tag `vX.Y.Z`).
-2. Build release assets locally and upload them to GitHub Release `vX.Y.Z`.
-3. Run `npm publish` locally from `ProjectAmp2/graphonomous/npm`.
-4. Verify with `npm view graphonomous version` and `npx -y graphonomous --help`.
+2. Build release assets locally and upload to GitHub Release `vX.Y.Z`.
+3. Run `npm publish` from `graphonomous/npm`.
+4. Verify: `npm view graphonomous version` and `npx -y graphonomous --help`.
 
-See full operational runbook:
-- `docs/NPM_PUBLISH.md` (manual publish path; no CI token dependency required)
+See `docs/NPM_PUBLISH.md` for the full operational runbook.
 
 ---
 
-### Architecture snapshot
+## Architecture
 
-Supervised services:
-- `Graphonomous.Store`
-- `Graphonomous.Embedder`
-- `Graphonomous.Graph`
-- `Graphonomous.Retriever`
+### Supervised OTP services
+
+- `Graphonomous.Store` — SQLite persistence
+- `Graphonomous.Embedder` — neural embedding (EXLA/ONNX/fallback)
+- `Graphonomous.Graph` — knowledge graph operations
+- `Graphonomous.Retriever` — κ-aware retrieval with cross-encoder reranking
 - `Graphonomous.Orchestrator` — stability-plasticity monitoring, adaptive learning rates
-- `Graphonomous.Learner`
-- `Graphonomous.GoalGraph`
-- `Graphonomous.Consolidator`
+- `Graphonomous.Learner` — outcome and feedback processing
+- `Graphonomous.GoalGraph` — durable intent lifecycle
+- `Graphonomous.Consolidator` — 8-stage idle-time memory maintenance
 
-Storage:
+### MCP server
+
+- **Transport:** stdio (default) or streamable HTTP (`--transport streamable_http --port 4100`)
+- **v2 surface (default):** 5 machines in `lib/graphonomous/mcp/machines/` — each is an `Anubis.Server.Component` with `schema do` parameter validation and `execute/2` dispatch
+- **v1 surface (backward compat):** 29 individual tools in `lib/graphonomous/mcp/`
+- **Resources:** 5 read-only resources in `lib/graphonomous/mcp/resources/`
+
+### Storage
+
 - SQLite tables: `nodes`, `edges`, `outcomes`, `goals`
-- migration tracking: `schema_migrations`
+- Migration tracking: `schema_migrations`
 - ETS hot cache with startup rebuild
-
----
+- HNSW vector index for embedding similarity search
 
 ### Public API (direct module usage)
 
@@ -432,22 +408,31 @@ Primary module: `Graphonomous`
 
 ---
 
-### Documentation map
+## Documentation
 
+- `docs/index.md` — landing/navigation
+- `docs/quickstart.md` — 2–5 minute setup
+- `docs/architecture.md` — internals, OTP supervision, data model
+- `docs/mcp-tools.md` — complete tool/parameter reference
+- `docs/operations.md` — maintenance, consolidation, release workflow
+- `docs/runtime-walkthrough.md` — retrieve → act → store → learn loop walkthrough
 - `docs/BOOTSTRAP.md` — bootstrap + verification
+- `docs/TECHNICAL_DOCUMENTATION.md` — deep-dive internals
 - `docs/ZED.md` — Zed integration details
-- `docs/NPM_PUBLISH.md` — npm publishing and maintenance runbook
-- `docs/skills/` — always-on Graphonomous agent skills pack and bootstrap prompt
-- `npm/README.md` — npm wrapper package usage and overrides
+- `docs/NPM_PUBLISH.md` — npm publishing runbook
+- `docs/skills/` — agent skills reference (18 files mirroring ampersand-plugins + SKILLS.md index)
+- `docs/spec/README.md` — technical specification
+
+Online: [docs.graphonomous.com](https://docs.graphonomous.com)
 
 ---
 
 ## Notes
 
-- EXLA is currently optional to avoid environment-level NIF/CUDA mismatch issues.
+- EXLA is optional — avoids environment-level NIF/CUDA mismatch issues. Use `--embedder-backend fallback` to skip entirely.
 - sqlite-vec extension loading is optional.
 - OpenSentience integration is **not required** to start using Graphonomous.
-- MCP stdio reliability is currently ensured by a vendored `anubis_mcp` dependency patch (`vendor/anubis_mcp`) that fixes decoded message list handling and request-response writes in the STDIO transport path.
+- MCP stdio reliability is ensured by a vendored `anubis_mcp` patch (`vendor/anubis_mcp`) that fixes STDIO transport handling.
 
 ---
 
