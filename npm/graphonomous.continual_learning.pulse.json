@@ -1,0 +1,126 @@
+{
+  "$schema": "https://opensentience.org/schemas/pulse-loop-manifest.v0.1.json",
+  "pulse_protocol_version": "0.1",
+
+  "loop_id": "graphonomous.continual_learning",
+  "loop_name": "Graphonomous Continual Learning Loop",
+  "version": "0.4.1",
+  "owner": "ampersandboxdesign.com",
+  "workspace_scope": "required",
+
+  "description": "Per-turn memory loop that retrieves context, routes by topology, acts on the graph, learns from outcomes, and consolidates during idle. Implements OS-001 (continual learning) and OS-002 (kappa routing).",
+
+  "phases": [
+    {
+      "id": "retrieve_ctx",
+      "kind": "retrieve",
+      "description": "Pull semantic, episodic, and procedural context for the current query.",
+      "inputs":  { "from": "external", "schema": "RetrieveRequest" },
+      "outputs": { "to": "phase:route_topology", "schema": "RetrieveResult" },
+      "idempotent": true,
+      "signature": "blake3(query, workspace_id, k)",
+      "timeout_ms": 500,
+      "on_failure": "retry",
+      "max_retries": 2
+    },
+    {
+      "id": "route_topology",
+      "kind": "route",
+      "description": "Compute kappa over retrieved subgraph; route to act or deliberate.",
+      "inputs":  { "from": "phase:retrieve_ctx", "schema": "RetrieveResult" },
+      "outputs": { "to": "phase:act_store", "schema": "RouteDecision" },
+      "idempotent": true,
+      "invariant": "kappa_routing"
+    },
+    {
+      "id": "act_store",
+      "kind": "act",
+      "description": "Persist the agent's action and outcome envelope.",
+      "inputs":  { "from": "phase:route_topology", "schema": "RouteDecision" },
+      "outputs": { "to": "substrate:memory", "schema": "Mutation" },
+      "idempotent": false,
+      "policy_check": "delegatic.check_policy",
+      "audit_event": "node.created"
+    },
+    {
+      "id": "learn_outcome",
+      "kind": "learn",
+      "description": "Update confidence on causal parent nodes from outcome signal.",
+      "inputs":  { "from": "external|signal:OutcomeSignal", "schema": "OutcomeSignal" },
+      "outputs": { "to": "substrate:memory", "schema": "ConfidenceUpdate" },
+      "idempotent": true,
+      "invariant": "feedback_immutability"
+    },
+    {
+      "id": "consolidate_idle",
+      "kind": "consolidate",
+      "description": "Merge similar nodes and promote across timescales during idle periods.",
+      "inputs":  { "from": "substrate:memory", "schema": "ConsolidationCandidate[]" },
+      "outputs": { "to": "substrate:memory", "schema": "ConsolidationEvent" },
+      "idempotent": true
+    }
+  ],
+
+  "closure": {
+    "from_phase": "consolidate_idle",
+    "to_phase":   "retrieve_ctx",
+    "via":        "substrate:memory",
+    "guarantee":  "eventual"
+  },
+
+  "cadence": {
+    "type":   "event",
+    "params": { "trigger": "agent_query" },
+    "fallback": { "type": "idle", "params": { "min_idle_ms": 60000 } }
+  },
+
+  "nesting": {
+    "parent_loop": null,
+    "inner_loops": [
+      {
+        "loop_id": "graphonomous.deliberate",
+        "trigger": "phase:route_topology when kappa > 0",
+        "wait":    "until_stable"
+      }
+    ]
+  },
+
+  "substrates": {
+    "memory":    "graphonomous://workspace/{ws_id}",
+    "policy":    "delegatic://workspace/{ws_id}",
+    "audit":     "delegatic://workspace/{ws_id}/audit",
+    "auth":      "open_sentience://workspace/{ws_id}",
+    "transport": "mcp",
+    "time":      null
+  },
+
+  "invariants": {
+    "phase_atomicity":       true,
+    "feedback_immutability": true,
+    "append_only_audit":     true,
+    "kappa_routing":         true,
+    "quorum_before_commit":  false,
+    "outcome_grounding":     true,
+    "trace_id_propagation":  true
+  },
+
+  "connections": [
+    {
+      "id": "outcome_to_prism",
+      "emit_phase":     "learn_outcome",
+      "emit_condition": "status in ['success','failure']",
+      "envelope":       "cloudevents.v1",
+      "token":          "OutcomeSignal",
+      "to_loop":        "prism.benchmark",
+      "to_phase":       "observe",
+      "cadence":        "async",
+      "delivery":       "at_least_once"
+    }
+  ],
+
+  "telemetry": {
+    "namespace": "graphonomous",
+    "phase_metrics": ["duration_ms", "input_size", "output_size", "status"],
+    "loop_metrics": ["closure_rate", "iteration_count", "kappa_distribution"]
+  }
+}

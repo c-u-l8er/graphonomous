@@ -1,7 +1,7 @@
 {
   "name": "graphonomous",
-  "version": "0.4.0",
-  "description": "Continual learning MCP server for AI agents — topology-aware knowledge graph with kappa-routing, 28 tools, causal metadata, GraphMemBench 120-scenario suite, and neural embeddings",
+  "version": "0.4.1",
+  "description": "Continual learning MCP server for AI agents — topology-aware knowledge graph with kappa-routing, exposed as 5 loop-phase machines (retrieve/route/act/learn/consolidate), causal metadata, and neural embeddings. One of four MCP servers in the [&] three-protocol stack (box-and-box, graphonomous, os-prism, os-pulse).",
   "private": false,
   "license": "Apache-2.0",
   "author": "Ampersand Box Design <travis@ampersandboxdesign.com> (https://ampersandboxdesign.com)",
@@ -21,6 +21,7 @@
     "bin",
     "scripts",
     "vendor",
+    "graphonomous.continual_learning.pulse.json",
     "README.md"
   ],
   "scripts": {
