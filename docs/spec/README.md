@@ -832,6 +832,56 @@ Managed Graphonomous instances:
 
 ---
 
+## 10.5 PULSE Loop Manifest
+
+Graphonomous is a **PULSE-conforming loop** under OS-010. Its temporal topology is declared in [`/PULSE/manifests/graphonomous.continual_learning.json`](../../../PULSE/manifests/graphonomous.continual_learning.json) against schema `pulse-loop-manifest.v0.1.json`.
+
+**Loop ID:** `graphonomous.continual_learning`
+**Loop name:** Graphonomous Continual Learning Loop
+**Version:** 0.4.0
+**Owner:** graphonomous
+**Workspace scope:** required
+
+**Phases (5 canonical kinds — one per Graphonomous machine):**
+
+| Phase ID | Kind | MCP Machine | Outputs |
+|---|---|---|---|
+| `retrieve_ctx` | `retrieve` | `retrieve` | κ-aware context subgraph + topology signal |
+| `route_topo` | `route` | `route` | Routing decision (`fast` or `deliberate`); inner deliberation loop fires when `kappa > 0` |
+| `act_store` | `act` | `act` | Mutation (store_node, store_edge, manage_goal, …) |
+| `learn_outcome` | `learn` | `learn` | Updated confidence + causal binding (`feedback_immutability`) |
+| `consolidate_idle` | `consolidate` | `consolidate` | Merged/strengthened/pruned graph regions (idle-time) |
+
+**Closure:** `consolidate_idle → retrieve_ctx` via `substrate:memory`, guarantee `eventual`.
+
+**Cadence:**
+- Primary: `event` (any tool invocation)
+- Fallback: `idle` (consolidation)
+
+**Nesting:**
+- Parent loop: `prism.benchmark` (when registered as PRISM-evaluable system)
+- Inner loop: `graphonomous.deliberate` triggered by `kappa > 0`, wait `until_done`
+
+**Substrates:**
+- `memory`: `graphonomous://workspace/{ws_id}` (self)
+- `policy`: `delegatic://workspace/{ws_id}`
+- `audit`: `delegatic://workspace/{ws_id}/audit`
+- `auth`: `open_sentience://workspace/{ws_id}`
+- `transport`: `mcp` (Hermes/Anubis)
+- `time`: `ticktickclock://workspace/{ws_id}` (optional)
+
+**Invariants enabled:** `phase_atomicity`, `feedback_immutability`, `append_only_audit`, `kappa_routing`, `outcome_grounding`, `trace_id_propagation` (`quorum_before_commit` is delegated to inner deliberation loop).
+
+**Cross-loop connections:**
+- `outcome_to_prism` — emits `OutcomeSignal` from `learn_outcome` to `prism.benchmark.observe` via CloudEvents v1, `at_least_once` delivery
+- Optional `consolidation_to_prism` — emits `ConsolidationEvent` from `consolidate_idle` to PRISM diagnostics
+
+**Conformance:** validated against the 12-test PULSE conformance suite. Reference manifest is the canonical example for the PULSE specification.
+
+**Why this matters:** because Graphonomous declares its loop in PULSE, any PRISM-conforming benchmark can drive it without bespoke integration; any other [&] loop can subscribe to `OutcomeSignal` / `ConsolidationEvent` without coupling to Graphonomous internals.
+
+---
+
 ## 11. Dependencies (mix.exs)
 
 ```elixir
