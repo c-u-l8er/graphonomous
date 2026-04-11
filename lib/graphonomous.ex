@@ -36,14 +36,20 @@ defmodule Graphonomous do
   into `value` for ergonomic MCP usage.
   """
   def store_node(attrs) when is_map(attrs) do
-    result =
-      attrs
-      |> normalize_node_attrs()
-      |> Graph.store_node()
-      |> unwrap_ok()
+    content = Map.get(attrs, :content) || Map.get(attrs, "content")
 
-    Attention.notify_graph_mutation()
-    result
+    if is_binary(content) and String.trim(content) != "" do
+      result =
+        attrs
+        |> normalize_node_attrs()
+        |> Graph.store_node()
+        |> unwrap_ok()
+
+      Attention.notify_graph_mutation()
+      result
+    else
+      {:error, :content_required}
+    end
   catch
     :exit, {:timeout, _} ->
       {:error, :timeout}

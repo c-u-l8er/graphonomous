@@ -1,6 +1,6 @@
 {
   "name": "graphonomous",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "Continual learning MCP server for AI agents — topology-aware knowledge graph with kappa-routing, exposed as 5 loop-phase machines (retrieve/route/act/learn/consolidate), causal metadata, and neural embeddings. One of four MCP servers in the [&] three-protocol stack (box-and-box, graphonomous, os-prism, os-pulse).",
   "private": false,
   "license": "Apache-2.0",

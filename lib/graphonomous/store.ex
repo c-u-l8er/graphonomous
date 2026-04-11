@@ -244,6 +244,7 @@ defmodule Graphonomous.Store do
              :ok <- maybe_load_vec_extension(conn, vec_extension_path),
              :ok <- warm_cache_from_db(conn) do
           schedule_access_flush()
+          audit_empty_content_nodes()
           {:ok, %{state | conn: conn}}
         else
           {:error, reason} -> {:stop, {:bootstrap_failed, reason}}
@@ -268,15 +269,25 @@ defmodule Graphonomous.Store do
   end
 
   def handle_call({:insert_node, attrs}, _from, state) do
-    node = build_node(attrs)
+    # Defense-in-depth: reject empty/whitespace/non-binary content at the Store
+    # boundary. Silently persisting empty-content nodes was a memory-loop bug
+    # that broke durable memory across sessions. See
+    # test/store_node_content_validation_test.exs for the regression suite.
+    case validate_insert_content(attrs) do
+      :ok ->
+        node = build_node(attrs)
 
-    with :ok <- persist_node(state.conn, node) do
-      true = :ets.insert(@nodes_table, {node.id, node})
-      # Keep BM25 FTS index in sync
-      maybe_bm25_upsert(node)
-      {:reply, {:ok, node}, state}
-    else
-      {:error, reason} -> {:reply, {:error, reason}, state}
+        with :ok <- persist_node(state.conn, node) do
+          true = :ets.insert(@nodes_table, {node.id, node})
+          # Keep BM25 FTS index in sync
+          maybe_bm25_upsert(node)
+          {:reply, {:ok, node}, state}
+        else
+          {:error, reason} -> {:reply, {:error, reason}, state}
+        end
+
+      {:error, reason} ->
+        {:reply, {:error, {:content_required, reason}}, state}
     end
   end
 
@@ -2378,6 +2389,59 @@ defmodule Graphonomous.Store do
 
   defp map_get(map, key, default \\ nil) when is_map(map) do
     Map.get(map, key, Map.get(map, Atom.to_string(key), default))
+  end
+
+  # Post-warmup audit: scan the ETS cache for empty-content nodes and log a
+  # loud warning if any are found. These are zombie remnants of the 2026-04-11
+  # empty-content bug (now fixed). Surfacing them at boot makes regressions
+  # loud instead of silent.
+  defp audit_empty_content_nodes do
+    empty =
+      @nodes_table
+      |> :ets.tab2list()
+      |> Enum.filter(fn {_id, node} ->
+        c = Map.get(node, :content)
+        is_nil(c) or (is_binary(c) and String.trim(c) == "")
+      end)
+
+    case empty do
+      [] ->
+        :ok
+
+      nodes ->
+        require Logger
+
+        Logger.warning(
+          "Graphonomous.Store: #{length(nodes)} empty-content zombie node(s) detected " <>
+            "in the graph (legacy of the 2026-04-11 store_node bug). Run " <>
+            "`mix graphonomous.cleanup_empty_nodes --delete` to remove them. " <>
+            "Sample IDs: #{nodes |> Enum.take(5) |> Enum.map(fn {id, _} -> id end) |> Enum.join(", ")}"
+        )
+
+        :ok
+    end
+  rescue
+    _ -> :ok
+  end
+
+  # Defense-in-depth content gate for the :insert_node write path.
+  # See test/store_node_content_validation_test.exs for the regression suite.
+  defp validate_insert_content(attrs) do
+    content = map_get(attrs, :content, nil)
+
+    cond do
+      is_nil(content) ->
+        {:error, "content is required"}
+
+      not is_binary(content) ->
+        {:error, "content must be a string, got: #{inspect(content)}"}
+
+      String.trim(content) == "" ->
+        {:error, "content must not be empty or whitespace-only"}
+
+      true ->
+        :ok
+    end
   end
 
   defp id(prefix) do

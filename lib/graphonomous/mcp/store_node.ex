@@ -24,8 +24,29 @@ defmodule Graphonomous.MCP.StoreNode do
 
   @impl true
   def execute(params, frame) do
+    raw_content = get_param(params, :content)
+
+    case validate_content(raw_content) do
+      {:error, reason} ->
+        payload = %{
+          status: "error",
+          error: "content_required",
+          reason: reason
+        }
+
+        {:reply,
+         Anubis.Server.Response.tool()
+         |> Anubis.Server.Response.structured(payload)
+         |> Map.put(:isError, true), frame}
+
+      {:ok, content} ->
+        do_execute(content, params, frame)
+    end
+  end
+
+  defp do_execute(content, params, frame) do
     attrs = %{
-      content: get_param(params, :content),
+      content: content,
       node_type: normalize_node_type(get_param(params, :node_type, "semantic")),
       confidence: normalize_confidence(get_param(params, :confidence, 0.5)),
       source: get_param(params, :source),
@@ -74,6 +95,21 @@ defmodule Graphonomous.MCP.StoreNode do
   defp get_param(params, key, default \\ nil) when is_map(params) and is_atom(key) do
     Map.get(params, key, Map.get(params, Atom.to_string(key), default))
   end
+
+  # Reject nil/non-binary/empty/whitespace-only content at the MCP boundary.
+  # Silently storing empty nodes was a bug that broke durable memory across
+  # sessions — see test/store_node_content_validation_test.exs.
+  defp validate_content(nil), do: {:error, "content is required and must be a non-empty string"}
+
+  defp validate_content(content) when is_binary(content) do
+    case String.trim(content) do
+      "" -> {:error, "content must not be empty or whitespace-only"}
+      _ -> {:ok, content}
+    end
+  end
+
+  defp validate_content(other),
+    do: {:error, "content must be a string, got: #{inspect(other)}"}
 
   defp normalize_node_type(type) when is_atom(type), do: normalize_node_type(Atom.to_string(type))
 
