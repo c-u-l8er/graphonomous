@@ -1,11 +1,14 @@
 _build/
 deps/
+dist/
 .elixir_ls/
 .git/
 .gitignore
 *.db
 *.db-*
 *.db.*
+*.hnsw
+*.fts
 priv/models/
 priv/beam/
 priv/longmemeval/
@@ -13,6 +16,10 @@ priv/graphmembench/
 priv/graphonomous.db
 priv/graphonomous.db-*
 test/
+benchmark_results/
+tmp/
+scripts/
+prompts/
 .envrc
 .env
 cover/
