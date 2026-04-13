@@ -5,7 +5,11 @@ deps/
 .gitignore
 *.db
 *.db-*
+*.db.*
 priv/models/
+priv/beam/
+priv/longmemeval/
+priv/graphmembench/
 priv/graphonomous.db
 priv/graphonomous.db-*
 test/
