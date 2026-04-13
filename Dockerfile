@@ -1,6 +1,8 @@
 FROM elixir:1.18-slim AS build
 
-RUN apt-get update -y && apt-get install -y build-essential git && apt-get clean
+RUN apt-get update -y && apt-get install -y build-essential git curl && apt-get clean
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal
+ENV PATH="/root/.cargo/bin:${PATH}"
 
 WORKDIR /app
 
