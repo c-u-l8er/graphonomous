@@ -47,6 +47,10 @@ defmodule Graphonomous.MixProject do
       # Also used for cross-encoder reranking.
       {:ortex, "~> 0.1.10"},
 
+      # HTTP transport (standalone Streamable HTTP server for Fly.io deploy)
+      {:plug, "~> 1.18"},
+      {:bandit, "~> 1.6"},
+
       # Utilities
       {:jason, "~> 1.4"},
       {:telemetry, "~> 1.2"},

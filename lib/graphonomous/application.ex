@@ -5,25 +5,57 @@ defmodule Graphonomous.Application do
 
   @impl true
   def start(_type, _args) do
-    children = [
-      {Anubis.Server.Registry, []},
-      {Graphonomous.Store, store_opts()},
-      {Graphonomous.Embedder, embedder_opts()},
-      {Graphonomous.HNSWIndex, hnsw_opts()},
-      {Graphonomous.Graph, []},
-      {Graphonomous.BM25Index, []},
-      {Graphonomous.Reranker, reranker_opts()},
-      {Graphonomous.Retriever, []},
-      {Graphonomous.Orchestrator, orchestrator_opts()},
-      {Graphonomous.Learner, []},
-      {Graphonomous.GoalGraph, []},
-      {Graphonomous.Attention, []},
-      {Graphonomous.Consolidator, consolidator_opts()},
-      {Graphonomous.OpenSentience.HarnessSupervisor, []}
-    ]
+    children =
+      [
+        {Anubis.Server.Registry, []},
+        {Graphonomous.Store, store_opts()},
+        {Graphonomous.Embedder, embedder_opts()},
+        {Graphonomous.HNSWIndex, hnsw_opts()},
+        {Graphonomous.Graph, []},
+        {Graphonomous.BM25Index, []},
+        {Graphonomous.Reranker, reranker_opts()},
+        {Graphonomous.Retriever, []},
+        {Graphonomous.Orchestrator, orchestrator_opts()},
+        {Graphonomous.Learner, []},
+        {Graphonomous.GoalGraph, []},
+        {Graphonomous.Attention, []},
+        {Graphonomous.Consolidator, consolidator_opts()},
+        {Graphonomous.OpenSentience.HarnessSupervisor, []}
+      ] ++ http_children()
 
     opts = [strategy: :one_for_one, name: Graphonomous.Supervisor]
     Supervisor.start_link(children, opts)
+  end
+
+  # When GRAPHONOMOUS_TRANSPORT=http, start MCP over Streamable HTTP + Bandit.
+  defp http_children do
+    if System.get_env("GRAPHONOMOUS_TRANSPORT") == "http" do
+      port = parse_port(System.get_env("GRAPHONOMOUS_PORT"), 4100)
+
+      [
+        %{
+          id: :graphonomous_mcp_http,
+          start:
+            {Anubis.Server.Supervisor, :start_link,
+             [
+               Graphonomous.MCP.Machines.Server,
+               [transport: {:streamable_http, start: true}, request_timeout: 120_000]
+             ]}
+        },
+        {Bandit, plug: Graphonomous.HttpRouter, port: port, scheme: :http}
+      ]
+    else
+      []
+    end
+  end
+
+  defp parse_port(nil, default), do: default
+
+  defp parse_port(value, default) do
+    case Integer.parse(value) do
+      {port, ""} when port > 0 -> port
+      _ -> default
+    end
   end
 
   defp store_opts do

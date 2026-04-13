@@ -1,0 +1,33 @@
+app = "graphonomous-mcp"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  MIX_ENV = "prod"
+  GRAPHONOMOUS_TRANSPORT = "http"
+  GRAPHONOMOUS_PORT = "4100"
+  GRAPHONOMOUS_DB_PATH = "/data/graphonomous.db"
+  GRAPHONOMOUS_EMBEDDER_BACKEND = "fallback"
+  LOG_LEVEL = "info"
+
+[http_service]
+  internal_port = 4100
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [http_service.concurrency]
+    type = "connections"
+    hard_limit = 100
+    soft_limit = 80
+
+[[vm]]
+  size = "shared-cpu-2x"
+  memory = "1024mb"
+
+[mounts]
+  source = "graphonomous_data"
+  destination = "/data"

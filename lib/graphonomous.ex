@@ -21,6 +21,16 @@ defmodule Graphonomous do
   @allowed_node_types [:episodic, :semantic, :procedural, :temporal, :outcome, :goal]
   @allowed_statuses [:success, :partial_success, :failure, :timeout]
 
+  @doc "Returns the application version string."
+  @spec version() :: String.t()
+  def version do
+    case Application.spec(:graphonomous, :vsn) do
+      vsn when is_list(vsn) -> List.to_string(vsn)
+      vsn when is_binary(vsn) -> vsn
+      _ -> "0.0.0"
+    end
+  end
+
   @doc """
   Store a knowledge node.
 
