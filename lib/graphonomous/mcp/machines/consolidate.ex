@@ -88,6 +88,12 @@ defmodule Graphonomous.MCP.Machines.Consolidate do
   end
 
   defp dispatch("traverse", params, frame) do
+    # Map start_id → node_id (v1 tool expects node_id)
+    params =
+      if is_nil(p(params, :node_id)) and not is_nil(p(params, :start_id)),
+        do: Map.put(params, "node_id", p(params, :start_id)),
+        else: params
+
     Graphonomous.MCP.GraphTraverse.execute(params, frame)
   end
 

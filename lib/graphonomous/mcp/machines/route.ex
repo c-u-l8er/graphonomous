@@ -45,6 +45,16 @@ defmodule Graphonomous.MCP.Machines.Route do
 
     # -- review_goal action --
     field(:goal_id, :string, description: "Goal ID to review coverage for (review_goal)")
+
+    field(:signal, :any,
+      description:
+        "Coverage signal as a JSON object for review_goal. Example: {\"retrieved_nodes\": [...], \"outcomes\": [...]}"
+    )
+
+    field(:apply_decision, :any,
+      description:
+        "Whether to apply decision -> status transition policy (review_goal, default: true)"
+    )
   end
 
   @impl true

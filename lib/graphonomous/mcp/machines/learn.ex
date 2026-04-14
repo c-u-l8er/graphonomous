@@ -69,17 +69,28 @@ defmodule Graphonomous.MCP.Machines.Learn do
     # -- from_feedback --
     field(:node_id, :string, description: "Target node ID (from_feedback, contradictions)")
 
-    field(:feedback_type, :string,
+    field(:feedback, :string,
       description: "Feedback type: positive | negative | correction (from_feedback)"
+    )
+
+    field(:feedback_type, :string,
+      description: "Alias for feedback (deprecated, use feedback instead)"
     )
 
     field(:correction, :string,
       description: "Corrected content when feedback_type is correction (from_feedback)"
     )
 
-    # -- detect_novelty --
+    # -- detect_novelty / from_interaction --
     field(:content, :string,
       description: "Content to check for novelty (detect_novelty, from_interaction)"
+    )
+
+    # -- from_interaction --
+    field(:user_message, :string, description: "The user's message/query (from_interaction)")
+
+    field(:model_response, :string,
+      description: "The model's response to the user (from_interaction)"
     )
 
     field(:threshold, :number,
@@ -120,18 +131,47 @@ defmodule Graphonomous.MCP.Machines.Learn do
   end
 
   defp dispatch("from_feedback", params, frame) do
+    # Map feedback_type → feedback for backward compatibility
+    params =
+      if is_nil(p(params, :feedback)) and not is_nil(p(params, :feedback_type)),
+        do: Map.put(params, "feedback", p(params, :feedback_type)),
+        else: params
+
     Graphonomous.MCP.LearnFromFeedback.execute(params, frame)
   end
 
   defp dispatch("detect_novelty", params, frame) do
+    require Logger
+    Logger.warning("[learn:detect_novelty] params keys: #{inspect(Map.keys(params))}")
+    Logger.warning("[learn:detect_novelty] content=#{inspect(p(params, :content))} query=#{inspect(p(params, :query))}")
+
+    # Map content → query (v1 tool requires query)
+    params =
+      if is_nil(p(params, :query)) and not is_nil(p(params, :content)),
+        do: Map.put(params, "query", p(params, :content)),
+        else: params
+
+    Logger.warning("[learn:detect_novelty] after mapping query=#{inspect(p(params, :query))}")
     Graphonomous.MCP.LearnDetectNovelty.execute(params, frame)
   end
 
   defp dispatch("from_interaction", params, frame) do
+    # Map content → user_message if user_message not provided
+    params =
+      if is_nil(p(params, :user_message)) and not is_nil(p(params, :content)),
+        do: Map.put(params, "user_message", p(params, :content)),
+        else: params
+
     Graphonomous.MCP.LearnFromInteraction.execute(params, frame)
   end
 
   defp dispatch("contradictions", params, frame) do
+    # Map query → content (v1 tool expects content, not query)
+    params =
+      if is_nil(p(params, :content)) and not is_nil(p(params, :query)),
+        do: Map.put(params, "content", p(params, :query)),
+        else: params
+
     Graphonomous.MCP.BeliefContradictions.execute(params, frame)
   end
 
