@@ -19,8 +19,7 @@ defmodule Graphonomous.Application do
         {Graphonomous.Learner, []},
         {Graphonomous.GoalGraph, []},
         {Graphonomous.Attention, []},
-        {Graphonomous.Consolidator, consolidator_opts()},
-        {Graphonomous.OpenSentience.HarnessSupervisor, []}
+        {Graphonomous.Consolidator, consolidator_opts()}
       ] ++ http_children()
 
     opts = [strategy: :one_for_one, name: Graphonomous.Supervisor]

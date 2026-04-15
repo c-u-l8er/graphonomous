@@ -51,6 +51,9 @@ defmodule Graphonomous.MixProject do
       {:plug, "~> 1.18"},
       {:bandit, "~> 1.6"},
 
+      # OS-008 Agent Harness Protocol
+      {:open_sentience, github: "c-u-l8er/opensentience.org"},
+
       # Utilities
       {:jason, "~> 1.4"},
       {:telemetry, "~> 1.2"},
