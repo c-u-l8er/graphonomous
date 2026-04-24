@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.4.3] — 2026-04-21
+
+### Added — OS-011 `&memory.episodic.store/replay`
+
+- **`act(action: "store_trace")`** — persists a full OS-011 `InteractionTrace` (trace header + ordered edges) in episodic memory. Validates the payload against the canonical OS-011 §4 schema before writing.
+- **`retrieve(action: "replay")`** — fetches a trace (by `trace_id` or by initial `state_hash` for procedural cluster lookup) and returns a replay manifest ready for a `&body.*` provider to execute. Destructive traces are flagged with `re_authorization_required: true` per OS-011 §4.4.
+- **New types:** `Graphonomous.Types.InteractionTrace` and nested `Edge` — validating parsers for both JSON strings and decoded maps.
+- **New tables:** `interaction_traces` + `trace_edges` (migration `2026_04_21_interaction_traces_os011`), indexed on `body_subtype`, `initial_state_hash`, `started_at`, and `trace_edges.state_before` for procedural clustering lookups.
+- **19 new tests** covering schema validation, Store CRUD, machine routing, destructive-action flagging, and state-hash lookups. Total: **573 tests, 0 failures** (was 554).
+
+### Impact
+
+- Unblocks OS-011 conformance tests 7 (`trace_edge_complete`), 9–10 (replay state-divergence), and 11 (re-authorization) for downstream `&body.*` providers.
+- Enables website/OS FSM emergence, skill crystallization (Graphonomous → FleetPrompt `SkillCandidate`), and cross-machine replay — the core of the dark-factory closed loop.
+- Step 2 of the 7-step dark-factory loop (`Records InteractionTrace`) moves from ❌ to ✅ in `STACK_COMPLETION.md`.
+
 ## [0.3.3] — 2026-04-06
 
 ### Added

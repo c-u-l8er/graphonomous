@@ -12,22 +12,35 @@ defmodule Graphonomous.MCP.Machines.Retrieve do
   - `coverage`       — epistemic coverage assessment (act/learn/escalate)
   - `trace_evidence` — weighted Dijkstra evidence path between nodes
   - `frontier`       — Wilson interval uncertainty analysis
+  - `replay`         — OS-011 &memory.episodic.replay: fetch an InteractionTrace
+                       by trace_id or by initial state_hash for body-provider replay
 
   Replaces: retrieve_context, retrieve_episodic, retrieve_procedural,
-            coverage_query, trace_evidence_path, epistemic_frontier
+            coverage_query, trace_evidence_path, epistemic_frontier, replay_trace
   """
 
   use Anubis.Server.Component, type: :tool
 
   alias Anubis.Server.Response
 
-  @valid_actions ~w(context episodic procedural coverage trace_evidence frontier)
+  @valid_actions ~w(context episodic procedural coverage trace_evidence frontier replay)
 
   schema do
     field(:action, :string,
       required: true,
       description:
-        "Retrieval action: context | episodic | procedural | coverage | trace_evidence | frontier"
+        "Retrieval action: context | episodic | procedural | coverage | trace_evidence | frontier | replay"
+    )
+
+    # -- replay action (OS-011 &memory.episodic.replay) --
+    field(:trace_id, :string, description: "Trace id for exact replay lookup (replay)")
+
+    field(:state_hash, :string,
+      description: "Initial state hash for procedural cluster lookup (replay)"
+    )
+
+    field(:body_subtype, :string,
+      description: "Filter by &body subtype e.g. \"browser\" | \"os\" (replay)"
     )
 
     # -- context action --
@@ -138,6 +151,10 @@ defmodule Graphonomous.MCP.Machines.Retrieve do
 
   defp dispatch("frontier", params, frame) do
     Graphonomous.MCP.EpistemicFrontier.execute(params, frame)
+  end
+
+  defp dispatch("replay", params, frame) do
+    Graphonomous.MCP.ReplayTrace.execute(params, frame)
   end
 
   # -- Helpers --

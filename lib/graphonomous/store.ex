@@ -213,6 +213,39 @@ defmodule Graphonomous.Store do
 
   def rebuild_cache, do: GenServer.call(__MODULE__, :rebuild_cache, @write_timeout_ms)
 
+  ## Interaction Traces (OS-011 &memory.episodic)
+
+  @doc """
+  Persist a full `InteractionTrace` (trace + ordered edges).
+
+  `trace` must be a `%Graphonomous.Types.InteractionTrace{}`. The trace
+  and all its edges are written atomically; on failure no rows are left
+  behind.
+  """
+  def insert_trace(%Graphonomous.Types.InteractionTrace{} = trace),
+    do: GenServer.call(__MODULE__, {:insert_trace, trace}, @write_timeout_ms)
+
+  @doc "Fetch a trace (including ordered edges) by `trace_id`."
+  def get_trace(trace_id) when is_binary(trace_id),
+    do: GenServer.call(__MODULE__, {:get_trace, trace_id})
+
+  @doc """
+  List traces matching the given filters (all optional):
+    * `:body_subtype` — `"browser"` | `"os"` | ...
+    * `:outcome`      — `"success"` | ...
+    * `:initial_state_hash` — exact-match prefix for procedural clustering
+    * `:limit`        — max rows (default 50)
+
+  Traces are returned without their edges for listing efficiency.
+  Use `get_trace/1` to hydrate the full edge sequence.
+  """
+  def list_traces(filters \\ %{}) when is_map(filters),
+    do: GenServer.call(__MODULE__, {:list_traces, filters})
+
+  @doc "Delete a trace and all its edges."
+  def delete_trace(trace_id) when is_binary(trace_id),
+    do: GenServer.call(__MODULE__, {:delete_trace, trace_id}, @write_timeout_ms)
+
   ## GenServer
 
   @impl true
@@ -776,6 +809,38 @@ defmodule Graphonomous.Store do
     _ = execute_prepared(state.conn, "DELETE FROM entities WHERE id = ?;", [entity_id])
 
     {:reply, :ok, state}
+  end
+
+  ## Interaction Trace handle_calls (OS-011 &memory.episodic)
+
+  def handle_call({:insert_trace, trace}, _from, state) do
+    case persist_trace(state.conn, trace) do
+      :ok -> {:reply, {:ok, trace}, state}
+      {:error, reason} -> {:reply, {:error, reason}, state}
+    end
+  end
+
+  def handle_call({:get_trace, trace_id}, _from, state) do
+    {:reply, hydrate_trace(state.conn, trace_id), state}
+  end
+
+  def handle_call({:list_traces, filters}, _from, state) do
+    {:reply, do_list_traces(state.conn, filters), state}
+  end
+
+  def handle_call({:delete_trace, trace_id}, _from, state) do
+    # ON DELETE CASCADE on trace_edges handles the edges row cleanup.
+    reply =
+      case execute_prepared(
+             state.conn,
+             "DELETE FROM interaction_traces WHERE trace_id = ?;",
+             [trace_id]
+           ) do
+        :ok -> :ok
+        {:error, reason} -> {:error, reason}
+      end
+
+    {:reply, reply, state}
   end
 
   # P2-L8: Batch increment_access — update ETS immediately, defer SQLite persist
@@ -1446,6 +1511,47 @@ defmodule Graphonomous.Store do
          """,
          "CREATE INDEX IF NOT EXISTS idx_enl_entity ON entity_node_links(entity_id);",
          "CREATE INDEX IF NOT EXISTS idx_enl_node ON entity_node_links(node_id);"
+       ]},
+      {"2026_04_21_interaction_traces_os011",
+       [
+         """
+         CREATE TABLE IF NOT EXISTS interaction_traces (
+           trace_id TEXT PRIMARY KEY,
+           body_subtype TEXT NOT NULL,
+           provider TEXT,
+           agent_id TEXT,
+           started_at TEXT NOT NULL,
+           ended_at TEXT,
+           goal TEXT,
+           outcome TEXT NOT NULL DEFAULT 'success',
+           environment TEXT NOT NULL DEFAULT '{}',
+           metadata TEXT NOT NULL DEFAULT '{}',
+           initial_state_hash TEXT,
+           edge_count INTEGER NOT NULL DEFAULT 0,
+           created_at TEXT NOT NULL
+         );
+         """,
+         """
+         CREATE TABLE IF NOT EXISTS trace_edges (
+           trace_id TEXT NOT NULL REFERENCES interaction_traces(trace_id) ON DELETE CASCADE,
+           edge_id INTEGER NOT NULL,
+           state_before TEXT NOT NULL,
+           state_after TEXT NOT NULL,
+           typed_action TEXT NOT NULL,
+           latency_ms INTEGER,
+           outcome_status TEXT NOT NULL DEFAULT 'success',
+           observed_outcome TEXT,
+           authorization TEXT,
+           provenance TEXT NOT NULL DEFAULT '{}',
+           surprise_magnitude REAL,
+           surprise_kind TEXT,
+           PRIMARY KEY (trace_id, edge_id)
+         );
+         """,
+         "CREATE INDEX IF NOT EXISTS idx_traces_subtype ON interaction_traces(body_subtype);",
+         "CREATE INDEX IF NOT EXISTS idx_traces_initial_state_hash ON interaction_traces(initial_state_hash);",
+         "CREATE INDEX IF NOT EXISTS idx_traces_started_at ON interaction_traces(started_at);",
+         "CREATE INDEX IF NOT EXISTS idx_trace_edges_state_before ON trace_edges(state_before);"
        ]}
     ]
   end
@@ -2028,6 +2134,271 @@ defmodule Graphonomous.Store do
       _ -> goals
     end
   end
+
+  ## Interaction Traces — private helpers (OS-011)
+
+  defp persist_trace(conn, %Graphonomous.Types.InteractionTrace{} = trace) do
+    alias Graphonomous.Types.InteractionTrace, as: IT
+
+    trace_params = [
+      trace.trace_id,
+      trace.body_subtype,
+      trace.provider,
+      trace.agent_id,
+      iso8601(trace.started_at),
+      nullable_iso8601(trace.ended_at),
+      trace.goal,
+      Atom.to_string(trace.outcome),
+      json_encode(trace.environment),
+      json_encode(trace.metadata),
+      IT.initial_state_hash(trace),
+      length(trace.edges),
+      iso8601(DateTime.utc_now())
+    ]
+
+    trace_sql = """
+    INSERT OR REPLACE INTO interaction_traces (
+      trace_id, body_subtype, provider, agent_id, started_at, ended_at,
+      goal, outcome, environment, metadata, initial_state_hash, edge_count, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+    """
+
+    with :ok <- execute_prepared(conn, trace_sql, trace_params),
+         # Clear prior edges on replace so we never mix old+new
+         :ok <-
+           execute_prepared(
+             conn,
+             "DELETE FROM trace_edges WHERE trace_id = ?;",
+             [trace.trace_id]
+           ),
+         :ok <- persist_trace_edges(conn, trace.trace_id, trace.edges) do
+      :ok
+    end
+  end
+
+  defp persist_trace_edges(_conn, _trace_id, []), do: :ok
+
+  defp persist_trace_edges(conn, trace_id, edges) do
+    sql = """
+    INSERT INTO trace_edges (
+      trace_id, edge_id, state_before, state_after, typed_action,
+      latency_ms, outcome_status, observed_outcome, authorization,
+      provenance, surprise_magnitude, surprise_kind
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+    """
+
+    Enum.reduce_while(edges, :ok, fn edge, :ok ->
+      params = [
+        trace_id,
+        edge.edge_id,
+        edge.state_before,
+        edge.state_after,
+        json_encode(edge.typed_action),
+        edge.latency_ms,
+        Atom.to_string(edge.outcome_status),
+        nullable_json(edge.observed_outcome),
+        nullable_json(edge.authorization),
+        json_encode(edge.provenance),
+        edge.surprise_magnitude,
+        edge.surprise_kind
+      ]
+
+      case execute_prepared(conn, sql, params) do
+        :ok -> {:cont, :ok}
+        {:error, reason} -> {:halt, {:error, reason}}
+      end
+    end)
+  end
+
+  defp hydrate_trace(conn, trace_id) do
+    trace_sql = """
+    SELECT trace_id, body_subtype, provider, agent_id, started_at, ended_at,
+           goal, outcome, environment, metadata, initial_state_hash, edge_count
+    FROM interaction_traces
+    WHERE trace_id = ?;
+    """
+
+    with {:ok, [row]} <- select_all(conn, trace_sql, [trace_id]),
+         {:ok, edges} <- select_trace_edges(conn, trace_id) do
+      {:ok, row_to_trace(row, edges)}
+    else
+      {:ok, []} -> {:error, :not_found}
+      {:error, _} = err -> err
+    end
+  end
+
+  defp select_trace_edges(conn, trace_id) do
+    sql = """
+    SELECT edge_id, state_before, state_after, typed_action, latency_ms,
+           outcome_status, observed_outcome, authorization, provenance,
+           surprise_magnitude, surprise_kind
+    FROM trace_edges
+    WHERE trace_id = ?
+    ORDER BY edge_id ASC;
+    """
+
+    case select_all(conn, sql, [trace_id]) do
+      {:ok, rows} -> {:ok, Enum.map(rows, &row_to_edge/1)}
+      {:error, _} = err -> err
+    end
+  end
+
+  defp do_list_traces(conn, filters) do
+    {where, params} = build_trace_where(filters)
+    limit = map_get(filters, :limit, 50) |> normalize_positive_limit(50)
+
+    sql = """
+    SELECT trace_id, body_subtype, provider, agent_id, started_at, ended_at,
+           goal, outcome, environment, metadata, initial_state_hash, edge_count
+    FROM interaction_traces
+    #{where}
+    ORDER BY started_at DESC
+    LIMIT #{limit};
+    """
+
+    case select_all(conn, sql, params) do
+      {:ok, rows} -> {:ok, Enum.map(rows, &row_to_trace(&1, []))}
+      {:error, _} = err -> err
+    end
+  end
+
+  defp build_trace_where(filters) do
+    clauses =
+      [
+        {map_get(filters, :body_subtype, nil), "body_subtype = ?"},
+        {map_get(filters, :outcome, nil), "outcome = ?"},
+        {map_get(filters, :initial_state_hash, nil), "initial_state_hash = ?"}
+      ]
+      |> Enum.filter(fn {v, _} -> is_binary(v) and v != "" end)
+
+    case clauses do
+      [] ->
+        {"", []}
+
+      list ->
+        where = "WHERE " <> Enum.map_join(list, " AND ", fn {_, frag} -> frag end)
+        params = Enum.map(list, fn {v, _} -> v end)
+        {where, params}
+    end
+  end
+
+  defp normalize_positive_limit(v, _default) when is_integer(v) and v > 0 and v <= 1000, do: v
+  defp normalize_positive_limit(_, default), do: default
+
+  defp row_to_trace(
+         [
+           trace_id,
+           body_subtype,
+           provider,
+           agent_id,
+           started_at,
+           ended_at,
+           goal,
+           outcome,
+           environment_json,
+           metadata_json,
+           initial_state_hash,
+           edge_count
+         ],
+         edges
+       ) do
+    %Graphonomous.Types.InteractionTrace{
+      trace_id: to_s(trace_id),
+      body_subtype: to_s(body_subtype),
+      provider: to_s(provider),
+      agent_id: to_s(agent_id),
+      started_at: to_s(started_at),
+      ended_at: to_s(ended_at),
+      goal: to_s(goal),
+      outcome: to_outcome_atom(to_s(outcome)),
+      environment: decode_json_map(environment_json),
+      metadata:
+        decode_json_map(metadata_json)
+        |> Map.put_new("edge_count", edge_count)
+        |> Map.put_new("initial_state_hash", to_s(initial_state_hash)),
+      edges: edges
+    }
+  end
+
+  defp row_to_edge([
+         edge_id,
+         state_before,
+         state_after,
+         typed_action_json,
+         latency_ms,
+         outcome_status,
+         observed_outcome_json,
+         authorization_json,
+         provenance_json,
+         surprise_magnitude,
+         surprise_kind
+       ]) do
+    %Graphonomous.Types.InteractionTrace.Edge{
+      edge_id: to_i(edge_id),
+      state_before: to_s(state_before),
+      state_after: to_s(state_after),
+      typed_action: decode_json_map(typed_action_json),
+      latency_ms: to_i(latency_ms),
+      outcome_status: to_edge_status_atom(to_s(outcome_status)),
+      observed_outcome: decode_json_nullable(observed_outcome_json),
+      authorization: decode_json_nullable(authorization_json),
+      provenance: decode_json_map(provenance_json),
+      surprise_magnitude: to_f(surprise_magnitude),
+      surprise_kind: to_s(surprise_kind)
+    }
+  end
+
+  defp to_s(nil), do: nil
+  defp to_s(v) when is_binary(v), do: v
+  defp to_s(v), do: to_string(v)
+
+  defp to_i(nil), do: nil
+  defp to_i(v) when is_integer(v), do: v
+  defp to_i(v) when is_binary(v), do: String.to_integer(v)
+  defp to_i(_), do: nil
+
+  defp to_f(nil), do: nil
+  defp to_f(v) when is_float(v), do: v
+  defp to_f(v) when is_integer(v), do: v * 1.0
+  defp to_f(_), do: nil
+
+  defp decode_json_map(nil), do: %{}
+  defp decode_json_map(""), do: %{}
+
+  defp decode_json_map(s) when is_binary(s) do
+    case Jason.decode(s) do
+      {:ok, m} when is_map(m) -> m
+      _ -> %{}
+    end
+  end
+
+  defp decode_json_map(_), do: %{}
+
+  defp decode_json_nullable(nil), do: nil
+  defp decode_json_nullable(""), do: nil
+
+  defp decode_json_nullable(s) when is_binary(s) do
+    case Jason.decode(s) do
+      {:ok, v} -> v
+      _ -> nil
+    end
+  end
+
+  defp decode_json_nullable(_), do: nil
+
+  defp nullable_json(nil), do: nil
+  defp nullable_json(v), do: json_encode(v)
+
+  defp to_outcome_atom("partial"), do: :partial
+  defp to_outcome_atom("failure"), do: :failure
+  defp to_outcome_atom("aborted"), do: :aborted
+  defp to_outcome_atom(_), do: :success
+
+  defp to_edge_status_atom("partial"), do: :partial
+  defp to_edge_status_atom("failure"), do: :failure
+  defp to_edge_status_atom("blocked"), do: :blocked
+  defp to_edge_status_atom("timeout"), do: :timeout
+  defp to_edge_status_atom(_), do: :success
 
   ## Utils
 

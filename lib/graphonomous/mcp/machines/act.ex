@@ -8,6 +8,7 @@ defmodule Graphonomous.MCP.Machines.Act do
   Actions:
   - `store_node`     — store a knowledge node
   - `store_edge`     — store a relationship edge
+  - `store_trace`    — store an OS-011 InteractionTrace (&memory.episodic.store)
   - `delete_node`    — remove a node
   - `manage_edge`    — CRUD on edges
   - `manage_goal`    — goal CRUD + lifecycle transitions
@@ -16,7 +17,7 @@ defmodule Graphonomous.MCP.Machines.Act do
   - `forget_policy`  — budget-aware priority pruning
   - `gdpr_erase`     — hard delete with audit trail
 
-  Replaces: store_node, store_edge, delete_node, manage_edge,
+  Replaces: store_node, store_edge, store_trace, delete_node, manage_edge,
             manage_goal, belief_revise, forget_node, forget_by_policy, gdpr_erase
   """
 
@@ -25,7 +26,7 @@ defmodule Graphonomous.MCP.Machines.Act do
   alias Anubis.Server.Response
 
   @valid_actions ~w(
-    store_node store_edge delete_node manage_edge
+    store_node store_edge store_trace delete_node manage_edge
     manage_goal belief_revise
     forget_node forget_policy gdpr_erase
   )
@@ -34,7 +35,12 @@ defmodule Graphonomous.MCP.Machines.Act do
     field(:action, :string,
       required: true,
       description:
-        "Mutation action: store_node | store_edge | delete_node | manage_edge | manage_goal | belief_revise | forget_node | forget_policy | gdpr_erase"
+        "Mutation action: store_node | store_edge | store_trace | delete_node | manage_edge | manage_goal | belief_revise | forget_node | forget_policy | gdpr_erase"
+    )
+
+    # -- store_trace (OS-011 &memory.episodic.store) --
+    field(:interaction_trace, :string,
+      description: "InteractionTrace as JSON string or object (store_trace). See OS-011 §4."
     )
 
     # -- store_node --
@@ -124,6 +130,10 @@ defmodule Graphonomous.MCP.Machines.Act do
 
   defp dispatch("store_edge", params, frame) do
     Graphonomous.MCP.StoreEdge.execute(params, frame)
+  end
+
+  defp dispatch("store_trace", params, frame) do
+    Graphonomous.MCP.StoreTrace.execute(params, frame)
   end
 
   defp dispatch("delete_node", params, frame) do
