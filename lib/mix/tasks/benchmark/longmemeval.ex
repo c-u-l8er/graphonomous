@@ -1239,7 +1239,36 @@ defmodule Mix.Tasks.Benchmark.Longmemeval do
         Enum.map(filtered, fn c -> Map.put(c, :q_relevance, 0.0) end)
       end
 
-    format_longmemeval_context(filtered, ability)
+    # Cap distilled chunks by ability to bound judge-prompt size (and latency).
+    # Without this, multi_session retrievals (up to ~60 results with 2-hop
+    # expansion) were pushing the generator prompt to ~120KB and taking 2-3min
+    # per question on Gemma-class models via OpenRouter.
+    #
+    # IMPORTANT: sort by retriever `score` (which already combines ANN+BM25+
+    # cross-encoder+entity+session-diversification) rather than raw q_relevance
+    # (naive lexical overlap). Sorting by q_relevance first makes "which came
+    # first, X or Y?" questions drop the Y chunks because X naturally lexically
+    # dominates the question. q_relevance stays as a secondary tiebreaker only.
+    #
+    # Caps are sized for models with ≥64K context windows. Override via
+    # GRAPHONOMOUS_JUDGE_CONTEXT_CHARS if the generator is smaller-context.
+    chunk_cap =
+      case ability do
+        :multi_session_reasoning -> 40
+        :knowledge_update -> 40
+        :temporal_reasoning -> 35
+        :abstention -> 15
+        _ -> 25
+      end
+
+    capped =
+      filtered
+      |> Enum.sort_by(fn c ->
+        {-Map.get(c, :score, 0.0), -Map.get(c, :q_relevance, 0.0)}
+      end)
+      |> Enum.take(chunk_cap)
+
+    format_longmemeval_context(capped, ability)
   end
 
   defp distill_longmemeval_context([], _ability, _question), do: "No relevant context found."

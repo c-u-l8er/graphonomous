@@ -2405,9 +2405,9 @@ defmodule Graphonomous.Retriever do
               score: @entity_base_score,
               similarity: 0.0,
               confidence: node.confidence,
-              hop: 0,
               source: :entity_lookup,
-              metadata: node.metadata || %{}
+              hops: 0,
+              via: nil
             }
 
             Map.put(acc, node_id, entry)

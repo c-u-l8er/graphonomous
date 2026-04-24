@@ -33,9 +33,12 @@ defmodule Mix.Tasks.Benchmark.LlmJudge do
   @openrouter_model_default "google/gemma-4-12b-a4b-it:free"
   @max_tokens 8192
   @judge_max_tokens 4096
-  # Default context chars passed to generator (~32K tokens for cloud models, ~8K for local)
-  # Override with GRAPHONOMOUS_JUDGE_CONTEXT_CHARS env var
-  @default_context_chars 128_000
+  # Default context chars passed to generator (~16K tokens, ~64KB of text).
+  # Balances latency against evidence completeness. The distill_longmemeval
+  # step already caps chunks per-ability, so this is a secondary guardrail
+  # for models with smaller context windows (Gemma-3-class).
+  # Override with GRAPHONOMOUS_JUDGE_CONTEXT_CHARS up/down by model tier.
+  @default_context_chars 64_000
 
   @doc "Check if judge mode is available"
   def available? do
