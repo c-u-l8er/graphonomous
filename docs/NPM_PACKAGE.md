@@ -1,7 +1,7 @@
 # graphonomous — NPM Package Specification
 
 **Package**: `graphonomous`
-**Version**: `0.4.0` (current) → `0.4.1` (four-package alignment bump)
+**Version**: `0.4.0` (current) → `0.4.1` (three-package alignment bump)
 **Language**: TypeScript (MCP wrapper) + Elixir (engine, vendored escript)
 **License**: Apache-2.0
 **Registry**: https://www.npmjs.com/package/graphonomous
@@ -15,12 +15,12 @@ exposes the 5 Graphonomous loop-phase machines (`retrieve`, `route`, `act`,
 SQLite + sqlite-vec database.
 
 This package already ships at v0.4.0 and serves as the **template** for
-the other three packages in the four-package MCP stack. A v0.4.1 bump is
+the other two packages in the three-package MCP stack. A v0.4.1 bump is
 required to:
 
 1. Update the package description to name the 5-machine surface (no more
    "28 tools" wording — the v1 tool surface is now legacy).
-2. Update the README to reference the four-package install story.
+2. Update the README to reference the three-package install story.
 3. Publish a `graphonomous.continual_learning.pulse.json` manifest so
    `os-prism` can benchmark against a canonical PULSE manifest.
 4. Register itself with a running `os-pulse` instance at startup if one
@@ -67,7 +67,7 @@ compatibility but is deprecated. New integrations should use the 5 machines.
 - [ ] Bump `mix.exs` version to `0.4.1`
 - [ ] Bump `npm/package.json` version to `0.4.1`
 - [ ] Update `npm/package.json` description to the 5-machine framing (**done**)
-- [ ] Update `npm/README.md` to reference four-package install block
+- [ ] Update `npm/README.md` to reference three-package install block
 - [ ] Add `graphonomous.continual_learning.pulse.json` alongside the existing
       `PULSE/manifests/graphonomous.continual_learning.json` so the manifest
       is shipped as part of the npm package's `files` array

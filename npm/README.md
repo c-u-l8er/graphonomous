@@ -2,14 +2,19 @@
 
 **Continual learning memory loop for AI agents — 5 loop-phase MCP machines.**
 
-One of four MCP servers in the [&] three-protocol stack:
+One of three MCP servers in the [&] three-protocol stack:
 
 | Package        | Role                                          | Install                                                          |
 |----------------|-----------------------------------------------|------------------------------------------------------------------|
-| `box-and-box`  | [&] Protocol validator / composer             | `npx -y box-and-box --db ~/.box-and-box/specs.db`                |
 | `graphonomous` | Memory loop (**this**, 5 machines)            | `npx -y graphonomous --db ~/.graphonomous/knowledge.db`          |
 | `os-prism`     | Diagnostic loop (6 machines)                  | `npx -y os-prism --db ~/.os-prism/benchmarks.db`                 |
 | `os-pulse`     | PULSE manifest registry                       | `npx -y os-pulse --db ~/.os-pulse/manifests.db`                  |
+
+> The `box-and-box` name now belongs to the [&] **governance kernel** (the
+> eight-rung arithmetic ladder · 97 property-tested laws — `AmpersandBoxDesign/box-and-box/`),
+> not an MCP server. The old `box-and-box` [&] Protocol validator MCP was removed.
+> Graphonomous's coverage→decision policy already implements the kernel's bridge and
+> epistemic rung — see [`../docs/ARITHMETIC_COMPLIANCE.md`](../docs/ARITHMETIC_COMPLIANCE.md).
 
 Graphonomous exposes the five memory-loop machines — `retrieve`, `route`, `act`,
 `learn`, `consolidate` — with κ-aware routing, causal metadata, and neural
@@ -141,12 +146,11 @@ Add to your project's `.mcp.json`:
 }
 ```
 
-To run the full four-package stack side by side:
+To run the full three-package stack side by side:
 
 ```json
 {
   "mcpServers": {
-    "box-and-box":  { "command": "npx", "args": ["-y", "box-and-box",  "--db", "~/.box-and-box/specs.db"] },
     "graphonomous": { "command": "npx", "args": ["-y", "graphonomous", "--db", "~/.graphonomous/knowledge.db", "--embedder-backend", "fallback"] },
     "os-prism":     { "command": "npx", "args": ["-y", "os-prism",     "--db", "~/.os-prism/benchmarks.db"] },
     "os-pulse":     { "command": "npx", "args": ["-y", "os-pulse",     "--db", "~/.os-pulse/manifests.db"] }
