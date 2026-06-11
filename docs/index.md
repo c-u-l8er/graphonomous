@@ -1,5 +1,7 @@
 # Graphonomous Documentation
 
+> **Part of the [&] Protocol stack** · [Ecosystem overview](../../ECOSYSTEM.md) · [Three-protocol stack](../../PULSE/docs/THREE_PROTOCOL_STACK.md) · [Stack status](../../STACK_COMPLETION.md)
+
 Welcome to the documentation hub for **Graphonomous**.
 
 Graphonomous is a continual-learning memory engine for AI agents, implemented in Elixir/OTP and exposed via MCP tools/resources. It combines graph-based memory, outcome-driven confidence updates, goal orchestration, topology-aware routing, and consolidation cycles.
@@ -105,6 +107,48 @@ skills/workflows
 skills/sync
 skills/watch
 :::
+
+## Documentation index
+
+Linked index of every page in this set (renders on GitHub and in the docs atlas; the toctrees above drive the Sphinx build):
+
+**Guides**
+
+- [Architecture](architecture.md)
+- [Quickstart](quickstart.md)
+- [Runtime Walkthrough](runtime-walkthrough.md)
+- [MCP Tools Reference](mcp-tools.md)
+- [Operations & Maintenance](operations.md)
+- [FAQ](faq.md)
+- [Technical Documentation](TECHNICAL_DOCUMENTATION.md)
+- [Arithmetic Compliance Review (box-and-box)](ARITHMETIC_COMPLIANCE.md)
+- [Agent Skills](skills/SKILLS.md)
+
+**Setup & distribution**
+
+- [Local Bootstrap & Verification Guide](BOOTSTRAP.md)
+- [Zed MCP Setup Guide](ZED.md)
+- [NPM Package Specification](NPM_PACKAGE.md)
+- [npm Publishing + Maintenance Runbook](NPM_PUBLISH.md)
+
+**Specification**
+
+- [κ Integration Spec — Product-Level Specification](spec/kappa_integration_spec.md)
+- [κ × Product Crosswalk](spec/kappa_product_crosswalk.md)
+- [κ-Aware Graph Intelligence — Theoretical Foundation](spec/kappa_theory_applied.md)
+
+**UX**
+
+- [User Stories](ux/user-stories.md)
+
+**Build prompts**
+
+- [Benchmark Expansion Prompt](../prompts/BENCHMARK_EXPANSION_PROMPT.md)
+- [Continual Learning v0.3 — Implementation Prompt](../prompts/CONTINUAL_LEARNING_V03_PROMPT.md)
+- [Continual Learning v0.3 — P1 (Week 3-4)](../prompts/CONTINUAL_LEARNING_P1_PROMPT.md)
+- [Continual Learning v0.3 — P2 (Week 5+)](../prompts/CONTINUAL_LEARNING_P2_PROMPT.md)
+- [Continual Learning v0.3 — P3 (Week 6+)](../prompts/CONTINUAL_LEARNING_P3_PROMPT.md)
+- [κ-Topology QA & SHR Optimization — Session Prompt](../prompts/KAPPA_QA_OPTIMIZATION_PROMPT.md)
 
 ## Recommended Reading Path
 
