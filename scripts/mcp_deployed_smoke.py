@@ -404,10 +404,11 @@ def run_deployed_smoke(args: argparse.Namespace) -> EvidenceBundle:
                     f"session={client.session_id[:16]}...",
         ))
 
-        # --- Step 1: store ---
+        # --- Step 1: store (v2: act machine, action=store_node) ---
         node_content = f"Deployed smoke test node [{run_token}]"
         t0 = time.monotonic()
-        store_payload = client.tool_call("store_node", {
+        store_payload = client.tool_call("act", {
+            "action": "store_node",
             "content": node_content,
             "node_type": "episodic",
             "source": "mcp_deployed_smoke",
@@ -416,13 +417,13 @@ def run_deployed_smoke(args: argparse.Namespace) -> EvidenceBundle:
 
         if store_payload.get("status") != "stored":
             raise DeployedSmokeError(
-                f"store_node did not return status=stored: {store_payload}",
+                f"act/store_node did not return status=stored: {store_payload}",
                 FAILURE_UNOBSERVED_OUTCOME,
             )
         node_id = store_payload.get("node_id")
         if not isinstance(node_id, str) or not node_id:
             raise DeployedSmokeError(
-                f"store_node missing node_id: {store_payload}",
+                f"act/store_node missing node_id: {store_payload}",
                 FAILURE_UNOBSERVED_OUTCOME,
             )
 
@@ -434,19 +435,22 @@ def run_deployed_smoke(args: argparse.Namespace) -> EvidenceBundle:
             details=f"node_id={node_id}",
         ))
 
-        # --- Step 2: retrieve ---
+        # --- Step 2: retrieve (v2: retrieve machine, action=context) ---
         t0 = time.monotonic()
-        retrieve_payload = client.tool_call("retrieve_context", {
+        retrieve_payload = client.tool_call("retrieve", {
+            "action": "context",
             "query": run_token,
             "max_results": 10,
         })
         lat = (time.monotonic() - t0) * 1000.0
 
         # Validate that the stored node appears in retrieval
-        nodes = retrieve_payload.get("nodes", retrieve_payload.get("results", []))
+        nodes = retrieve_payload.get("nodes",
+                    retrieve_payload.get("results", []))
         if not isinstance(nodes, list):
             raise DeployedSmokeError(
-                f"retrieve_context did not return a nodes/results list: {retrieve_payload}",
+                f"retrieve/context did not return a nodes/results list: "
+                f"{retrieve_payload}",
                 FAILURE_UNOBSERVED_OUTCOME,
             )
 
@@ -459,7 +463,7 @@ def run_deployed_smoke(args: argparse.Namespace) -> EvidenceBundle:
         )
         if not found:
             raise DeployedSmokeError(
-                f"retrieve_context did not return the stored node "
+                f"retrieve/context did not return the stored node "
                 f"(token={run_token!r}, node_id={node_id!r}): "
                 f"got {len(nodes)} results",
                 FAILURE_UNOBSERVED_OUTCOME,
@@ -473,20 +477,24 @@ def run_deployed_smoke(args: argparse.Namespace) -> EvidenceBundle:
             details=f"found=true, results={len(nodes)}",
         ))
 
-        # --- Step 3: learn ---
+        # --- Step 3: learn (v2: learn machine, action=from_outcome) ---
         t0 = time.monotonic()
-        learn_payload = client.tool_call("learn_from_outcome", {
+        learn_payload = client.tool_call("learn", {
+            "action": "from_outcome",
             "action_id": f"deployed-smoke-{run_id}",
             "status": "success",
             "confidence": 0.85,
             "causal_node_ids": json.dumps([node_id]),
-            "evidence": json.dumps({"runner": "mcp_deployed_smoke", "run_id": run_id}),
+            "evidence": json.dumps({
+                "runner": "mcp_deployed_smoke",
+                "run_id": run_id,
+            }),
         })
         lat = (time.monotonic() - t0) * 1000.0
 
         if learn_payload.get("action_id") is None:
             raise DeployedSmokeError(
-                f"learn_from_outcome missing action_id: {learn_payload}",
+                f"learn/from_outcome missing action_id: {learn_payload}",
                 FAILURE_UNOBSERVED_OUTCOME,
             )
 
@@ -498,9 +506,11 @@ def run_deployed_smoke(args: argparse.Namespace) -> EvidenceBundle:
             details=f"updated={learn_payload.get('updated', '?')}",
         ))
 
-        # --- Step 4: consolidate ---
+        # --- Step 4: consolidate (v2: consolidate machine, action=run) ---
         t0 = time.monotonic()
-        consolidate_payload = client.tool_call("run_consolidation", {})
+        consolidate_payload = client.tool_call("consolidate", {
+            "action": "run",
+        })
         lat = (time.monotonic() - t0) * 1000.0
 
         # Consolidation is best-effort; we just need a non-error response

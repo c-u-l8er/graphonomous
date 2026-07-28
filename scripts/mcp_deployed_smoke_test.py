@@ -151,15 +151,20 @@ class MockMCPHandler(http.server.BaseHTTPRequestHandler):
         tool_name = params.get("name", "")
         arguments = params.get("arguments", {})
 
-        if tool_name == "store_node":
-            if self.__class__.behavior == "store_fail":
-                self._send_tool_result(msg_id, {"status": "error", "message": "disk full"})
+        # v2 machine surface: act, retrieve, learn, consolidate
+        if tool_name == "act":
+            action = arguments.get("action", "")
+            if action == "store_node":
+                if self.__class__.behavior == "store_fail":
+                    self._send_tool_result(msg_id, {"status": "error", "message": "disk full"})
+                else:
+                    self._send_tool_result(msg_id, {
+                        "status": "stored",
+                        "node_id": self.__class__.stored_node_id,
+                    })
             else:
-                self._send_tool_result(msg_id, {
-                    "status": "stored",
-                    "node_id": self.__class__.stored_node_id,
-                })
-        elif tool_name == "retrieve_context":
+                self._send_tool_result(msg_id, {})
+        elif tool_name == "retrieve":
             if self.__class__.behavior == "retrieve_miss":
                 self._send_tool_result(msg_id, {"nodes": []})
             else:
@@ -168,7 +173,7 @@ class MockMCPHandler(http.server.BaseHTTPRequestHandler):
                         {"id": self.__class__.stored_node_id, "content": "Deployed smoke test node [smoke-deployed-smoke-test123]"},
                     ],
                 })
-        elif tool_name == "learn_from_outcome":
+        elif tool_name == "learn":
             if self.__class__.behavior == "learn_fail":
                 self._send_tool_result(msg_id, {"status": "error"})
             else:
@@ -176,7 +181,7 @@ class MockMCPHandler(http.server.BaseHTTPRequestHandler):
                     "action_id": arguments.get("action_id", "test"),
                     "updated": 1,
                 })
-        elif tool_name == "run_consolidation":
+        elif tool_name == "consolidate":
             if self.__class__.behavior == "consolidate_fail":
                 self._send_jsonrpc_response(msg_id, error={
                     "code": -32600,
