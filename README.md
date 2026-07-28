@@ -347,6 +347,44 @@ MIX_ENV=prod mix release --overwrite
 _build/prod/rel/graphonomous/bin/graphonomous eval "Graphonomous.CLI.main(System.argv())" --help
 ```
 
+### Deployed MCP smoke test
+
+Drives store → retrieve → learn → consolidate against a **deployed** Streamable
+HTTP MCP endpoint and writes a JSON evidence bundle recording which rung each
+step reached (`spec`, `in_tree`, `live_local`, `live_deployed`, or `external`).
+
+**WARNING: this command mutates deployed memory** (it stores a smoke-test node).
+
+```sh
+# Default endpoint: https://graphonomous-mcp.fly.dev/mcp
+python3 scripts/mcp_deployed_smoke.py \
+  --endpoint "${GRAPHONOMOUS_MCP_ENDPOINT:-https://graphonomous-mcp.fly.dev/mcp}" \
+  --output tmp/mcp-deployed-smoke-evidence.json
+
+# With bearer token (if auth is enabled):
+python3 scripts/mcp_deployed_smoke.py \
+  --token "$GRAPHONOMOUS_MCP_TOKEN" \
+  --output tmp/mcp-deployed-smoke-evidence.json
+```
+
+Configuration:
+- `GRAPHONOMOUS_MCP_ENDPOINT` — endpoint URL (default: `https://graphonomous-mcp.fly.dev/mcp`)
+- `GRAPHONOMOUS_MCP_TOKEN` — optional Bearer token for authentication
+- `--timeout-s` — per-request timeout (default: 30s)
+- `--output` / `-o` — evidence bundle path (default: `tmp/mcp-deployed-smoke-evidence.json`)
+
+Evidence bundle schema: `{ endpoint, run_id, run_start, run_end, overall_ok,
+failure_reason, protocol_version, session_id, steps: [{ name, rung, ok,
+latency_ms, details, failure_reason, timestamp }] }`. Authorization secrets are
+never written to the bundle.
+
+If the endpoint is unreachable, times out, returns an auth error, a malformed
+response, a missing session ID, a JSON-RPC error, or an unobserved tool outcome,
+the run fails with a named reason and all failed/unattempted steps are recorded
+as `in_tree` — never as `live_deployed`.
+
+Regression tests: `python3 scripts/mcp_deployed_smoke_test.py`
+
 ### npm package pre-publish smoke test
 
 ```sh
