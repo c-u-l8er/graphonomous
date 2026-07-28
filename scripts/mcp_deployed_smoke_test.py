@@ -5,11 +5,15 @@ Automated regression tests for mcp_deployed_smoke.py.
 Validates, against a mock HTTP server, that the deployed smoke driver:
   - Performs initialize with correct protocol negotiation
   - Preserves the mcp-session-id from initialize through all later requests
-  - Observes store → retrieve → learn → consolidate in order
-  - Produces correct evidence bundles with valid rungs
+  - Executes all five loop phases in order: retrieve → route → act → learn → consolidate
+  - Carries verifiable evidence from each phase to the next
+  - Produces correct execution certificates with valid rungs, claims, and gaps
   - Handles failure modes: unreachable, timeout, auth failure, malformed
-    response, missing session ID, JSON-RPC error, unobserved outcome
-  - Never emits live_deployed for a failed or unattempted step
+    response, missing session ID, JSON-RPC error, unobserved outcome,
+    evidence chain break
+  - Never emits live_deployed for a failed or unattempted phase
+  - Records failed phases as named GAPs
+  - Includes the retraction of the input_schema/0 implication
 """
 
 from __future__ import annotations
@@ -35,11 +39,11 @@ VALID_RUNGS = smoke.VALID_RUNGS
 # ---------------------------------------------------------------------------
 
 class MockMCPHandler(http.server.BaseHTTPRequestHandler):
-    """Configurable mock Streamable HTTP MCP server."""
+    """Configurable mock Streamable HTTP MCP server for the five-phase loop."""
 
     # Class-level config — set before starting server
     session_id: str = "test-session-abc123"
-    behavior: str = "happy"  # happy | no_session | auth_fail | bad_json | jsonrpc_error | store_fail | retrieve_miss | learn_fail | consolidate_fail
+    behavior: str = "happy"
     request_log: List[Dict[str, Any]] = []
     stored_node_id: str = "node-test-001"
     mcp_protocol_version: str = smoke.DEFAULT_PROTOCOL_VERSION
@@ -83,6 +87,7 @@ class MockMCPHandler(http.server.BaseHTTPRequestHandler):
         self.__class__.request_log.append({
             "method": message.get("method"),
             "id": message.get("id"),
+            "params": message.get("params"),
             "session_header": self.headers.get("mcp-session-id"),
             "authorization": self.headers.get("Authorization"),
         })
@@ -151,46 +156,93 @@ class MockMCPHandler(http.server.BaseHTTPRequestHandler):
         tool_name = params.get("name", "")
         arguments = params.get("arguments", {})
 
-        # v2 machine surface: act, retrieve, learn, consolidate
-        if tool_name == "act":
-            action = arguments.get("action", "")
-            if action == "store_node":
-                if self.__class__.behavior == "store_fail":
-                    self._send_tool_result(msg_id, {"status": "error", "message": "disk full"})
-                else:
-                    self._send_tool_result(msg_id, {
-                        "status": "stored",
-                        "node_id": self.__class__.stored_node_id,
-                    })
-            else:
-                self._send_tool_result(msg_id, {})
-        elif tool_name == "retrieve":
-            if self.__class__.behavior == "retrieve_miss":
-                self._send_tool_result(msg_id, {"nodes": []})
-            else:
-                self._send_tool_result(msg_id, {
-                    "nodes": [
-                        {"id": self.__class__.stored_node_id, "content": "Deployed smoke test node [smoke-deployed-smoke-test123]"},
-                    ],
-                })
+        if tool_name == "retrieve":
+            self._handle_retrieve(msg_id, arguments)
+        elif tool_name == "route":
+            self._handle_route(msg_id, arguments)
+        elif tool_name == "act":
+            self._handle_act(msg_id, arguments)
         elif tool_name == "learn":
-            if self.__class__.behavior == "learn_fail":
-                self._send_tool_result(msg_id, {"status": "error"})
-            else:
-                self._send_tool_result(msg_id, {
-                    "action_id": arguments.get("action_id", "test"),
-                    "updated": 1,
-                })
+            self._handle_learn(msg_id, arguments)
         elif tool_name == "consolidate":
-            if self.__class__.behavior == "consolidate_fail":
-                self._send_jsonrpc_response(msg_id, error={
-                    "code": -32600,
-                    "message": "consolidation failed",
-                })
-            else:
-                self._send_tool_result(msg_id, {"status": "completed"})
+            self._handle_consolidate(msg_id, arguments)
         else:
             self._send_tool_result(msg_id, {})
+
+    def _handle_retrieve(self, msg_id, arguments):
+        if self.__class__.behavior == "retrieve_miss":
+            # Return empty results — evidence chain break on consolidation verify
+            self._send_tool_result(msg_id, {
+                "nodes": [],
+                "topology": {"routing": "fast"},
+            })
+        elif self.__class__.behavior == "evidence_break":
+            # First retrieve works, second (consolidation verify) returns empty
+            calls = [r for r in self.__class__.request_log
+                     if r.get("params", {}).get("name") == "retrieve"]
+            if len(calls) > 1:
+                self._send_tool_result(msg_id, {"nodes": [], "topology": {}})
+            else:
+                self._send_tool_result(msg_id, {
+                    "nodes": [],
+                    "topology": {"routing": "fast"},
+                })
+        else:
+            # Return nodes that include the pass token for verification
+            query = arguments.get("query", "")
+            self._send_tool_result(msg_id, {
+                "nodes": [
+                    {
+                        "id": self.__class__.stored_node_id,
+                        "content": f"Five-phase closed pass [{query}]",
+                    },
+                ],
+                "topology": {"routing": "fast", "kappa": 0},
+            })
+
+    def _handle_route(self, msg_id, arguments):
+        if self.__class__.behavior == "route_fail":
+            self._send_jsonrpc_response(msg_id, error={
+                "code": -32600,
+                "message": "route failed",
+            })
+        else:
+            self._send_tool_result(msg_id, {
+                "routing": "fast",
+                "kappa": 0,
+                "components": 1,
+            })
+
+    def _handle_act(self, msg_id, arguments):
+        action = arguments.get("action", "")
+        if action == "store_node":
+            if self.__class__.behavior == "store_fail":
+                self._send_tool_result(msg_id, {"status": "error", "message": "disk full"})
+            else:
+                self._send_tool_result(msg_id, {
+                    "status": "stored",
+                    "node_id": self.__class__.stored_node_id,
+                })
+        else:
+            self._send_tool_result(msg_id, {})
+
+    def _handle_learn(self, msg_id, arguments):
+        if self.__class__.behavior == "learn_fail":
+            self._send_tool_result(msg_id, {"status": "error"})
+        else:
+            self._send_tool_result(msg_id, {
+                "action_id": arguments.get("action_id", "test"),
+                "updated": 1,
+            })
+
+    def _handle_consolidate(self, msg_id, arguments):
+        if self.__class__.behavior == "consolidate_fail":
+            self._send_jsonrpc_response(msg_id, error={
+                "code": -32600,
+                "message": "consolidation failed",
+            })
+        else:
+            self._send_tool_result(msg_id, {"status": "completed"})
 
     def _send_jsonrpc_response(self, msg_id, *, result=None, error=None):
         resp: Dict[str, Any] = {"jsonrpc": "2.0", "id": msg_id}
@@ -237,7 +289,7 @@ def _start_mock_server(behavior: str = "happy",
 # ---------------------------------------------------------------------------
 
 class TestHappyPath(unittest.TestCase):
-    """Verify the full initialize → store → retrieve → learn → consolidate path."""
+    """Verify the full five-phase closed pass: initialize → retrieve → route → act → learn → consolidate."""
 
     def setUp(self):
         self.server, self.port, self.thread = _start_mock_server("happy")
@@ -256,23 +308,38 @@ class TestHappyPath(unittest.TestCase):
         ] + [item for k, v in kwargs.items() for item in [f"--{k}", str(v)]])
         return smoke.run_deployed_smoke(args)
 
-    def test_full_pass(self):
-        bundle = self._run()
-        self.assertTrue(bundle.overall_ok)
-        self.assertIsNone(bundle.failure_reason)
-        self.assertEqual(len(bundle.steps), 5)
+    def test_full_pass_all_five_phases(self):
+        cert = self._run()
+        self.assertTrue(cert.overall_ok)
+        self.assertIsNone(cert.failure_reason)
+        # 6 steps: initialize + 5 loop phases
+        self.assertEqual(len(cert.phases), 6)
 
-        step_names = [s.name for s in [smoke.StepRecord(**s) for s in bundle.steps]]
-        self.assertEqual(step_names, ["initialize", "store", "retrieve", "learn", "consolidate"])
+        phase_names = [s["name"] for s in cert.phases]
+        self.assertEqual(phase_names,
+                         ["initialize", "retrieve", "route", "act", "learn", "consolidate"])
 
-        for s in bundle.steps:
+        for s in cert.phases:
             self.assertTrue(s["ok"])
             self.assertEqual(s["rung"], "live_deployed")
             self.assertIn(s["rung"], VALID_RUNGS)
 
+    def test_certificate_fields(self):
+        cert = self._run()
+        d = cert.to_dict()
+        self.assertEqual(d["claim"], smoke.CLAIM_NAME)
+        self.assertEqual(d["prior_rung"], "in_tree")
+        self.assertEqual(d["awarded_rung"], "live_deployed")
+        self.assertTrue(d["pass_id"].startswith("pass-"))
+        self.assertEqual(d["exit_status"], 0)
+        self.assertIn("retraction", d)
+        self.assertIn("RETRACTED", d["retraction"])
+        self.assertIn("input_schema", d["retraction"])
+        self.assertEqual(d["gaps"], [])
+
     def test_session_id_preserved(self):
-        bundle = self._run()
-        self.assertEqual(bundle.session_id, "test-session-abc123")
+        cert = self._run()
+        self.assertEqual(cert.session_id, "test-session-abc123")
 
         # All requests after initialize should include the session header
         logs = MockMCPHandler.request_log
@@ -280,26 +347,56 @@ class TestHappyPath(unittest.TestCase):
         self.assertIsNone(logs[0]["session_header"])
         # All subsequent requests should have it
         for log in logs[1:]:
-            if log["method"] != "notifications/initialized":
-                # notifications/initialized is fire-and-forget
-                pass
             self.assertEqual(log["session_header"], "test-session-abc123")
 
+    def test_evidence_chain_flows_between_phases(self):
+        cert = self._run()
+        phases = cert.phases
+
+        # Phase 1 (retrieve) produces routing evidence
+        self.assertIsNotNone(phases[1]["evidence_produced"])
+        self.assertIn("routing=", phases[1]["evidence_produced"])
+
+        # Phase 2 (route) consumes retrieve's routing, produces decision
+        self.assertIsNotNone(phases[2]["evidence_consumed"])
+        self.assertIn("retrieve_routing=", phases[2]["evidence_consumed"])
+        self.assertIsNotNone(phases[2]["evidence_produced"])
+        self.assertIn("decision=", phases[2]["evidence_produced"])
+
+        # Phase 3 (act) consumes route's decision, produces node_id
+        self.assertIsNotNone(phases[3]["evidence_consumed"])
+        self.assertIn("route_decision=", phases[3]["evidence_consumed"])
+        self.assertIsNotNone(phases[3]["evidence_produced"])
+        self.assertIn("node_id=", phases[3]["evidence_produced"])
+
+        # Phase 4 (learn) consumes act's node_id, produces action_id
+        self.assertIsNotNone(phases[4]["evidence_consumed"])
+        self.assertIn("act_node_id=", phases[4]["evidence_consumed"])
+        self.assertIsNotNone(phases[4]["evidence_produced"])
+        self.assertIn("action_id=", phases[4]["evidence_produced"])
+
+        # Phase 5 (consolidate) consumes act's node_id and learn's action_id
+        self.assertIsNotNone(phases[5]["evidence_consumed"])
+        self.assertIn("act_node_id=", phases[5]["evidence_consumed"])
+        self.assertIn("learn_action_id=", phases[5]["evidence_consumed"])
+
     def test_evidence_bundle_written(self):
-        bundle = self._run()
-        smoke.write_evidence(bundle, self.output)
+        cert = self._run()
+        smoke.write_evidence(cert, self.output)
 
         with open(self.output) as f:
             data = json.load(f)
 
-        self.assertIn("endpoint", data)
-        self.assertIn("run_id", data)
-        self.assertIn("run_start", data)
-        self.assertIn("run_end", data)
-        self.assertIn("overall_ok", data)
-        self.assertIn("steps", data)
-        self.assertIn("protocol_version", data)
-        self.assertIn("session_id", data)
+        self.assertIn("claim", data)
+        self.assertIn("prior_rung", data)
+        self.assertIn("awarded_rung", data)
+        self.assertIn("pass_id", data)
+        self.assertIn("substrate", data)
+        self.assertIn("settling_command", data)
+        self.assertIn("exit_status", data)
+        self.assertIn("phases", data)
+        self.assertIn("gaps", data)
+        self.assertIn("retraction", data)
 
         # No secrets in the bundle
         raw = json.dumps(data)
@@ -307,26 +404,103 @@ class TestHappyPath(unittest.TestCase):
         self.assertNotIn("GRAPHONOMOUS_MCP_TOKEN", raw)
 
         # Rungs are valid
-        for s in data["steps"]:
+        for s in data["phases"]:
             self.assertIn(s["rung"], VALID_RUNGS)
 
-    def test_step_order_is_store_retrieve_learn_consolidate(self):
-        bundle = self._run()
-        step_names = [s["name"] for s in bundle.steps]
-        # After initialize, the loop steps must be in this exact order
-        self.assertEqual(step_names[1:], ["store", "retrieve", "learn", "consolidate"])
+    def test_phase_order_is_canonical_loop(self):
+        cert = self._run()
+        phase_names = [s["name"] for s in cert.phases]
+        # After initialize, the loop phases must be in canonical order
+        self.assertEqual(phase_names[1:],
+                         ["retrieve", "route", "act", "learn", "consolidate"])
 
-    def test_unique_run_token_in_store(self):
-        bundle = self._run()
-        self.assertIn("run_id", bundle.to_dict())
-        self.assertTrue(bundle.run_id.startswith("deployed-smoke-"))
+    def test_unique_pass_id(self):
+        cert = self._run()
+        self.assertTrue(cert.pass_id.startswith("pass-"))
+        self.assertGreater(len(cert.pass_id), 10)
 
     def test_timestamps_present(self):
-        bundle = self._run()
-        self.assertTrue(bundle.run_start)
-        self.assertTrue(bundle.run_end)
-        for s in bundle.steps:
+        cert = self._run()
+        self.assertTrue(cert.run_start)
+        self.assertTrue(cert.run_end)
+        for s in cert.phases:
             self.assertTrue(s["timestamp"])
+
+    def test_no_gaps_on_success(self):
+        cert = self._run()
+        for s in cert.phases:
+            self.assertFalse(s["gap"])
+        self.assertEqual(cert.gaps, [])
+
+
+class TestRouteFailure(unittest.TestCase):
+    """Route phase failure → GAP, no live_deployed for route or later phases."""
+
+    def setUp(self):
+        self.server, self.port, self.thread = _start_mock_server("route_fail")
+        self.endpoint = f"http://127.0.0.1:{self.port}/mcp"
+
+    def tearDown(self):
+        self.server.shutdown()
+
+    def test_route_fail_gaps_remaining(self):
+        args = smoke.parse_args([
+            "--endpoint", self.endpoint,
+            "--output", "/dev/null",
+            "--timeout-s", "5",
+        ])
+        cert = smoke.run_deployed_smoke(args)
+        self.assertFalse(cert.overall_ok)
+        self.assertEqual(cert.awarded_rung, "in_tree")
+
+        # initialize and retrieve should pass
+        self.assertTrue(cert.phases[0]["ok"])
+        self.assertTrue(cert.phases[1]["ok"])
+        self.assertEqual(cert.phases[0]["rung"], "live_deployed")
+        self.assertEqual(cert.phases[1]["rung"], "live_deployed")
+
+        # route should fail, and act/learn/consolidate should be GAPs
+        for s in cert.phases[2:]:
+            self.assertFalse(s["ok"])
+            self.assertNotEqual(s["rung"], "live_deployed")
+            self.assertTrue(s["gap"])
+
+        # GAPs should be recorded in certificate
+        gap_names = [g["phase"] for g in cert.gaps]
+        self.assertIn("route", gap_names)
+        self.assertIn("act", gap_names)
+        self.assertIn("learn", gap_names)
+        self.assertIn("consolidate", gap_names)
+
+
+class TestEvidenceChainBreak(unittest.TestCase):
+    """Consolidation pre-check fails → evidence chain break."""
+
+    def setUp(self):
+        self.server, self.port, self.thread = _start_mock_server("evidence_break")
+        self.endpoint = f"http://127.0.0.1:{self.port}/mcp"
+
+    def tearDown(self):
+        self.server.shutdown()
+
+    def test_evidence_break_on_consolidation_verify(self):
+        args = smoke.parse_args([
+            "--endpoint", self.endpoint,
+            "--output", "/dev/null",
+            "--timeout-s", "5",
+        ])
+        cert = smoke.run_deployed_smoke(args)
+        self.assertFalse(cert.overall_ok)
+        self.assertEqual(cert.failure_reason, smoke.FAILURE_EVIDENCE_BREAK)
+        self.assertEqual(cert.awarded_rung, "in_tree")
+
+        # Phases up to learn should pass
+        for s in cert.phases[:5]:  # initialize, retrieve, route, act, learn
+            self.assertTrue(s["ok"])
+
+        # Consolidate should be a GAP
+        self.assertFalse(cert.phases[5]["ok"])
+        self.assertTrue(cert.phases[5]["gap"])
 
 
 class TestUnreachable(unittest.TestCase):
@@ -338,22 +512,24 @@ class TestUnreachable(unittest.TestCase):
             "--output", "/dev/null",
             "--timeout-s", "2",
         ])
-        bundle = smoke.run_deployed_smoke(args)
-        self.assertFalse(bundle.overall_ok)
-        self.assertIn(bundle.failure_reason, (
+        cert = smoke.run_deployed_smoke(args)
+        self.assertFalse(cert.overall_ok)
+        self.assertIn(cert.failure_reason, (
             smoke.FAILURE_UNREACHABLE,
             smoke.FAILURE_TIMEOUT,
         ))
-        for s in bundle.steps:
+        self.assertEqual(cert.awarded_rung, "in_tree")
+        for s in cert.phases:
             self.assertNotEqual(s["rung"], "live_deployed")
             self.assertFalse(s["ok"])
+        # All phases should be GAPs
+        self.assertGreater(len(cert.gaps), 0)
 
 
 class TestTimeout(unittest.TestCase):
     """Request timeout → non-zero exit, named reason, no live_deployed."""
 
     def setUp(self):
-        # Start a server that never responds
         import socketserver
         class SilentHandler(http.server.BaseHTTPRequestHandler):
             def do_POST(self):
@@ -374,13 +550,14 @@ class TestTimeout(unittest.TestCase):
             "--output", "/dev/null",
             "--timeout-s", "1",
         ])
-        bundle = smoke.run_deployed_smoke(args)
-        self.assertFalse(bundle.overall_ok)
-        self.assertIn(bundle.failure_reason, (
+        cert = smoke.run_deployed_smoke(args)
+        self.assertFalse(cert.overall_ok)
+        self.assertIn(cert.failure_reason, (
             smoke.FAILURE_TIMEOUT,
             smoke.FAILURE_UNREACHABLE,
         ))
-        for s in bundle.steps:
+        self.assertEqual(cert.awarded_rung, "in_tree")
+        for s in cert.phases:
             self.assertNotEqual(s["rung"], "live_deployed")
 
 
@@ -400,10 +577,11 @@ class TestAuthFailure(unittest.TestCase):
             "--output", "/dev/null",
             "--timeout-s", "5",
         ])
-        bundle = smoke.run_deployed_smoke(args)
-        self.assertFalse(bundle.overall_ok)
-        self.assertEqual(bundle.failure_reason, smoke.FAILURE_AUTH)
-        for s in bundle.steps:
+        cert = smoke.run_deployed_smoke(args)
+        self.assertFalse(cert.overall_ok)
+        self.assertEqual(cert.failure_reason, smoke.FAILURE_AUTH)
+        self.assertEqual(cert.awarded_rung, "in_tree")
+        for s in cert.phases:
             self.assertNotEqual(s["rung"], "live_deployed")
 
 
@@ -423,10 +601,11 @@ class TestMalformedResponse(unittest.TestCase):
             "--output", "/dev/null",
             "--timeout-s", "5",
         ])
-        bundle = smoke.run_deployed_smoke(args)
-        self.assertFalse(bundle.overall_ok)
-        self.assertEqual(bundle.failure_reason, smoke.FAILURE_MALFORMED_RESPONSE)
-        for s in bundle.steps:
+        cert = smoke.run_deployed_smoke(args)
+        self.assertFalse(cert.overall_ok)
+        self.assertEqual(cert.failure_reason, smoke.FAILURE_MALFORMED_RESPONSE)
+        self.assertEqual(cert.awarded_rung, "in_tree")
+        for s in cert.phases:
             self.assertNotEqual(s["rung"], "live_deployed")
 
 
@@ -448,10 +627,11 @@ class TestMissingSession(unittest.TestCase):
             "--output", "/dev/null",
             "--timeout-s", "5",
         ])
-        bundle = smoke.run_deployed_smoke(args)
-        self.assertFalse(bundle.overall_ok)
-        self.assertEqual(bundle.failure_reason, smoke.FAILURE_MISSING_SESSION)
-        for s in bundle.steps:
+        cert = smoke.run_deployed_smoke(args)
+        self.assertFalse(cert.overall_ok)
+        self.assertEqual(cert.failure_reason, smoke.FAILURE_MISSING_SESSION)
+        self.assertEqual(cert.awarded_rung, "in_tree")
+        for s in cert.phases:
             self.assertNotEqual(s["rung"], "live_deployed")
 
 
@@ -471,15 +651,16 @@ class TestJsonRpcError(unittest.TestCase):
             "--output", "/dev/null",
             "--timeout-s", "5",
         ])
-        bundle = smoke.run_deployed_smoke(args)
-        self.assertFalse(bundle.overall_ok)
-        self.assertEqual(bundle.failure_reason, smoke.FAILURE_JSONRPC_ERROR)
-        # Initialize should pass, store should fail
-        init_step = bundle.steps[0]
+        cert = smoke.run_deployed_smoke(args)
+        self.assertFalse(cert.overall_ok)
+        self.assertEqual(cert.failure_reason, smoke.FAILURE_JSONRPC_ERROR)
+        self.assertEqual(cert.awarded_rung, "in_tree")
+        # Initialize should pass, retrieve (first tools/call) should fail
+        init_step = cert.phases[0]
         self.assertTrue(init_step["ok"])
         self.assertEqual(init_step["rung"], "live_deployed")
-        # The store step and remaining should not be live_deployed
-        for s in bundle.steps[1:]:
+        # Retrieve and remaining should not be live_deployed
+        for s in cert.phases[1:]:
             self.assertNotEqual(s["rung"], "live_deployed")
             self.assertFalse(s["ok"])
 
@@ -500,33 +681,18 @@ class TestUnobservedOutcome(unittest.TestCase):
             "--output", "/dev/null",
             "--timeout-s", "5",
         ])
-        bundle = smoke.run_deployed_smoke(args)
-        self.assertFalse(bundle.overall_ok)
-        self.assertEqual(bundle.failure_reason, smoke.FAILURE_UNOBSERVED_OUTCOME)
-        # Initialize ok, store fails, rest unattempted
-        self.assertTrue(bundle.steps[0]["ok"])
-        self.assertEqual(bundle.steps[0]["rung"], "live_deployed")
-        for s in bundle.steps[1:]:
+        cert = smoke.run_deployed_smoke(args)
+        self.assertFalse(cert.overall_ok)
+        self.assertEqual(cert.failure_reason, smoke.FAILURE_UNOBSERVED_OUTCOME)
+        self.assertEqual(cert.awarded_rung, "in_tree")
+        # Initialize, retrieve, route should pass; act should fail
+        self.assertTrue(cert.phases[0]["ok"])  # initialize
+        self.assertTrue(cert.phases[1]["ok"])  # retrieve
+        self.assertTrue(cert.phases[2]["ok"])  # route
+        self.assertFalse(cert.phases[3]["ok"])  # act
+        for s in cert.phases[3:]:
             self.assertFalse(s["ok"])
             self.assertNotEqual(s["rung"], "live_deployed")
-
-    def test_retrieve_miss(self):
-        """Retrieve doesn't find the stored node → unobserved outcome."""
-        self.server.shutdown()
-        self.server, self.port, self.thread = _start_mock_server("retrieve_miss")
-        endpoint = f"http://127.0.0.1:{self.port}/mcp"
-        args = smoke.parse_args([
-            "--endpoint", endpoint,
-            "--output", "/dev/null",
-            "--timeout-s", "5",
-        ])
-        bundle = smoke.run_deployed_smoke(args)
-        self.assertFalse(bundle.overall_ok)
-        self.assertEqual(bundle.failure_reason, smoke.FAILURE_UNOBSERVED_OUTCOME)
-        # init and store pass, retrieve fails
-        self.assertTrue(bundle.steps[0]["ok"])
-        self.assertTrue(bundle.steps[1]["ok"])
-        self.assertFalse(bundle.steps[2]["ok"])
 
     def test_learn_fail(self):
         """Learn returns no action_id → unobserved outcome."""
@@ -538,13 +704,13 @@ class TestUnobservedOutcome(unittest.TestCase):
             "--output", "/dev/null",
             "--timeout-s", "5",
         ])
-        bundle = smoke.run_deployed_smoke(args)
-        self.assertFalse(bundle.overall_ok)
-        self.assertEqual(bundle.failure_reason, smoke.FAILURE_UNOBSERVED_OUTCOME)
-        # init, store, retrieve pass; learn fails
-        for s in bundle.steps[:3]:
+        cert = smoke.run_deployed_smoke(args)
+        self.assertFalse(cert.overall_ok)
+        self.assertEqual(cert.failure_reason, smoke.FAILURE_UNOBSERVED_OUTCOME)
+        # init, retrieve, route, act pass; learn fails
+        for s in cert.phases[:4]:
             self.assertTrue(s["ok"])
-        self.assertFalse(bundle.steps[3]["ok"])
+        self.assertFalse(cert.phases[4]["ok"])  # learn
 
 
 class TestExitCode(unittest.TestCase):
@@ -593,20 +759,20 @@ class TestBearerToken(unittest.TestCase):
             "--timeout-s", "5",
             "--token", "secret-test-token",
         ])
-        bundle = smoke.run_deployed_smoke(args)
-        self.assertTrue(bundle.overall_ok)
+        cert = smoke.run_deployed_smoke(args)
+        self.assertTrue(cert.overall_ok)
 
         # All requests should have the Authorization header
         for log in MockMCPHandler.request_log:
             self.assertEqual(log["authorization"], "Bearer secret-test-token")
 
-        # Token must not appear in evidence bundle
-        bundle_json = json.dumps(bundle.to_dict())
-        self.assertNotIn("secret-test-token", bundle_json)
+        # Token must not appear in certificate
+        cert_json = json.dumps(cert.to_dict())
+        self.assertNotIn("secret-test-token", cert_json)
 
 
 class TestNoSecretsInBundle(unittest.TestCase):
-    """Evidence bundle must not contain authorization secrets."""
+    """Execution certificate must not contain authorization secrets."""
 
     def setUp(self):
         self.server, self.port, self.thread = _start_mock_server("happy")
@@ -622,9 +788,36 @@ class TestNoSecretsInBundle(unittest.TestCase):
             "--output", os.path.join(self.tmpdir, "evidence.json"),
             "--timeout-s", "5",
         ])
-        bundle = smoke.run_deployed_smoke(args)
-        bundle_json = json.dumps(bundle.to_dict())
-        self.assertNotIn("query-secret", bundle_json)
+        cert = smoke.run_deployed_smoke(args)
+        cert_json = json.dumps(cert.to_dict())
+        self.assertNotIn("query-secret", cert_json)
+
+
+class TestRetraction(unittest.TestCase):
+    """Certificate includes the explicit retraction of input_schema/0 claim."""
+
+    def setUp(self):
+        self.server, self.port, self.thread = _start_mock_server("happy")
+        self.endpoint = f"http://127.0.0.1:{self.port}/mcp"
+
+    def tearDown(self):
+        self.server.shutdown()
+
+    def test_retraction_in_certificate(self):
+        args = smoke.parse_args([
+            "--endpoint", self.endpoint,
+            "--output", "/dev/null",
+            "--timeout-s", "5",
+        ])
+        cert = smoke.run_deployed_smoke(args)
+        self.assertIn("RETRACTED", cert.retraction)
+        self.assertIn("input_schema", cert.retraction)
+        self.assertIn("in_tree", cert.retraction)
+
+    def test_retraction_in_module(self):
+        """The retraction text exists in the module docstring."""
+        self.assertIn("RETRACTION", smoke.__doc__)
+        self.assertIn("input_schema", smoke.__doc__)
 
 
 if __name__ == "__main__":

@@ -347,11 +347,19 @@ MIX_ENV=prod mix release --overwrite
 _build/prod/rel/graphonomous/bin/graphonomous eval "Graphonomous.CLI.main(System.argv())" --help
 ```
 
-### Deployed MCP smoke test
+### Deployed MCP smoke test — five-phase closed pass
 
-Drives store → retrieve → learn → consolidate against a **deployed** Streamable
-HTTP MCP endpoint and writes a JSON evidence bundle recording which rung each
-step reached (`spec`, `in_tree`, `live_local`, `live_deployed`, or `external`).
+**Claim:** "Graphonomous five-phase closed pass"
+**Prior rung:** `in_tree` (loading five modules and answering `input_schema/0`
+proves modules load, not that a five-phase loop circulated — that implication is
+explicitly **retracted**).
+
+Drives **retrieve → route → act → learn → consolidate** against a **deployed**
+Streamable HTTP MCP endpoint, carrying verifiable evidence from each phase into
+the next.  Fails closed on any absent, mismatched, or synthetic evidence.  Writes
+a JSON execution certificate recording the claim, substrate, pass identifier,
+ordered phase evidence, settling command, exit status, any GAPs, and the
+retraction of the `input_schema/0` claim.
 
 **WARNING: this command mutates deployed memory** (it stores a smoke-test node).
 
@@ -371,17 +379,25 @@ Configuration:
 - `GRAPHONOMOUS_MCP_ENDPOINT` — endpoint URL (default: `https://graphonomous-mcp.fly.dev/mcp`)
 - `GRAPHONOMOUS_MCP_TOKEN` — optional Bearer token for authentication
 - `--timeout-s` — per-request timeout (default: 30s)
-- `--output` / `-o` — evidence bundle path (default: `tmp/mcp-deployed-smoke-evidence.json`)
+- `--output` / `-o` — certificate path (default: `tmp/mcp-deployed-smoke-evidence.json`)
 
-Evidence bundle schema: `{ endpoint, run_id, run_start, run_end, overall_ok,
-failure_reason, protocol_version, session_id, steps: [{ name, rung, ok,
-latency_ms, details, failure_reason, timestamp }] }`. Authorization secrets are
-never written to the bundle.
+Execution certificate schema: `{ claim, prior_rung, awarded_rung, endpoint,
+substrate, pass_id, run_start, run_end, overall_ok, failure_reason,
+settling_command, exit_status, protocol_version, session_id, phases: [{ name,
+rung, ok, latency_ms, details, evidence_produced, evidence_consumed,
+failure_reason, gap, gap_blocker, timestamp }], gaps: [{ phase, blocker }],
+retraction }`.  Authorization secrets are never written to the certificate.
 
-If the endpoint is unreachable, times out, returns an auth error, a malformed
-response, a missing session ID, a JSON-RPC error, or an unobserved tool outcome,
-the run fails with a named reason and all failed/unattempted steps are recorded
-as `in_tree` — never as `live_deployed`.
+Evidence chain: each phase produces evidence consumed by the next —
+- **retrieve** → topology routing signal → **route**
+- **route** → routing decision → **act**
+- **act** → node_id → **learn**
+- **learn** → action_id + causal node → **consolidate**
+- **consolidate** verifies the act node is observable before running
+
+If any phase fails, it and all subsequent phases are recorded as named **GAPs**
+at `in_tree` — never as `live_deployed`.  The certificate awards `live_deployed`
+only when all five phases complete with an unbroken evidence chain.
 
 Regression tests: `python3 scripts/mcp_deployed_smoke_test.py`
 
