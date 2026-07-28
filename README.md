@@ -352,16 +352,36 @@ _build/prod/rel/graphonomous/bin/graphonomous eval "Graphonomous.CLI.main(System
 **Claim:** "Graphonomous five-phase closed pass"
 **Prior rung:** `in_tree` (loading five modules and answering `input_schema/0`
 proves modules load, not that a five-phase loop circulated — that implication is
-explicitly **retracted**).
+explicitly **retracted**; see retraction below).
+**Current rung:** `live_deployed` — demonstrated by the retained execution
+certificate at [`tmp/mcp-deployed-smoke-evidence.json`](tmp/mcp-deployed-smoke-evidence.json).
+
+**RETRACTION:** The earlier evidence that loading five MCP machine modules and
+answering `input_schema/0` established a live five-phase loop is **retracted**.
+Module loading proves five modules load (`in_tree`); it does not prove that a
+five-phase loop circulated against a real substrate.  The settling command below
+is the replacement evidence.
+
+**Settling command** (the single command whose exit code settles the claim):
+
+```sh
+python3 scripts/mcp_deployed_smoke.py
+```
+
+Exit 0 = all five phases completed with an unbroken evidence chain against the
+deployed substrate → `live_deployed`.  Exit non-zero = at least one phase is a
+named GAP → claim stays at `in_tree`.
+
+**Retained certificate:** [`tmp/mcp-deployed-smoke-evidence.json`](tmp/mcp-deployed-smoke-evidence.json)
+— records claim, prior rung, awarded rung, endpoint, substrate, unique pass
+identifier, ordered phase evidence (produced and consumed), settling command,
+exit status, any GAPs with blockers, and the retraction text.
+
+**WARNING: this command mutates deployed memory** (it stores a smoke-test node).
 
 Drives **retrieve → route → act → learn → consolidate** against a **deployed**
 Streamable HTTP MCP endpoint, carrying verifiable evidence from each phase into
-the next.  Fails closed on any absent, mismatched, or synthetic evidence.  Writes
-a JSON execution certificate recording the claim, substrate, pass identifier,
-ordered phase evidence, settling command, exit status, any GAPs, and the
-retraction of the `input_schema/0` claim.
-
-**WARNING: this command mutates deployed memory** (it stores a smoke-test node).
+the next.  Fails closed on any absent, mismatched, or synthetic evidence.
 
 ```sh
 # Default endpoint: https://graphonomous-mcp.fly.dev/mcp
@@ -399,7 +419,8 @@ If any phase fails, it and all subsequent phases are recorded as named **GAPs**
 at `in_tree` — never as `live_deployed`.  The certificate awards `live_deployed`
 only when all five phases complete with an unbroken evidence chain.
 
-Regression tests: `python3 scripts/mcp_deployed_smoke_test.py`
+Regression tests (in_tree, mock transport — does not prove circulation):
+`python3 scripts/mcp_deployed_smoke_test.py`
 
 ### npm package pre-publish smoke test
 
