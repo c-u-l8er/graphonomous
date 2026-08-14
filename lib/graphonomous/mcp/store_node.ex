@@ -20,6 +20,11 @@ defmodule Graphonomous.MCP.StoreNode do
     field(:source, :string, description: "Where this knowledge came from")
 
     field(:metadata, :string, description: "Optional JSON object with extra node metadata")
+
+    field(:region, :array,
+      description:
+        "Optional N-dimensional spatial coordinate (list of numbers) anchoring this node in a region (SCOPE / OS-012)"
+    )
   end
 
   @impl true
@@ -50,7 +55,8 @@ defmodule Graphonomous.MCP.StoreNode do
       node_type: normalize_node_type(get_param(params, :node_type, "semantic")),
       confidence: normalize_confidence(get_param(params, :confidence, 0.5)),
       source: get_param(params, :source),
-      metadata: normalize_metadata(get_param(params, :metadata, %{}))
+      metadata: normalize_metadata(get_param(params, :metadata, %{})),
+      region: normalize_region(get_param(params, :region))
     }
 
     case Graphonomous.store_node(attrs) do
@@ -151,6 +157,21 @@ defmodule Graphonomous.MCP.StoreNode do
   end
 
   defp normalize_metadata(_), do: %{}
+
+  # Accept an N-D region as a list of numbers, or a JSON-array string; anything
+  # else (including nil) becomes nil. The Store layer re-validates before persist.
+  defp normalize_region(value) when is_list(value) do
+    if value != [] and Enum.all?(value, &is_number/1), do: value, else: nil
+  end
+
+  defp normalize_region(value) when is_binary(value) do
+    case Jason.decode(value) do
+      {:ok, decoded} -> normalize_region(decoded)
+      _ -> nil
+    end
+  end
+
+  defp normalize_region(_), do: nil
 
   defp clamp(value, min_value, _max_value) when value < min_value, do: min_value
   defp clamp(value, _min_value, max_value) when value > max_value, do: max_value

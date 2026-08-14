@@ -15,7 +15,8 @@ defmodule Graphonomous do
     Graph,
     Learner,
     Orchestrator,
-    Retriever
+    Retriever,
+    Store
   }
 
   @allowed_node_types [:episodic, :semantic, :procedural, :temporal, :outcome, :goal]
@@ -171,6 +172,22 @@ defmodule Graphonomous do
     |> normalize_query_params()
     |> Graph.list_nodes()
     |> unwrap_ok()
+  end
+
+  @doc """
+  SCOPE (OS-012) spatial query: return knowledge nodes whose N-dimensional
+  `region` lies within `radius` (Euclidean) of `center`, nearest-first.
+
+  This is the first real consumer of the node `region` field — an N-D
+  region-algebra ball query over the graph. Returns `[{node, distance}]`. Nodes
+  without a region, or with a region of a different dimensionality than `center`,
+  are excluded.
+
+  Options: `:limit` (default 100).
+  """
+  def nodes_in_region(center, radius, opts \\ [])
+      when is_list(center) and is_number(radius) and is_list(opts) do
+    Store.nodes_in_region(center, radius, opts)
   end
 
   @doc """

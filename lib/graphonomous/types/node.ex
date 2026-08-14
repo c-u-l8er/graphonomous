@@ -32,6 +32,7 @@ defmodule Graphonomous.Types.Node do
           q_update_count: non_neg_integer(),
           evidence_count: non_neg_integer(),
           agent_id: binary(),
+          region: [number()] | nil,
           forgotten_at: DateTime.t() | nil,
           created_at: DateTime.t() | nil,
           updated_at: DateTime.t() | nil,
@@ -47,6 +48,9 @@ defmodule Graphonomous.Types.Node do
     :revision_id,
     :superseded_by,
     :forgotten_at,
+    # SCOPE (OS-012): optional N-dimensional spatial coordinate / region anchor.
+    # nil when the node has no spatial position; otherwise a list of numbers.
+    :region,
     node_type: :semantic,
     confidence: 0.5,
     metadata: %{},

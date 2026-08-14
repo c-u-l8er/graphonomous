@@ -63,6 +63,36 @@ defmodule Graphonomous.Store do
   def list_nodes(filters \\ %{}) when is_map(filters),
     do: GenServer.call(__MODULE__, {:list_nodes, filters})
 
+  @doc """
+  SCOPE (OS-012) consumer: return nodes whose N-dimensional `region` lies within
+  `radius` (Euclidean distance) of `center`.
+
+  This is the first real consumer of the `region` field — N-D region-algebra
+  membership (a ball query) applied to the knowledge graph. Nodes with no region,
+  or whose region has a different dimensionality than `center`, are excluded
+  (fail-closed: a coordinate of the wrong shape is never silently matched).
+
+  Returns `[{%Node{}, distance}]` sorted nearest-first. Direct ETS read (the node
+  table is `:public` with read_concurrency, same as `get_node_direct/1`).
+
+  Options: `:limit` (default 100).
+  """
+  def nodes_in_region(center, radius, opts \\ [])
+      when is_list(center) and is_number(radius) and is_list(opts) do
+    limit = Keyword.get(opts, :limit, 100)
+
+    @nodes_table
+    |> :ets.tab2list()
+    |> Enum.reduce([], fn {_id, %Node{region: region} = node}, acc ->
+      case region_distance(center, region) do
+        {:ok, d} when d <= radius -> [{node, d} | acc]
+        _ -> acc
+      end
+    end)
+    |> Enum.sort_by(fn {_node, d} -> d end)
+    |> Enum.take(limit)
+  end
+
   def update_node(node_id, attrs) when is_binary(node_id) and is_map(attrs),
     do: GenServer.call(__MODULE__, {:update_node, node_id, attrs}, @write_timeout_ms)
 
@@ -938,7 +968,7 @@ defmodule Graphonomous.Store do
            SELECT id, content, node_type, confidence, embedding, metadata, source, access_count,
                   causal_parent_ids, creation_source, timescale, decay_rate,
                   revision_id, superseded_by,
-                  q_value, q_update_count, evidence_count, agent_id, forgotten_at,
+                  q_value, q_update_count, evidence_count, agent_id, forgotten_at, region,
                   created_at, updated_at, last_accessed_at
            FROM nodes;
            """),
@@ -1013,6 +1043,7 @@ defmodule Graphonomous.Store do
          evidence_count,
          agent_id,
          forgotten_at,
+         region,
          created_at,
          updated_at,
          last_accessed_at
@@ -1038,6 +1069,7 @@ defmodule Graphonomous.Store do
       q_update_count: normalize_integer(q_update_count, 0),
       evidence_count: normalize_integer(evidence_count, 0),
       agent_id: to_string(agent_id || "default"),
+      region: normalize_db_region(region),
       forgotten_at: normalize_nullable_datetime(forgotten_at),
       created_at: normalize_datetime(created_at, now),
       updated_at: normalize_datetime(updated_at, now),
@@ -1552,6 +1584,13 @@ defmodule Graphonomous.Store do
          "CREATE INDEX IF NOT EXISTS idx_traces_initial_state_hash ON interaction_traces(initial_state_hash);",
          "CREATE INDEX IF NOT EXISTS idx_traces_started_at ON interaction_traces(started_at);",
          "CREATE INDEX IF NOT EXISTS idx_trace_edges_state_before ON trace_edges(state_before);"
+       ]},
+      {"2026_06_13_node_region_scope_os012",
+       [
+         # SCOPE (OS-012): optional N-D spatial region, stored as a JSON array of
+         # numbers (NULL when the node has no spatial position).
+         "ALTER TABLE nodes ADD COLUMN region TEXT;",
+         "CREATE INDEX IF NOT EXISTS idx_nodes_region ON nodes(region);"
        ]}
     ]
   end
@@ -1680,9 +1719,9 @@ defmodule Graphonomous.Store do
       (id, content, node_type, confidence, embedding, metadata, source, access_count,
        causal_parent_ids, creation_source, timescale, decay_rate,
        revision_id, superseded_by,
-       q_value, q_update_count, evidence_count, agent_id, forgotten_at,
+       q_value, q_update_count, evidence_count, agent_id, forgotten_at, region,
        created_at, updated_at, last_accessed_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
       """,
       [
         node.id,
@@ -1704,6 +1743,7 @@ defmodule Graphonomous.Store do
         normalize_integer(node.evidence_count || 0, 0),
         node.agent_id || "default",
         nullable_iso8601(node.forgotten_at),
+        encode_region(node.region),
         iso8601(node.created_at),
         iso8601(node.updated_at),
         iso8601(node.last_accessed_at)
@@ -1822,6 +1862,7 @@ defmodule Graphonomous.Store do
       q_update_count: normalize_integer(map_get(attrs, :q_update_count, 0), 0),
       evidence_count: normalize_integer(map_get(attrs, :evidence_count, 0), 0),
       agent_id: map_get(attrs, :agent_id, "default") || "default",
+      region: normalize_region(map_get(attrs, :region, nil)),
       forgotten_at: nil,
       created_at: map_get(attrs, :created_at, now) |> normalize_datetime(now),
       updated_at: map_get(attrs, :updated_at, now) |> normalize_datetime(now),
@@ -1946,6 +1987,7 @@ defmodule Graphonomous.Store do
             node.evidence_count || 0
           ),
         agent_id: map_get(attrs, :agent_id, node.agent_id) || "default",
+        region: normalize_region(map_get(attrs, :region, node.region)),
         forgotten_at: map_get(attrs, :forgotten_at, node.forgotten_at),
         updated_at: now
     }
@@ -2734,6 +2776,54 @@ defmodule Graphonomous.Store do
 
   defp normalize_db_json_list(value) when is_list(value), do: normalize_string_list(value)
   defp normalize_db_json_list(_), do: []
+
+  # SCOPE (OS-012) region helpers. A region is an N-D numeric coordinate (list of
+  # numbers) or nil. Inputs may arrive as a list (Elixir API) or a JSON string
+  # (MCP / DB). Anything that isn't a list of numbers normalizes to nil — never a
+  # partial/garbage coordinate.
+  defp normalize_region(nil), do: nil
+
+  defp normalize_region(value) when is_list(value) do
+    if value != [] and Enum.all?(value, &is_number/1), do: value, else: nil
+  end
+
+  defp normalize_region(value) when is_binary(value) do
+    case Jason.decode(value) do
+      {:ok, decoded} -> normalize_region(decoded)
+      _ -> nil
+    end
+  end
+
+  defp normalize_region(_), do: nil
+
+  # DB read: stored as a JSON array of numbers (or NULL).
+  defp normalize_db_region(nil), do: nil
+  defp normalize_db_region(value) when is_binary(value), do: normalize_region(value)
+  defp normalize_db_region(value) when is_list(value), do: normalize_region(value)
+  defp normalize_db_region(_), do: nil
+
+  # DB write: nil stays SQL NULL; a list is encoded as a JSON array.
+  defp encode_region(nil), do: nil
+  defp encode_region(region) when is_list(region), do: json_encode(region)
+  defp encode_region(_), do: nil
+
+  # Euclidean distance between two same-dimension numeric coordinates. Returns
+  # `:error` for mismatched dimensionality, empty vectors, a nil region, or any
+  # non-numeric element — so `nodes_in_region/3` excludes ill-shaped coordinates.
+  defp region_distance(center, region)
+       when is_list(center) and is_list(region) and
+              length(center) == length(region) and length(center) > 0 do
+    pairs = Enum.zip(center, region)
+
+    if Enum.all?(pairs, fn {a, b} -> is_number(a) and is_number(b) end) do
+      sum = Enum.reduce(pairs, 0.0, fn {a, b}, acc -> acc + (a - b) * (a - b) end)
+      {:ok, :math.sqrt(sum)}
+    else
+      :error
+    end
+  end
+
+  defp region_distance(_center, _region), do: :error
 
   defp normalize_datetime(%DateTime{} = dt, _fallback), do: dt
 
