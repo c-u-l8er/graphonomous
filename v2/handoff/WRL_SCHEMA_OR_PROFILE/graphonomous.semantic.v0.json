@@ -1,6 +1,6 @@
 {
  "profile_id": "graphonomous.semantic.v0",
- "state": "SEALED by WRL-P0 (WRL b072db0) — the WRL row V2_PROFILES['graphonomous.semantic.v0'] is the admitted declaration; this file is Graphonomous's submitted declaration and must agree facet-for-facet (test/wrl_world.test.mjs 'declaration reconcile'). D-034 ruled by D-037 (transition → claim is STATE_TRANSITION_OF, SUPERSEDES frozen to comparable kinds). FROZEN only when GPT accepts this round",
+ "state": "FROZEN CONTRACT (GPT Adjudication v4, 2026-09-03; D-049/D-050) at WRL b072db0 — the WRL row V2_PROFILES['graphonomous.semantic.v0'] is the admitted declaration and this file is Graphonomous's submitted declaration; they must agree facet-for-facet (test/wrl_world.test.mjs 'declaration reconcile'). No role, kind, endpoint pair, identity-affecting default, policy vocabulary or canonicalization semantics may change under this id: a needed change is proposed as graphonomous.semantic.v1 with every v0 golden identity proven unchanged. Golden worlds: baseline sem-0f952f03804c73152b762e4a09570ce37adb35039203c5c4c501507bd0ab17be, historical sem-3ae051cf2a4ab35436eedeb1b15cae759bd3001652d55d67a3f29ae23f5d0e23",
  "shape": "WRL §D6.1 eight items plus role declarations (the spec-text hole R5 found, GAP-W1); admitted by WRL-P0 as a `static` profile row (relation-v2.js V2_PROFILES; receipt STACK_FIX_RECEIPTS/WRL-P0.md). WRL validates, canonicalizes and seals; lib/wrl_world.mjs keeps only a pre-check that names the WRL code the same input draws",
  "ir_version": "2.0",
  "semantic_policies": {

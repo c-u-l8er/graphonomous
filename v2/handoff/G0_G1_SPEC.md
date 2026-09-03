@@ -26,6 +26,13 @@ to a frozen section is a new decision entry that cites the section, never a sile
 > `sem-`) → D-039, D-041; §7.3 lid → `\w+` encoding accepted as a profile adapter → D-040; §7.5 profile shape candidate →
 > D-042; statement lid / `rev-` / `rel-` law → D-043; §13 `has_exec_receipt(Subject)` is generic → D-044; checkpoint
 > commits + execution order → D-045, D-046. The section text below is left as frozen.
+>
+> **Amendments by decision (2026-09-03, GPT Adjudication v4 — G0-C FROZEN):** §7 the two golden worlds, the WRL pin
+> `b072db0` and the six-point identity interpretation are FROZEN → D-049; the profile `graphonomous.semantic.v0` is a
+> frozen contract, changes go to `graphonomous.semantic.v1` → D-050; §7.5 the measured `sem`/`gsem` equality is
+> non-normative → D-051; WRL-P0.1 spec text is WRL debt → D-052; `graphonomous.evidence.v0` deferred → D-053; §8.3 what
+> the `GRAPHONOMOUS-PROJECTION-v0` certificate may mean (reconstruction identity, not truth; not a warrant) and the
+> GAP-T9 / TRVM-P0 discipline, then G0-F → D-054. The section text below is left as frozen.
 
 ## 1. Purpose and boundary
 

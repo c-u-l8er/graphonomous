@@ -759,3 +759,95 @@ right thing by stopping instead of freezing over D-034 / GAP-W11..W13."
 - **Open.** Whether GPT wants `identities.json` to keep the spike mapping once the round is accepted, or retire it to
   `world-spike/` alone; and whether the measured equality should be promoted to a stated property of the profile
   ("a conforming submitter's bytes are WRL's bytes") or left as a per-pin measurement.
+
+## GPT Adjudication v4 (2026-09-03, input `GRAPHONOMOUS_G0C_WRLP0_FOR_GPT.md` + `graphonomous-g0c-wrlp0-v1.zip`, sha256 `8d2d20e5…`) — rulings recorded as D-049 … D-054
+
+GPT independently verified the 19,889-entry `SHA256SUMS` and re-ran the self-contained suites from the ZIP: **67 tests,
+67 pass** (the repository-backed projection tests and WRL's 900-check suite accepted as receipt evidence). State after
+v4: G-PR0 FROZEN · G0-A/B.1/E TESTED · WRL-P0 ACCEPTED/TESTED · **G0-C FROZEN** · **`graphonomous.semantic.v0` FROZEN
+CONTRACT** · D-048 equality MEASURED/NON-NORMATIVE · WRL-P0.1 spec text OPEN/NON-BLOCKING · `graphonomous.evidence.v0`
+DEFERRED until post-G0-F evidence · G0-D AUTHORIZED NEXT · G0-F AUTHORIZED AFTER G0-D · G0.5/UI not this round.
+
+## D-049 — G0-C FROZEN: the golden worlds, their pins, and the frozen identity interpretation (2026-09-03, GPT v4 §1–§3)
+
+- **D-037 accepted, TESTED, FROZEN modeling decision.** `EVIDENCE_STATE_TRANSITION --STATE_TRANSITION_OF--> CLAIM`;
+  transition→claim `SUPERSEDES` rejected; `SUPERSEDES` never inferred from chronology; `current` unmodified. The
+  post-D-037 projection/evaluation roots (`root-da4f3d7a…` / `root-c7f9c759…`; `root-c5d650b0…` / `root-edcd9f6f…`) are
+  the accepted G0-B.1/G0-E receipts for the two source snapshots.
+- **WRL-P0 accepted** as the first Graphonomous-driven owning-layer repair; WRL local commit
+  `b072db0a983a33108b9a0c4429b978cb07e54148` is **the WRL pin for frozen G0-C v0**. This freezes the behaviour
+  `graphonomous.semantic.v0` needs and the cited non-regression vectors — not all future WRL profile design.
+- **Final G0-C accepted, TESTED, identities FROZEN** under profile `graphonomous.semantic.v0`, WRL `b072db0`, source pins
+  `invariant-r10@ba4e625` (baseline) / `@699fbc2` (historical) + `computedriven@efa8881`, `super@7651697`,
+  `TRVM@fd0df4c`, factory ref `d217ee2`. **Golden worlds:** baseline
+  `sem-0f952f03804c73152b762e4a09570ce37adb35039203c5c4c501507bd0ab17be`, historical
+  `sem-3ae051cf2a4ab35436eedeb1b15cae759bd3001652d55d67a3f29ae23f5d0e23`; the exact `rev-`/`rel-` sets in
+  `projections/{baseline,historical}/world/identities.json` at Graphonomous commit `0da094a` are the golden G0-C vectors.
+- **Frozen identity interpretation.** (1) Graphonomous statement lid = cross-world proposition identity; (2) WRL `rev-`
+  = relation revision/content identity; (3) WRL `rel-` = allocation identity under one exact `sem-`; (4) the projection
+  root includes assertions/provenance; (5) `graphonomous.semantic.v0` deliberately excludes assertion/provenance
+  occurrence from semantic-world identity; (6) the G0-E evaluation root is separately bound to the projection root. The
+  measured identity matrix (`G0C_IDENTITY_MATRIX.md`) is accepted as the law's evidence.
+
+## D-050 — `graphonomous.semantic.v0` is a FROZEN CONTRACT; changes go to `graphonomous.semantic.v1` (2026-09-03, GPT v4 §3)
+
+- No role, relation kind, endpoint pair, identity-affecting default, policy vocabulary or canonicalization semantics may
+  be added under the same profile id. If G0-F (or any application requirement) cannot be represented by the frozen v0
+  declaration: **stop**, keep the projection/evaluation/certificate evidence, and propose `graphonomous.semantic.v1`
+  with the smallest new obligation and a migration/non-regression analysis proving every v0 golden identity still
+  reproduces — or prove the change is non-semantic and non-contractual. New datasets may produce new `sem-/rel-/rev-`
+  values while conforming to v0. Guard: `test/wrl_world.test.mjs` reconciles the submitted declaration against WRL's
+  row facet-for-facet; the WRL row at `b072db0` is the contract's bytes.
+
+## D-051 — D-048 ruled: the `sem`/`gsem` hex equality stays a per-pin MEASUREMENT, non-normative (2026-09-03, GPT v4 §4)
+
+- Not a profile property; no future submitter must reproduce WRL's canonical bytes ahead of WRL; future compatibility
+  must not depend on it. Authority remains normative: historical `gsem-` = Graphonomous spike receipt; `sem-` =
+  WRL-validated, WRL-minted. **Keep the mapping** in `identities.json` / `world-spike/` as migration evidence that no
+  rename was smuggled in, marked historical/provisional/**non-normative** and ignored by the live sealing/allocation
+  path. No `grelpre-` value becomes or aliases a kernel `rel-`.
+
+## D-052 — WRL-P0.1 Spec Closure is real documentation debt, non-blocking; `OBJECT_ID_RE` duplication stays (2026-09-03, GPT v4 §5)
+
+- WRL code is ahead of numbered spec text for static profiles. A small WRL-owned documentation/spec item should state,
+  with stable rule/capability references: profile selection by `profile_id`; `lowered` vs `static` derivation; the static
+  declaration surface; policy-vocabulary validation; that a static seal is no runtime/downgrade claim; the endpoint
+  role/kind constraints admitted static profiles use. Filed as `STACK_GAP_REGISTER.md` row GAP-W14 (WRL-P0.1); never mixed
+  with Graphonomous semantic code; does not block G0-D/G0-F. The kernel is **not** modified to export its private regex;
+  the profile adapter's restatement stays pinned by conformance/round-trip tests until WRL changes the core grammar or a
+  second consumer shows real drift risk.
+
+## D-053 — `graphonomous.evidence.v0` DEFERRED until after G0-F (2026-09-03, GPT v4 §6)
+
+- The three-surface separation (projection root = complete evidence/provenance; G0-E root = derived understanding;
+  `sem-` = semantic statement world) is working. An evidence WRL profile is reconsidered only after G0-F, from measured
+  needs of at least two authoritative source families; G0-F returns a measurement note and a recommendation, not code
+  (which provenance/assertion concepts are shared vs source-specific; whether any query/identity/certificate need cannot
+  be met by root + world separation). If no concrete requirement emerges, provenance stays in the projection/CAS layer.
+
+## D-054 — Next order: G0-D projection certificate, then G0-F factory ledger; what the certificate may mean; GAP-T9 discipline (2026-09-03, GPT v4 §7–§9)
+
+- **G0-D `GRAPHONOMOUS-PROJECTION-v0`** certifies **reconstruction identity, not truth**: *under these pinned source
+  identities, ingestion contracts, canonical-byte rules and manifest, this projection reconstructs to this exact root
+  and the protocol checker verifies the required identity/chain relations.* It must not mean any claim is true, evidence
+  is sufficient, a state is promoted, Graphonomous may write a registry, or a G0-E derived fact is a TRVM derivation.
+  Required: versioned protocol id; content-bound certificate identity; binds the exact projection root, the
+  source/snapshot identity set (or a commitment to it), the ingestion/rule/schema identities needed to reconstruct;
+  moves on any bound semantic input, holds on unbound prose; old certificates stay independently checkable after a
+  later snapshot; explicitly **not a warrant**; no authority follows from possession. Field mapping is derived from the
+  real `certificate.mjs` / `nest_check.mjs` API, never from the old pre-spec.
+- **GAP-T9 discipline.** First try TRVM's existing certificate extension/checking mechanisms. If TRVM can mint but
+  cannot generically check/register the child protocol except by a Graphonomous-local checker, reduce that to a minimal
+  reproducer and classify it; only then a focused owning-layer round **`TRVM-P0 — Checked Child Protocol Registration`**
+  (failing-first; generic/versioned registration or dispatch; no `if (protocol === "GRAPHONOMOUS…")`; all existing
+  certificate/nest-check vectors unchanged; Graphonomous checker and TRVM checker agree on the same positive/refusal
+  vectors; no derivation-language/`prim` work; receipt + separate local TRVM commit, not pushed). GAP-T9 is certificate
+  authority, not graph rule execution — never conflated with the `prim` basis.
+- **G0-F** after G0-D: the pinned factory canonical ref (`d217ee2`, exact commit resolved before ingestion) as an
+  independent authoritative source; tests the `inv` namespace against a second producer, qualified/unqualified id
+  collision rules, whether equivalent claims converge on one statement + multiple assertions or stay distinct with
+  explicit relations (text equality is never identity); preserves source authority; measures new fault types rather
+  than normalizing them away; proves certificate sensitivity (new source commitment → new snapshot commitment; semantic
+  additions move root and certificate; the pre-G0-F certificate still verifies against its frozen snapshot;
+  reordering/dropping a source cannot alias a certificate); seals under frozen v0 or stops with a v1 proposal (D-050).
+- Not this round: UI/G0.5, broad G1, `graphonomous.evidence.v0`, the TRVM primitive-basis round.

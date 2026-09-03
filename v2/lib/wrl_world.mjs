@@ -94,7 +94,7 @@ export function identitiesDocument(sealed, p, historicalSpikeGsem) {
     sem: sealed.sem, profile_id: sealed.profile_id,
     wrl: { commit: WRL_PIN.commit, blobs: Object.entries(WRL_PIN.blobs).map(([file, blob]) => ({ file, blob })) },
     projection_root: p.root, snapshot: p.snapshot, objects: sealed.objects, relations: sealed.relations,
-    supersedes: { historical_spike_gsem: historicalSpikeGsem, note: "D-038/D-041: provisional Graphonomous spike identity (world-spike/); superseded for WRL-world purposes by sem. Equivalence of the two hexes is MEASURED per pin by test/wrl_world.test.mjs, never assumed: the spike is not a seal, whatever its bytes" },
+    supersedes: { historical_spike_gsem: historicalSpikeGsem, note: "D-038/D-041/D-051: HISTORICAL, PROVISIONAL, NON-NORMATIVE — the Graphonomous spike receipt (world-spike/), kept as migration evidence that no rename was smuggled in; ignored by the live sealing/allocation path. Equivalence of the two hexes is a per-pin MEASUREMENT (test/wrl_world.test.mjs), never a profile property: no submitter must reproduce WRL's canonical bytes ahead of WRL; the spike is not a seal, whatever its bytes" },
     state: WORLD_STATE,
   };
 }

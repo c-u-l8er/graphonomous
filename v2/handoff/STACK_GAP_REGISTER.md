@@ -46,6 +46,7 @@ computedriven `21a1452` · super `c4160fd`. Full audits: `research/R6_TRVM_DERIV
 
 Observation, not a G0 gap: the spine's exported registries are mutable (`Object.isFrozen(W.ROLE_IDS) === false`),
 unlike the deep-frozen relation vocabularies (`relation-identity.js:97-118`).
+| GAP-W14 | numbered spec text for static profiles (WRL-P0.1 Spec Closure) | **SPEC_GAP** (documentation debt, WRL-owned) — **ruled non-blocking** (GPT v4 §5, D-052) | WRL `spec.html` / `reference.html` | `relation-v2.js` at `b072db0` implements `V2_PROFILES` (`lowered`/`static`), policy-vocabulary validation and the static-seal-is-not-a-run refusals, but no D8 rule number states them, so conformance 21j could add no pending-register row | WRL-P0 | a WRL documentation/spec commit with conformance annotations: profile selection by `profile_id`; `lowered` vs `static` derivation; the static declaration surface; policy validation; static seal ≠ runtime/downgrade claim; endpoint role/kind constraints of admitted static profiles. Never mixed with Graphonomous semantic code. `OBJECT_ID_RE` duplication stays until the core grammar changes or a second consumer shows drift. |
 
 ## WEK
 

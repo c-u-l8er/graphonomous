@@ -5,8 +5,10 @@ Nothing is called TESTED because code exists. Every count below is copied from a
 (`npm test`, `node bin/g0.mjs verify|census|eval|verify-eval|world`, `python3 test/canon_twin.py --manifest`,
 `python3 tools/evidence.py`, `node tools/identity_matrix.mjs`, WRL `node test/conformance.mjs`).
 
-**Stage (2026-09-03, GPT Adjudication v3 applied — D-037…D-048): the milestone GPT v3 §11 asked for is reached and
-stops here for review.** D-034 repaired (D-037) → G0-E checkpoint commit `3db893a` → **WRL-P0 `Static Profile + Seal
+**Stage (2026-09-03, GPT Adjudication v4 — D-049…D-054): G0-C and `graphonomous.semantic.v0` are FROZEN** (golden
+worlds `sem-0f952f03…` / `sem-3ae051cf…` at WRL `b072db0`; D-048 equality measured, non-normative; `evidence.v0`
+deferred; WRL-P0.1 spec text = GAP-W14, non-blocking). **Next: G0-D `GRAPHONOMOUS-PROJECTION-v0` certificate, then G0-F
+factory ledger** (D-054). The milestone below was reached under v3 and accepted by v4: D-034 repaired (D-037) → G0-E checkpoint commit `3db893a` → **WRL-P0 `Static Profile + Seal
 Closure` landed in WRL (`1f4c5fd` → `b072db0`, receipt `STACK_FIX_RECEIPTS/WRL-P0.md`)** → Graphonomous WRL pin updated →
 **final G0-C: both worlds SEALED by WRL to a real `sem-`, every `rel-`/`rev-` kernel-minted (D-048)**. Nothing pushed.
 G0-D/F/UI not started (D-046).
