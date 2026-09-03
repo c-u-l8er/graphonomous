@@ -1,0 +1,1 @@
+{"attrs":{"reason":"prose","text":"S2 non-amplification: revoked / consumed authority is superseded authority"},"code":"UNRESOLVED_LINK","concerns":["claim:crosswalk:E-46b"],"lid":"fault:g0:UNRESOLVED_LINK:0023","message":"E-46b link 0 is prose, not a reference","rule":"crosswalk.derivation_links","snapshot":"snapshot:g0:baseline-ba4e625"}

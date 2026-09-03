@@ -1,0 +1,297 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "https://graphonomous.com/g0/schemas/assertion.schema.json",
+ "title": "G0 assertion: one source stating one subject at one location",
+ "x-g0-witness": [],
+ "type": "object",
+ "required": [
+  "lid",
+  "subject",
+  "location",
+  "asserted_by",
+  "precision",
+  "snapshot"
+ ],
+ "additionalProperties": false,
+ "properties": {
+  "lid": {
+   "$ref": "#/$defs/lid"
+  },
+  "subject": {
+   "$ref": "#/$defs/lid"
+  },
+  "location": {
+   "$ref": "#/$defs/lid"
+  },
+  "asserted_by": {
+   "$ref": "#/$defs/lid"
+  },
+  "precision": {
+   "$ref": "#/$defs/precision"
+  },
+  "snapshot": {
+   "$ref": "#/$defs/snapshot_id"
+  },
+  "attrs": {
+   "$ref": "#/$defs/attrs"
+  }
+ },
+ "$defs": {
+  "lid": {
+   "type": "string",
+   "pattern": "^[a-z]+:[a-z0-9][a-z0-9.-]*:[A-Za-z0-9._/@+~#%:-]+$",
+   "minLength": 5,
+   "maxLength": 1024
+  },
+  "hash": {
+   "type": "string",
+   "pattern": "^sha256:[0-9a-f]{64}$"
+  },
+  "hex64": {
+   "type": "string",
+   "pattern": "^[0-9a-f]{64}$"
+  },
+  "git_oid": {
+   "type": "string",
+   "pattern": "^[0-9a-f]{40}$"
+  },
+  "pinned_identity": {
+   "anyOf": [
+    {
+     "$ref": "#/$defs/git_oid"
+    },
+    {
+     "$ref": "#/$defs/hash"
+    }
+   ]
+  },
+  "decimal_string": {
+   "type": "object",
+   "properties": {
+    "decimal_string": {
+     "type": "string",
+     "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+    }
+   },
+   "required": [
+    "decimal_string"
+   ],
+   "additionalProperties": false
+  },
+  "safe_int": {
+   "type": "integer",
+   "minimum": -9007199254740991,
+   "maximum": 9007199254740991
+  },
+  "basis": {
+   "enum": [
+    "observed",
+    "derived",
+    "proposed"
+   ]
+  },
+  "precision": {
+   "enum": [
+    "pointer",
+    "heading",
+    "line",
+    "symbol",
+    "file"
+   ]
+  },
+  "snapshot_id": {
+   "type": "string",
+   "pattern": "^snapshot:g0:[a-z0-9.-]+$"
+  },
+  "node_kind": {
+   "enum": [
+    "OBLIGATION",
+    "ENFORCEMENT_PROPERTY",
+    "CLAIM",
+    "LAW",
+    "MECHANISM",
+    "DEFINITION",
+    "REPRESENTATION",
+    "PROFILE",
+    "ASSUMPTION",
+    "WITNESS",
+    "FALSIFIER",
+    "FINDING",
+    "EXPERIMENT",
+    "RECEIPT",
+    "ARTIFACT",
+    "ADJUDICATION",
+    "EVIDENCE_STATE_TRANSITION",
+    "ROUND",
+    "CELL",
+    "REGISTRY",
+    "SOURCE_LOCATION",
+    "FAULT",
+    "PROPOSAL"
+   ]
+  },
+  "relation_kind": {
+   "enum": [
+    "STATES",
+    "IMPLEMENTS",
+    "DERIVES_FROM",
+    "REDUCES_TO",
+    "REFINES",
+    "SPLIT_FROM",
+    "SUPERSEDES",
+    "RETRACTS",
+    "REQUIRES",
+    "WITNESSES",
+    "SUPPORTS",
+    "FALSIFIES",
+    "ATTACKS",
+    "TESTED_UNDER",
+    "SCOPED_BY",
+    "ASSUMES",
+    "CLOSES",
+    "OPENS",
+    "PRODUCED_BY",
+    "ADJUDICATED_BY",
+    "LOCATED_IN",
+    "MEMBER_OF",
+    "BINDS",
+    "CITES",
+    "INDEPENDENT_OF",
+    "CONFLICTS_WITH",
+    "EQUIVALENT_TO",
+    "DEFINES",
+    "REPRESENTS",
+    "CROSS_CUTS",
+    "STATE_TRANSITION_OF"
+   ]
+  },
+  "digest_set": {
+   "type": "object",
+   "properties": {
+    "sha256": {
+     "$ref": "#/$defs/hex64"
+    },
+    "gitCommit": {
+     "$ref": "#/$defs/git_oid"
+    },
+    "gitTree": {
+     "$ref": "#/$defs/git_oid"
+    },
+    "gitBlob": {
+     "$ref": "#/$defs/git_oid"
+    },
+    "dirHash1": {
+     "type": "string",
+     "minLength": 1
+    }
+   },
+   "additionalProperties": false,
+   "minProperties": 1
+  },
+  "resource_descriptor": {
+   "type": "object",
+   "properties": {
+    "name": {
+     "type": "string"
+    },
+    "uri": {
+     "type": "string",
+     "minLength": 1
+    },
+    "digest": {
+     "$ref": "#/$defs/digest_set"
+    },
+    "media_type": {
+     "type": "string"
+    }
+   },
+   "required": [
+    "uri",
+    "digest"
+   ],
+   "additionalProperties": false
+  },
+  "unknown": {
+   "type": "object",
+   "properties": {
+    "unknown": {
+     "enum": [
+      "not-stated",
+      "not-executed",
+      "undecidable-from-data",
+      "source-dangling",
+      "masked"
+     ]
+    }
+   },
+   "required": [
+    "unknown"
+   ],
+   "additionalProperties": false
+  },
+  "evidence_state": {
+   "type": "object",
+   "properties": {
+    "token": {
+     "type": "string",
+     "minLength": 1
+    },
+    "vocabulary": {
+     "type": "string",
+     "pattern": "^[a-z0-9][a-z0-9.-]*$"
+    },
+    "text": {
+     "type": "string"
+    }
+   },
+   "required": [
+    "token",
+    "vocabulary"
+   ],
+   "additionalProperties": false
+  },
+  "attr_value": {
+   "anyOf": [
+    {
+     "type": "null"
+    },
+    {
+     "type": "boolean"
+    },
+    {
+     "$ref": "#/$defs/safe_int"
+    },
+    {
+     "type": "string"
+    },
+    {
+     "$ref": "#/$defs/decimal_string"
+    },
+    {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/attr_value"
+     }
+    },
+    {
+     "type": "object",
+     "propertyNames": {
+      "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+     },
+     "additionalProperties": {
+      "$ref": "#/$defs/attr_value"
+     }
+    }
+   ]
+  },
+  "attrs": {
+   "type": "object",
+   "propertyNames": {
+    "pattern": "^[a-z][a-z0-9_]*$"
+   },
+   "additionalProperties": {
+    "$ref": "#/$defs/attr_value"
+   }
+  }
+ }
+}

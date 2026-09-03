@@ -1,0 +1,1 @@
+{"attrs":{"reason":"retired-id","text":"E-13"},"code":"UNRESOLVED_LINK","concerns":["claim:crosswalk:E-12"],"lid":"fault:g0:UNRESOLVED_LINK:0045","message":"E-12 → E-13: no such record at this pin (retired by a split?)","rule":"crosswalk.derivation_links","snapshot":"snapshot:g0:baseline-ba4e625"}

@@ -1,0 +1,25 @@
+{
+ "started_at": "2026-09-03T16:19:17.907Z",
+ "finished_at": "2026-09-03T16:19:18.555Z",
+ "host": "PX13",
+ "node": "v25.2.1",
+ "head_drift": [
+  {
+   "repo": "invariant-r10",
+   "head": "c67435fbaab012b79cdb1a272c12b1e09f247423",
+   "pinned": "699fbc2859efdaf57b2391d51dd7712b471e92b9"
+  },
+  {
+   "repo": "super",
+   "head": "afd73fb4267a535126afd806a4d5e9cee84e0a7c",
+   "pinned": "76516978bfa84057d179c0dbdc8a323f512a828b"
+  },
+  {
+   "repo": "computedriven",
+   "head": "e42cc8870d4192e1f36fc65c3de80e7d3262104b",
+   "pinned": "efa8881a5d44011c165b24276a17d07d6556c047"
+  }
+ ],
+ "shuffle_seed": null,
+ "reverse_adapters": false
+}

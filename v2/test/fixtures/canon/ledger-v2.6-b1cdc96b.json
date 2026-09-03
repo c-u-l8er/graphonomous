@@ -1,0 +1,814 @@
+{
+ "research_version": "fable51-invariant-discovery-2026-09-02-v2.6-v3-adjudication-applied",
+ "source_bundle": {
+  "file": "FABLE_5_1_COMPUTEDRIVEN_FULL_RESEARCH_BUNDLE_2026-09-01.zip",
+  "sha256": "70c00df9e60cbdaace009c342920ece0d7b7b2e4681bbd797f8d058b0c577b99"
+ },
+ "source_registries_derived": {
+  "CLAIM_LEDGER.json": {
+   "round": {
+    "id": "INV-R9.4",
+    "date": "2026-08-26",
+    "receipt_ref": "mosaic/receipts/INV-R9.4.json"
+   },
+   "claims": 208,
+   "by_status": {
+    "REFUTED": 19,
+    "PROVED": 52,
+    "CONDITIONAL": 3,
+    "KNOWN": 7,
+    "OPEN": 46,
+    "DECLARED": 71,
+    "MEASURED": 3,
+    "PROVISIONAL": 7
+   },
+   "by_prefix": {
+    "FED": 38,
+    "LED": 17,
+    "ESC": 4,
+    "TAX": 6,
+    "REPRO": 2,
+    "MOS": 29,
+    "EVID": 5,
+    "FAC": 40,
+    "EMB": 22,
+    "ASR": 19,
+    "INC": 3,
+    "TERM": 1,
+    "LINEAGE": 3,
+    "SUPPORT": 3,
+    "ADMISSION": 2,
+    "MEDIATION": 3,
+    "IMPACT": 9,
+    "CONTROL": 1,
+    "RECEIPT": 1
+   }
+  },
+  "cells.json": {
+   "version": "0.8",
+   "cells": 46,
+   "by_status": {
+    "proved": 8,
+    "shipped": 5,
+    "named": 4,
+    "sketched": 9,
+    "missing": 17,
+    "conditional": 3
+   }
+  },
+  "invariant-grid.json": {
+   "version": "1.47.0",
+   "law_registry_entries": 94,
+   "canonical": 66,
+   "by_status": {
+    "FALSIFIED": 4,
+    "PROVED": 2,
+    "PROPERTY-TESTED": 82,
+    "REGRESSION-LOCKED": 6
+   }
+  },
+  "computedriven_git_bundle": {
+   "head": "efa8881",
+   "commits": 62
+  },
+  "not_found": [
+   "WEK_R0_REPO_MAP.md",
+   "world-to-world communication spec",
+   "spatial navigation spec",
+   "live repository access",
+   "R0.8.3 lab receipt"
+  ]
+ },
+ "status_vocabulary": [
+  "PROVEN",
+  "EXHAUSTIVE-IN-MODEL",
+  "TESTED",
+  "PROPERTY-TESTED",
+  "SUPPORTED",
+  "SPEC",
+  "PLAUSIBLE",
+  "SPECULATIVE",
+  "REFUTED",
+  "REFUTED-AS-STATED",
+  "REDUNDANT",
+  "REJECT",
+  "OUT-OF-SCOPE",
+  "UNKNOWN",
+  "DEFINITION"
+ ],
+ "witness": {
+  "file": "witnesses/adversarial_worlds.py",
+  "sha256": "439ed40b90fbf8d8c7c3c933a593f0b6420471df993ef28bb3359d620965868f",
+  "expectations": 19,
+  "exit": 0,
+  "deterministic_across_hash_seeds": true
+ },
+ "claims": [
+  {
+   "id": "P1",
+   "name": "atomic admission",
+   "statement": "No authority-bearing lifecycle transition takes effect without consuming the single current admission and returning its successor; failure paths return every un-consumed value.",
+   "scope": [
+    "persistent agents",
+    "single-log worlds"
+   ],
+   "classification": "invariant/safety",
+   "status": "TESTED",
+   "dependencies": [],
+   "falsifiers": [
+    "two vacancies from detach-then-competing-finality",
+    "admission reuse (E0382)"
+   ],
+   "evidence": [
+    {
+     "kind": "TESTED",
+     "source": "cd-core docs/admission-model.md; receipts/R0.7.md"
+    },
+    {
+     "kind": "EXHAUSTIVE-IN-MODEL",
+     "witness": "witnesses/adversarial_worlds.py",
+     "model": "M2"
+    }
+   ],
+   "prior_art": [
+    {
+     "name": "fencing token / serialization point",
+     "url": "https://martin.kleppmann.com/2016/02/08/how-to-do-distributed-locking.html"
+    }
+   ],
+   "confidence": 0.9,
+   "note": "primitive P0 | v2: candidate obligation, NOT promoted (GPT-5.6 R10-pre ruling)"
+  },
+  {
+   "id": "P2",
+   "name": "evidence-only, route-free authority",
+   "statement": "Authority is reconstructed from admitted grant/revocation evidence; no observation (reachability, name, position, restart, merge, lifecycle event) mints, restores or widens it.",
+   "scope": [
+    "all agents"
+   ],
+   "classification": "invariant/safety",
+   "status": "TESTED",
+   "dependencies": [],
+   "falsifiers": [
+    "partition finalizes a generation",
+    "replacement inherits authority",
+    "restart widens"
+   ],
+   "evidence": [
+    {
+     "kind": "TESTED",
+     "source": "cd-core authority.rs; failure-model.md; ampd README crash truth"
+    },
+    {
+     "kind": "EXHAUSTIVE-IN-MODEL",
+     "witness": "witnesses/adversarial_worlds.py",
+     "model": "M3"
+    }
+   ],
+   "prior_art": [
+    {
+     "name": "EROS confinement / authority non-amplification",
+     "url": "https://flint.cs.yale.edu/cs428/doc/eros-verify.pdf"
+    },
+    {
+     "name": "Chandra-Toueg failure detectors",
+     "url": "https://dl.acm.org/doi/10.1145/226643.226647"
+    }
+   ],
+   "confidence": 0.9,
+   "note": "primitive P0 | v2: candidate obligation, NOT promoted (GPT-5.6 R10-pre ruling)"
+  },
+  {
+   "id": "P3a",
+   "name": "exclusivity outside copyable state",
+   "statement": "Currentness of a lineage is never carried by copyable bytes; it is an anchor (lock/epoch/counter) outside any state a copy can carry.",
+   "scope": [
+    "persistent agents",
+    "single host as executed"
+   ],
+   "classification": "invariant/safety",
+   "status": "TESTED",
+   "dependencies": [],
+   "falsifiers": [
+    "two controllers over one copied store both act"
+   ],
+   "evidence": [
+    {
+     "kind": "TESTED",
+     "source": "cd-durable R0.8.2 (in-process; lab not executed)"
+    },
+    {
+     "kind": "EXHAUSTIVE-IN-MODEL",
+     "witness": "witnesses/adversarial_worlds.py",
+     "model": "M1 commitment-only variant"
+    }
+   ],
+   "prior_art": [
+    {
+     "name": "leases",
+     "url": "https://dl.acm.org/doi/10.1145/74850.74870"
+    }
+   ],
+   "confidence": 0.75,
+   "note": "primitive P0 (host-local scope); cross-host UNKNOWN",
+   "r10pre_revision": "mechanism for S3 on copyable substrates, not a universal primitive",
+   "r10pre_disposition": "RECLASSIFIED",
+   "r10pre_execution": "live_local: PX13 R0.8.3 21/21 (nc1/nc6); narrowed by F31 to one lock namespace; cross-host measured by EXP-1 (E-13)."
+  },
+  {
+   "id": "P3b",
+   "name": "root commitment under injective encoding",
+   "statement": "The trust root commits to the canonical transition history under an injective encoding; every mutation re-validates the store against it.",
+   "scope": [
+    "persistent agents"
+   ],
+   "classification": "invariant/safety",
+   "status": "TESTED",
+   "dependencies": [],
+   "falsifiers": [
+    "forged one-record history reproduces honest digest (F1)",
+    "live store edit laundered into root (F15)"
+   ],
+   "evidence": [
+    {
+     "kind": "TESTED",
+     "source": "cd-durable R0.8.3 F1/F15 reproduced and repaired"
+    },
+    {
+     "kind": "EXHAUSTIVE-IN-MODEL",
+     "witness": "witnesses/adversarial_worlds.py",
+     "model": "M1 exclusive-only variant"
+    }
+   ],
+   "prior_art": [
+    {
+     "name": "Memoir",
+     "url": "https://www.semanticscholar.org/paper/b9c37207976ab7db60119e717b3c2138906fa6f8"
+    },
+    {
+     "name": "Ariadne",
+     "url": "https://www.usenix.org/system/files/conference/usenixsecurity16/sec16_paper_strackx.pdf"
+    }
+   ],
+   "confidence": 0.8,
+   "note": "primitive P0",
+   "r10pre_revision": "mechanism for S3 on copyable substrates, not a universal primitive",
+   "r10pre_disposition": "RECLASSIFIED",
+   "r10pre_execution": "live_local: PX13 R0.8.3 21/21 (nc2/nc4/nc8); narrowed: SQLite interpretation contract trusted (F23/F24 open) (E-14)."
+  },
+  {
+   "id": "P4a",
+   "name": "write-mediated identity",
+   "statement": "A resource's observable value cannot change except through a version-advancing transition; same version implies same value.",
+   "scope": [
+    "all worlds"
+   ],
+   "classification": "invariant",
+   "status": "PROPERTY-TESTED",
+   "dependencies": [],
+   "falsifiers": [
+    "read-aliased mutation with fixed version (AUDIT-WORLD-ALIAS)"
+   ],
+   "evidence": [
+    {
+     "kind": "TESTED",
+     "source": "TRVM law:world.write-mediated@1"
+    }
+   ],
+   "prior_art": [],
+   "confidence": 0.8,
+   "note": "primitive P0 | v2: candidate obligation, NOT promoted (GPT-5.6 R10-pre ruling)",
+   "r10pre_execution": "EXP-3 on live v0.12.0: holds for side-effecting observations; scope registry unversioned (E-43) and fork split (E-42) kept red."
+  },
+  {
+   "id": "P4b",
+   "name": "ADEQUACY paired with EQUIVARIANCE (observable completeness)",
+   "statement": "P(x)=P(y) implies O(x)=O(y): the shared observable is a sufficient statistic for future behaviour, quotiented by identity-preserving renaming.",
+   "scope": [
+    "all worlds",
+    "replicated agents"
+   ],
+   "classification": "consistency",
+   "status": "PROPERTY-TESTED",
+   "dependencies": [],
+   "falsifiers": [
+    "replicas diverge on observable-equal states",
+    "byte inequality blocks convergence"
+   ],
+   "evidence": [
+    {
+     "kind": "TESTED",
+     "source": "TRVM meta_laws ADEQUACY/EQUIVARIANCE"
+    },
+    {
+     "kind": "EXHAUSTIVE-IN-MODEL",
+     "witness": "witnesses/adversarial_worlds.py",
+     "model": "M5"
+    }
+   ],
+   "prior_art": [
+    {
+     "name": "predictive state representations / sufficient statistic",
+     "url": "https://proceedings.neurips.cc/paper_files/paper/2001/file/1e4d36177d71bbb3558e43af9577d70e-Paper.pdf"
+    }
+   ],
+   "confidence": 0.85,
+   "note": "known property, new name; P1 not P0 when taken alone | v2: candidate obligation, NOT promoted (GPT-5.6 R10-pre ruling)"
+  },
+  {
+   "id": "P5",
+   "name": "effect boundary (output commit)",
+   "statement": "Automatic roll-forward is safe only for transitions whose entire future-affecting outcome is canonical state; an irreversible external effect needs a durable claim before issue and a legal indeterminate terminal.",
+   "scope": [
+    "worlds with irreversible external effects"
+   ],
+   "classification": "invariant/safety",
+   "status": "TESTED",
+   "dependencies": [],
+   "falsifiers": [
+    "fork after issue re-issues the effect"
+   ],
+   "evidence": [
+    {
+     "kind": "SPEC",
+     "source": "cd-durable THE EFFECT BOUNDARY; ampd effect journal (in_tree); WEK RESOLVE"
+    },
+    {
+     "kind": "EXHAUSTIVE-IN-MODEL",
+     "witness": "witnesses/adversarial_worlds.py",
+     "model": "M4"
+    }
+   ],
+   "prior_art": [
+    {
+     "name": "output commit problem",
+     "url": "https://www.cs.utexas.edu/~lorenzo/papers/SurveyFinal.pdf"
+    }
+   ],
+   "confidence": 0.85,
+   "note": "vanishes in a pure simulated world | v2: candidate obligation, NOT promoted (GPT-5.6 R10-pre ruling)",
+   "status_v2_4": "SUPPORTED",
+   "r10pre_execution": "v2.5: first adapter run (EXP-6, crosswalk E-48) — UNKNOWN reached live for process- and node-level crashes, re-claim refused by name, naive adapter duplicates on re-authorized replay, keyed far side deduplicates, reconciliation by far-side evidence; profile: bare git far side on the same machine. Kept red at the journal (E-50). v2.6: S5 TESTED under the exact stated profile (GPT v3 §12); tested / not_tested lists on E-48; E-50 split into E-50a/E-50b; E-51 model."
+  },
+  {
+   "id": "C-1",
+   "name": "S3 independence witness: currentness and history continuity are separately necessary enforcement properties",
+   "statement": "On copyable/restorable substrates, S3 requires two independently falsifiable enforcement properties — currentness/exclusivity and canonical-history continuity; a-only leaves a rollback duplicate reachable, b-only a concurrent duplicate. They may be supplied by separate mechanisms or by one compound trusted mechanism that demonstrably supplies both.",
+   "scope": [
+    "persistent agents"
+   ],
+   "classification": "invariant/safety",
+   "status": "EXHAUSTIVE-IN-MODEL",
+   "dependencies": [
+    "P3a",
+    "P3b"
+   ],
+   "falsifiers": [
+    "bytes-only, exclusive-only, commitment-only each reach BAD"
+   ],
+   "evidence": [
+    {
+     "kind": "EXHAUSTIVE-IN-MODEL",
+     "witness": "witnesses/adversarial_worlds.py",
+     "model": "M1"
+    }
+   ],
+   "prior_art": [
+    {
+     "name": "fencing tokens + state continuity (synthesis)",
+     "url": "https://martin.kleppmann.com/2016/02/08/how-to-do-distributed-locking.html"
+    }
+   ],
+   "confidence": 0.85,
+   "note": "new to project as a pair; P0 candidate | v2: candidate obligation, NOT promoted (GPT-5.6 R10-pre ruling)",
+   "r10pre_revision": "v2.1: not a mechanism-count claim (GPT-5.6 v2 audit §3)",
+   "r10pre_disposition": "OBLIGATION+MECHANISM-WITNESS",
+   "r10pre_execution": "EXP-8 witness: one compound NV mechanism suffices in-model; count invisible to the model (E-47)."
+  },
+  {
+   "id": "C-2",
+   "name": "a Locus is not itself an ambient authority source (narrowed)",
+   "statement": "On the admissible-action relation, the locus encoding equals capability evidence + one linear occupancy/exclusivity token + provenance; position contributes scope and serialization, not authority. Locus remains semantically open in observation field, neighborhood, causal locality, support, resource neighborhood, communication adjacency, spatial navigation, position-scoped policy, embodiment coupling, world-to-world boundary.",
+   "scope": [
+    "ComputeDriven worlds as implemented"
+   ],
+   "classification": "corollary/definition",
+   "status": "EXHAUSTIVE-IN-MODEL",
+   "dependencies": [
+    "P1",
+    "P2"
+   ],
+   "falsifiers": [
+    "a test that passes on cd-core and fails through a capability facade"
+   ],
+   "evidence": [
+    {
+     "kind": "EXHAUSTIVE-IN-MODEL",
+     "witness": "witnesses/adversarial_worlds.py",
+     "model": "M7"
+    }
+   ],
+   "prior_art": [
+    {
+     "name": "mobile ambients (location as boundary)",
+     "url": "http://lucacardelli.name/Papers/MobileAmbientsETAPS98.A4.pdf"
+    },
+    {
+     "name": "Boebert *-property (why position-policy needs a monitor)",
+     "url": "http://www.erights.org/elib/capability/duals/boebert.html"
+    }
+   ],
+   "confidence": 0.8,
+   "note": "v2.1: narrowed per GPT-5.6 REVISE B; the v1 record name is retained only in v1-provenance/",
+   "r10pre_revision": "promoted claim narrowed: a Locus is not itself an ambient authority source (admissible-action relation only); other Locus roles UNTESTED",
+   "r10pre_disposition": "NARROWED",
+   "r10pre_execution": "EXP-4 façade mirror: 5/4/18/0 (pass/partial/inexpressible/fail) of 27; the non-authority residue enumerated — see crosswalk E-45. The narrowed Locus statement stands; nothing further reduced."
+  },
+  {
+   "id": "C-3",
+   "name": "admission-basis reification",
+   "statement": "Every environmental input an admission consumed (time, epsilon, profile, Q digests, X hashes, admission generation) is committed into the transition record.",
+   "scope": [
+    "worlds whose admission consults an environment"
+   ],
+   "classification": "corollary of P4b",
+   "status": "SPEC",
+   "dependencies": [
+    "P4b"
+   ],
+   "falsifiers": [
+    "WEK vector #27 pair"
+   ],
+   "evidence": [
+    {
+     "kind": "SPEC",
+     "source": "WEK_FABLE_REVIEW_R3_1 M3-1; TRVM derivation.entry-snapshot@1"
+    }
+   ],
+   "prior_art": [],
+   "confidence": 0.9,
+   "note": "v2: candidate obligation, NOT promoted (GPT-5.6 R10-pre ruling)",
+   "r10pre_revision": "the committed transition and its authenticated evidence closure are sufficient to reconstruct the legality basis",
+   "r10pre_disposition": "REWORDED"
+  },
+  {
+   "id": "C-4",
+   "name": "indeterminacy is a legal terminal",
+   "statement": "An effect with unknown completion stays INDETERMINATE/UNKNOWN until evidence, keyed re-drive, or fresh receipted authority; a materialized duplicate is recorded, not hidden.",
+   "scope": [
+    "worlds with external effects"
+   ],
+   "classification": "corollary of P5",
+   "status": "EXHAUSTIVE-IN-MODEL",
+   "dependencies": [
+    "P5"
+   ],
+   "falsifiers": [
+    "duplicate without RISK_REAUTHORIZE"
+   ],
+   "evidence": [
+    {
+     "kind": "EXHAUSTIVE-IN-MODEL",
+     "witness": "witnesses/adversarial_worlds.py",
+     "model": "M4"
+    },
+    {
+     "kind": "SPEC",
+     "source": "ampd UNKNOWN->RECONCILE; WEK RESOLVE A/B/C"
+    }
+   ],
+   "prior_art": [],
+   "confidence": 0.9,
+   "note": "naming cleanup: three names for one machine | v2: candidate obligation, NOT promoted (GPT-5.6 R10-pre ruling)",
+   "r10pre_execution": "v2.5: + TESTED live (EXP-6): UNKNOWN is a legal terminal ampd reaches and refuses to re-claim by name; resolving it needs far-side evidence and an attempt identity the key alone does not carry."
+  },
+  {
+   "id": "C-5",
+   "name": "no blind authority union (join-safe algebras permitted)",
+   "statement": "Effective authority may be merge-computed only by an algebra proven monotone/join-safe for its grant, revocation, expiry, delegation and exclusivity semantics; otherwise merge facts/evidence and re-derive authority under an admitted order. Join-safety of a representation does not make acting on it coordination-free under revocation.",
+   "scope": [
+    "worlds with revocation"
+   ],
+   "classification": "consistency",
+   "status": "EXHAUSTIVE-IN-MODEL",
+   "dependencies": [
+    "P1"
+   ],
+   "falsifiers": [
+    "merge verdict differs from sequenced verdict on [g,r,g] vs [g,r]"
+   ],
+   "evidence": [
+    {
+     "kind": "EXHAUSTIVE-IN-MODEL",
+     "witness": "witnesses/adversarial_worlds.py",
+     "model": "M6"
+    }
+   ],
+   "prior_art": [
+    {
+     "name": "CALM theorem",
+     "url": "https://arxiv.org/abs/1901.01930"
+    }
+   ],
+   "confidence": 0.85,
+   "note": "v2.1: reworded per GPT-5.6 REVISE D; the v1 record name is retained only in v1-provenance/",
+   "r10pre_revision": "effective authority may be merge-computed only by an algebra proven join-safe for grant/revocation/expiry/delegation/exclusivity; otherwise merge facts and re-derive under admitted order; join-safe representation does not make acting coordination-free",
+   "r10pre_disposition": "REWORDED",
+   "r10pre_execution": "EXP-5 executed on cd-core reconstruct and on ampd's grant shape (E-46): blind union manufactures/resurrects authority; remove-wins by id is join-safe; acting needs admission. v2.4: split into representation (E-46a), S2 resurrection (E-46b), S1 stale-true action (E-46c); the conjunction case is a merge-contract question, not amplification evidence."
+  },
+  {
+   "id": "C-6",
+   "name": "admission-visible resource separation",
+   "statement": "Any shared resource whose state alters another world's admit/refuse outcome is a channel: partition, declare, or quantify it.",
+   "scope": [
+    "multi-world isolation"
+   ],
+   "classification": "hyperproperty (2-safety)",
+   "status": "SPEC",
+   "dependencies": [],
+   "falsifiers": [
+    "two-world shared pool bit decode"
+   ],
+   "evidence": [
+    {
+     "kind": "SPEC",
+     "source": "WEK W-16"
+    }
+   ],
+   "prior_art": [
+    {
+     "name": "covert storage channels / hyperproperties",
+     "url": "(knowledge, not fetched)"
+    }
+   ],
+   "confidence": 0.75,
+   "note": "P2 scoped"
+  },
+  {
+   "id": "C-7",
+   "name": "locus-birth uniqueness",
+   "statement": "Within a world two lineages with one LocusId cannot both be born; create_locus is admitted through the world's admission, not the root's discretion.",
+   "scope": [
+    "worlds"
+   ],
+   "classification": "invariant",
+   "status": "TESTED",
+   "dependencies": [
+    "P1"
+   ],
+   "falsifiers": [
+    "trusted root forks lineages (documented)"
+   ],
+   "evidence": [
+    {
+     "kind": "SPEC",
+     "source": "cd-core STATUS: 'future World-level invariant'"
+    }
+   ],
+   "prior_art": [],
+   "confidence": 0.7,
+   "note": "uncovered column",
+   "status_before_v2_3": "UNKNOWN",
+   "r10pre_execution": "S6? falsifier executed on frozen cd-core: two births of one LocusId under one root both act; a warden minted by one birth finalizes the other. Remedy (World admission) has S1's exact shape → RECORDED AS S1(domain = world locus-birth); not promoted as S6.",
+   "classification_v2_4": "S1 corollary (domain = world locus-birth / currentness); not an obligation"
+  },
+  {
+   "id": "X-1",
+   "name": "observable completeness as stated",
+   "statement": "Any shared observable must carry every state variable that determines future behaviour.",
+   "scope": [
+    "all"
+   ],
+   "classification": "consistency",
+   "status": "REFUTED-AS-STATED",
+   "dependencies": [],
+   "falsifiers": [
+    "byte-level variables break convergence"
+   ],
+   "evidence": [
+    {
+     "kind": "EXHAUSTIVE-IN-MODEL",
+     "witness": "witnesses/adversarial_worlds.py",
+     "model": "M5 P2 variant"
+    }
+   ],
+   "prior_art": [],
+   "confidence": 0.9,
+   "note": "survives only as the ADEQUACY/EQUIVARIANCE pair"
+  },
+  {
+   "id": "X-2",
+   "name": "position grants authority",
+   "statement": "Authority derives from an agent's locus/surroundings.",
+   "scope": [
+    "all"
+   ],
+   "classification": "claim",
+   "status": "REDUNDANT",
+   "dependencies": [],
+   "falsifiers": [],
+   "evidence": [
+    {
+     "kind": "EXHAUSTIVE-IN-MODEL",
+     "witness": "witnesses/adversarial_worlds.py",
+     "model": "M7"
+    }
+   ],
+   "prior_art": [],
+   "confidence": 0.85,
+   "note": "see C-2 (narrowed): only ambient authority from position is reduced"
+  },
+  {
+   "id": "X-3",
+   "name": "law/cell counts as floor evidence",
+   "statement": "The number of laws or cells evidences an irreducible floor.",
+   "scope": [
+    "-"
+   ],
+   "classification": "heuristic",
+   "status": "REJECT",
+   "dependencies": [],
+   "falsifiers": [],
+   "evidence": [
+    {
+     "kind": "SPEC",
+     "source": "WEK R2 M2-1 deleted the ratios"
+    }
+   ],
+   "prior_art": [],
+   "confidence": 0.95,
+   "note": ""
+  },
+  {
+   "id": "X-4",
+   "name": "agents survive their engines",
+   "statement": "A locus continues across model/harness replacement.",
+   "scope": [
+    "all"
+   ],
+   "classification": "empirical",
+   "status": "UNKNOWN",
+   "dependencies": [],
+   "falsifiers": [],
+   "evidence": [
+    {
+     "kind": "SPEC",
+     "source": "AGENCY.md section 6; no run in tree"
+    }
+   ],
+   "prior_art": [],
+   "confidence": 0.5,
+   "note": "not an invariant until observed"
+  },
+  {
+   "id": "D-1",
+   "name": "agent definition",
+   "statement": "An agent is an active locus of established operational state, scoped authority, observation, admissible action, and causal continuity within a world.",
+   "scope": [
+    "-"
+   ],
+   "classification": "definition",
+   "status": "DEFINITION",
+   "dependencies": [],
+   "falsifiers": [],
+   "evidence": [
+    {
+     "kind": "SPEC",
+     "source": "AGENCY.md"
+    }
+   ],
+   "prior_art": [
+    {
+     "name": "locus of agency (extended cognition; Anthropic PSM 2026)",
+     "url": "https://alignment.anthropic.com/2026/psm/"
+    }
+   ],
+   "confidence": 1.0,
+   "note": "record, do not count"
+  }
+ ],
+ "adjudication": {
+  "file": "FABLE51_RESEARCH_GPT56_ADJUDICATION_FOR_OPUS.md",
+  "disposition": "ACCEPT AS FRONTIER MAP; REVISE BASIS BEFORE PROMOTION",
+  "countersign": "FABLE51_R10PRE_COUNTERSIGN.md"
+ },
+ "semantic_map": {
+  "P1": "S1",
+  "P2": "S2",
+  "P3a": "S3-mechanism",
+  "P3b": "S3-mechanism",
+  "C-1": "S3-witness",
+  "P4a": "S4",
+  "P4b": "S4",
+  "C-3": "S4",
+  "P5": "S5",
+  "C-4": "S5",
+  "C-7": "S6?",
+  "C-2": "Locus-narrowed",
+  "C-5": "reworded",
+  "C-6": "CROSS"
+ },
+ "drift_gate": {
+  "tool": "tools/drift_gate.py",
+  "required": "DRIFT GATE PASS before release"
+ },
+ "liveness_candidates": {
+  "L1?": {
+   "axis": "liveness (separate from the safety obligations S1–S5; never an S-row)",
+   "name": "recoverable succession / explicit terminalization",
+   "statement": "For a Locus whose policy declares continued service, if the current holder becomes permanently unavailable and sufficient admissible loss evidence is eventually established, the system eventually (A) admits exactly one successor in a later generation, or (B) moves the Locus to an explicit terminal/quarantined state; it never remains silently ambiguous forever. L1 must not weaken S1/S2; a system may choose halt-on-loss and promise only (B).",
+   "statement_temporal_v2_5": "Under weak fairness of the finality action family (finalize ∨ terminalize) — i.e. the resolver is not postponed forever while enabled — every admissibly evidenced permanent-loss state eventually reaches an explicit terminal state or a closed generation (L1-closed). Admission of exactly one successor (L1-strict, clause A) additionally requires weak fairness of attachment: an assumption on the ENVIRONMENT (a willing successor exists), not on the Locus mechanism.",
+   "status": "candidate — NOT promoted (GPT v3 §11); L1-PRE + a temporal witness under declared fairness; TLC twin unexecuted",
+   "witnesses": [
+    {
+     "file": "witnesses/liveness_l1.py",
+     "sha256": "2e3804d1b58a21922ed7ac17cbf9e2bc28cf9a00c6c5992811000f567f738d63",
+     "label": "L1-PRE / resolution availability",
+     "class": "EXHAUSTIVE-IN-FINITE-MODEL: resolvability",
+     "fairness": "none",
+     "temporal_eventuality": false,
+     "executed": true,
+     "runtime": "python3 3.13.14",
+     "proves": "from every admissibly evidenced permanent-loss state a safety-preserving resolution path EXISTS (existential BFS); NOT \"every execution eventually resolves\"",
+     "expectations": 6
+    },
+    {
+     "file": "witnesses/liveness_l1_fair.py",
+     "sha256": "0d48e3e557ffe6d59088fec7d6812872172c31e668aca84433bf2ac5660eeb52",
+     "label": "L1 temporal witness under a DECLARED fairness policy (v2.6: offer/attach split; eventuality-failing vocabulary)",
+     "class": "EXHAUSTIVE-IN-FINITE-MODEL under declared WF/SF; two independent algorithms (fair-SCC condition; generalized-Büchi product) must agree; three checker mutations flip a verdict; resolvability checked beside eventuality",
+     "fairness": "declared: WF(finality) for L1-closed; WF(finality)+WF(offer)+WF(attach) for L1-service-succession (ENV-SUCCESSOR = WF(offer), SYS-ATTACH-FAIRNESS = WF(attach)); each alone fails; SF(finality) ≡ WF(finality); NONE admits the postponement counterexample",
+     "temporal_eventuality": true,
+     "executed": true,
+     "runtime": "python3 3.13.14",
+     "vocabulary": "eventuality-failing / non-resolving counterexample; \"unresolvable\" only for NO-FINALITY (no path)",
+     "proves": "FINALITY under WF(finality): L1-closed HOLDS from every evidenced state (continue and halt-on-loss); L1-strict fails under WF(finality) alone, under WF(finality)+WF(attach) alone (nobody offers) and under WF(finality)+WF(offer) alone (an offered attachment is postponed forever), and HOLDS under all three; with no fairness every evidenced state is resolvable yet admits a non-resolving stuttering execution; NO-FINALITY is genuinely unresolvable under every policy; REACH-AS-LOSS resolves but closes generations while the holder is alive (M3, not L1)",
+     "expectations": 19
+    },
+    {
+     "file": "witnesses/L1Succession.tla",
+     "sha256": "abc19edb56bba9d09ff5fc2593cd9ecc4f85f39e43080ad675bb37fe8a37101d",
+     "label": "the same model for TLC (with L1Succession.cfg; v2.6: Offer/Attach split, SpecEnvOnly / SpecSysOnly / SpecSuccession)",
+     "class": "NOT RUN — no JVM on the execution host (GPT v3 §11: not a blocker)",
+     "fairness": "declared in the spec (WF_vars)",
+     "temporal_eventuality": true,
+     "executed": false
+    }
+   ],
+   "finding_v2_5": "the successor clause (A) of L1 is an environment-liveness assumption; only the closure/terminalization clause is a property of the Locus mechanism alone. Weak fairness of the DISJUNCTION finalize ∨ terminalize is the minimal obligation (Specifying Systems §8.6: weaker than WF of each). — refined in v2.6 (GPT v3 §10): WF(attach) mixed two assumptions; the model now separates ENV-SUCCESSOR from SYS-ATTACH-FAIRNESS and shows neither alone guarantees succession.",
+   "mechanism_instances_seen": [
+    "cd-core FinalityWarden + LossBasis (evidence-gated closure of a generation)"
+   ],
+   "source": "GPT-5.6 execution adjudication §2; v2 adjudication §7",
+   "statement_temporal_v2_6": "L1-closed (a SYSTEM guarantee): under weak fairness of the finality action family (finalize ∨ terminalize), every admissibly evidenced permanent-loss state eventually reaches an explicit terminal state or a closed generation. L1-service-succession (a system guarantee CONDITIONAL on two assumptions): admission of exactly one successor additionally requires ENV-SUCCESSOR — eventually a valid willing successor is offered (the environment; the Locus cannot manufacture one) — AND SYS-ATTACH-FAIRNESS — a continuously enabled valid attachment is not postponed forever (the system/scheduler). Neither alone suffices (executed: witnesses/liveness_l1_fair.py).",
+   "vocabulary_v2_6": "resolvable = a resolution path exists (L1-PRE; fairness ignored) · eventuality-failing = a fair non-resolving execution exists (\"eventual resolution not guaranteed\") · UNRESOLVABLE is reserved for states with NO path (the NO-FINALITY variant only). A resolvable state is never called unresolvable because temporal eventuality fails."
+  }
+ },
+ "factory_candidates": {
+  "FAC-CONTROL-SENSITIVITY": {
+   "axis": "factory epistemic invariant / evidence-admission rule (not S1–S5; not liveness)",
+   "statement": "A control may promote an evidence class only if its sensitivity to the claimed forbidden state is itself evidenced — at least one of: (A) pre-fix or injected-fault execution demonstrates FAIL; (B) an independent witness demonstrates that the control reaches the intended subject and discriminates the forbidden state; (C) a mutation/negative-control pair proves that removing the target mechanism flips the verdict. A green-only control with no demonstrated failure sensitivity cannot support promotion.",
+   "corollary": "the runner/receipt machinery that records a control must itself have a negative control capable of making the aggregate fail",
+   "gate_rule": "if a record's evidence class is promoted between package versions, require sensitivity_witness != null naming a receipt (implemented in tools/drift_gate.py v2.5 over promotions[])",
+   "witness_families": [
+    "R0.8.4 NC24/NC25 FAIL→PASS committed before repair (A)",
+    "R0.8.5 NC26/NC27 FAIL→PASS + verify_battery.py (A, corollary)",
+    "R0.8.6 NC28: a rollback-direction control cannot reach a roll-forward defect (B: reach)",
+    "drift gate v2.4 FAIL(33) on v2.3 and v2.5 FAIL on v2.4 + six in-memory mutations (C)",
+    "liveness_l1_fair.py three checker mutations + two-algorithm agreement (C)",
+    "EXP-6: naive adapter duplicates; the lane's own key-only reconcile said COMMITTED for an attempt that never ran (A + negative example)",
+    "EXP-5 first-run mis-specification kept beside the result (negative example)"
+   ],
+   "handoff": "handoffs/FAC_CONTROL_SENSITIVITY_CANDIDATE.md",
+   "status": "READY FOR A FACTORY PROMOTION ROUND (GPT v3 §17) — NOT minted by this lane; generic validator kit in tools-lane/factory-kit/ (rules A–H, typed, project-agnostic, with its own mutation selftest)",
+   "source": "GPT-5.6 v2 execution adjudication §6",
+   "generic_rules_v3": [
+    "A no silent evidence-class promotion (token change ⇒ promotion record)",
+    "B every promotion needs a TYPED sensitivity witness (pre-fix-fail | injected-fault-fail | subject-reach | mutation-verdict-flip) with receipt hash / source identity",
+    "C conditional claims require conditions + a trust profile",
+    "D executed evidence distinguishable from unexecuted artifacts (executed flag, receipt path, tool/runtime identity) before TESTED",
+    "E OPEN requires enumerated open findings",
+    "F historical falsifiers are append-only (pre-fix + repair witnesses preserved on FALSIFIED→TESTED)",
+    "G derived counts are computed, never typed",
+    "H the station has its own mutation tests"
+   ]
+  }
+ },
+ "witnesses": {
+  "adversarial_worlds.py": "439ed40b90fbf8d8c7c3c933a593f0b6420471df993ef28bb3359d620965868f",
+  "liveness_l1.py": "2e3804d1b58a21922ed7ac17cbf9e2bc28cf9a00c6c5992811000f567f738d63",
+  "liveness_l1_fair.py": "0d48e3e557ffe6d59088fec7d6812872172c31e668aca84433bf2ac5660eeb52",
+  "L1Succession.tla": "abc19edb56bba9d09ff5fc2593cd9ecc4f85f39e43080ad675bb37fe8a37101d",
+  "L1Succession.cfg": "c8864761a26c700bace8ea98db2cee58207dff429973d9e8a0e1c3e0012bbc90"
+ },
+ "adjudication_v2": {
+  "file": "inputs/R10PRE_EXECUTION_V2_GPT56_ADJUDICATION.md",
+  "disposition": "PACKAGE-v2.4 SEMANTICS ACCEPT; R0.8.4 PARTIAL CLOSURE UNDER EXPLICIT TRUST PROFILES; L1? witness proves resolvability, not liveness without fairness; FAC-CONTROL-SENSITIVITY accept as a factory rule; go to codebase execution",
+  "applied_in": "v2.5"
+ },
+ "adjudication_v3": {
+  "file": "inputs/R10PRE_EXECUTION_V3_GPT56_ADJUDICATION.md",
+  "disposition": "SCIENTIFIC RESULTS GO; package-v2.5 ACCEPT WITH AN ADJUDICATION PATCH (this is v2.6); S5 TESTED under the exact profile; L1 two-witness structure accepted with a vocabulary correction and the ENV/SYS split; FAC-CONTROL-SENSITIVITY ready for a factory round",
+  "applied_in": "v2.6"
+ }
+}

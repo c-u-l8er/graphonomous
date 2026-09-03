@@ -1,0 +1,691 @@
+{
+ "F1": {
+  "total": 10,
+  "n_files": 7,
+  "files": {
+   "receipts/R0.8.3-FALSIFIED.md": 4,
+   "receipts/R0.4.1.md": 1,
+   "tools/compile-fail/f1_forge_attach_record.rs": 1,
+   "tools/compile-fail/f1_forge_custody.rs": 1,
+   "tools/compile-fail/f1_forge_detach_receipt.rs": 1,
+   "tools/compile-fail/f1_forge_loss_finalization.rs": 1,
+   "tools/compile-fail/f1_forge_warden.rs": 1
+  }
+ },
+ "F2": {
+  "total": 5,
+  "n_files": 5,
+  "files": {
+   "cd-core/src/authority.rs": 1,
+   "receipts/R0.4.1.md": 1,
+   "receipts/R0.4.3.md": 1,
+   "receipts/R0.4.7.md": 1,
+   "receipts/R0.8.3-FALSIFIED.md": 1
+  }
+ },
+ "F3": {
+  "total": 7,
+  "n_files": 6,
+  "files": {
+   "receipts/R0.8.3-FALSIFIED.md": 2,
+   "cd-core/src/authority.rs": 1,
+   "receipts/R0.4.1.md": 1,
+   "receipts/R0.4.3.md": 1,
+   "receipts/R0.4.7.md": 1,
+   "tools/compile-fail/f3_reuse_vacancy.rs": 1
+  }
+ },
+ "F4": {
+  "total": 3,
+  "n_files": 3,
+  "files": {
+   "cd-node/tests/authority_vs_reachability.rs": 1,
+   "receipts/R0.4.1.md": 1,
+   "receipts/R0.8.3-FALSIFIED.md": 1
+  }
+ },
+ "F5": {
+  "total": 7,
+  "n_files": 5,
+  "files": {
+   "receipts/R0.8.3-FALSIFIED.md": 3,
+   "cd-core/src/authority.rs": 1,
+   "receipts/R0.4.1.md": 1,
+   "receipts/R0.4.3.md": 1,
+   "receipts/R0.4.7.md": 1
+  }
+ },
+ "F6": {
+  "total": 9,
+  "n_files": 6,
+  "files": {
+   "receipts/R0.8.3-FALSIFIED.md": 3,
+   "cd-durable/src/main.rs": 2,
+   "cd-core/src/authority.rs": 1,
+   "receipts/R0.4.1.md": 1,
+   "receipts/R0.4.3.md": 1,
+   "receipts/R0.4.7.md": 1
+  }
+ },
+ "F7": {
+  "total": 1,
+  "n_files": 1,
+  "files": {
+   "receipts/R0.8.3-FALSIFIED.md": 1
+  }
+ },
+ "F8": {
+  "total": 1,
+  "n_files": 1,
+  "files": {
+   "receipts/R0.8.3-FALSIFIED.md": 1
+  }
+ },
+ "F9": {
+  "total": 1,
+  "n_files": 1,
+  "files": {
+   "receipts/R0.8.3-FALSIFIED.md": 1
+  }
+ },
+ "F10": {
+  "total": 2,
+  "n_files": 1,
+  "files": {
+   "receipts/R0.8.3-FALSIFIED.md": 2
+  }
+ },
+ "F11": {
+  "total": 4,
+  "n_files": 2,
+  "files": {
+   "receipts/R0.8.3-FALSIFIED.md": 3,
+   "cd-durable/src/main.rs": 1
+  }
+ },
+ "F12": {
+  "total": 6,
+  "n_files": 4,
+  "files": {
+   "cd-durable/src/main.rs": 2,
+   "receipts/R0.8.3-FALSIFIED.md": 2,
+   "docs/durable-authority-model.md": 1,
+   "lab/scripts/nc17_live_store_tamper.sh": 1
+  }
+ },
+ "F13": {
+  "total": 5,
+  "n_files": 2,
+  "files": {
+   "cd-durable/src/main.rs": 3,
+   "receipts/R0.8.3-FALSIFIED.md": 2
+  }
+ },
+ "F14": {
+  "total": 11,
+  "n_files": 4,
+  "files": {
+   "receipts/R0.8.3-FALSIFIED.md": 5,
+   "cd-durable/src/main.rs": 4,
+   "docs/durable-authority-model.md": 1,
+   "lab/scripts/nc17_live_store_tamper.sh": 1
+  }
+ },
+ "F15": {
+  "total": 18,
+  "n_files": 7,
+  "files": {
+   "cd-durable/src/main.rs": 6,
+   "receipts/R0.8.3-FALSIFIED.md": 5,
+   "docs/durable-authority-model.md": 2,
+   "receipts/R0.8.4-FALSIFIED.md": 2,
+   "cd-durable/SCHEMA_CLASSIFICATION.md": 1,
+   "lab/scripts/nc25_schema_contract.sh": 1,
+   "lab/scripts/run_r08.sh": 1
+  }
+ },
+ "F16": {
+  "total": 16,
+  "n_files": 6,
+  "files": {
+   "receipts/R0.8.3-FALSIFIED.md": 6,
+   "cd-durable/src/main.rs": 3,
+   "docs/durable-authority-model.md": 3,
+   "tools/store_read_gate.sh": 2,
+   "cd-durable/SCHEMA_CLASSIFICATION.md": 1,
+   "tools/guards.sh": 1
+  }
+ },
+ "F17": {
+  "total": 24,
+  "n_files": 7,
+  "files": {
+   "docs/durable-authority-model.md": 6,
+   "receipts/R0.8.3-FALSIFIED.md": 6,
+   "cd-durable/src/main.rs": 5,
+   "receipts/R0.8.4-FALSIFIED.md": 3,
+   "lab/scripts/nc25_schema_contract.sh": 2,
+   "cd-durable/SCHEMA_CLASSIFICATION.md": 1,
+   "lab/scripts/run_r08.sh": 1
+  }
+ },
+ "F18": {
+  "total": 1,
+  "n_files": 1,
+  "files": {
+   "receipts/R0.8.3-FALSIFIED.md": 1
+  }
+ },
+ "F19": {
+  "total": 12,
+  "n_files": 5,
+  "files": {
+   "cd-durable/src/main.rs": 7,
+   "receipts/R0.8.3-FALSIFIED.md": 2,
+   "docs/durable-authority-model.md": 1,
+   "lab/scripts/nc29_foreign_pending_import.sh": 1,
+   "receipts/R0.8.7-FALSIFIED.md": 1
+  }
+ },
+ "F20": {
+  "total": 8,
+  "n_files": 3,
+  "files": {
+   "cd-durable/src/main.rs": 6,
+   "docs/durable-authority-model.md": 1,
+   "receipts/R0.8.3-FALSIFIED.md": 1
+  }
+ },
+ "F21": {
+  "total": 5,
+  "n_files": 3,
+  "files": {
+   "cd-durable/src/main.rs": 2,
+   "receipts/R0.8.3-FALSIFIED.md": 2,
+   "docs/durable-authority-model.md": 1
+  }
+ },
+ "F22": {
+  "total": 9,
+  "n_files": 5,
+  "files": {
+   "cd-durable/src/main.rs": 3,
+   "receipts/R0.8.4-FALSIFIED.md": 2,
+   "receipts/R0.8.5-FALSIFIED.md": 2,
+   "lab/falsifiers/F22_tmp_symlink.sh": 1,
+   "receipts/R0.8.6-FALSIFIED.md": 1
+  }
+ },
+ "F23": {
+  "total": 11,
+  "n_files": 4,
+  "files": {
+   "cd-durable/src/main.rs": 5,
+   "receipts/R0.8.4-FALSIFIED.md": 3,
+   "lab/scripts/nc25_schema_contract.sh": 2,
+   "receipts/R0.8.5-FALSIFIED.md": 1
+  }
+ },
+ "F24": {
+  "total": 8,
+  "n_files": 5,
+  "files": {
+   "cd-durable/src/main.rs": 3,
+   "receipts/R0.8.5-FALSIFIED.md": 2,
+   "lab/scripts/nc25_schema_contract.sh": 1,
+   "receipts/R0.8.4-FALSIFIED.md": 1,
+   "receipts/R0.8.6-FALSIFIED.md": 1
+  }
+ },
+ "F25": {
+  "total": 6,
+  "n_files": 4,
+  "files": {
+   "lab/falsifiers/F25_vacuous_r08g.sh": 3,
+   "lab/scripts/run_r08.sh": 1,
+   "receipts/R0.8.4-FALSIFIED.md": 1,
+   "receipts/R0.8.5-FALSIFIED.md": 1
+  }
+ },
+ "F26": {
+  "total": 2,
+  "n_files": 2,
+  "files": {
+   "cd-durable/src/main.rs": 1,
+   "lab/scripts/run_r08.sh": 1
+  }
+ },
+ "F27": {
+  "total": 1,
+  "n_files": 1,
+  "files": {
+   "lab/scripts/run_r08.sh": 1
+  }
+ },
+ "F29": {
+  "total": 3,
+  "n_files": 2,
+  "files": {
+   "lab/scripts/run_r08.sh": 2,
+   "receipts/R0.8.5-FALSIFIED.md": 1
+  }
+ },
+ "F30": {
+  "total": 6,
+  "n_files": 4,
+  "files": {
+   "cd-durable/src/main.rs": 2,
+   "tools/guards.sh": 2,
+   "receipts/R0.8.5-FALSIFIED.md": 1,
+   "receipts/R0.8.6-FALSIFIED.md": 1
+  }
+ },
+ "F31": {
+  "total": 9,
+  "n_files": 4,
+  "files": {
+   "receipts/R0.8.4-FALSIFIED.md": 4,
+   "lab/scripts/nc24_root_clone.sh": 2,
+   "lab/scripts/run_r08.sh": 2,
+   "cd-durable/src/main.rs": 1
+  }
+ },
+ "F32": {
+  "total": 21,
+  "n_files": 8,
+  "files": {
+   "cd-durable/src/main.rs": 7,
+   "receipts/R0.8.6-FALSIFIED.md": 4,
+   "lab/scripts/nc15_repeated_crash.sh": 3,
+   "lab/scripts/nc26_stale_root_resurrection.sh": 2,
+   "receipts/R0.8.5-FALSIFIED.md": 2,
+   "lab/scripts/nc17_live_store_tamper.sh": 1,
+   "lab/scripts/nc25_schema_contract.sh": 1,
+   "lab/scripts/run_r08.sh": 1
+  }
+ },
+ "F33": {
+  "total": 8,
+  "n_files": 5,
+  "files": {
+   "cd-durable/src/main.rs": 2,
+   "lab/scripts/nc25_schema_contract.sh": 2,
+   "lab/scripts/nc27_genesis_schema_contract.sh": 2,
+   "receipts/R0.8.5-FALSIFIED.md": 1,
+   "receipts/R0.8.6-FALSIFIED.md": 1
+  }
+ },
+ "F34": {
+  "total": 3,
+  "n_files": 3,
+  "files": {
+   "cd-durable/src/main.rs": 1,
+   "receipts/R0.8.5-FALSIFIED.md": 1,
+   "receipts/R0.8.6-FALSIFIED.md": 1
+  }
+ },
+ "F35": {
+  "total": 18,
+  "n_files": 6,
+  "files": {
+   "cd-durable/src/main.rs": 7,
+   "receipts/R0.8.7-FALSIFIED.md": 4,
+   "lab/scripts/nc28_foreign_successor.sh": 2,
+   "lab/scripts/nc29_foreign_pending_import.sh": 2,
+   "receipts/R0.8.6-FALSIFIED.md": 2,
+   "tools/verify_battery.py": 1
+  }
+ },
+ "F36": {
+  "total": 12,
+  "n_files": 4,
+  "files": {
+   "cd-durable/src/main.rs": 6,
+   "receipts/R0.8.7-FALSIFIED.md": 3,
+   "lab/scripts/nc29_foreign_pending_import.sh": 2,
+   "lab/scripts/nc15_repeated_crash.sh": 1
+  }
+ },
+ "F37": {
+  "total": 9,
+  "n_files": 3,
+  "files": {
+   "cd-durable/src/main.rs": 6,
+   "lab/scripts/nc30_anchor_reservation_window.sh": 2,
+   "receipts/R0.8.7-FALSIFIED.md": 1
+  }
+ },
+ "G1": {
+  "total": 7,
+  "n_files": 3,
+  "files": {
+   "lab/scripts/run_r08.sh": 5,
+   "lab/scripts/nc17_live_store_tamper.sh": 1,
+   "receipts/R0.8.3-FALSIFIED.md": 1
+  }
+ },
+ "G2": {
+  "total": 9,
+  "n_files": 5,
+  "files": {
+   "lab/scripts/run_r08.sh": 5,
+   "cd-durable/src/main.rs": 1,
+   "docs/durable-authority-model.md": 1,
+   "lab/scripts/nc17_live_store_tamper.sh": 1,
+   "receipts/R0.8.3-FALSIFIED.md": 1
+  }
+ },
+ "G3": {
+  "total": 1,
+  "n_files": 1,
+  "files": {
+   "lab/scripts/run_r08.sh": 1
+  }
+ },
+ "NC1": {
+  "total": 18,
+  "n_files": 11,
+  "files": {
+   "receipts/R0.7.md": 4,
+   "receipts/R0.8.md": 3,
+   "lab/scripts/run_r08.sh": 2,
+   "receipts/R0.7-negative-controls.txt": 2,
+   "docs/durable-authority-model.md": 1,
+   "docs/failure-model.md": 1,
+   "lab/scripts/nc17_live_store_tamper.sh": 1,
+   "receipts/R0.8-FALSIFIED.md": 1,
+   "receipts/R0.8-reproducibility.txt": 1,
+   "receipts/R0.8.3-FALSIFIED.md": 1,
+   "receipts/STATUS.md": 1
+  }
+ },
+ "NC2": {
+  "total": 9,
+  "n_files": 6,
+  "files": {
+   "receipts/R0.7.md": 3,
+   "receipts/R0.8.2-reproducibility.txt": 2,
+   "lab/scripts/run_r08.sh": 1,
+   "receipts/R0.7-negative-controls.txt": 1,
+   "receipts/R0.8-FALSIFIED.md": 1,
+   "receipts/R0.8.md": 1
+  }
+ },
+ "NC3": {
+  "total": 4,
+  "n_files": 3,
+  "files": {
+   "lab/scripts/run_r08.sh": 2,
+   "receipts/R0.8-FALSIFIED.md": 1,
+   "receipts/R0.8.md": 1
+  }
+ },
+ "NC4": {
+  "total": 5,
+  "n_files": 3,
+  "files": {
+   "lab/scripts/run_r08.sh": 2,
+   "receipts/R0.8.md": 2,
+   "receipts/R0.8.3-FALSIFIED.md": 1
+  }
+ },
+ "NC5": {
+  "total": 3,
+  "n_files": 2,
+  "files": {
+   "lab/scripts/run_r08.sh": 2,
+   "receipts/R0.8.md": 1
+  }
+ },
+ "NC6": {
+  "total": 11,
+  "n_files": 7,
+  "files": {
+   "receipts/R0.8.2-reproducibility.txt": 4,
+   "receipts/R0.8.md": 2,
+   "cd-durable/src/main.rs": 1,
+   "lab/scripts/nc24_root_clone.sh": 1,
+   "lab/scripts/run_r08.sh": 1,
+   "receipts/R0.8-FALSIFIED.md": 1,
+   "receipts/R0.8.4-FALSIFIED.md": 1
+  }
+ },
+ "NC7": {
+  "total": 11,
+  "n_files": 6,
+  "files": {
+   "lab/scripts/run_r08.sh": 6,
+   "cd-durable/src/main.rs": 1,
+   "receipts/R0.8-FALSIFIED.md": 1,
+   "receipts/R0.8.2-FINAL-20260831T225009Z.json": 1,
+   "receipts/R0.8.3-FALSIFIED.md": 1,
+   "receipts/R0.8.md": 1
+  }
+ },
+ "NC8": {
+  "total": 6,
+  "n_files": 5,
+  "files": {
+   "receipts/R0.8.md": 2,
+   "cd-durable/src/bin/cd-tamper.rs": 1,
+   "docs/durable-authority-model.md": 1,
+   "lab/scripts/run_r08.sh": 1,
+   "receipts/R0.8-FALSIFIED.md": 1
+  }
+ },
+ "NC9": {
+  "total": 4,
+  "n_files": 3,
+  "files": {
+   "cd-durable/src/main.rs": 2,
+   "cd-durable/src/bin/cd-tamper.rs": 1,
+   "receipts/R0.8.3-FALSIFIED.md": 1
+  }
+ },
+ "NC10": {
+  "total": 3,
+  "n_files": 2,
+  "files": {
+   "cd-durable/src/main.rs": 2,
+   "cd-durable/src/bin/cd-tamper.rs": 1
+  }
+ },
+ "NC11": {
+  "total": 3,
+  "n_files": 1,
+  "files": {
+   "cd-durable/src/main.rs": 3
+  }
+ },
+ "NC12": {
+  "total": 4,
+  "n_files": 3,
+  "files": {
+   "cd-durable/src/main.rs": 2,
+   "cd-durable/SCHEMA_CLASSIFICATION.md": 1,
+   "receipts/R0.8.3-FALSIFIED.md": 1
+  }
+ },
+ "NC13": {
+  "total": 1,
+  "n_files": 1,
+  "files": {
+   "cd-durable/src/main.rs": 1
+  }
+ },
+ "NC14": {
+  "total": 1,
+  "n_files": 1,
+  "files": {
+   "cd-durable/src/main.rs": 1
+  }
+ },
+ "NC15": {
+  "total": 12,
+  "n_files": 5,
+  "files": {
+   "receipts/R0.8.3-FALSIFIED.md": 5,
+   "lab/scripts/nc15_repeated_crash.sh": 3,
+   "cd-durable/src/main.rs": 2,
+   "docs/durable-authority-model.md": 1,
+   "tools/verify_battery.py": 1
+  }
+ },
+ "NC16": {
+  "total": 8,
+  "n_files": 4,
+  "files": {
+   "docs/durable-authority-model.md": 3,
+   "receipts/R0.8.3-FALSIFIED.md": 3,
+   "cd-durable/src/main.rs": 1,
+   "lab/scripts/nc17_live_store_tamper.sh": 1
+  }
+ },
+ "NC17": {
+  "total": 15,
+  "n_files": 5,
+  "files": {
+   "lab/scripts/nc17_live_store_tamper.sh": 6,
+   "receipts/R0.8.3-FALSIFIED.md": 4,
+   "cd-durable/src/main.rs": 2,
+   "docs/durable-authority-model.md": 2,
+   "lab/scripts/run_r08.sh": 1
+  }
+ },
+ "NC18": {
+  "total": 11,
+  "n_files": 6,
+  "files": {
+   "lab/scripts/nc17_live_store_tamper.sh": 5,
+   "receipts/R0.8.3-FALSIFIED.md": 2,
+   "cd-durable/src/bin/cd-tamper.rs": 1,
+   "cd-durable/src/main.rs": 1,
+   "docs/durable-authority-model.md": 1,
+   "lab/scripts/run_r08.sh": 1
+  }
+ },
+ "NC19": {
+  "total": 12,
+  "n_files": 7,
+  "files": {
+   "lab/scripts/nc17_live_store_tamper.sh": 5,
+   "cd-durable/src/main.rs": 2,
+   "cd-durable/SCHEMA_CLASSIFICATION.md": 1,
+   "cd-durable/src/bin/cd-tamper.rs": 1,
+   "docs/durable-authority-model.md": 1,
+   "lab/scripts/run_r08.sh": 1,
+   "receipts/R0.8.3-FALSIFIED.md": 1
+  }
+ },
+ "NC20": {
+  "total": 4,
+  "n_files": 4,
+  "files": {
+   "cd-durable/src/main.rs": 1,
+   "docs/durable-authority-model.md": 1,
+   "lab/scripts/nc17_live_store_tamper.sh": 1,
+   "receipts/R0.8.3-FALSIFIED.md": 1
+  }
+ },
+ "NC21": {
+  "total": 5,
+  "n_files": 4,
+  "files": {
+   "cd-durable/src/main.rs": 2,
+   "docs/durable-authority-model.md": 1,
+   "lab/scripts/nc17_live_store_tamper.sh": 1,
+   "receipts/R0.8.3-FALSIFIED.md": 1
+  }
+ },
+ "NC22": {
+  "total": 5,
+  "n_files": 4,
+  "files": {
+   "cd-durable/src/main.rs": 2,
+   "docs/durable-authority-model.md": 1,
+   "lab/scripts/nc17_live_store_tamper.sh": 1,
+   "receipts/R0.8.3-FALSIFIED.md": 1
+  }
+ },
+ "NC23": {
+  "total": 8,
+  "n_files": 4,
+  "files": {
+   "lab/scripts/nc17_live_store_tamper.sh": 3,
+   "receipts/R0.8.3-FALSIFIED.md": 3,
+   "cd-durable/src/main.rs": 1,
+   "docs/durable-authority-model.md": 1
+  }
+ },
+ "NC24": {
+  "total": 9,
+  "n_files": 4,
+  "files": {
+   "lab/scripts/nc24_root_clone.sh": 4,
+   "lab/scripts/nc26_stale_root_resurrection.sh": 2,
+   "receipts/R0.8.5-FALSIFIED.md": 2,
+   "lab/scripts/run_r08.sh": 1
+  }
+ },
+ "NC25": {
+  "total": 6,
+  "n_files": 4,
+  "files": {
+   "lab/scripts/nc25_schema_contract.sh": 3,
+   "cd-durable/src/main.rs": 1,
+   "receipts/R0.8.5-FALSIFIED.md": 1,
+   "tools/verify_battery.py": 1
+  }
+ },
+ "NC26": {
+  "total": 9,
+  "n_files": 4,
+  "files": {
+   "lab/scripts/nc26_stale_root_resurrection.sh": 4,
+   "receipts/R0.8.6-FALSIFIED.md": 3,
+   "lab/scripts/nc28_foreign_successor.sh": 1,
+   "tools/verify_battery.py": 1
+  }
+ },
+ "NC27": {
+  "total": 4,
+  "n_files": 2,
+  "files": {
+   "lab/scripts/nc27_genesis_schema_contract.sh": 3,
+   "tools/verify_battery.py": 1
+  }
+ },
+ "NC28": {
+  "total": 6,
+  "n_files": 3,
+  "files": {
+   "lab/scripts/nc28_foreign_successor.sh": 4,
+   "lab/scripts/nc29_foreign_pending_import.sh": 1,
+   "tools/verify_battery.py": 1
+  }
+ },
+ "NC29": {
+  "total": 5,
+  "n_files": 2,
+  "files": {
+   "lab/scripts/nc29_foreign_pending_import.sh": 4,
+   "tools/verify_battery.py": 1
+  }
+ },
+ "NC30": {
+  "total": 5,
+  "n_files": 2,
+  "files": {
+   "lab/scripts/nc30_anchor_reservation_window.sh": 4,
+   "tools/verify_battery.py": 1
+  }
+ },
+ "S1": {
+  "total": 6,
+  "n_files": 2,
+  "files": {
+   "lab/scripts/nc28_foreign_successor.sh": 3,
+   "receipts/R0.8.6-FALSIFIED.md": 3
+  }
+ }
+}

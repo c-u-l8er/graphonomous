@@ -1,0 +1,1 @@
+{"code":"DANGLING_WITNESS","concerns":["claim:crosswalk:E-15"],"lid":"fault:g0:DANGLING_WITNESS:0059","message":"\"EVIDENCE-nc17-19-23-AFTER-efa8881.txt\" resolves under no pinned root","rule":"evstate.receipts","snapshot":"snapshot:g0:baseline-ba4e625"}

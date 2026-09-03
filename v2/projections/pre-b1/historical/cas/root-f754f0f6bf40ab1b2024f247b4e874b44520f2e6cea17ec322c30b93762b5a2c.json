@@ -1,0 +1,1 @@
+{"code":"TRUNCATED_FIELD","concerns":["transition:crosswalk:E-14:promotion:v2.6"],"lid":"fault:g0:TRUNCATED_FIELD:0058","message":"promotion E-14: 'to' ends with an ellipsis in the source","rule":"crosswalk.promotions.to","snapshot":"snapshot:g0:historical-699fbc2"}

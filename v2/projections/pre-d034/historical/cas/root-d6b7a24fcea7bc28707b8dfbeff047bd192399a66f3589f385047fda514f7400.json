@@ -1,0 +1,1 @@
+{"attrs":{"form":"directory-label","text":"cd-core tests"},"code":"UNSUPPORTED_SOURCE_FORM","concerns":["claim:crosswalk:E-09"],"lid":"fault:g0:UNSUPPORTED_SOURCE_FORM:0010","message":"\"cd-core tests\" is a test-suite label, not a file","rule":"evstate.receipts","snapshot":"snapshot:g0:historical-699fbc2"}

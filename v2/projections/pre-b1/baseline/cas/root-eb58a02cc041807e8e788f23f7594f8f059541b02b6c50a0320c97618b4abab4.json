@@ -1,0 +1,1 @@
+{"attrs":{"form":"directory-label","text":"cd-core tests"},"code":"UNSUPPORTED_SOURCE_FORM","concerns":["claim:crosswalk:E-09"],"lid":"fault:g0:UNSUPPORTED_SOURCE_FORM:0009","message":"\"cd-core tests\" is a test-suite label (directory cd-core/ in computedriven plus a suite name and a count), not a file","rule":"crosswalk.witness_paths","snapshot":"snapshot:g0:baseline-ba4e625"}

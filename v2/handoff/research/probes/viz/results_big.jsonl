@@ -1,0 +1,9 @@
+{"engine":"fa2","n":2000,"m":10000,"ms":2561,"rerun_same_hash":true,"settings":{"barnesHutOptimize":false,"strongGravityMode":true,"gravity":0.05,"scalingRatio":10,"slowDown":8.600902459542082}}
+{"engine":"d3force","n":2000,"m":10000,"ms":1645,"rerun_same_hash":true}
+{"engine":"hpcc","n":2000,"m":10000,"graphviz":"15.1.0","ms_plain":8810,"rerun_same_hash":true}
+{"engine":"viz","n":2000,"m":10000,"graphviz":"16.0.0","ms_plain":11428,"ms_svg":11994,"svg_bytes":4835492,"rerun_same_hash":true}
+{"engine":"elk","n":2000,"m":10000,"ms":12296,"rerun_same_hash":true}
+{"engine":"dagre","n":2000,"status":"timeout_or_error rc=124"}
+{"engine":"cydagre","n":2000,"status":"timeout_or_error rc=124"}
+{"engine":"fcose","n":2000,"m":10000,"init_ms":166,"ms":58605,"rerun_same_hash":false}
+DONE

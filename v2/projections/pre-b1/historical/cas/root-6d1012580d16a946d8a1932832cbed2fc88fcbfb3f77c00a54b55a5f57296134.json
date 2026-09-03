@@ -1,0 +1,1 @@
+{"attrs":{"reason":"prose","text":"S4 ADEQUACY"},"code":"UNRESOLVED_LINK","concerns":["claim:crosswalk:E-43"],"lid":"fault:g0:UNRESOLVED_LINK:0030","message":"E-43 link 0 is prose, not a reference","rule":"crosswalk.derivation_links","snapshot":"snapshot:g0:historical-699fbc2"}

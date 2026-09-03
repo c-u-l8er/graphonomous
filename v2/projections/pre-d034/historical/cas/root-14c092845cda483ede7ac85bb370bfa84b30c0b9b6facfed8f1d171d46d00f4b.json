@@ -1,0 +1,1 @@
+{"attrs":{"form":"directory-label","text":"ampd/test lineage (5)"},"code":"UNSUPPORTED_SOURCE_FORM","concerns":["claim:crosswalk:E-20"],"lid":"fault:g0:UNSUPPORTED_SOURCE_FORM:0006","message":"\"ampd/test lineage (5)\" is a test-suite label, not a file","rule":"evstate.receipts","snapshot":"snapshot:g0:historical-699fbc2"}

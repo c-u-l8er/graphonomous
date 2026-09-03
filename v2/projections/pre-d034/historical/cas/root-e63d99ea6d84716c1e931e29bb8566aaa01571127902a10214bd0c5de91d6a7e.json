@@ -1,0 +1,1 @@
+{"attrs":{"form":"directory-label","text":"ampd/test effect (7)"},"code":"UNSUPPORTED_SOURCE_FORM","concerns":["claim:crosswalk:E-17"],"lid":"fault:g0:UNSUPPORTED_SOURCE_FORM:0004","message":"\"ampd/test effect (7)\" is a test-suite label, not a file","rule":"evstate.receipts","snapshot":"snapshot:g0:historical-699fbc2"}

@@ -1,0 +1,29 @@
+{
+  "_comment": "G0 canonicalization vectors. `text` is SOURCE JSON text fed to the strict reader; `expect.accept` says whether the strict reader + G0 domain guard accepts it; `canonical` (when present) is the expected canonical text, derivable by hand; `refusal` is the expected error code from the Node side (the Python twin reports the same class). Vectors marked twin:true are also run by test/canon_twin.py and compared byte for byte.",
+  "vectors": [
+    { "name": "sorted-keys-compact", "text": "{\"b\": 1, \"a\": [3, {\"z\": true, \"y\": null}], \"c\": \"x\"}", "expect": { "accept": true, "canonical": "{\"a\":[3,{\"y\":null,\"z\":true}],\"b\":1,\"c\":\"x\"}" }, "twin": true },
+    { "name": "integer-lexemes-stay-integers", "text": "{\"n\": 42, \"m\": -7, \"z\": 0, \"big\": 9007199254740991, \"neg\": -9007199254740991}", "expect": { "accept": true, "canonical": "{\"big\":9007199254740991,\"m\":-7,\"n\":42,\"neg\":-9007199254740991,\"z\":0}" }, "twin": true },
+    { "name": "one-point-zero-becomes-decimal-string", "text": "{\"confidence\": 1.0}", "expect": { "accept": true, "canonical": "{\"confidence\":{\"decimal_string\":\"1.0\"}}", "number_forms": [{ "pointer": "/confidence", "lexeme": "1.0" }] }, "twin": true },
+    { "name": "zero-point-nine", "text": "{\"c\": 0.9}", "expect": { "accept": true, "canonical": "{\"c\":{\"decimal_string\":\"0.9\"}}" }, "twin": true },
+    { "name": "exponent-lexeme-preserved", "text": "[1e21, 1E-7, -0.0, 2.50]", "expect": { "accept": true, "canonical": "[{\"decimal_string\":\"1e21\"},{\"decimal_string\":\"1E-7\"},{\"decimal_string\":\"-0.0\"},{\"decimal_string\":\"2.50\"}]" }, "twin": true },
+    { "name": "negative-zero-integer-lexeme", "text": "{\"x\": -0}", "expect": { "accept": true, "canonical": "{\"x\":0}" }, "twin": true },
+    { "name": "unsafe-integer-becomes-decimal-string", "text": "{\"x\": 9007199254740992, \"y\": -9007199254740993}", "expect": { "accept": true, "canonical": "{\"x\":{\"decimal_string\":\"9007199254740992\"},\"y\":{\"decimal_string\":\"-9007199254740993\"}}" }, "twin": true },
+    { "name": "non-ascii-literal-utf8", "text": "{\"s\": \"é\", \"u\": \"☃\", \"arrow\": \"S6? → S1\", \"emoji\": \"😀\"}", "expect": { "accept": true, "canonical": "{\"arrow\":\"S6? → S1\",\"emoji\":\"😀\",\"s\":\"é\",\"u\":\"☃\"}" }, "twin": true },
+    { "name": "escapes-normalized", "text": "{\"t\": \"a\\tb\\nc\\rd\", \"q\": \"say \\\"hi\\\" \\\\ \\/ done\", \"u\": \"\\u00e9\"}", "expect": { "accept": true, "canonical": "{\"q\":\"say \\\"hi\\\" \\\\ / done\",\"t\":\"a\\tb\\nc\\rd\",\"u\":\"é\"}" }, "twin": true },
+    { "name": "empty-containers", "text": "{\"a\": {}, \"b\": []}", "expect": { "accept": true, "canonical": "{\"a\":{},\"b\":[]}" }, "twin": true },
+    { "name": "nested-keys-sorted-everywhere", "text": "{\"z\": {\"b\": {\"d\": 1, \"c\": 2}, \"a\": 0}}", "expect": { "accept": true, "canonical": "{\"z\":{\"a\":0,\"b\":{\"c\":2,\"d\":1}}}" }, "twin": true },
+    { "name": "duplicate-key-refused", "text": "{\"a\": 1, \"a\": 2}", "expect": { "accept": false, "refusal": "DUPLICATE_KEY" }, "twin": true },
+    { "name": "lone-surrogate-escape-refused", "text": "{\"s\": \"\\ud800\"}", "expect": { "accept": false, "refusal": "LONE_SURROGATE" }, "twin": true },
+    { "name": "raw-control-refused", "text": "{\"s\": \"a\u0001b\"}", "expect": { "accept": false, "refusal": "CONTROL_IN_STRING" }, "twin": true },
+    { "name": "nan-literal-refused", "text": "{\"x\": NaN}", "expect": { "accept": false, "refusal": "MALFORMED" }, "twin": true },
+    { "name": "trailing-garbage-refused", "text": "{\"x\": 1} }", "expect": { "accept": false, "refusal": "MALFORMED" }, "twin": true },
+    { "name": "leading-zero-refused", "text": "{\"x\": 007}", "expect": { "accept": false, "refusal": "MALFORMED" }, "twin": true },
+    { "name": "del-in-string-refused-by-domain", "text": "{\"s\": \"a\u007fb\"}", "expect": { "accept": false, "refusal": "G0_STRING_DEL" }, "twin": true },
+    { "name": "non-ascii-key-refused-by-domain", "text": "{\"clé\": 1}", "expect": { "accept": false, "refusal": "G0_KEY_GRAMMAR" }, "twin": true },
+    { "name": "key-with-hyphen-refused-by-domain", "text": "{\"C-7\": \"S6?\"}", "expect": { "accept": false, "refusal": "G0_KEY_GRAMMAR" }, "twin": true },
+    { "name": "dollar-key-refused-by-domain", "text": "{\"$decimal\": \"1.0\"}", "expect": { "accept": false, "refusal": "G0_KEY_GRAMMAR" }, "twin": true },
+    { "name": "decimal-wrapper-must-hold-a-number-lexeme", "text": "{\"decimal_string\": \"abc\"}", "expect": { "accept": true, "canonical": "{\"decimal_string\":\"abc\"}", "note": "a plain object with that key and a non-numeric string is an ordinary object under the grammar; the schema layer decides where decimal strings may appear" }, "twin": true },
+    { "name": "deep-nesting-ok", "text": "[[[[[[[[[[1]]]]]]]]]]", "expect": { "accept": true, "canonical": "[[[[[[[[[[1]]]]]]]]]]" }, "twin": true },
+    { "name": "whitespace-everywhere", "text": " \n\t{ \"a\" :\r\n [ 1 , 2 ] } \n", "expect": { "accept": true, "canonical": "{\"a\":[1,2]}" }, "twin": true }
+  ]
+}

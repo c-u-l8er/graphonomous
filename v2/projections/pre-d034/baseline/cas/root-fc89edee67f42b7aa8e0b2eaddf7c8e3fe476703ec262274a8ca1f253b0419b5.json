@@ -1,0 +1,1 @@
+{"assertions":["asrt:g0:claim:factory:TAX-FLOW:loc:crosswalk:c7dba29f2035b84386ac66037693f2ef7c4e05f6:package-v2.7/CROSS_REGISTRY_CLAIM_MAP.json#/records/42/source_ids/1"],"attrs":{"claim_id":"TAX-FLOW","present_in_pinned_ledger":true,"registry_hint":"factory-ledger"},"basis":"observed","kind":"CLAIM","lid":"claim:factory:TAX-FLOW","snapshot":"snapshot:g0:baseline-ba4e625"}

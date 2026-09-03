@@ -1,0 +1,12 @@
+{"engine":"dagre","n":500,"m":1500,"ms":1956,"rerun_same_hash":true,"reversed_insertion_same_hash":false}
+{"engine":"cydagre","n":500,"m":1500,"init_ms":38,"ms":2386,"rerun_same_hash":true}
+{"engine":"cydagre","n":500,"status":"timeout_or_error rc=124"}
+{"engine":"elk","n":500,"m":1500,"ms":1118,"rerun_same_hash":true}
+{"engine":"viz","n":500,"m":1500,"graphviz":"16.0.0","ms_plain":399,"ms_svg":401,"svg_bytes":648489,"rerun_same_hash":true}
+{"engine":"hpcc","n":500,"m":1500,"graphviz":"15.1.0","ms_plain":289,"rerun_same_hash":true}
+{"engine":"fa2","n":500,"m":1500,"ms":207,"rerun_same_hash":true,"settings":{"barnesHutOptimize":false,"strongGravityMode":true,"gravity":0.05,"scalingRatio":10,"slowDown":7.214608098422191}}
+{"engine":"d3force","n":500,"m":1500,"ms":276,"rerun_same_hash":true}
+{"engine":"fcose","n":500,"m":1500,"init_ms":42,"ms":858,"rerun_same_hash":false}
+{"engine":"fcose","n":500,"status":"timeout_or_error rc=124"}
+{"engine":"cose","n":500,"m":1500,"init_ms":31,"ms":3383,"rerun_same_hash":false}
+{"engine":"cose","n":500,"status":"timeout_or_error rc=124"}

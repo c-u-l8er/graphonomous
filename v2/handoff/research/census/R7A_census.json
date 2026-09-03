@@ -1,0 +1,2431 @@
+{
+ "census": "R7A_SOURCE_CENSUS_INVARIANTS",
+ "dataset": "G0 dataset A — the ComputeDriven invariant program",
+ "generated": "2026-09-02T16:10:00-05:00",
+ "method": "read-only; every count recomputed by this script from the files/refs named; path resolution tested against package dir, invariant-r10 root, computedriven working tree and computedriven@efa8881, super/, TRVM/, WRL/, ProjectAmp2 root",
+ "authority_classes": {
+  "AUTHORITATIVE": "a registry that owns its records",
+  "DERIVED": "computed/projected from other registries or a build",
+  "HISTORICAL": "superseded package versions, old rounds, stale checkouts",
+  "ADVISORY": "GPT/Fable adjudication prose, briefs, handoffs, draft claims not minted"
+ },
+ "roots": {
+  "invariant-r10": {
+   "path": "/home/travis/ProjectAmp2/invariant-r10",
+   "census_pinned_commit": "699fbc2859efdaf57b2391d51dd7712b471e92b9",
+   "pinned_tree": "d668a7e89db2f5fdcf6797a029b7533443ecf674",
+   "head_at_final_write": "ba4e625871b74f2dbddef18a2098ff0742c54774",
+   "commits_since_pin": [
+    "ba4e625_START_HERE v5 cites the v5 identity 303f76c5e9b2a086ea2c024e2908f83682b2c43b",
+    "303f76c_v5 return: package-v2.7 per the GPT-5.6 v4 execution adjudication (evidence-state patch): F35 CLOSED, R0.8 open for the NC29 cut which R0.8.7 executed and found F36/F37 (repaired, shipped whole, unadjudicated), profile explicit; E-50a as two rules + model v2.7; SYS-SUCCESSOR-ENABLEMENT executed; promotions with class tokens, subject identity, adjudication refs; generated projection hash; FAC-CONTROL-SENSITIVITY DECLARED + the narrow schema claim; gate v2.7 with 23 mutations"
+   ],
+   "package_v2_6_tree_identical_pin_vs_head": true,
+   "head": "ba4e625871b74f2dbddef18a2098ff0742c54774",
+   "branch": "main",
+   "tree_at_head": "6ed88b9730a5b7a2c9a94ef77b6af02a33315606",
+   "porcelain_lines_at_start": 0,
+   "porcelain_at_end": [],
+   "porcelain_at_end_note": "the working tree was dirtied (up to 24 lines: package-v2.7/, the GPT v4 adjudication, factory-kit edits, a rewritten E-51 receipt) and then COMMITTED by a parallel session during this census; nothing was written by the census; every sha256 in sources[] is the blob at the pinned commit",
+   "remotes": "none",
+   "tracked_files": 440,
+   "bundle_head": "ba4e625871b74f2dbddef18a2098ff0742c54774",
+   "v4_return_commit": "0270e811b314ef06becfffb2edeffbfa454ad825",
+   "v4_return_tree": "b48d04e77ff0cf3a3db188beaf609c4b7f722b36",
+   "sources_pinned": {
+    "computedriven": "efa8881 (vendored) / handbacks 0b87256, af1cbc2, 747f025, 21a1452",
+    "TRVM": "fd0df4c",
+    "super": "7651697"
+   }
+  },
+  "invariant-factory": {
+   "bare_repo": "/home/travis/.invariant-factory/canonical.git",
+   "ref": "refs/heads/invariant-canonical",
+   "oid": "d217ee29a3322c68db0d43be47491f0e9d4fbc64",
+   "tree": "11ab2c6192ecf19fbf974da7b6483899903eca32",
+   "HEAD_symref": "refs/heads/invariant-canonical",
+   "commits_on_ref": 15,
+   "tree_paths": 111,
+   "tags": [
+    "INV-R6",
+    "INV-R6.2-MIXED",
+    "INV-R7.1-UNPROMOTED",
+    "INV-R8-RECOVERY",
+    "INV-R8.1-CONCURRENCY-OBSERVED",
+    "INV-R8.1-DRAFT",
+    "INV-R8.1-DRAFT2",
+    "INV-R8.1-DRAFT3",
+    "INV-R8.1-DRAFT4",
+    "INV-R8.1-DRAFT5",
+    "INV-R8.2",
+    "INV-R8.3",
+    "INV-R9",
+    "INV-R9.1",
+    "INV-R9.2",
+    "INV-R9.3",
+    "INV-R9.4"
+   ],
+   "other_heads": [
+    "invariant-canonical d217ee2",
+    "invariant-quarantine 8aab4de",
+    "invariant-unpromoted-r71 9eb24ec"
+   ],
+   "log_3": [
+    "d217ee29a3322c68db0d43be47491f0e9d4fbc64_INV-R9.4 — the advertised reproduction runs from the review packet alone; the universal NOT_STATED claim retreats to the policy it is; a forwarded record no longer grants itself the privilege to differ; and the settled predicate moves into the registry",
+    "0cc11141f1668efdd0998e4502880af1a79507d4_INV-R9.3 — NOT STATED stops being an exit-0 hard-gate result, the undischarged already_present disposition is withdrawn and re-adjudicated as an import at CONDITIONAL, and every forwarded correction declares a target transformation checked against its source",
+    "887637be26e8908d8c4880e8648006de8069eeee_INV-R9.2 — the integration manifest stops being its own only witness: the delta is recomputed from its pinned materials, the disposition vocabulary is closed with a contract each, and receipt ancestry is derived"
+   ],
+   "worktrees": [
+    "/home/travis/.invariant-factory/canonical.git (bare)",
+    "/home/travis/.invariant-factory/wt-e1         7a33da2 (detached HEAD)",
+    "/home/travis/.invariant-factory/wt-r83        dba1ab4 (detached HEAD)",
+    "/home/travis/.invariant-factory/wt-r9         2913613 (detached HEAD)"
+   ]
+  },
+  "opensentience.org": {
+   "path": "/home/travis/ProjectAmp2/opensentience.org",
+   "head": "2c0f523dc5975a0c8939f59cfe7a7be638448073",
+   "branch": "main",
+   "tree": "458debc9a7567c5902c453092f857a23140fa0c1",
+   "porcelain_lines": 0,
+   "remote": "git@github.com:c-u-l8er/opensentience.org.git"
+  },
+  "computedriven": {
+   "path": "/home/travis/ProjectAmp2/computedriven",
+   "head": "21a1452eb6de183292e398872a4e83176566790b",
+   "branch": "master",
+   "porcelain_lines": 0,
+   "efa8881_present": true
+  }
+ },
+ "sources": [
+  {
+   "id": "A1.crosswalk",
+   "path": "invariant-r10/package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json",
+   "git_blob": "4639a28d888a54abe5c2a804f4bcfc4278566139",
+   "bytes": 85064,
+   "sha256": "910cf6eaaf8e4f72dcec8636b1f6a1ce34d158d79043909055bab51e7b1c6a50",
+   "sha256_of": "blob at 699fbc2",
+   "authority_class": "AUTHORITATIVE (owns the E-records; self-declared status DRAFT; merges nothing into CLAIM_LEDGER.json)",
+   "crosswalk_version": "r10-pre-v2.6-2026-09-02-v3-adjudication-applied",
+   "counts": {
+    "records": 56,
+    "top_level_keys": 22,
+    "promotions": 5,
+    "resolved_candidates": 1,
+    "liveness_candidates": 1,
+    "factory_candidates": 1,
+    "untested_locus_roles": 10,
+    "not_found_artifacts": 4,
+    "r0_8_open_findings": 5,
+    "r0_8_closed_by_adjudication_v3": 8,
+    "records_with_executed_true": 8,
+    "records_split_from": 8,
+    "section_refs_total": 58,
+    "section_refs_distinct": 19,
+    "line_number_refs": 0
+   },
+   "id_scheme": {
+    "regex": "^E-\\d{2}[abc]?$",
+    "examples": [
+     "E-01",
+     "E-13b",
+     "E-46c",
+     "E-50a",
+     "E-51"
+    ],
+    "all_match": true,
+    "duplicates": [],
+    "numeric_gaps": []
+   },
+   "status_vocabulary": {
+    "evidence_class_token": {
+     "TESTED": 20,
+     "PROPERTY-TESTED": 8,
+     "in_tree": 6,
+     "FROZEN": 5,
+     "SPEC": 4,
+     "FALSIFIED-KEPT-RED": 4,
+     "live_local": 2,
+     "TESTED-CONDITIONAL": 2,
+     "PROVED": 2,
+     "EXHAUSTIVE-IN-MODEL": 2,
+     "ARGUMENT": 1
+    },
+    "evidence_class_token_v2_5": {
+     "TESTED": 20,
+     "PROPERTY-TESTED": 8,
+     "in_tree": 6,
+     "FROZEN": 5,
+     "SPEC": 4,
+     "<ABSENT>": 3,
+     "live_local": 2,
+     "TESTED-CONDITIONAL": 2,
+     "PROVED": 2,
+     "FALSIFIED-KEPT-RED": 2,
+     "ARGUMENT": 1,
+     "EXHAUSTIVE-IN-MODEL": 1
+    },
+    "semantic_obligation": {
+     "S2": 11,
+     "S3": 10,
+     "S4": 9,
+     "S1": 7,
+     "S5": 7,
+     "CROSS": 6,
+     "DEF": 3,
+     "REPR": 3
+    },
+    "relation": {
+     "corollary": 27,
+     "mechanism": 8,
+     "representation": 7,
+     "direct": 6,
+     "cross-cutting": 5,
+     "definition": 3
+    },
+    "source_registry": {
+     "r10pre-execution": 13,
+     "cd-core-docs": 11,
+     "trvm-law-registry": 8,
+     "cd-durable-docs": 7,
+     "ampd-readme": 5,
+     "wrl-core": 5,
+     "wek-w-laws": 4,
+     "claim-ledger": 3
+    },
+    "evidence_class_free_text_distinct": 27,
+    "sensitivity_witness_type": {
+     "pre-fix-fail": 4,
+     "mutation-verdict-flip": 1
+    },
+    "promoted_in": {
+     "v2.6": 3,
+     "v2.5": 2
+    }
+   },
+   "xref_fields": {
+    "source_ids": {
+     "points_at": "registry-local ids: computedriven docs/receipts/source paths (cd-core-docs, cd-durable-docs), TRVM law ids (law:*@1), WRL_CORE_0.2 §, WEK W-n, ampd/test names, claim-ledger:<id>, cells.json:<num>, EXP-n labels",
+     "total": 77,
+     "distinct": 66,
+     "path_like": 33,
+     "non_path": 44,
+     "path_like_resolution": {
+      "total": 33,
+      "resolved": 28,
+      "dangling": 5,
+      "resolved_by_root": {
+       "cd": 21,
+       "super": 5,
+       "pa2": 2
+      },
+      "dangling_examples": [
+       {
+        "record": "E-03",
+        "ref": "cells.json:16 ⊥"
+       },
+       {
+        "record": "E-36",
+        "ref": "RB-DEV/RB-ANCHOR/RB-WITNESS"
+       },
+       {
+        "record": "E-41",
+        "ref": "cells.json:27a"
+       },
+       {
+        "record": "E-42",
+        "ref": "EXP-3/W4"
+       },
+       {
+        "record": "E-43",
+        "ref": "EXP-3/W3"
+       }
+      ]
+     }
+    },
+    "witness_paths": {
+     "points_at": "files relative to invariant-r10 root, package dir, or the computedriven tree @ efa8881 (plus super/, TRVM/ vendored copies); may carry #anchor or prose suffix",
+     "records_with_empty": [
+      "E-10",
+      "E-25",
+      "E-26",
+      "E-27",
+      "E-28",
+      "E-29",
+      "E-30",
+      "E-31",
+      "E-32",
+      "E-33",
+      "E-34",
+      "E-35",
+      "E-36",
+      "E-37",
+      "E-38",
+      "E-41"
+     ],
+     "resolution": {
+      "total": 93,
+      "resolved": 92,
+      "dangling": 1,
+      "resolved_by_root": {
+       "cd": 17,
+       "pkg": 10,
+       "r10": 58,
+       "super": 4,
+       "trvm": 1,
+       "pa2": 2
+      },
+      "dangling_examples": [
+       {
+        "record": "E-15",
+        "ref": "EVIDENCE-nc17-19-23-AFTER-efa8881.txt"
+       }
+      ]
+     }
+    },
+    "derivation_links": {
+     "points_at": "mixed: other E-records, obligation prose, law ids, factory claim ids, free prose",
+     "total": 61,
+     "records_with_none": 19,
+     "classes": {
+      "crosswalk record id": 24,
+      "prose": 19,
+      "obligation/prose": 15,
+      "law id/prose": 2,
+      "factory claim id/prose": 1
+     }
+    },
+    "split_from": {
+     "E-13": 3,
+     "E-46": 3,
+     "E-50": 2
+    },
+    "promotions[].sensitivity_witness.receipt": {
+     "points_at": "px13 tarballs / experiment receipts, with sha256; all recomputed MATCH",
+     "total": 5
+    },
+    "adjudication_section_refs": {
+     "form": "free-text \"GPT v3 §12\" etc. inside evidence_class / name / derivation_links",
+     "distinct_examples": [
+      "§1",
+      "§10",
+      "§11",
+      "§12",
+      "§13",
+      "§15",
+      "§16",
+      "§17",
+      "§18",
+      "§2",
+      "§21.2",
+      "§3"
+     ]
+    }
+   },
+   "provenance_fields_present": [
+    "source_registry",
+    "source_ids",
+    "witness_paths",
+    "scope_profile",
+    "derivation_links",
+    "split_from",
+    "evidence_class_before_v2_3",
+    "evidence_class_v2_4",
+    "evidence_class_v2_5",
+    "evidence_class_token_v2_5",
+    "promoted_in",
+    "executed",
+    "executed_by",
+    "runtime",
+    "adjudication_v2",
+    "adjudication_v3",
+    "r10pre_execution_note"
+   ],
+   "provenance_fields_missing": [
+    "no per-record commit hash of the source registry (hashes appear only inside prose: efa8881, 747f025, 7651697, fd0df4c)",
+    "no line numbers or byte ranges",
+    "no per-record timestamp (date lives at package level: 2026-09-02)",
+    "no per-record pointer to the adjudication FILE + section as a structured field (only prose \"GPT v3 §12\")",
+    "no sha256 on witness_paths entries (only on promotion receipts and the 5 package witnesses)"
+   ],
+   "dangling_refs_sample": [
+    {
+     "record": "E-03",
+     "ref": "cells.json:16 ⊥"
+    },
+    {
+     "record": "E-36",
+     "ref": "RB-DEV/RB-ANCHOR/RB-WITNESS"
+    },
+    {
+     "record": "E-41",
+     "ref": "cells.json:27a"
+    },
+    {
+     "record": "E-42",
+     "ref": "EXP-3/W4"
+    },
+    {
+     "record": "E-43",
+     "ref": "EXP-3/W3"
+    },
+    {
+     "record": "E-15",
+     "ref": "EVIDENCE-nc17-19-23-AFTER-efa8881.txt"
+    }
+   ]
+  },
+  {
+   "id": "A1.evidence_state",
+   "path": "invariant-r10/package-v2.6/evidence_state.json",
+   "git_blob": "8737c78c044543237c3fbfcd4d42ba8f46a6e00d",
+   "bytes": 29797,
+   "sha256": "1edb46d353b47dd3b8ea2aad05d89480913548da53db15a4db0c59cd48f2982c",
+   "sha256_of": "blob at 699fbc2",
+   "authority_class": "DERIVED (evidence-state@1 projection of the crosswalk, built by tools-lane/build_v2_6.py; validated by tools-lane/factory-kit/check-evidence-transitions.mjs → ADMISSIBLE against the receipts at the pinned commit 699fbc2; REFUSED once a parallel session rewrote (and then committed) the E-51 receipt — see sources[A1.factory_kit].validator_rerun and xref_fields.promotions sha256_check)",
+   "schema": "evidence-state@1",
+   "source": "CROSS_REGISTRY_CLAIM_MAP.json r10-pre-v2.6-2026-09-02-v3-adjudication-applied",
+   "counts": {
+    "records": 56,
+    "promotions": 5,
+    "statuses": 1,
+    "artifacts": 3,
+    "derived_counts": {
+     "records": 56,
+     "promotions": 5
+    },
+    "records_executed_true": 8,
+    "records_conditions_nonempty": 3,
+    "records_trust_profile_nonempty": 42,
+    "records_receipts_nonempty": 40,
+    "receipt_entries_total": 80,
+    "receipt_entries_are_plain_strings": true,
+    "receipt_entries_with_executed_flag": 0,
+    "artifacts_executed": {
+     "True": 2,
+     "False": 1
+    }
+   },
+   "id_scheme": {
+    "regex": "^E-\\d{2}[abc]?$",
+    "examples": [
+     "E-13b",
+     "E-48"
+    ],
+    "ids_equal_crosswalk_order": true
+   },
+   "status_vocabulary": {
+    "class": {
+     "TESTED": 20,
+     "PROPERTY-TESTED": 8,
+     "in_tree": 6,
+     "FROZEN": 5,
+     "SPEC": 4,
+     "FALSIFIED-KEPT-RED": 4,
+     "live_local": 2,
+     "TESTED-CONDITIONAL": 2,
+     "PROVED": 2,
+     "EXHAUSTIVE-IN-MODEL": 2,
+     "ARGUMENT": 1
+    },
+    "class_prev": {
+     "TESTED": 20,
+     "PROPERTY-TESTED": 8,
+     "in_tree": 6,
+     "FROZEN": 5,
+     "SPEC": 4,
+     "None": 3,
+     "live_local": 2,
+     "TESTED-CONDITIONAL": 2,
+     "PROVED": 2,
+     "FALSIFIED-KEPT-RED": 2,
+     "ARGUMENT": 1,
+     "EXHAUSTIVE-IN-MODEL": 1
+    },
+    "executed": {
+     "None": 48,
+     "True": 8
+    },
+    "statuses[].status": {
+     "OPEN": 1
+    }
+   },
+   "xref_fields": {
+    "records[].receipts": {
+     "points_at": "files (same paths as crosswalk witness_paths in 53/56 records)",
+     "resolution": {
+      "total": 80,
+      "resolved": 79,
+      "dangling": 1,
+      "resolved_by_root": {
+       "cd": 17,
+       "pkg": 10,
+       "r10": 45,
+       "super": 4,
+       "trvm": 1,
+       "pa2": 2
+      },
+      "dangling_examples": [
+       {
+        "record": "E-15",
+        "ref": "EVIDENCE-nc17-19-23-AFTER-efa8881.txt"
+       }
+      ]
+     },
+     "kinds": {
+      "code": 29,
+      "output": 26,
+      "prose(.md)": 17,
+      "other": 7,
+      "bundle": 1
+     }
+    },
+    "promotions[].{sensitivity_witness,pre_fix_witness,repair_witness}.receipt": {
+     "points_at": "hashed receipts (px13 tarballs, experiment outputs)",
+     "count": 9,
+     "sha256_check": {
+      "E-13b.sensitivity_witness": {
+       "receipt": "px13/COMPUTEDRIVEN_R085_FOR_GPT.tar.gz",
+       "recorded": "6ba8544cbf7c91ef",
+       "blob_at_pinned_commit": "MATCH",
+       "worktree": "MATCH"
+      },
+      "E-13b.pre_fix_witness": {
+       "receipt": "px13/COMPUTEDRIVEN_R084_FOR_GPT.tar.gz",
+       "recorded": "525211840abb0b9d",
+       "blob_at_pinned_commit": "MATCH",
+       "worktree": "MATCH"
+      },
+      "E-13b.repair_witness": {
+       "receipt": "px13/COMPUTEDRIVEN_R085_FOR_GPT.tar.gz",
+       "recorded": "6ba8544cbf7c91ef",
+       "blob_at_pinned_commit": "MATCH",
+       "worktree": "MATCH"
+      },
+      "E-14.sensitivity_witness": {
+       "receipt": "px13/COMPUTEDRIVEN_R085_FOR_GPT.tar.gz",
+       "recorded": "6ba8544cbf7c91ef",
+       "blob_at_pinned_commit": "MATCH",
+       "worktree": "MATCH"
+      },
+      "E-14.pre_fix_witness": {
+       "receipt": "px13/COMPUTEDRIVEN_R084_FOR_GPT.tar.gz",
+       "recorded": "525211840abb0b9d",
+       "blob_at_pinned_commit": "MATCH",
+       "worktree": "MATCH"
+      },
+      "E-14.repair_witness": {
+       "receipt": "px13/COMPUTEDRIVEN_R085_FOR_GPT.tar.gz",
+       "recorded": "6ba8544cbf7c91ef",
+       "blob_at_pinned_commit": "MATCH",
+       "worktree": "MATCH"
+      },
+      "E-15.sensitivity_witness": {
+       "receipt": "px13/COMPUTEDRIVEN_R084_FOR_GPT.tar.gz",
+       "recorded": "525211840abb0b9d",
+       "blob_at_pinned_commit": "MATCH",
+       "worktree": "MATCH"
+      },
+      "E-48.sensitivity_witness": {
+       "receipt": "experiments/s5_effect_adapter/receipts/phase_crash_naive_after.json",
+       "recorded": "21569669e2da1e78",
+       "blob_at_pinned_commit": "MATCH",
+       "worktree": "MATCH"
+      },
+      "E-51.sensitivity_witness": {
+       "receipt": "experiments/s5_effect_adapter/effect_identity_model.output.txt",
+       "recorded": "6966c054d7bf2591",
+       "blob_at_pinned_commit": "MATCH",
+       "worktree": "MISMATCH"
+      }
+     }
+    },
+    "statuses[].id": [
+     "R0.8"
+    ],
+    "artifacts[].id": [
+     "witnesses/liveness_l1.py",
+     "witnesses/liveness_l1_fair.py",
+     "witnesses/L1Succession.tla"
+    ]
+   },
+   "q6_first_cut": {
+    "tested_star_records": 22,
+    "tested_star_with_executed_true": 5,
+    "tested_star_with_any_receipt": 21,
+    "tested_star_with_receipt_marked_executed_true": 0,
+    "tested_star_with_no_receipt": [
+     "E-10"
+    ],
+    "tested_star_executed_null": [
+     "E-01",
+     "E-02",
+     "E-03",
+     "E-04",
+     "E-05",
+     "E-06",
+     "E-07",
+     "E-08",
+     "E-09",
+     "E-10",
+     "E-11",
+     "E-13c",
+     "E-44",
+     "E-45",
+     "E-46a",
+     "E-46b",
+     "E-46c"
+    ],
+    "tested_star_receipts_include_output_or_bundle": 10,
+    "tested_star_receipts_only_code_or_prose": [
+     "E-01",
+     "E-02",
+     "E-03",
+     "E-04",
+     "E-05",
+     "E-06",
+     "E-07",
+     "E-08",
+     "E-09",
+     "E-11",
+     "E-44"
+    ],
+    "decidable_from_data": "only the promotion records (5) and the 8 executed:true records carry an executed flag + runtime; receipts[] entries are bare strings with no executed marker, and artifacts[] marks only the 3 L1 files — so \"supported by an EXECUTED receipt\" is decidable for 8 records and UNDECIDABLE from evidence_state.json alone for the other 48 (their receipts must be opened: an .output.txt / receipt .json is an execution trace, a .rs/.py is code, a .md is prose)"
+   },
+   "dangling_refs_sample": [
+    {
+     "record": "E-15",
+     "ref": "EVIDENCE-nc17-19-23-AFTER-efa8881.txt"
+    }
+   ]
+  },
+  {
+   "id": "A1.ledger10",
+   "path": "invariant-r10/package-v2.6/10_MACHINE_READABLE_LEDGER.json",
+   "git_blob": "b1cdc96bb55271318e6b97f3d5d34d21fcc36067",
+   "bytes": 32374,
+   "sha256": "262d2ed08c25ea56f158030f167f5b560763ef2bae926512d65d83a40f71fb45",
+   "sha256_of": "blob at 699fbc2",
+   "authority_class": "AUTHORITATIVE for the research-lane claims P1..D-1 and their R10-pre dispositions; its source_registries_derived block is DERIVED (counts of the factory ledger @ INV-R9.4, cells.json v0.8, invariant-grid.json 1.47.0)",
+   "research_version": "fable51-invariant-discovery-2026-09-02-v2.6-v3-adjudication-applied",
+   "counts": {
+    "claims": 19,
+    "status_vocabulary_declared": 15,
+    "semantic_map_entries": 14,
+    "claims_with_r10pre_execution": 9,
+    "claims_with_r10pre_disposition": 6,
+    "source_registries_derived": {
+     "CLAIM_LEDGER.json": {
+      "round": {
+       "id": "INV-R9.4",
+       "date": "2026-08-26",
+       "receipt_ref": "mosaic/receipts/INV-R9.4.json"
+      },
+      "claims": 208,
+      "by_status": {
+       "REFUTED": 19,
+       "PROVED": 52,
+       "CONDITIONAL": 3,
+       "KNOWN": 7,
+       "OPEN": 46,
+       "DECLARED": 71,
+       "MEASURED": 3,
+       "PROVISIONAL": 7
+      },
+      "by_prefix": {
+       "FED": 38,
+       "LED": 17,
+       "ESC": 4,
+       "TAX": 6,
+       "REPRO": 2,
+       "MOS": 29,
+       "EVID": 5,
+       "FAC": 40,
+       "EMB": 22,
+       "ASR": 19,
+       "INC": 3,
+       "TERM": 1,
+       "LINEAGE": 3,
+       "SUPPORT": 3,
+       "ADMISSION": 2,
+       "MEDIATION": 3,
+       "IMPACT": 9,
+       "CONTROL": 1,
+       "RECEIPT": 1
+      }
+     },
+     "cells.json": {
+      "version": "0.8",
+      "cells": 46,
+      "by_status": {
+       "proved": 8,
+       "shipped": 5,
+       "named": 4,
+       "sketched": 9,
+       "missing": 17,
+       "conditional": 3
+      }
+     },
+     "invariant-grid.json": {
+      "version": "1.47.0",
+      "law_registry_entries": 94,
+      "canonical": 66,
+      "by_status": {
+       "FALSIFIED": 4,
+       "PROVED": 2,
+       "PROPERTY-TESTED": 82,
+       "REGRESSION-LOCKED": 6
+      }
+     },
+     "computedriven_git_bundle": {
+      "head": "efa8881",
+      "commits": 62
+     },
+     "not_found": [
+      "WEK_R0_REPO_MAP.md",
+      "world-to-world communication spec",
+      "spatial navigation spec",
+      "live repository access",
+      "R0.8.3 lab receipt"
+     ]
+    }
+   },
+   "id_scheme": {
+    "regex": "^(P\\d[ab]?|C-\\d|X-\\d|D-\\d)$",
+    "examples": [
+     "P1",
+     "P3a",
+     "C-7",
+     "X-1",
+     "D-1"
+    ],
+    "all_match": true
+   },
+   "status_vocabulary": {
+    "declared": [
+     "PROVEN",
+     "EXHAUSTIVE-IN-MODEL",
+     "TESTED",
+     "PROPERTY-TESTED",
+     "SUPPORTED",
+     "SPEC",
+     "PLAUSIBLE",
+     "SPECULATIVE",
+     "REFUTED",
+     "REFUTED-AS-STATED",
+     "REDUNDANT",
+     "REJECT",
+     "OUT-OF-SCOPE",
+     "UNKNOWN",
+     "DEFINITION"
+    ],
+    "status_used": {
+     "TESTED": 6,
+     "EXHAUSTIVE-IN-MODEL": 4,
+     "PROPERTY-TESTED": 2,
+     "SPEC": 2,
+     "REFUTED-AS-STATED": 1,
+     "REDUNDANT": 1,
+     "REJECT": 1,
+     "UNKNOWN": 1,
+     "DEFINITION": 1
+    },
+    "classification": {
+     "invariant/safety": 6,
+     "consistency": 3,
+     "invariant": 2,
+     "corollary/definition": 1,
+     "corollary of P4b": 1,
+     "corollary of P5": 1,
+     "hyperproperty (2-safety)": 1,
+     "claim": 1,
+     "heuristic": 1,
+     "empirical": 1,
+     "definition": 1
+    },
+    "r10pre_disposition": {
+     "<ABSENT>": 13,
+     "RECLASSIFIED": 2,
+     "REWORDED": 2,
+     "OBLIGATION+MECHANISM-WITNESS": 1,
+     "NARROWED": 1
+    },
+    "used_outside_declared": []
+   },
+   "xref_fields": {
+    "semantic_map": {
+     "P1": "S1",
+     "P2": "S2",
+     "P3a": "S3-mechanism",
+     "P3b": "S3-mechanism",
+     "C-1": "S3-witness",
+     "P4a": "S4",
+     "P4b": "S4",
+     "C-3": "S4",
+     "P5": "S5",
+     "C-4": "S5",
+     "C-7": "S6?",
+     "C-2": "Locus-narrowed",
+     "C-5": "reworded",
+     "C-6": "CROSS"
+    },
+    "dependencies": {
+     "P1": 3,
+     "P3a": 1,
+     "P3b": 1,
+     "P2": 1,
+     "P4b": 1,
+     "P5": 1
+    },
+    "evidence[].witness": {
+     "<none>": 14,
+     "witnesses/adversarial_worlds.py": 12
+    },
+    "evidence[].kind": {
+     "EXHAUSTIVE-IN-MODEL": 12,
+     "SPEC": 8,
+     "TESTED": 6
+    },
+    "prior_art_urls": 14
+   },
+   "status_moves_since_v1_as_delivered": [
+    {
+     "id": "P5",
+     "from": "SUPPORTED",
+     "to": "TESTED"
+    },
+    {
+     "id": "C-7",
+     "from": "UNKNOWN",
+     "to": "TESTED"
+    }
+   ],
+   "dangling_refs_sample": []
+  },
+  {
+   "id": "A1.frontier",
+   "path": "invariant-r10/package-v2.6/INV_FRONTIER_R10_PRE.md",
+   "git_blob": "c774128563b1ffc75128719b05e894af8eba5942",
+   "bytes": 23162,
+   "sha256": "7daec2be9e03d97eaf0ada2c647a43005231c860c18e865892c04160c3f8849e",
+   "sha256_of": "blob at 699fbc2",
+   "authority_class": "DERIVED prose surface (current-facing; scanned by drift_gate.py); the S6→S1 rule and outcome live in §4, L1? in §7, FAC rule in §8"
+  },
+  {
+   "id": "A1.synthesis",
+   "path": "invariant-r10/package-v2.6/12_R10PRE_SYNTHESIS.md",
+   "git_blob": "13ab3245b5cb70fb0cd47e146c4e217b95686c6f",
+   "bytes": 17744,
+   "sha256": "18e5f1d247b3bbf2e58c6b56d51a5241f6a45dcfe9a725d1b16c9eb165f174c3",
+   "sha256_of": "blob at 699fbc2",
+   "authority_class": "DERIVED prose surface (current-facing)",
+   "notes": [
+    "§7 still says liveness_l1_fair.py is 15/15; the v2.6 witness output and frontier §7 say 19 expectations"
+   ]
+  },
+  {
+   "id": "A1.experiments_md",
+   "path": "invariant-r10/package-v2.6/06_R10PRE_EXPERIMENTS.md",
+   "git_blob": "806e52a7eb2312005d01866fb4e000461c789eaf",
+   "bytes": 4861,
+   "sha256": "897e81bdeddef0ede9df4de9a2dde207ec05e19b66f7e3bd431668863475ae01",
+   "sha256_of": "blob at 699fbc2",
+   "authority_class": "DERIVED prose surface (current-facing)"
+  },
+  {
+   "id": "A1.handoff_md",
+   "path": "invariant-r10/package-v2.6/11_R10PRE_OPUS_HANDOFF.md",
+   "git_blob": "220a5d7a1b0fb94b543c45c66660416336982ae7",
+   "bytes": 10694,
+   "sha256": "c44a1b4e9cfa6e0bee8c88cd35a299f4fce4a30ed7d26919f125608004e8272a",
+   "sha256_of": "blob at 699fbc2",
+   "authority_class": "DERIVED prose surface (current-facing)",
+   "notes": [
+    "\"Registry integration\" paragraph still says CROSS_REGISTRY_CLAIM_MAP.json has 51 records (README and frontier say 56)"
+   ]
+  },
+  {
+   "id": "A1.witness.adversarial_worlds",
+   "path": "invariant-r10/package-v2.6/witnesses/adversarial_worlds.py",
+   "git_blob": "cc322249a0ef31c33908f74af4f49ca4e109fac0",
+   "bytes": 19024,
+   "sha256": "439ed40b90fbf8d8c7c3c933a593f0b6420471df993ef28bb3359d620965868f",
+   "sha256_of": "blob at 699fbc2",
+   "authority_class": "AUTHORITATIVE executable witness (7 models, 19 expectations; sha256 pinned in crosswalk.witnesses and ledger.witness — MATCH)",
+   "counts": {
+    "expectations": 19
+   }
+  },
+  {
+   "id": "A1.witness.liveness_l1",
+   "path": "invariant-r10/package-v2.6/witnesses/liveness_l1.py",
+   "git_blob": "07b65e02e6466e284fd4ca6f29f109fd8498fd44",
+   "bytes": 8422,
+   "sha256": "2e3804d1b58a21922ed7ac17cbf9e2bc28cf9a00c6c5992811000f567f738d63",
+   "sha256_of": "blob at 699fbc2",
+   "authority_class": "AUTHORITATIVE executable witness (L1-PRE resolvability, 6 expectations; sha256 MATCH)",
+   "counts": {
+    "expectations": 6
+   }
+  },
+  {
+   "id": "A1.witness.liveness_l1_fair",
+   "path": "invariant-r10/package-v2.6/witnesses/liveness_l1_fair.py",
+   "git_blob": "2c19960103f0b08b9611331ec554bcecec76dd10",
+   "bytes": 17867,
+   "sha256": "0d48e3e557ffe6d59088fec7d6812872172c31e668aca84433bf2ac5660eeb52",
+   "sha256_of": "blob at 699fbc2",
+   "authority_class": "AUTHORITATIVE executable witness (temporal, 19 expectations; sha256 MATCH)",
+   "counts": {
+    "expectations": 19
+   }
+  },
+  {
+   "id": "A1.witness.tla",
+   "path": "invariant-r10/package-v2.6/witnesses/L1Succession.tla",
+   "git_blob": "2291a939efa4ab464506dcbcd6eda0dd88c4b508",
+   "bytes": 3464,
+   "sha256": "abc19edb56bba9d09ff5fc2593cd9ecc4f85f39e43080ad675bb37fe8a37101d",
+   "sha256_of": "blob at 699fbc2",
+   "authority_class": "UNEXECUTED ARTIFACT (evidence_state.artifacts executed:false; no JVM) — not a receipt"
+  },
+  {
+   "id": "A1.drift_gate",
+   "path": "invariant-r10/package-v2.6/tools/drift_gate.py",
+   "git_blob": "ec3012f81f4fabe67c700c27938f4e4d53c0d8bc",
+   "bytes": 20494,
+   "sha256": "52739920bf48e0c14279c6ad419c72384605b21a49889f2dee89ddeab9086f9c",
+   "sha256_of": "blob at 699fbc2",
+   "authority_class": "DERIVED validator (v2.6; byte-identical to tools-lane/drift_gate_v2_6.py). Re-run 2026-09-02: PASS on v2.6 (12 files, 56 records, 5 promotions); FAIL(99) on v2.5",
+   "notes": [
+    "root-level invariant-r10/drift_gate.py is the v2.2 gate (byte-identical to package-v2.2/tools/drift_gate.py), not the current one"
+   ]
+  },
+  {
+   "id": "A1.v1_provenance",
+   "path": "invariant-r10/package-v2.6/v1-provenance/",
+   "git_blob": "884e1aa3f919ca691827aa68ad69907df5fe694f",
+   "bytes": 873,
+   "sha256": "4d8510dde8dcba118ed2762bd34ae09004bc30936991af00eeffde6934c8cf45",
+   "sha256_of": "blob at 699fbc2",
+   "authority_class": "HISTORICAL (pre-adjudication v1 analysis, 13 files, unedited, not gate-scanned)",
+   "counts": {
+    "files": 14
+   }
+  },
+  {
+   "id": "A1.changelog",
+   "path": "invariant-r10/CHANGELOG.md",
+   "git_blob": "ddd17c264adf4e777692bb48fc5495f985d1c83d",
+   "bytes": 22690,
+   "sha256": "42feddeac278aa4d5126d8f2dfba340d93d09f706e57a6282481b10aa231494f",
+   "sha256_of": "blob at 699fbc2",
+   "worktree_sha256": "2cc60ad226bc1bd05187d1676d45bab18ee6b7058b77fcd9a86cbfd755a09acd",
+   "worktree_note": "working tree differs from the pinned commit 699fbc2 (changed by a parallel session during this census)",
+   "authority_class": "DERIVED narrative (per-version claim-movement tables)"
+  },
+  {
+   "id": "A1.start_here",
+   "path": "invariant-r10/START_HERE_GPT.md",
+   "git_blob": "4839b121472e8c543c97f45d130215a4a573b4cb",
+   "bytes": 9791,
+   "sha256": "eb11d8fd405aa7ef913ae1fe7b4cbcac6ae008af87cbdfdaf1f2472753417ca1",
+   "sha256_of": "blob at 699fbc2",
+   "worktree_sha256": "768a072fbe69ad73bfe57b4e70b4206b6b718ec4d31acde76ca2cefd07058b15",
+   "worktree_note": "working tree differs from the pinned commit 699fbc2 (changed by a parallel session during this census)",
+   "authority_class": "DERIVED narrative / return letter (tree identities table)"
+  },
+  {
+   "id": "A1.px13_readme",
+   "path": "invariant-r10/px13/README.md",
+   "git_blob": "81e33435a04cb98ee07a46454a43a8fa927b614f",
+   "bytes": 9721,
+   "sha256": "3a277d2b416c88c729bc19b2698fafcfec273cb9cc0a142d564260f64886e5ab",
+   "sha256_of": "blob at 699fbc2",
+   "worktree_sha256": "57dbb188bb932a1a6b9ed9f13c82603e81c24deeae7ba195fe22277a91c77526",
+   "worktree_note": "working tree differs from the pinned commit 699fbc2 (changed by a parallel session during this census)",
+   "authority_class": "AUTHORITATIVE copy of the computedriven lane receipts + narrative paragraphs per return"
+  },
+  {
+   "id": "A1.inputs.FABLE51_R10PRE_V21_GPT56_FINAL_AUDIT_FOR_OPUS.md",
+   "path": "invariant-r10/package-v2.6/inputs/FABLE51_R10PRE_V21_GPT56_FINAL_AUDIT_FOR_OPUS.md",
+   "git_blob": "657a64f06dc6298c8b72626006f8e211897b6b76",
+   "bytes": 9138,
+   "sha256": "16a4b7469125ce962437e73924cce244b6aa66abee70cb364aa16d986988613e",
+   "sha256_of": "blob at 699fbc2",
+   "authority_class": "ADVISORY (GPT-5.6 ruling; authority is advisory — applied by name into the crosswalk)"
+  },
+  {
+   "id": "A1.inputs.FABLE51_R10PRE_V2_GPT56_AUDIT_FOR_OPUS.md",
+   "path": "invariant-r10/package-v2.6/inputs/FABLE51_R10PRE_V2_GPT56_AUDIT_FOR_OPUS.md",
+   "git_blob": "0c3bac9c79df86eed7ccbc19eb49927337939434",
+   "bytes": 12276,
+   "sha256": "34b269fa62794648450f20c38eb95083834836c2ab05f3ac0296f61a63413819",
+   "sha256_of": "blob at 699fbc2",
+   "authority_class": "ADVISORY (GPT-5.6 ruling; authority is advisory — applied by name into the crosswalk)"
+  },
+  {
+   "id": "A1.inputs.FABLE51_RESEARCH_GPT56_ADJUDICATION_FOR_OPUS.md",
+   "path": "invariant-r10/package-v2.6/inputs/FABLE51_RESEARCH_GPT56_ADJUDICATION_FOR_OPUS.md",
+   "git_blob": "1a3eede79d9ca2856c974476e1791c2863e40ad2",
+   "bytes": 13462,
+   "sha256": "ffe88b851378eef6897683fd8050a1c61d58d9ff7b9e964aca3c7c3433447742",
+   "sha256_of": "blob at 699fbc2",
+   "authority_class": "ADVISORY (GPT-5.6 ruling; authority is advisory — applied by name into the crosswalk)"
+  },
+  {
+   "id": "A1.inputs.R10PRE_EXECUTION_V2_GPT56_ADJUDICATION.md",
+   "path": "invariant-r10/package-v2.6/inputs/R10PRE_EXECUTION_V2_GPT56_ADJUDICATION.md",
+   "git_blob": "4d194f8e6df5bd62dff0892183ec77b715c2fa46",
+   "bytes": 17146,
+   "sha256": "6ee5827be99fa4de8636142158b3cd04e3b6a75864bf4f15c6b30cbc5878458b",
+   "sha256_of": "blob at 699fbc2",
+   "authority_class": "ADVISORY (GPT-5.6 ruling; authority is advisory — applied by name into the crosswalk)"
+  },
+  {
+   "id": "A1.inputs.R10PRE_EXECUTION_V3_GPT56_ADJUDICATION.md",
+   "path": "invariant-r10/package-v2.6/inputs/R10PRE_EXECUTION_V3_GPT56_ADJUDICATION.md",
+   "git_blob": "571f43345c626bb7a4636aa9856bb523f3e74c8a",
+   "bytes": 26943,
+   "sha256": "6e6c27019c8f3836a69436646f8c6ffbda7c6e7e1d733f0f7bb3c7771e376c09",
+   "sha256_of": "blob at 699fbc2",
+   "authority_class": "ADVISORY (GPT-5.6 ruling; authority is advisory — applied by name into the crosswalk)"
+  },
+  {
+   "id": "A1.inputs.root_v1",
+   "path": "invariant-r10/inputs-gpt-execution-adjudication.md",
+   "git_blob": "43fb7a29209e76b2832b90dc753e539e17fa57dd",
+   "bytes": 21558,
+   "sha256": "34e3afc868518ddf5fdbfdd9dc6dfce5b2fa115688306842b68b9cfbe7b6cd3d",
+   "sha256_of": "blob at 699fbc2",
+   "authority_class": "ADVISORY (GPT v1 execution adjudication; §1 = the S6?→S1 ruling; NOT copied into package-v2.6/inputs/)"
+  },
+  {
+   "id": "A1.inputs.root_go",
+   "path": "invariant-r10/inputs-gpt-execution-go.md",
+   "git_blob": "718a05691d4cf8439e8d557e65376e0b57df0188",
+   "bytes": 5837,
+   "sha256": "48fbe3c70faf27ae877a42444901792d6e8e06d9db59edc0f164d184a7949a71",
+   "sha256_of": "blob at 699fbc2",
+   "authority_class": "ADVISORY (GO ruling)"
+  },
+  {
+   "id": "A1.experiments.authority_merge",
+   "path": "invariant-r10/experiments/authority_merge/RESULT.md",
+   "git_blob": "9d51f7e5a9eb188a107a29232f8e70aefbd77acf",
+   "bytes": 3779,
+   "sha256": "ea69472c7a7f5a3ec67658a98faba5addee8d380701d6ef2f59bbbbbb8fd4d39",
+   "sha256_of": "blob at 699fbc2",
+   "authority_class": "AUTHORITATIVE receipt narrative of the execution lane (receipts/outputs beside it)"
+  },
+  {
+   "id": "A1.experiments.distributed_currentness",
+   "path": "invariant-r10/experiments/distributed_currentness/RESULT.md",
+   "git_blob": "99750cf9c725380240efc9fc1a64015938e5dfea",
+   "bytes": 6084,
+   "sha256": "ce62418cb0a6f255bbc91f6e71ad64772f88d41912f3b5712d429df95abfaa1a",
+   "sha256_of": "blob at 699fbc2",
+   "authority_class": "AUTHORITATIVE receipt narrative of the execution lane (receipts/outputs beside it)"
+  },
+  {
+   "id": "A1.experiments.locus_capability_facade",
+   "path": "invariant-r10/experiments/locus_capability_facade/RESULT.md",
+   "git_blob": "fe5d4e4f3cf9e961dac881e2d11cbc09144f1994",
+   "bytes": 2972,
+   "sha256": "727bcb4e63412f39f485305292b342b18d4a926bb8211280adcea0693e55b9fb",
+   "sha256_of": "blob at 699fbc2",
+   "authority_class": "AUTHORITATIVE receipt narrative of the execution lane (receipts/outputs beside it)"
+  },
+  {
+   "id": "A1.experiments.micro_locus_s3",
+   "path": "invariant-r10/experiments/micro_locus_s3/RESULT.md",
+   "git_blob": "5841130d2d1fba71ab06adf18a67bc6ce5c6388d",
+   "bytes": 1724,
+   "sha256": "ac7a6d5d181fa4a5c3fd9e805feb9bf1d8f0a1fc10b2b04d596a317327840be4",
+   "sha256_of": "blob at 699fbc2",
+   "authority_class": "AUTHORITATIVE receipt narrative of the execution lane (receipts/outputs beside it)"
+  },
+  {
+   "id": "A1.experiments.observe_is_write",
+   "path": "invariant-r10/experiments/observe_is_write/RESULT.md",
+   "git_blob": "0fc54b827ee145a2e78ce85ae75a7c8635c10d31",
+   "bytes": 3093,
+   "sha256": "bfc59032062f1ce3d3e1ffd4e8453930080bce10ff99fc115c7d1287b9615f43",
+   "sha256_of": "blob at 699fbc2",
+   "authority_class": "AUTHORITATIVE receipt narrative of the execution lane (receipts/outputs beside it)"
+  },
+  {
+   "id": "A1.experiments.s5_effect_adapter",
+   "path": "invariant-r10/experiments/s5_effect_adapter/RESULT.md",
+   "git_blob": "b90328d9ebdf07a6890e01399c1cb9e288565bab",
+   "bytes": 11118,
+   "sha256": "d4c22e4aa9c1e297b3e7f3c7ae3553645e3611b23bf43cf74369efcd5b8688b5",
+   "sha256_of": "blob at 699fbc2",
+   "worktree_sha256": "5203612636c68ad9cf21a839e05e03678e7dd0fa857e71eb7ad8c95c25b02b29",
+   "worktree_note": "working tree differs from the pinned commit 699fbc2 (changed by a parallel session during this census)",
+   "authority_class": "AUTHORITATIVE receipt narrative of the execution lane (receipts/outputs beside it)"
+  },
+  {
+   "id": "A1.experiments.s6_locus_birth",
+   "path": "invariant-r10/experiments/s6_locus_birth/RESULT.md",
+   "git_blob": "75bf01c7b91f88b47ebd268a7fe5347a361bf38f",
+   "bytes": 2426,
+   "sha256": "7465c274c2324d2e9afdcc55e71d22c100c174c8b03c577c829a23b0083b66bb",
+   "sha256_of": "blob at 699fbc2",
+   "authority_class": "AUTHORITATIVE receipt narrative of the execution lane (receipts/outputs beside it)"
+  },
+  {
+   "id": "A1.experiments.trvm_contracts",
+   "path": "invariant-r10/experiments/trvm_contracts/RESULT.md",
+   "git_blob": "441f3657e484b5b552eec2fc25f64c8ce3fdce82",
+   "bytes": 7384,
+   "sha256": "8995f740949391d5d26bd25a917eedba21682e8a9e9b5b26822bfa5690af8176",
+   "sha256_of": "blob at 699fbc2",
+   "authority_class": "AUTHORITATIVE receipt narrative of the execution lane (receipts/outputs beside it)"
+  },
+  {
+   "id": "A1.handoffs.FAC_CONTROL_SENSITIVITY_CANDIDATE.md",
+   "path": "invariant-r10/handoffs/FAC_CONTROL_SENSITIVITY_CANDIDATE.md",
+   "git_blob": "a30807ea233a1610788f49caa95b8eaec8b80dc0",
+   "bytes": 5255,
+   "sha256": "ed6ebaf4c9175142e175a0ea0a6835f9a209472f69e602cbed77cca92891532d",
+   "sha256_of": "blob at 699fbc2",
+   "authority_class": "ADVISORY handoff to another lane (TRVM / factory / Super); nothing registered"
+  },
+  {
+   "id": "A1.handoffs.SUPER_E50_EFFECT_IDENTITY.md",
+   "path": "invariant-r10/handoffs/SUPER_E50_EFFECT_IDENTITY.md",
+   "git_blob": "1a673866ad86e5bc9785bbe72e443e52728ee903",
+   "bytes": 8212,
+   "sha256": "0cec66026cc842b4bfd5cd70fb12ea88307f64dedccc9f9d2151e6556442fc21",
+   "sha256_of": "blob at 699fbc2",
+   "worktree_sha256": "ddcbedac1b7319599c6ef467edf3f0b0bcc16dfe72b1cb3630907d6ae757b2a0",
+   "worktree_note": "working tree differs from the pinned commit 699fbc2 (changed by a parallel session during this census)",
+   "authority_class": "ADVISORY handoff to another lane (TRVM / factory / Super); nothing registered"
+  },
+  {
+   "id": "A1.handoffs.TRVM_E42_E43_CANDIDATE_LAWS.md",
+   "path": "invariant-r10/handoffs/TRVM_E42_E43_CANDIDATE_LAWS.md",
+   "git_blob": "b3c30636fdeadff97beecfa230520678b39897f7",
+   "bytes": 5341,
+   "sha256": "3f51ff05846e5eebbed4cb8656607255352202a1645d505cb7e0805dfd900781",
+   "sha256_of": "blob at 699fbc2",
+   "worktree_sha256": "9b7f8f258f6c6c52f29460569e5a957e1890fbbe8be064cfde048819f52edb1f",
+   "worktree_note": "working tree differs from the pinned commit 699fbc2 (changed by a parallel session during this census)",
+   "authority_class": "ADVISORY handoff to another lane (TRVM / factory / Super); nothing registered"
+  },
+  {
+   "id": "A1.px13",
+   "path": "invariant-r10/px13/",
+   "authority_class": "AUTHORITATIVE receipts of the computedriven lane (R0.8.3 extracts + R0.8.4/5/6/7 handbacks shipped whole); R0.8.7 (F36/F37) is staged and UNADJUDICATED, not yet in any package",
+   "counts": {
+    "files": 24,
+    "tracked_in_git": 24,
+    "shipped_manifest_entries": 23,
+    "shipped_manifest_verifies": true,
+    "root_SHA256SUMS_px13_entries": 24,
+    "root_SHA256SUMS_missing_px13": [],
+    "root_SHA256SUMS_mismatch": [
+     "px13/README.md",
+     "px13/SHIPPED-SHA256SUMS.txt"
+    ]
+   },
+   "files": {
+    "COMPUTEDRIVEN_R083_EXECUTION_FOR_GPT.tar.gz": {
+     "path": "invariant-r10/px13/COMPUTEDRIVEN_R083_EXECUTION_FOR_GPT.tar.gz",
+     "git_blob": "4efb75f220e06289a966b97d9b14ac3d84e71a27",
+     "bytes": 1739732,
+     "sha256": "c99ab0ec470d6eb3601e12fefd3c1004dc9bfccd57ae4e5b4037fb2c298454d3",
+     "sha256_of": "blob at 699fbc2"
+    },
+    "COMPUTEDRIVEN_R084_FOR_GPT.md": {
+     "path": "invariant-r10/px13/COMPUTEDRIVEN_R084_FOR_GPT.md",
+     "git_blob": "b81cde5edd30428a265d8da718a2b56168e68b89",
+     "bytes": 13142,
+     "sha256": "e1f39e63d75117104f54973edf1688e4ce99ba9d98dc5c5ef4c031c89a231f75",
+     "sha256_of": "blob at 699fbc2"
+    },
+    "COMPUTEDRIVEN_R084_FOR_GPT.tar.gz": {
+     "path": "invariant-r10/px13/COMPUTEDRIVEN_R084_FOR_GPT.tar.gz",
+     "git_blob": "6add27c8de8bd1b5e419a86f5de2b085413e421a",
+     "bytes": 2473750,
+     "sha256": "525211840abb0b9d381f42537acc896a85e7fceeb49a5238ef90c075bdebf658",
+     "sha256_of": "blob at 699fbc2"
+    },
+    "COMPUTEDRIVEN_R085_FOR_GPT.md": {
+     "path": "invariant-r10/px13/COMPUTEDRIVEN_R085_FOR_GPT.md",
+     "git_blob": "55ad381b0f76d2de8ce4f5bf7e591c85cae3cc0d",
+     "bytes": 14036,
+     "sha256": "a48de61f4068ed1d80d3e7ad05152fc7022b188d21cc19d0e0e49dfca873580e",
+     "sha256_of": "blob at 699fbc2"
+    },
+    "COMPUTEDRIVEN_R085_FOR_GPT.tar.gz": {
+     "path": "invariant-r10/px13/COMPUTEDRIVEN_R085_FOR_GPT.tar.gz",
+     "git_blob": "d5464573c5e3f30e98a46f8cfebac0a634dcff07",
+     "bytes": 3854474,
+     "sha256": "6ba8544cbf7c91ef526ddde97943d54845e1f352814173b8fa9a64f86867a913",
+     "sha256_of": "blob at 699fbc2"
+    },
+    "COMPUTEDRIVEN_R086_FOR_GPT.md": {
+     "path": "invariant-r10/px13/COMPUTEDRIVEN_R086_FOR_GPT.md",
+     "git_blob": "414cd796f6dc1e24bf2fb685b4c1a09e2524a039",
+     "bytes": 7390,
+     "sha256": "667e221091e0dbcde25af23b0cb57f28b0037bd6823687d78cc3d6d06fa2d100",
+     "sha256_of": "blob at 699fbc2"
+    },
+    "COMPUTEDRIVEN_R086_FOR_GPT.tar.gz": {
+     "path": "invariant-r10/px13/COMPUTEDRIVEN_R086_FOR_GPT.tar.gz",
+     "git_blob": "e7626a142aefa926906163168688beb9421e8069",
+     "bytes": 4846934,
+     "sha256": "cffc0218fc450884ad2bf4d1630468c675b262e8260ef72b8c90dbf061016303",
+     "sha256_of": "blob at 699fbc2"
+    },
+    "COMPUTEDRIVEN_R087_FOR_GPT.md": {
+     "path": "invariant-r10/px13/COMPUTEDRIVEN_R087_FOR_GPT.md",
+     "git_blob": "facf125490fcab028cc0dd5d8a824c2131235de3",
+     "bytes": 7217,
+     "sha256": "864e171dd6b88e71460c46daab0a060cee1308f5f58a4ab2bcdfc8b6344e076e",
+     "sha256_of": "blob at 699fbc2"
+    },
+    "COMPUTEDRIVEN_R087_FOR_GPT.tar.gz": {
+     "path": "invariant-r10/px13/COMPUTEDRIVEN_R087_FOR_GPT.tar.gz",
+     "git_blob": "dd50d21d4ac9daed470c6fa24b7d5c92fcfa4da3",
+     "bytes": 5431661,
+     "sha256": "a40c60fe884611d5e4030578cb288237461992ca7bc79b63be114e3dfbb9d6cd",
+     "sha256_of": "blob at 699fbc2"
+    },
+    "F22_repro_output.txt": {
+     "path": "invariant-r10/px13/F22_repro_output.txt",
+     "git_blob": "c9814150f9796dc7b12a50476076ae37d3e64387",
+     "bytes": 1440,
+     "sha256": "f9367e3b914cb93fc5058e17f1f043fbc7ad8f66ac78a47119404db4f12d058f",
+     "sha256_of": "blob at 699fbc2"
+    },
+    "R0.8-20260901T035400Z.final-receipt.json": {
+     "path": "invariant-r10/px13/R0.8-20260901T035400Z.final-receipt.json",
+     "git_blob": "d4fb7fcad1f95e10bfef91a8d6193b581e6cc4d6",
+     "bytes": 45837,
+     "sha256": "4d294c5d21bb9a29b773835ebca27684bf6888aabe51278cd2e948f4ef289956",
+     "sha256_of": "blob at 699fbc2"
+    },
+    "R0.8.3-EXECUTION-HANDBACK.md": {
+     "path": "invariant-r10/px13/R0.8.3-EXECUTION-HANDBACK.md",
+     "git_blob": "66f3302759c919a6446030a58dcfbc2fae7c4c14",
+     "bytes": 24228,
+     "sha256": "d73585257910de962d088528630bfda53d7a8668c5eaa14a9568ec2cfe2902f1",
+     "sha256_of": "blob at 699fbc2"
+    },
+    "R0.8.4-FALSIFIED.parallel-session-copy.md": {
+     "path": "invariant-r10/px13/R0.8.4-FALSIFIED.parallel-session-copy.md",
+     "git_blob": "3a1bf56489d8d13f4fd64978536d653be679a912",
+     "bytes": 6820,
+     "sha256": "71e9fe67b85531cd2b9d362cf94702e7f8e319369e6fee127b054409ae431af8",
+     "sha256_of": "blob at 699fbc2"
+    },
+    "R083-handback-internal-SHA256SUMS.txt": {
+     "path": "invariant-r10/px13/R083-handback-internal-SHA256SUMS.txt",
+     "git_blob": "34e3965b53b3640d2ff5929ab960f1fbd6ca7f7c",
+     "bytes": 6422,
+     "sha256": "1db394fc595d811643142dc152816fa149c6dd51753e886ee638595e4bc21f00",
+     "sha256_of": "blob at 699fbc2"
+    },
+    "README.md": {
+     "path": "invariant-r10/px13/README.md",
+     "git_blob": "81e33435a04cb98ee07a46454a43a8fa927b614f",
+     "bytes": 9721,
+     "sha256": "3a277d2b416c88c729bc19b2698fafcfec273cb9cc0a142d564260f64886e5ab",
+     "sha256_of": "blob at 699fbc2",
+     "worktree_sha256": "57dbb188bb932a1a6b9ed9f13c82603e81c24deeae7ba195fe22277a91c77526",
+     "worktree_note": "working tree differs from the pinned commit 699fbc2 (changed by a parallel session during this census)"
+    },
+    "SHIPPED-SHA256SUMS.txt": {
+     "path": "invariant-r10/px13/SHIPPED-SHA256SUMS.txt",
+     "git_blob": "4a204ab237597dfe2b34337816010974b9242457",
+     "bytes": 2211,
+     "sha256": "acb3a8600567e23ca1a3e29afb82019d3baf956d4237f3345b00aa8a38614cd1",
+     "sha256_of": "blob at 699fbc2",
+     "worktree_sha256": "5808527b8ddd625f302bacdd9c5c9c6afd2c841eb6983306e59e9149b11dbd04",
+     "worktree_note": "working tree differs from the pinned commit 699fbc2 (changed by a parallel session during this census)"
+    },
+    "all-negative-controls.txt": {
+     "path": "invariant-r10/px13/all-negative-controls.txt",
+     "git_blob": "dcdc4f775cf162c4bf78f816a8c593b414af3041",
+     "bytes": 4372,
+     "sha256": "ee93eccbeae553024fd8c4fd481c794a232518a53afab0e1625801e43e2de660",
+     "sha256_of": "blob at 699fbc2"
+    },
+    "crash-matrix.txt": {
+     "path": "invariant-r10/px13/crash-matrix.txt",
+     "git_blob": "eb87d0e99f1a14d2d23ca72f453f73a7d0a0bf8a",
+     "bytes": 1012,
+     "sha256": "d05b2030a278b61b5188a0bc7286622a423fe63668c253728e5985400935fa94",
+     "sha256_of": "blob at 699fbc2"
+    },
+    "environment.txt": {
+     "path": "invariant-r10/px13/environment.txt",
+     "git_blob": "5d147b1aa76118d5af41b72ad4b742df2cc25b4a",
+     "bytes": 1635,
+     "sha256": "417881172fc067021529a9c6908c1e769bcd9d9be3d6c497098e0636fdfa75ed",
+     "sha256_of": "blob at 699fbc2"
+    },
+    "guards-output.txt": {
+     "path": "invariant-r10/px13/guards-output.txt",
+     "git_blob": "b19c7a7a98fcc6228c8487aebc89f0d34c8bb316",
+     "bytes": 4892,
+     "sha256": "805eab1992d6d436fcec8b35e9646ee76210c7516470cc3ad7c3c76dccacc077",
+     "sha256_of": "blob at 699fbc2"
+    },
+    "in-process-controls.txt": {
+     "path": "invariant-r10/px13/in-process-controls.txt",
+     "git_blob": "5b1f07cdcf0aefc9d807a4afc0fae6999e16fd4c",
+     "bytes": 1650,
+     "sha256": "afeabd4fb6e7ab89ff1b6e8c4322ba2a7d4c9bf30da93be9f0bac0a92a203f39",
+     "sha256_of": "blob at 699fbc2"
+    },
+    "nc15-repeated-crash.txt": {
+     "path": "invariant-r10/px13/nc15-repeated-crash.txt",
+     "git_blob": "36641531c224f859906ab231a850c1e307803f90",
+     "bytes": 7927,
+     "sha256": "43c707aa0c9180e1192afd1bc5e3b7a4c4b8ebccd544c6f04867883407c978cc",
+     "sha256_of": "blob at 699fbc2"
+    },
+    "nc17-18-19-23-live-tamper.txt": {
+     "path": "invariant-r10/px13/nc17-18-19-23-live-tamper.txt",
+     "git_blob": "6ab0a83faf54dac105c75ad9cdb9d25630e6eb6d",
+     "bytes": 7509,
+     "sha256": "d45d10b4ea16575c3d6dbe14fad9191affb1b8fff74913eb30dd5cf61ab51011",
+     "sha256_of": "blob at 699fbc2"
+    },
+    "series.txt": {
+     "path": "invariant-r10/px13/series.txt",
+     "git_blob": "e9f6bbf4a06fda250aafaa5dcfc1b895928628c2",
+     "bytes": 2345,
+     "sha256": "87dda7f5a55b4cd829fdba753d63d5bcc948e12598e2faf0a68fbff6f4dd3ab3",
+     "sha256_of": "blob at 699fbc2"
+    }
+   },
+   "handbacks": {
+    "R0.8.3": "COMPUTEDRIVEN_R083_EXECUTION_FOR_GPT.tar.gz @ efa8881 (21/21)",
+    "R0.8.4": "COMPUTEDRIVEN_R084_FOR_GPT.{md,tar.gz} @ 0b87256 (F31, F23/F24 falsify-then-repair)",
+    "R0.8.5": "COMPUTEDRIVEN_R085_FOR_GPT.{md,tar.gz} @ af1cbc2 (F32/F33/F34/F24/F22/F30)",
+    "R0.8.6": "COMPUTEDRIVEN_R086_FOR_GPT.{md,tar.gz} @ 747f025 (F35 NC28; shipped, OPEN-UNADJUDICATED)",
+    "R0.8.7": "COMPUTEDRIVEN_R087_FOR_GPT.{md,tar.gz} @ 21a1452 (F36 NC29, F37 NC30; staged, unadjudicated, in no package)"
+   }
+  },
+  {
+   "id": "A1.SHA256SUMS",
+   "path": "invariant-r10/SHA256SUMS",
+   "authority_class": "DERIVED manifest (git-ignored working file); STALE vs tree",
+   "counts": {
+    "entries": 495,
+    "verify_failures": 2,
+    "files_missing_from_manifest": []
+   }
+  },
+  {
+   "id": "A1.factory_kit",
+   "path": "invariant-r10/tools-lane/factory-kit/",
+   "authority_class": "DERIVED validator (rules A–H over evidence-state@1; --selftest 11 mutations refused, re-run 2026-09-02) + ADVISORY draft claim FAC-CONTROL-SENSITIVITY.claim.json (status DECLARED, NOT minted; NOT FOUND in the canonical CLAIM_LEDGER.json)",
+   "files": {
+    "check-evidence-transitions.mjs": {
+     "path": "invariant-r10/tools-lane/factory-kit/check-evidence-transitions.mjs",
+     "git_blob": "08442a50755b203449b1a0203045e82d9adb16d2",
+     "bytes": 10154,
+     "sha256": "fc2ede2504cb125bd63275bcaa986bf66b19e7f2b70b3ccadc7421f8f4a7e3c8",
+     "sha256_of": "blob at 699fbc2",
+     "worktree_sha256": "f0ae124ee39d6714bea82badfed9b4cca7ec62129eca7ada86bcc41b04acfdcb",
+     "worktree_note": "working tree differs from the pinned commit 699fbc2 (changed by a parallel session during this census)"
+    },
+    "FAC-CONTROL-SENSITIVITY.claim.json": {
+     "path": "invariant-r10/tools-lane/factory-kit/FAC-CONTROL-SENSITIVITY.claim.json",
+     "git_blob": "863f2c222d37d11ea9453af451c450a560aa5c93",
+     "bytes": 5827,
+     "sha256": "961a1f1c4358ecccd20d0c26e2f04567dd8d5da92e57ff3889070ec7f503f873",
+     "sha256_of": "blob at 699fbc2",
+     "worktree_sha256": "ee0d450042e991b606aea2aa3b6893f476e8f752ff2b204cb735b016d005103f",
+     "worktree_note": "working tree differs from the pinned commit 699fbc2 (changed by a parallel session during this census)"
+    },
+    "README.md": {
+     "path": "invariant-r10/tools-lane/factory-kit/README.md",
+     "git_blob": "d64b2ff6a7153fd4d8f2337d4b47dbdeecae170e",
+     "bytes": 4941,
+     "sha256": "9f5add1d7014266a75da3c67fd2de4dcf99a886cc0b5f5e706f7606dd5511ccd",
+     "sha256_of": "blob at 699fbc2",
+     "worktree_sha256": "70919c390ffbc29f65a7f8fe4877105898da21953c992ce04487dd0b3e12bdfd",
+     "worktree_note": "working tree differs from the pinned commit 699fbc2 (changed by a parallel session during this census)"
+    },
+    "selftest-evidence-state.json": {
+     "path": "invariant-r10/tools-lane/factory-kit/selftest-evidence-state.json",
+     "git_blob": "cbbcb742c9254db26a186c6bf4355abc34f1bcdf",
+     "bytes": 2406,
+     "sha256": "49e9d33356fe8df630e6d61094def27a4ba0fd63758c8772f97f8ce1e868092d",
+     "sha256_of": "blob at 699fbc2",
+     "worktree_sha256": "d3e27aeb78dd07cdc793fb6f6938108c6bd4e519322f2564bbca9a464d131901",
+     "worktree_note": "working tree differs from the pinned commit 699fbc2 (changed by a parallel session during this census)"
+    }
+   },
+   "validator_rerun": {
+    "against_committed_receipts (15:5x local, before the parallel edits)": "ADMISSIBLE · 56 records · 5 promotions",
+    "against_the_tree_after_the_parallel_session_rewrote_the_E-51_receipt (validator blob at the pin, run 16:0x)": "REFUSED (1): B E-51: receipt sha256 mismatch for experiments/s5_effect_adapter/effect_identity_model.output.txt — the receipt blob at the pinned commit still matches the recorded sha256; the rewritten one (now committed on top) does not",
+    "--selftest": "every one of 11 mutations refused (both runs)"
+   }
+  },
+  {
+   "id": "A1.historical_packages",
+   "path": "invariant-r10/package-v2.{2,3,4,5}/ + *-staging/",
+   "authority_class": "HISTORICAL (superseded package versions; v2.5 is ACCEPTED-with-patch, v2.6 supersedes it)",
+   "counts": {
+    "package-v2.2": 32,
+    "package-v2.3": 31,
+    "package-v2.4": 33,
+    "package-v2.4-staging": 4,
+    "package-v2.5": 39,
+    "package-v2.6-staging": 3
+   },
+   "live_tree_note": "package-v2.7-staging/ (3 files) appeared in the working tree at 15:54–15:55 local on 2026-09-02, after this census started (15:43) and not by this census; untracked; a parallel session is authoring the v2.7 patch"
+  },
+  {
+   "id": "A2.claim_ledger",
+   "path": "~/.invariant-factory/canonical.git:invariant-canonical:CLAIM_LEDGER.json",
+   "git_blob": "23141cd132059483c6b1f4aaeb4c241231c43cf9",
+   "sha256": "9ff6ac3f7865ae3267ac359811e3c96ed27ef65eeeebeddbf61e5b7f4ab2ce78",
+   "ref_oid": "d217ee29a3322c68db0d43be47491f0e9d4fbc64",
+   "tree_oid": "11ab2c6192ecf19fbf974da7b6483899903eca32",
+   "authority_class": "AUTHORITATIVE (the factory ledger; promotion finality via CAS on refs/heads/invariant-canonical; INV-R9.4 = tag INV-R9.4)",
+   "round": {
+    "id": "INV-R9.4",
+    "date": "2026-08-26",
+    "receipt_ref": "mosaic/receipts/INV-R9.4.json"
+   },
+   "counts": {
+    "claims": 208,
+    "top_level_keys": [
+     "_comment",
+     "_statuses",
+     "_settled",
+     "_round",
+     "claims",
+     "_revisions",
+     "_registries"
+    ],
+    "settled": 84,
+    "with_witnesses": 171,
+    "witness_refs": 269,
+    "witness_refs_with_section": 137,
+    "implementation_binding_cell": 54,
+    "implementation_binding_path": 122,
+    "implementation_binding_null": 32,
+    "field_freq": {
+     "claim_id": 208,
+     "statement": 208,
+     "status": 208,
+     "assumptions": 208,
+     "evidence": 208,
+     "witnesses": 208,
+     "prior_art": 208,
+     "implementation_binding": 208,
+     "last_verified": 208,
+     "assumption_refs": 140,
+     "review_focus": 96,
+     "evidence_kind": 86,
+     "obligation": 85,
+     "gap": 72,
+     "imported_from": 43,
+     "readjudicated": 43,
+     "evidence_qualifiers": 29,
+     "refutation_scope": 19,
+     "supersedes": 19,
+     "superseded_by": 13,
+     "note": 6,
+     "finding": 3,
+     "bound": 1,
+     "cites_bound": 1
+    }
+   },
+   "id_scheme": {
+    "regex": "^[A-Z0-9]+(-[A-Z0-9.]+)+$",
+    "prefix_distribution": {
+     "FAC": 40,
+     "FED": 38,
+     "MOS": 29,
+     "EMB": 22,
+     "ASR": 19,
+     "LED": 17,
+     "IMPACT": 9,
+     "TAX": 6,
+     "EVID": 5,
+     "ESC": 4,
+     "INC": 3,
+     "LINEAGE": 3,
+     "SUPPORT": 3,
+     "MEDIATION": 3,
+     "REPRO": 2,
+     "ADMISSION": 2,
+     "TERM": 1,
+     "CONTROL": 1,
+     "RECEIPT": 1
+    },
+    "examples": [
+     "FED-UNIV",
+     "FAC-PROMOTION-FINALITY",
+     "MOS-DERIVED-EQ",
+     "EMB-AUTH-NONAMP",
+     "LED-C9"
+    ],
+    "duplicates": []
+   },
+   "status_vocabulary": {
+    "_statuses": {
+     "PROVED": "a proof is given AND an executable check reproduces it here",
+     "CONDITIONAL": "proved under a stated antecedent that is NOT discharged; the antecedent is in `assumptions`",
+     "REFUTED": "shown false, with a construction that runs",
+     "KNOWN": "established in the cited literature; NOT re-derived here",
+     "MEASURED": "an empirical count from a stated procedure, not a theorem",
+     "DECLARED": "a design decision recorded so it can be attacked; not a truth claim",
+     "PROVISIONAL": "proposed on thin evidence, deliberately not promoted",
+     "OPEN": "not settled"
+    },
+    "_settled": [
+     "PROVED",
+     "CONDITIONAL",
+     "REFUTED",
+     "KNOWN",
+     "MEASURED"
+    ],
+    "status_used": {
+     "DECLARED": 71,
+     "PROVED": 52,
+     "OPEN": 46,
+     "REFUTED": 19,
+     "KNOWN": 7,
+     "PROVISIONAL": 7,
+     "CONDITIONAL": 3,
+     "MEASURED": 3
+    },
+    "evidence_kind": {
+     "<ABSENT>": 122,
+     "deductive_proof": 26,
+     "counterexample": 17,
+     "constructive_witness": 16,
+     "exhaustion": 15,
+     "cited_result": 8,
+     "measurement": 4
+    },
+    "obligation": {
+     "<ABSENT>": 123,
+     "universal_affirmation": 38,
+     "existence": 22,
+     "universal_refutation": 19,
+     "universal_absence": 4,
+     "rate_bound": 1,
+     "bounded_absence": 1
+    },
+    "refutation_scope": {
+     "<ABSENT>": 189,
+     "timeless": 14,
+     "INV-R2.1": 2,
+     "INV-R7.3": 2,
+     "INV-R1": 1
+    },
+    "last_verified": {
+     "2026-08-24": 126,
+     "2026-08-26": 66,
+     "2026-08-23": 15,
+     "2026-08-25": 1
+    },
+    "used_outside_declared": []
+   },
+   "xref_fields": {
+    "witnesses": {
+     "points_at": "paths in the canonical tree, optionally \"path §SECTION\"",
+     "total": 269,
+     "resolved_in_tree": 269,
+     "dangling": [],
+     "prefix_distribution": {
+      "scripts": 209,
+      "mosaic": 50,
+      "AmpersandBoxDesign": 8,
+      "opensentience.org": 2
+     }
+    },
+    "implementation_binding": {
+     "points_at": "cell:<num> in cells.json OR a path (+ symbol) in the tree",
+     "cell_refs": 54,
+     "cell_refs_resolve": 54,
+     "distinct_cells_bound": [
+      "01",
+      "24",
+      "25",
+      "27a",
+      "27b",
+      "36",
+      "45"
+     ],
+     "path_bindings_resolve": 122,
+     "path_bindings_total": 122
+    },
+    "assumption_refs": {
+     "points_at": "mosaic/assumptions.json ASM-* ids",
+     "claims_with": 36
+    },
+    "imported_from / readjudicated": {
+     "points_at": "source revision + artifact (cross-lane integration, INV-R9-from-INV-R7.5)",
+     "claims_with_imported_from": 43,
+     "claims_with_readjudicated": 43
+    },
+    "supersedes / superseded_by": {
+     "claims_with_supersedes": 19,
+     "claims_with_superseded_by": 13
+    },
+    "evidence_qualifiers": {
+     "claims_with": 29,
+     "points_at": "SRC-* citation_ref, ARG-* mapping_argument_ref, instrument INS-*"
+    }
+   },
+   "cross_dataset_mentions": {
+    "E-records": 0,
+    "R0.8": 0,
+    "computedriven": 0,
+    "invariant-r10": 0,
+    "FAC-CONTROL-SENSITIVITY": 0
+   },
+   "dangling_refs_sample": []
+  },
+  {
+   "id": "A2.mosaic",
+   "path": "~/.invariant-factory/canonical.git:invariant-canonical:mosaic/",
+   "authority_class": "AUTHORITATIVE registries (evidence/instruments, assumptions, arguments, sources, objectives, occupancy, operations, embodiment, factory, defeaters+incidents); mosaic/derived/ is DERIVED (regenerated by check-mosaic.mjs --regen); mosaic/receipts/ are the AUTHORITATIVE transition receipts",
+   "registries": {
+    "evidence": {
+     "path": "mosaic/evidence.json",
+     "version": "4",
+     "round": "INV-R6",
+     "top_level_keys": [
+      "_comment",
+      "version",
+      "generated",
+      "round",
+      "kinds",
+      "qualifiers",
+      "obligations",
+      "consumption",
+      "status_obligation_domain",
+      "instruments",
+      "provenance_fields",
+      "origins"
+     ],
+     "list_field_sizes": {
+      "instruments": 12
+     },
+     "id_schemes": {
+      "instruments": {
+       "n": 12,
+       "prefixes": {
+        "INS": 12
+       },
+       "examples": [
+        "INS-FED-GATE",
+        "INS-LEDGER-GATE",
+        "INS-MOSAIC-GATE"
+       ]
+      }
+     }
+    },
+    "assumptions": {
+     "path": "mosaic/assumptions.json",
+     "version": "2",
+     "round": "INV-R7.5",
+     "top_level_keys": [
+      "_comment",
+      "version",
+      "generated",
+      "round",
+      "kinds",
+      "discharge_states",
+      "assumptions"
+     ],
+     "list_field_sizes": {
+      "assumptions": 29
+     },
+     "id_schemes": {
+      "assumptions": {
+       "n": 29,
+       "prefixes": {
+        "ASM": 29
+       },
+       "examples": [
+        "ASM-D-FINITE",
+        "ASM-GAMMA-FINITE",
+        "ASM-1PA"
+       ]
+      }
+     }
+    },
+    "arguments": {
+     "path": "mosaic/arguments.json",
+     "version": "4",
+     "round": "INV-R9",
+     "top_level_keys": [
+      "_comment",
+      "version",
+      "generated",
+      "round",
+      "roles",
+      "role_conclusions",
+      "arguments"
+     ],
+     "list_field_sizes": {
+      "arguments": 27
+     },
+     "id_schemes": {
+      "arguments": {
+       "n": 27,
+       "prefixes": {
+        "ARG": 27
+       },
+       "examples": [
+        "ARG-REPRO-CLOSURE-COVERAGE",
+        "ARG-LED-C9-MEDIATED-SURFACE",
+        "ARG-FED-1PA-DEC-CITATION"
+       ]
+      }
+     }
+    },
+    "sources": {
+     "path": "mosaic/sources.json",
+     "version": "2",
+     "round": "INV-R7.5",
+     "top_level_keys": [
+      "_comment",
+      "version",
+      "generated",
+      "round",
+      "sources"
+     ],
+     "list_field_sizes": {
+      "sources": 24
+     },
+     "id_schemes": {
+      "sources": {
+       "n": 24,
+       "prefixes": {
+        "SRC": 24
+       },
+       "examples": [
+        "SRC-JCG-1997-INVPOL",
+        "SRC-HN-1992-CORE",
+        "SRC-BFMY-1983-PAIRWISE"
+       ]
+      }
+     }
+    },
+    "objectives": {
+     "path": "mosaic/objectives.json",
+     "version": "3",
+     "round": "INV-R6",
+     "top_level_keys": [
+      "_comment",
+      "version",
+      "generated",
+      "round",
+      "subject",
+      "hard_constraints",
+      "soft_objectives",
+      "selection_rule",
+      "evaluators",
+      "exteriority"
+     ],
+     "list_field_sizes": {
+      "soft_objectives": 5,
+      "evaluators": 4
+     },
+     "id_schemes": {
+      "soft_objectives": {
+       "n": 5,
+       "prefixes": {
+        "SO": 5
+       },
+       "examples": [
+        "SO-CELLS-CLOSED",
+        "SO-CLAIMS-SETTLED",
+        "SO-REFUSALS"
+       ]
+      },
+      "evaluators": {
+       "n": 4,
+       "prefixes": {
+        "EVAL": 4
+       },
+       "examples": [
+        "EVAL-FABLE-5",
+        "EVAL-OPUS-5",
+        "EVAL-GPT-56"
+       ]
+      }
+     }
+    },
+    "occupancy": {
+     "path": "mosaic/occupancy.json",
+     "version": "2",
+     "round": "INV-R6",
+     "top_level_keys": [
+      "_comment",
+      "version",
+      "generated",
+      "round",
+      "subject",
+      "kind_vocabulary",
+      "rules"
+     ],
+     "list_field_sizes": {
+      "rules": 3
+     },
+     "id_schemes": {
+      "rules": {
+       "n": 3,
+       "prefixes": {
+        "OCC": 3
+       },
+       "examples": [
+        "OCC-STAT-AUTH",
+        "OCC-KIND-VOCAB",
+        "OCC-FLOW-ARITY"
+       ]
+      }
+     }
+    },
+    "operations": {
+     "path": "mosaic/operations.json",
+     "version": "1",
+     "round": "INV-R7.1",
+     "top_level_keys": [
+      "_comment",
+      "version",
+      "generated",
+      "round",
+      "status",
+      "proposal_audit",
+      "obligations",
+      "quantities",
+      "operations_not_registered",
+      "matrix",
+      "orders",
+      "strict_relations"
+     ],
+     "list_field_sizes": {
+      "matrix": 6
+     },
+     "id_schemes": {}
+    },
+    "embodiment": {
+     "path": "mosaic/embodiment.json",
+     "version": "1",
+     "round": "INV-R6",
+     "top_level_keys": [
+      "_comment",
+      "version",
+      "generated",
+      "round",
+      "support_evidence_kinds",
+      "monotonicity",
+      "capabilities",
+      "battery",
+      "not_in_this_file",
+      "inference_support_envelope",
+      "admission_mediation",
+      "impact_algebra"
+     ],
+     "list_field_sizes": {
+      "capabilities": 4
+     },
+     "id_schemes": {
+      "capabilities": {
+       "n": 4,
+       "prefixes": {
+        "CAP": 4
+       },
+       "examples": [
+        "CAP-SYNTHETIC-AOBC",
+        "CAP-SYNTHETIC-INTERFERENCE",
+        "CAP-SYNTHETIC-IN-PRIORS"
+       ]
+      }
+     }
+    },
+    "factory": {
+     "path": "mosaic/factory.json",
+     "version": "1",
+     "round": "INV-R9.1",
+     "top_level_keys": [
+      "_comment",
+      "version",
+      "generated",
+      "canonical_ref",
+      "quarantine_ref",
+      "git_dir",
+      "git_dir_why",
+      "tree",
+      "derivations",
+      "derivations_why",
+      "narrative",
+      "revisions",
+      "quarantine",
+      "working_tree_divergence",
+      "unpromoted_ref",
+      "promotion",
+      "quarantine_classes",
+      "artifact_additions",
+      "artifact_additions_why",
+      "render",
+      "publication"
+     ],
+     "list_field_sizes": {
+      "derivations": 12,
+      "narrative": 27,
+      "artifact_additions": 15,
+      "render": 1
+     },
+     "id_schemes": {
+      "derivations": {
+       "n": 12,
+       "prefixes": {
+        "ledger": 1,
+        "registry": 1,
+        "prose": 1,
+        "witness": 1,
+        "argument_evidence": 1,
+        "instrument": 1,
+        "constraint_enforcer": 1,
+        "defeater_target": 1,
+        "incident_reproducer": 1,
+        "gate": 1,
+        "pinned": 1,
+        "import_closure": 1
+       },
+       "examples": [
+        "ledger",
+        "registry",
+        "prose"
+       ]
+      }
+     }
+    },
+    "defeaters": {
+     "path": "mosaic/defeaters.json",
+     "version": "2",
+     "round": "INV-R9.1",
+     "top_level_keys": [
+      "_comment",
+      "version",
+      "generated",
+      "round",
+      "kinds",
+      "target_types",
+      "statuses",
+      "dispositions",
+      "terminators",
+      "strict_rules",
+      "elimination_modes",
+      "assurance_states",
+      "promotion_policy",
+      "severities",
+      "defeaters",
+      "incidents"
+     ],
+     "list_field_sizes": {
+      "defeaters": 68,
+      "incidents": 46
+     },
+     "id_schemes": {
+      "defeaters": {
+       "n": 68,
+       "prefixes": {
+        "DEF": 68
+       },
+       "examples": [
+        "DEF-REPRO-DYNAMIC-IMPORT",
+        "DEF-MUTATION-ALIAS",
+        "DEF-MUTATION-COMPUTED"
+       ]
+      },
+      "incidents": {
+       "n": 46,
+       "prefixes": {
+        "INC": 46
+       },
+       "examples": [
+        "INC-R5-OBLIGATION-FROM-STATUS",
+        "INC-R5-COVERAGE-TRUST-ME",
+        "INC-R5-CITATION-TRUST-ME"
+       ]
+      }
+     }
+    }
+   },
+   "receipts": {
+    "count": 20,
+    "files": [
+     "INV-R5.1.json",
+     "INV-R5.2.json",
+     "INV-R5.json",
+     "INV-R6.1.json",
+     "INV-R6.2.json",
+     "INV-R6.json",
+     "INV-R7.1.json",
+     "INV-R7.2.json",
+     "INV-R7.3.json",
+     "INV-R7.4.json",
+     "INV-R7.5.json",
+     "INV-R8-RECOVERY.json",
+     "INV-R8.1-CONCURRENCY-OBSERVED.json",
+     "INV-R8.2.json",
+     "INV-R8.3.json",
+     "INV-R9.1.json",
+     "INV-R9.2.json",
+     "INV-R9.3.json",
+     "INV-R9.4.json",
+     "INV-R9.json"
+    ],
+    "example": "INV-R9.4.json",
+    "example_top_level_keys": [
+     "_comment",
+     "receipt_version",
+     "parent",
+     "candidate",
+     "transition",
+     "tree_delta",
+     "source_artifacts",
+     "contracts",
+     "invariants",
+     "authority",
+     "objectives",
+     "evidence",
+     "scope",
+     "provenance",
+     "decision",
+     "lineage",
+     "honesty",
+     "next"
+    ],
+    "example_parent": "0cc11141f1668efdd0998e4502880af1a79507d4",
+    "example_decision": "promote",
+    "example_invariants_before_after": [
+     205,
+     208
+    ]
+   },
+   "derived": {
+    "brief-facts.json": null,
+    "measurements.json": null,
+    "occupancy.json": null,
+    "integration-delta.json": null
+   },
+   "scripts": [
+    "asr-min-graph.mjs",
+    "canonical-repo.mjs",
+    "check-claim-ledger.mjs",
+    "check-derivation.mjs",
+    "check-escalation-claims.mjs",
+    "check-federation-invariants.mjs",
+    "check-gate-import-closure.mjs",
+    "check-impact-mutants.mjs",
+    "check-integration.mjs",
+    "check-irreversible-ledger.mjs",
+    "check-lineage.mjs",
+    "check-mosaic.mjs",
+    "check-mutation-surface.mjs",
+    "check-publication-identity.mjs",
+    "emb-battery-control.mjs",
+    "emb-impact-closure.mjs",
+    "emb-support.mjs",
+    "factory-scope.mjs",
+    "factory-station.mjs",
+    "factory-tree.mjs",
+    "federation-kernel.mjs",
+    "impact-kernel.mjs",
+    "integration-delta.mjs",
+    "integration-kernel.mjs",
+    "invariant-36-witness.mjs",
+    "make-invariant-review-bundle.sh",
+    "receipt-digests.mjs",
+    "reproduce-r52-attacks.mjs",
+    "verify-review-artifact.mjs"
+   ],
+   "validation_rules_check_claim_ledger": [
+    "status must be in _statuses",
+    "witness file must exist; a §SECTION must be present in the file",
+    "PROVED/CONDITIONAL need a witness",
+    "CONDITIONAL needs non-empty assumptions",
+    "implementation_binding cell:NN must exist in cells.json and its table status must not contradict",
+    "no duplicate claim_id; required fields present",
+    "witness .mjs import closure must resolve",
+    "REFUTED needs refutation_scope naming a revision (domain derived = pre_receipt prefix + receipts/*.json)",
+    "no UPPER bound cited for a LOWER-bound conclusion"
+   ],
+   "validation_rules_check_mosaic": [
+    "§1 registries resolve (typed refs: witness path / claim / source)",
+    "§2 consumption against each claim's declared obligation via a RELEVANT typed argument (role, conclusion, discharged obligation, cited source)",
+    "§3 measurements computed, objectives may not present un-instrumented values",
+    "§4 occupancy rules executable over the table; derived views regenerated and compared",
+    "§5 negative tests (exploits refused)",
+    "§6 head transition receipt with every copied count derived",
+    "§7 counted phrases in ledger prose derived",
+    "§8 residual doubt = open defeaters"
+   ]
+  },
+  {
+   "id": "A2.wt-r9",
+   "path": "~/.invariant-factory/wt-r9",
+   "authority_class": "NOT authoritative: a station worktree whose HEAD label (2913613 = INV-R8.3) is 5 commits behind the ref; its 60 modified/untracked files are byte-identical to the ref's blobs; only 3 review-bundle products are not in the ref",
+   "head": "2913613e46415a99c3c0766525f0236f9858a7c0",
+   "porcelain_lines": 56,
+   "is_ancestor_of_ref": true,
+   "commits_behind_ref": 5,
+   "content_parity": {
+    "identical_to_ref": 60,
+    "differs": 0,
+    "not_in_ref": [
+     "INVARIANT_CURRENT_BRIEF.md",
+     "INVARIANT_REVIEW_BUNDLE.md",
+     "invariant-review.zip"
+    ]
+   },
+   "ledger_sha256_equals_ref": true
+  },
+  {
+   "id": "A2b.projectamp2_root_ledger",
+   "path": "ProjectAmp2/CLAIM_LEDGER.json (+ ProjectAmp2/mosaic/)",
+   "sha256": "b5a941170365c162247e9ead73d521fe5567ac3fe70a1029b882b67618b41cd4",
+   "authority_class": "HISTORICAL / parallel R7 lane (content source of INV-R9-from-INV-R7.5; NOT the canonical ref)",
+   "round": {
+    "id": "INV-R7.8",
+    "date": "2026-08-25",
+    "receipt_ref": "mosaic/receipts/INV-R7.8.json"
+   },
+   "counts": {
+    "claims": 190
+   },
+   "last_commit_in_projectamp2": "c1c7d82_2026-08-28"
+  },
+  {
+   "id": "A3.cells",
+   "path": "opensentience.org/_invariants/data/cells.json",
+   "sha256": "ea36e684a795b2e9c462ed8efdf5158688ef893bd36cc1b5d8a684b6d46a74f5",
+   "git_blob_site": "5d3dd7023c457ee127c98c46e067caf096831aa3",
+   "git_blob_factory": "5d3dd7023c457ee127c98c46e067caf096831aa3",
+   "identical_to_factory_copy": true,
+   "site_head": "2c0f523dc5975a0c8939f59cfe7a7be638448073",
+   "authority_class": "AUTHORITATIVE (the 46 authored cells; the page is GENERATED from it)",
+   "version": "0.8",
+   "counts": {
+    "cells": 46,
+    "fields": {
+     "num": 46,
+     "symbol": 46,
+     "label": 46,
+     "status": 46,
+     "title": 46,
+     "tagline": 46,
+     "desc": 46,
+     "extra": 46,
+     "protocol": 46,
+     "protocol_group": 46,
+     "authority": 46,
+     "source": 46,
+     "kind": 13,
+     "kind_source": 13,
+     "tier": 12,
+     "economic": 7,
+     "formal": 7,
+     "kind_why": 6,
+     "proof": 6,
+     "glyph": 4,
+     "hypothesis": 3,
+     "relational_arity": 2,
+     "witnesses": 1,
+     "witness_note": 1,
+     "observer_model": 1
+    },
+    "cells_bound_by_ledger_claims": 7,
+    "bound_cells": [
+     "01",
+     "24",
+     "25",
+     "27a",
+     "27b",
+     "36",
+     "45"
+    ],
+    "unbound_cells": 39,
+    "cells_with_hypothesis": 3,
+    "cells_with_witnesses_field": 1,
+    "forward_refs_to_claim_ids": 0
+   },
+   "id_scheme": {
+    "field": "num",
+    "regex": "^\\d{2}[ab]?$",
+    "type": "string",
+    "examples": [
+     "01",
+     "27a",
+     "27b",
+     "45"
+    ],
+    "note": "ints 1..45 with 27 split into 27a/27b → 46 cells; order in file is not numeric"
+   },
+   "status_vocabulary": {
+    "status (authored, six tokens per axes.json)": {
+     "missing": 17,
+     "sketched": 9,
+     "proved": 8,
+     "shipped": 5,
+     "named": 4,
+     "conditional": 3
+    },
+    "kind": {
+     "null": 33,
+     "[\"Structural\"]": 4,
+     "[\"Order\"]": 2,
+     "[\"Authority\"]": 2,
+     "[\"Order\", \"Statistical\"]": 1,
+     "[\"Conservation\", \"Order\"]": 1,
+     "[\"Structural\", \"Authority\", \"Flow?\"]": 1,
+     "[\"Conservation\", \"Order\", \"Statistical\"]": 1,
+     "[\"Conservation\", \"Statistical\", \"Flow?\"]": 1
+    },
+    "tier": {
+     "None": 34,
+     "property": 7,
+     "impl": 4,
+     "machine": 1
+    },
+    "kind_source": {
+     "None": 33,
+     "declared": 7,
+     "authored": 6
+    }
+   },
+   "xref_fields": {
+    "binding_direction": "REVERSE ONLY — cells carry no claim ids; CLAIM_LEDGER.json claims point at cells via implementation_binding \"cell:NN\"; build.mjs joins them (R18-DANGLING-BINDING refuses a cell:NN absent from cells.json)",
+    "ledger_claims_bound": 54,
+    "claim_status_x_cell_status": {
+     "REFUTED→conditional": 12,
+     "PROVED→conditional": 12,
+     "OPEN→conditional": 10,
+     "PROVED→proved": 3,
+     "DECLARED→sketched": 3,
+     "CONDITIONAL→conditional": 2,
+     "REFUTED→proved": 2,
+     "KNOWN→conditional": 2,
+     "PROVED→sketched": 2,
+     "DECLARED→proved": 1,
+     "MEASURED→sketched": 1,
+     "PROVISIONAL→shipped": 1,
+     "PROVED→shipped": 1,
+     "OPEN→shipped": 1,
+     "PROVISIONAL→conditional": 1
+    },
+    "kind_vocabulary_source": "mosaic/occupancy.json kind_vocabulary.declared (read, not copied)"
+   },
+   "siblings": {
+    "axes.json": {
+     "sha256": "5bed9223522d8a0da9a55d6a55d837b4d435d37f83cf31ef180a6d89f6ce6096",
+     "top_level": [
+      "_comment",
+      "kind_vocabulary_source",
+      "registers",
+      "statuses",
+      "tiers",
+      "census_note"
+     ],
+     "registers": [
+      "decided",
+      "built",
+      "named",
+      "proposed"
+     ],
+     "statuses": [
+      "proved",
+      "conditional",
+      "shipped",
+      "named",
+      "sketched",
+      "missing"
+     ],
+     "differs_from_factory_copy": "1 line (register \"named\".claim wording)"
+    },
+    "copy.json": {
+     "sha256": "ceb2495c211f92a6e38036e6a1b522212efd81f8455a49e26f0a46f5c651be58",
+     "top_level": [
+      "_comment",
+      "meta_description",
+      "subtitle",
+      "reframe_note",
+      "census",
+      "unassigned_meta",
+      "proposed_group_name",
+      "citations"
+     ],
+     "differs_from_factory_copy": "meta_description/subtitle wording + reformatting"
+    },
+    "dist/artifact.json": {
+     "authority_class": "DERIVED build record of the served page",
+     "round": "INV-R7.6",
+     "version": "0.8",
+     "facts": {
+      "CELL_COUNT": 46,
+      "DECIDED_COUNT": 13,
+      "BUILT_COUNT": 4,
+      "NAMED_COUNT": 22,
+      "PROPOSED_COUNT": 7,
+      "PROTOCOL_GROUP_COUNT": 10,
+      "BOUND_CLAIM_COUNT": 54,
+      "BOUND_CELL_COUNT": 7,
+      "REFUTED_CLAIM_COUNT": 14,
+      "LEDGER_CLAIM_COUNT": 182,
+      "KIND_COUNT": 13,
+      "KIND_AUTHORED_COUNT": 6,
+      "KIND_DECLARED_COUNT": 7,
+      "KIND_VOCAB_COUNT": 6,
+      "UNKINDED_DECIDED_COUNT": 1,
+      "TIER_COUNT": 12,
+      "ACTIVE_DOUBT_COUNT": 6,
+      "DEFEATER_COUNT": 44,
+      "ROUND": "INV-R7.6",
+      "VERSION": "0.8"
+     },
+     "page_sha256": "40af287ea38cb67ff0496f0abbebbbb80e3ffa611c86702542c657e59b912962",
+     "note": "built from ProjectAmp2-root CLAIM_LEDGER.json (build.mjs ROOT = resolve(SITE,\"..\")), LEDGER_CLAIM_COUNT 182 @ INV-R7.6 — not from the canonical ref (208 @ INV-R9.4)"
+    }
+   },
+   "dangling_refs_sample": []
+  }
+ ],
+ "seven_questions": {
+  "q1_S6_not_primitive": {
+   "ledger": "10_MACHINE_READABLE_LEDGER.json claims[C-7] (status UNKNOWN→TESTED; classification_v2_4 \"S1 corollary (domain = world locus-birth / currentness); not an obligation\"); semantic_map C-7→\"S6?\"",
+   "crosswalk": "resolved_candidates[\"S6?\"]; record E-44 (S1/corollary; derivation_links[0] \"S6? RESOLVED: S1(domain = world locus-birth / currentness) — not a distinct obligation\"); adjudication_v2_4.applied[0]",
+   "experiment": "experiments/s6_locus_birth/RESULT.md; experiments/rust/results/S6_locus_birth.md",
+   "adjudication": "inputs-gpt-execution-adjudication.md (v1) §1 \"S6? ruling — ACCEPT the reduction to S1\"; package-v2.6/inputs/FABLE51_R10PRE_V2_GPT56_AUDIT_FOR_OPUS.md §6 (the promotion rule); INV_FRONTIER_R10_PRE.md §4"
+  },
+  "q2_R0_8_open": {
+   "crosswalk": "r0_8 {status:\"OPEN\", f35_status:\"OPEN-UNADJUDICATED (handback shipped whole this return)\", open_findings[5], closed_by_adjudication_v3[8], shipped_not_adjudicated[1]}; r0_8_status; record E-13b.conditions[2]",
+   "evidence_state": "statuses[0] {id:\"R0.8\", status:\"OPEN\", open_findings[5]}",
+   "receipts": "px13/COMPUTEDRIVEN_R086_FOR_GPT.{md,tar.gz} (F35), px13/COMPUTEDRIVEN_R087_FOR_GPT.{md,tar.gz} (F36/F37, staged)",
+   "adjudication": "inputs/R10PRE_EXECUTION_V3_GPT56_ADJUDICATION.md §2, §8, §18, §21.2"
+  },
+  "q3_S5_support": {
+   "records": "semantic_obligation==S5: E-16, E-17, E-18, E-48 (mechanism, TESTED, executed:true), E-50a (FALSIFIED-KEPT-RED), E-50b (FALSIFIED-KEPT-RED), E-51 (EXHAUSTIVE-IN-MODEL); ledger P5 (TESTED), C-4",
+   "receipts": "E-48.receipts = experiments/s5_effect_adapter/receipts/run_exp6.log + receipts-run1-key-only-reconcile/run_exp6.log; E-48.witness_paths (12) phase_*.json; promotions[E-48].sensitivity_witness = receipts/phase_crash_naive_after.json sha 21569669…; E-51 effect_identity_model.output.txt sha 6966c054…",
+   "profile": "E-48.tested[6] / not_tested[5]; scope_profile"
+  },
+  "q4_scopes_on_conditional": {
+   "E-13b": "conditions[3], trust_profile, scope_profile, sensitivity_witness, pre_fix_witness, repair_witness, executed, runtime, evidence_class_v2_4/v2_5 history",
+   "E-14": "conditions[2], committed[3], not_claimed[3], trust_profile, scope_profile",
+   "rule": "factory-kit rule C: a class containing CONDITIONAL must have non-empty conditions AND trust_profile; only E-13b and E-14 carry conditions as lists (E-15 has conditions too in the crosswalk); 42/56 records have a trust_profile string, 53/56 have conditions:null in evidence_state"
+  },
+  "q5_mechanism_representation": {
+   "finding": "NO first-class MECHANISM records. Mechanisms appear as (a) relation==\"mechanism\" on 8 E-records (E-13a/b/c, E-14, E-15, E-36, E-48, E-49), (b) prose in the frontier §1 \"ENFORCEMENT MECHANISM (by substrate profile)\" column and the five-level ontology (MECHANISM INSTANCE is a level, not a record type), (c) source_ids strings such as \"cd-core/src/locus.rs LifecycleAdmission\" (E-01) and \"cd-core/src/authority.rs reconstruct\" (E-02) — 2 records name a code symbol, (d) liveness_candidates.L1?.mechanism_instances_seen[1]. The factory mosaic has no mechanism type either (operations/embodiment matrices are obligations over operations)."
+  },
+  "q6_unsupported_by_executed_receipt": {
+   "tested_star_records": 22,
+   "tested_star_with_executed_true": 5,
+   "tested_star_with_any_receipt": 21,
+   "tested_star_with_receipt_marked_executed_true": 0,
+   "tested_star_with_no_receipt": [
+    "E-10"
+   ],
+   "tested_star_executed_null": [
+    "E-01",
+    "E-02",
+    "E-03",
+    "E-04",
+    "E-05",
+    "E-06",
+    "E-07",
+    "E-08",
+    "E-09",
+    "E-10",
+    "E-11",
+    "E-13c",
+    "E-44",
+    "E-45",
+    "E-46a",
+    "E-46b",
+    "E-46c"
+   ],
+   "tested_star_receipts_include_output_or_bundle": 10,
+   "tested_star_receipts_only_code_or_prose": [
+    "E-01",
+    "E-02",
+    "E-03",
+    "E-04",
+    "E-05",
+    "E-06",
+    "E-07",
+    "E-08",
+    "E-09",
+    "E-11",
+    "E-44"
+   ],
+   "decidable_from_data": "only the promotion records (5) and the 8 executed:true records carry an executed flag + runtime; receipts[] entries are bare strings with no executed marker, and artifacts[] marks only the 3 L1 files — so \"supported by an EXECUTED receipt\" is decidable for 8 records and UNDECIDABLE from evidence_state.json alone for the other 48 (their receipts must be opened: an .output.txt / receipt .json is an execution trace, a .rs/.py is code, a .md is prose)"
+  },
+  "q7_relation_provenance": {
+   "present": [
+    "source_registry",
+    "source_ids",
+    "witness_paths",
+    "scope_profile",
+    "derivation_links",
+    "split_from",
+    "evidence_class_before_v2_3",
+    "evidence_class_v2_4",
+    "evidence_class_v2_5",
+    "evidence_class_token_v2_5",
+    "promoted_in",
+    "executed",
+    "executed_by",
+    "runtime",
+    "adjudication_v2",
+    "adjudication_v3",
+    "r10pre_execution_note"
+   ],
+   "missing": [
+    "no per-record commit hash of the source registry (hashes appear only inside prose: efa8881, 747f025, 7651697, fd0df4c)",
+    "no line numbers or byte ranges",
+    "no per-record timestamp (date lives at package level: 2026-09-02)",
+    "no per-record pointer to the adjudication FILE + section as a structured field (only prose \"GPT v3 §12\")",
+    "no sha256 on witness_paths entries (only on promotion receipts and the 5 package witnesses)"
+   ],
+   "factory_side_present": [
+    "imported_from{source_revision,source_status,artifact}",
+    "readjudicated{by,on,method,authority_transferred}",
+    "supersedes/superseded_by",
+    "last_verified (YYYY-MM-DD)",
+    "refutation_scope (derived revision domain)",
+    "evidence_qualifiers{citation_ref,mapping_argument_ref}",
+    "assumption_refs",
+    "receipts with parent.commit_oid + tree manifest sha256"
+   ],
+   "factory_side_missing": [
+    "no per-claim commit OID (the receipt binds the whole tree)",
+    "no line numbers (witnesses use \"path §SECTION\")"
+   ]
+  }
+ },
+ "inconsistencies": [
+  "11_R10PRE_OPUS_HANDOFF.md \"Registry integration\" says the crosswalk has 51 records; README/frontier/JSON say 56",
+  "12_R10PRE_SYNTHESIS.md §1 and §7 say liveness_l1_fair.py is 15/15; the v2.6 witness prints 19 expectations and frontier §7 / README say 19",
+  "package-v2.6/README.md says inputs/ holds \"the four GPT-5.6 rulings\"; the directory holds 5 files, and the v1 execution adjudication (whose §1 is the S6 ruling) is only at the repo root",
+  "INV_FRONTIER_R10_PRE.md §5 numbers its items 1,2,3,4,5,6,8,7 (out of order)",
+  "root SHA256SUMS (git-ignored) fails on px13/README.md and px13/SHIPPED-SHA256SUMS.txt and lacks the two R087 files; px13/SHIPPED-SHA256SUMS.txt itself verifies",
+  "invariant-r10.bundle head is 1426428 (START_HERE v4), one commit behind HEAD 699fbc2 (R0.8.7 staged)",
+  "root-level invariant-r10/drift_gate.py is the v2.2 gate, not v2.6",
+  "evidence_state.json receipts[] are bare strings: no executed flag per receipt, so rule D is only checkable for promotions",
+  "the served opensentience.org/invariants.html facts say 182 ledger claims @ INV-R7.6 while the canonical ledger is 208 @ INV-R9.4; cells.json is identical in both places, axes.json/copy.json differ by wording",
+  "FAC-CONTROL-SENSITIVITY is NOT FOUND in the canonical CLAIM_LEDGER.json (draft only in invariant-r10/tools-lane/factory-kit/)",
+  "wt-r9 HEAD label is INV-R8.3 while its files equal INV-R9.4 — the label, not the content, is stale",
+  "promotion receipts are cited by relative path + sha256, and the paths point into a shared working tree: the E-51 receipt experiments/s5_effect_adapter/effect_identity_model.output.txt was rewritten by a parallel session during this census, so package-v2.6/evidence_state.json is ADMISSIBLE at commit 699fbc2 (blob MATCH) and REFUSED on the commit the parallel session made on top of it (rule B) — a receipt pinned by path is pinned only inside a commit",
+  "crosswalk source_ids mix paths, law ids, section refs and free labels in one string field; 5 path-like source_ids dangle (EXP-3/W3, EXP-3/W4, cells.json:16 ⊥, cells.json:27a, RB-DEV/RB-ANCHOR/RB-WITNESS are labels, not paths)"
+ ]
+}

@@ -1,0 +1,1 @@
+{"attrs":{"text":"RB-DEV/RB-ANCHOR/RB-WITNESS"},"code":"UNRESOLVED_LINK","concerns":["claim:crosswalk:E-36"],"lid":"fault:g0:UNRESOLVED_LINK:0048","message":"E-36 source_id \"RB-DEV/RB-ANCHOR/RB-WITNESS\" is a label, not a resolvable reference","rule":"crosswalk.source_ids","snapshot":"snapshot:g0:baseline-ba4e625"}

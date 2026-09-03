@@ -1,0 +1,4020 @@
+{
+ "files_scanned": {
+  "computedriven": 142,
+  "super": 202,
+  "invariant-r10": 171,
+  "TRVM": 4,
+  "WEK": 8
+ },
+ "index": {
+  "F2": {
+   "total": 10,
+   "n_files": 9,
+   "per_source": {
+    "computedriven": 5,
+    "super": 4,
+    "TRVM": 1
+   },
+   "files": {
+    "super:ampd/test/locus_test.exs": 2,
+    "computedriven:cd-core/src/authority.rs": 1,
+    "computedriven:receipts/R0.4.1.md": 1,
+    "computedriven:receipts/R0.4.3.md": 1,
+    "computedriven:receipts/R0.4.7.md": 1,
+    "computedriven:receipts/R0.8.3-FALSIFIED.md": 1,
+    "super:ampd/lib/ampd/loci.ex": 1,
+    "super:ampd/lib/ampd/locus.ex": 1,
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "F3": {
+   "total": 11,
+   "n_files": 8,
+   "per_source": {
+    "computedriven": 7,
+    "super": 3,
+    "TRVM": 1
+   },
+   "files": {
+    "super:ampd/test/locus_test.exs": 3,
+    "computedriven:receipts/R0.8.3-FALSIFIED.md": 2,
+    "computedriven:cd-core/src/authority.rs": 1,
+    "computedriven:receipts/R0.4.1.md": 1,
+    "computedriven:receipts/R0.4.3.md": 1,
+    "computedriven:receipts/R0.4.7.md": 1,
+    "computedriven:tools/compile-fail/f3_reuse_vacancy.rs": 1,
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "F5": {
+   "total": 11,
+   "n_files": 8,
+   "per_source": {
+    "computedriven": 7,
+    "super": 4
+   },
+   "files": {
+    "computedriven:receipts/R0.8.3-FALSIFIED.md": 3,
+    "super:ampd/test/locus_test.exs": 2,
+    "computedriven:cd-core/src/authority.rs": 1,
+    "computedriven:receipts/R0.4.1.md": 1,
+    "computedriven:receipts/R0.4.3.md": 1,
+    "computedriven:receipts/R0.4.7.md": 1,
+    "super:cockpit/src/worker.rs": 1,
+    "super:docs/reviews/W_2_3_3_REVIEW_BRIEF.md": 1
+   }
+  },
+  "F6": {
+   "total": 16,
+   "n_files": 10,
+   "per_source": {
+    "computedriven": 9,
+    "super": 3,
+    "invariant-r10": 4
+   },
+   "files": {
+    "computedriven:receipts/R0.8.3-FALSIFIED.md": 3,
+    "computedriven:cd-durable/src/main.rs": 2,
+    "super:ampd/test/locus_test.exs": 2,
+    "invariant-r10:experiments/distributed_currentness/cd-durable-pristine/src/main.rs": 2,
+    "invariant-r10:experiments/distributed_currentness/cd-durable-witness/src/main.rs": 2,
+    "computedriven:cd-core/src/authority.rs": 1,
+    "computedriven:receipts/R0.4.1.md": 1,
+    "computedriven:receipts/R0.4.3.md": 1,
+    "computedriven:receipts/R0.4.7.md": 1,
+    "super:ampd/lib/ampd/locus.ex": 1
+   }
+  },
+  "F15": {
+   "total": 34,
+   "n_files": 16,
+   "per_source": {
+    "computedriven": 18,
+    "super": 2,
+    "invariant-r10": 14
+   },
+   "files": {
+    "computedriven:cd-durable/src/main.rs": 6,
+    "computedriven:receipts/R0.8.3-FALSIFIED.md": 5,
+    "invariant-r10:experiments/distributed_currentness/cd-durable-pristine/src/main.rs": 3,
+    "invariant-r10:experiments/distributed_currentness/cd-durable-witness/src/main.rs": 3,
+    "computedriven:docs/durable-authority-model.md": 2,
+    "computedriven:receipts/R0.8.4-FALSIFIED.md": 2,
+    "super:ampd/test/locus_test.exs": 2,
+    "invariant-r10:package-v2.6/10_MACHINE_READABLE_LEDGER.json": 2,
+    "invariant-r10:package-v2.6/v1-provenance/10_MACHINE_READABLE_LEDGER_v2_as_delivered.json": 2,
+    "computedriven:cd-durable/SCHEMA_CLASSIFICATION.md": 1,
+    "computedriven:lab/scripts/nc25_schema_contract.sh": 1,
+    "computedriven:lab/scripts/run_r08.sh": 1,
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 1,
+    "invariant-r10:package-v2.6/INV_FRONTIER_R10_PRE.md": 1,
+    "invariant-r10:package-v2.6/v1-provenance/02_EXISTING_INVARIANT_LEDGER.md": 1,
+    "invariant-r10:package-v2.6/v1-provenance/12_FINAL_SYNTHESIS.md": 1
+   }
+  },
+  "F16": {
+   "total": 24,
+   "n_files": 9,
+   "per_source": {
+    "computedriven": 16,
+    "super": 2,
+    "invariant-r10": 6
+   },
+   "files": {
+    "computedriven:receipts/R0.8.3-FALSIFIED.md": 6,
+    "computedriven:cd-durable/src/main.rs": 3,
+    "computedriven:docs/durable-authority-model.md": 3,
+    "invariant-r10:experiments/distributed_currentness/cd-durable-pristine/src/main.rs": 3,
+    "invariant-r10:experiments/distributed_currentness/cd-durable-witness/src/main.rs": 3,
+    "computedriven:tools/store_read_gate.sh": 2,
+    "super:ampd/test/locus_test.exs": 2,
+    "computedriven:cd-durable/SCHEMA_CLASSIFICATION.md": 1,
+    "computedriven:tools/guards.sh": 1
+   }
+  },
+  "F17": {
+   "total": 33,
+   "n_files": 10,
+   "per_source": {
+    "computedriven": 24,
+    "super": 3,
+    "invariant-r10": 6
+   },
+   "files": {
+    "computedriven:docs/durable-authority-model.md": 6,
+    "computedriven:receipts/R0.8.3-FALSIFIED.md": 6,
+    "computedriven:cd-durable/src/main.rs": 5,
+    "computedriven:receipts/R0.8.4-FALSIFIED.md": 3,
+    "super:ampd/test/locus_test.exs": 3,
+    "invariant-r10:experiments/distributed_currentness/cd-durable-pristine/src/main.rs": 3,
+    "invariant-r10:experiments/distributed_currentness/cd-durable-witness/src/main.rs": 3,
+    "computedriven:lab/scripts/nc25_schema_contract.sh": 2,
+    "computedriven:cd-durable/SCHEMA_CLASSIFICATION.md": 1,
+    "computedriven:lab/scripts/run_r08.sh": 1
+   }
+  },
+  "NC12": {
+   "total": 8,
+   "n_files": 5,
+   "per_source": {
+    "computedriven": 4,
+    "invariant-r10": 4
+   },
+   "files": {
+    "computedriven:cd-durable/src/main.rs": 2,
+    "invariant-r10:experiments/distributed_currentness/cd-durable-pristine/src/main.rs": 2,
+    "invariant-r10:experiments/distributed_currentness/cd-durable-witness/src/main.rs": 2,
+    "computedriven:cd-durable/SCHEMA_CLASSIFICATION.md": 1,
+    "computedriven:receipts/R0.8.3-FALSIFIED.md": 1
+   }
+  },
+  "NC19": {
+   "total": 16,
+   "n_files": 9,
+   "per_source": {
+    "computedriven": 12,
+    "invariant-r10": 4
+   },
+   "files": {
+    "computedriven:lab/scripts/nc17_live_store_tamper.sh": 5,
+    "computedriven:cd-durable/src/main.rs": 2,
+    "invariant-r10:experiments/distributed_currentness/cd-durable-pristine/src/main.rs": 2,
+    "invariant-r10:experiments/distributed_currentness/cd-durable-witness/src/main.rs": 2,
+    "computedriven:cd-durable/SCHEMA_CLASSIFICATION.md": 1,
+    "computedriven:cd-durable/src/bin/cd-tamper.rs": 1,
+    "computedriven:docs/durable-authority-model.md": 1,
+    "computedriven:lab/scripts/run_r08.sh": 1,
+    "computedriven:receipts/R0.8.3-FALSIFIED.md": 1
+   }
+  },
+  "NC18": {
+   "total": 13,
+   "n_files": 8,
+   "per_source": {
+    "computedriven": 11,
+    "invariant-r10": 2
+   },
+   "files": {
+    "computedriven:lab/scripts/nc17_live_store_tamper.sh": 5,
+    "computedriven:receipts/R0.8.3-FALSIFIED.md": 2,
+    "computedriven:cd-durable/src/bin/cd-tamper.rs": 1,
+    "computedriven:cd-durable/src/main.rs": 1,
+    "computedriven:docs/durable-authority-model.md": 1,
+    "computedriven:lab/scripts/run_r08.sh": 1,
+    "invariant-r10:experiments/distributed_currentness/cd-durable-pristine/src/main.rs": 1,
+    "invariant-r10:experiments/distributed_currentness/cd-durable-witness/src/main.rs": 1
+   }
+  },
+  "NC8": {
+   "total": 6,
+   "n_files": 5,
+   "per_source": {
+    "computedriven": 6
+   },
+   "files": {
+    "computedriven:receipts/R0.8.md": 2,
+    "computedriven:cd-durable/src/bin/cd-tamper.rs": 1,
+    "computedriven:docs/durable-authority-model.md": 1,
+    "computedriven:lab/scripts/run_r08.sh": 1,
+    "computedriven:receipts/R0.8-FALSIFIED.md": 1
+   }
+  },
+  "NC10": {
+   "total": 7,
+   "n_files": 4,
+   "per_source": {
+    "computedriven": 3,
+    "invariant-r10": 4
+   },
+   "files": {
+    "computedriven:cd-durable/src/main.rs": 2,
+    "invariant-r10:experiments/distributed_currentness/cd-durable-pristine/src/main.rs": 2,
+    "invariant-r10:experiments/distributed_currentness/cd-durable-witness/src/main.rs": 2,
+    "computedriven:cd-durable/src/bin/cd-tamper.rs": 1
+   }
+  },
+  "NC9": {
+   "total": 8,
+   "n_files": 5,
+   "per_source": {
+    "computedriven": 4,
+    "invariant-r10": 4
+   },
+   "files": {
+    "computedriven:cd-durable/src/main.rs": 2,
+    "invariant-r10:experiments/distributed_currentness/cd-durable-pristine/src/main.rs": 2,
+    "invariant-r10:experiments/distributed_currentness/cd-durable-witness/src/main.rs": 2,
+    "computedriven:cd-durable/src/bin/cd-tamper.rs": 1,
+    "computedriven:receipts/R0.8.3-FALSIFIED.md": 1
+   }
+  },
+  "F23": {
+   "total": 102,
+   "n_files": 21,
+   "per_source": {
+    "computedriven": 11,
+    "invariant-r10": 91
+   },
+   "files": {
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 16,
+    "invariant-r10:tools-lane/build_v2_5.py": 15,
+    "invariant-r10:inputs-gpt-execution-adjudication-v2.md": 9,
+    "invariant-r10:package-v2.6/evidence_state.json": 9,
+    "invariant-r10:package-v2.6/inputs/R10PRE_EXECUTION_V2_GPT56_ADJUDICATION.md": 9,
+    "invariant-r10:CHANGELOG.md": 7,
+    "invariant-r10:tools-lane/build_v2_4.py": 7,
+    "computedriven:cd-durable/src/main.rs": 5,
+    "invariant-r10:inputs-gpt-execution-adjudication.md": 4,
+    "invariant-r10:tools-lane/build_v2_6.py": 4,
+    "computedriven:receipts/R0.8.4-FALSIFIED.md": 3,
+    "invariant-r10:package-v2.6/12_R10PRE_SYNTHESIS.md": 3,
+    "computedriven:lab/scripts/nc25_schema_contract.sh": 2,
+    "invariant-r10:tools-lane/gate-v2_5-negative-control.txt": 2,
+    "computedriven:receipts/R0.8.5-FALSIFIED.md": 1,
+    "invariant-r10:handoffs/FAC_CONTROL_SENSITIVITY_CANDIDATE.md": 1,
+    "invariant-r10:package-v2.6/06_R10PRE_EXPERIMENTS.md": 1,
+    "invariant-r10:package-v2.6/10_MACHINE_READABLE_LEDGER.json": 1,
+    "invariant-r10:package-v2.6/11_R10PRE_OPUS_HANDOFF.md": 1,
+    "invariant-r10:package-v2.6/INV_FRONTIER_R10_PRE.md": 1,
+    "invariant-r10:tools-lane/drift_gate_v2_5.py": 1
+   }
+  },
+  "F33": {
+   "total": 65,
+   "n_files": 21,
+   "per_source": {
+    "computedriven": 8,
+    "invariant-r10": 57
+   },
+   "files": {
+    "invariant-r10:tools-lane/build_v2_6.py": 15,
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 10,
+    "invariant-r10:tools-lane/build_v2_5.py": 5,
+    "invariant-r10:inputs-gpt-execution-adjudication-v3.md": 4,
+    "invariant-r10:package-v2.6/inputs/R10PRE_EXECUTION_V3_GPT56_ADJUDICATION.md": 4,
+    "invariant-r10:package-v2.6/evidence_state.json": 3,
+    "computedriven:cd-durable/src/main.rs": 2,
+    "computedriven:lab/scripts/nc25_schema_contract.sh": 2,
+    "computedriven:lab/scripts/nc27_genesis_schema_contract.sh": 2,
+    "invariant-r10:CHANGELOG.md": 2,
+    "invariant-r10:START_HERE_GPT.md": 2,
+    "invariant-r10:package-v2.6/12_R10PRE_SYNTHESIS.md": 2,
+    "invariant-r10:package-v2.6/INV_FRONTIER_R10_PRE.md": 2,
+    "invariant-r10:package-v2.6/tools/drift_gate.py": 2,
+    "invariant-r10:tools-lane/drift_gate_v2_6.py": 2,
+    "computedriven:receipts/R0.8.5-FALSIFIED.md": 1,
+    "computedriven:receipts/R0.8.6-FALSIFIED.md": 1,
+    "invariant-r10:handoffs/FAC_CONTROL_SENSITIVITY_CANDIDATE.md": 1,
+    "invariant-r10:package-v2.6/06_R10PRE_EXPERIMENTS.md": 1,
+    "invariant-r10:package-v2.6/11_R10PRE_OPUS_HANDOFF.md": 1,
+    "invariant-r10:tools-lane/build_v2_4.py": 1
+   }
+  },
+  "F24": {
+   "total": 118,
+   "n_files": 24,
+   "per_source": {
+    "computedriven": 8,
+    "invariant-r10": 110
+   },
+   "files": {
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 19,
+    "invariant-r10:tools-lane/build_v2_6.py": 18,
+    "invariant-r10:tools-lane/build_v2_5.py": 16,
+    "invariant-r10:package-v2.6/evidence_state.json": 8,
+    "invariant-r10:CHANGELOG.md": 7,
+    "invariant-r10:inputs-gpt-execution-adjudication-v2.md": 7,
+    "invariant-r10:package-v2.6/inputs/R10PRE_EXECUTION_V2_GPT56_ADJUDICATION.md": 7,
+    "invariant-r10:package-v2.6/12_R10PRE_SYNTHESIS.md": 5,
+    "computedriven:cd-durable/src/main.rs": 3,
+    "invariant-r10:inputs-gpt-execution-adjudication-v3.md": 3,
+    "invariant-r10:package-v2.6/INV_FRONTIER_R10_PRE.md": 3,
+    "invariant-r10:package-v2.6/inputs/R10PRE_EXECUTION_V3_GPT56_ADJUDICATION.md": 3,
+    "invariant-r10:tools-lane/build_v2_4.py": 3,
+    "computedriven:receipts/R0.8.5-FALSIFIED.md": 2,
+    "invariant-r10:START_HERE_GPT.md": 2,
+    "invariant-r10:package-v2.6/06_R10PRE_EXPERIMENTS.md": 2,
+    "invariant-r10:package-v2.6/11_R10PRE_OPUS_HANDOFF.md": 2,
+    "invariant-r10:tools-lane/gate-v2_5-negative-control.txt": 2,
+    "computedriven:lab/scripts/nc25_schema_contract.sh": 1,
+    "computedriven:receipts/R0.8.4-FALSIFIED.md": 1,
+    "computedriven:receipts/R0.8.6-FALSIFIED.md": 1,
+    "invariant-r10:inputs-gpt-execution-adjudication.md": 1,
+    "invariant-r10:package-v2.6/10_MACHINE_READABLE_LEDGER.json": 1,
+    "invariant-r10:tools-lane/drift_gate_v2_5.py": 1
+   }
+  },
+  "F31": {
+   "total": 98,
+   "n_files": 21,
+   "per_source": {
+    "computedriven": 9,
+    "invariant-r10": 89
+   },
+   "files": {
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 14,
+    "invariant-r10:tools-lane/build_v2_5.py": 14,
+    "invariant-r10:tools-lane/build_v2_4.py": 10,
+    "invariant-r10:CHANGELOG.md": 8,
+    "invariant-r10:inputs-gpt-execution-adjudication-v2.md": 8,
+    "invariant-r10:package-v2.6/evidence_state.json": 8,
+    "invariant-r10:package-v2.6/inputs/R10PRE_EXECUTION_V2_GPT56_ADJUDICATION.md": 8,
+    "invariant-r10:tools-lane/build_v2_6.py": 5,
+    "computedriven:receipts/R0.8.4-FALSIFIED.md": 4,
+    "invariant-r10:inputs-gpt-execution-adjudication.md": 4,
+    "invariant-r10:package-v2.6/12_R10PRE_SYNTHESIS.md": 3,
+    "computedriven:lab/scripts/nc24_root_clone.sh": 2,
+    "computedriven:lab/scripts/run_r08.sh": 2,
+    "computedriven:cd-durable/src/main.rs": 1,
+    "invariant-r10:START_HERE_GPT.md": 1,
+    "invariant-r10:experiments/distributed_currentness/RESULT.md": 1,
+    "invariant-r10:handoffs/FAC_CONTROL_SENSITIVITY_CANDIDATE.md": 1,
+    "invariant-r10:package-v2.6/06_R10PRE_EXPERIMENTS.md": 1,
+    "invariant-r10:package-v2.6/10_MACHINE_READABLE_LEDGER.json": 1,
+    "invariant-r10:package-v2.6/11_R10PRE_OPUS_HANDOFF.md": 1,
+    "invariant-r10:package-v2.6/INV_FRONTIER_R10_PRE.md": 1
+   }
+  },
+  "F22": {
+   "total": 119,
+   "n_files": 26,
+   "per_source": {
+    "computedriven": 9,
+    "invariant-r10": 110
+   },
+   "files": {
+    "invariant-r10:tools-lane/build_v2_6.py": 15,
+    "invariant-r10:tools-lane/build_v2_5.py": 13,
+    "invariant-r10:tools-lane/build_v2_4.py": 10,
+    "invariant-r10:inputs-gpt-execution-adjudication-v3.md": 9,
+    "invariant-r10:package-v2.6/inputs/R10PRE_EXECUTION_V3_GPT56_ADJUDICATION.md": 9,
+    "invariant-r10:tools-lane/gate-v2_5-negative-control.txt": 8,
+    "invariant-r10:CHANGELOG.md": 7,
+    "invariant-r10:inputs-gpt-execution-adjudication-v2.md": 5,
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 5,
+    "invariant-r10:package-v2.6/inputs/R10PRE_EXECUTION_V2_GPT56_ADJUDICATION.md": 5,
+    "invariant-r10:package-v2.6/tools/drift_gate.py": 5,
+    "invariant-r10:tools-lane/drift_gate_v2_6.py": 5,
+    "computedriven:cd-durable/src/main.rs": 3,
+    "invariant-r10:package-v2.6/INV_FRONTIER_R10_PRE.md": 3,
+    "computedriven:receipts/R0.8.4-FALSIFIED.md": 2,
+    "computedriven:receipts/R0.8.5-FALSIFIED.md": 2,
+    "invariant-r10:START_HERE_GPT.md": 2,
+    "invariant-r10:inputs-gpt-execution-adjudication.md": 2,
+    "invariant-r10:package-v2.6/12_R10PRE_SYNTHESIS.md": 2,
+    "computedriven:lab/falsifiers/F22_tmp_symlink.sh": 1,
+    "computedriven:receipts/R0.8.6-FALSIFIED.md": 1,
+    "invariant-r10:package-v2.6/06_R10PRE_EXPERIMENTS.md": 1,
+    "invariant-r10:package-v2.6/11_R10PRE_OPUS_HANDOFF.md": 1,
+    "invariant-r10:package-v2.6/evidence_state.json": 1,
+    "invariant-r10:tools-lane/drift_gate_v2_5.py": 1,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 1
+   }
+  },
+  "F32": {
+   "total": 83,
+   "n_files": 21,
+   "per_source": {
+    "computedriven": 21,
+    "invariant-r10": 62
+   },
+   "files": {
+    "invariant-r10:tools-lane/build_v2_6.py": 15,
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 12,
+    "computedriven:cd-durable/src/main.rs": 7,
+    "invariant-r10:inputs-gpt-execution-adjudication-v3.md": 7,
+    "invariant-r10:package-v2.6/inputs/R10PRE_EXECUTION_V3_GPT56_ADJUDICATION.md": 7,
+    "invariant-r10:package-v2.6/evidence_state.json": 5,
+    "invariant-r10:tools-lane/build_v2_5.py": 5,
+    "computedriven:receipts/R0.8.6-FALSIFIED.md": 4,
+    "computedriven:lab/scripts/nc15_repeated_crash.sh": 3,
+    "computedriven:lab/scripts/nc26_stale_root_resurrection.sh": 2,
+    "computedriven:receipts/R0.8.5-FALSIFIED.md": 2,
+    "invariant-r10:CHANGELOG.md": 2,
+    "invariant-r10:START_HERE_GPT.md": 2,
+    "invariant-r10:package-v2.6/12_R10PRE_SYNTHESIS.md": 2,
+    "invariant-r10:package-v2.6/INV_FRONTIER_R10_PRE.md": 2,
+    "computedriven:lab/scripts/nc17_live_store_tamper.sh": 1,
+    "computedriven:lab/scripts/nc25_schema_contract.sh": 1,
+    "computedriven:lab/scripts/run_r08.sh": 1,
+    "invariant-r10:handoffs/FAC_CONTROL_SENSITIVITY_CANDIDATE.md": 1,
+    "invariant-r10:package-v2.6/06_R10PRE_EXPERIMENTS.md": 1,
+    "invariant-r10:package-v2.6/11_R10PRE_OPUS_HANDOFF.md": 1
+   }
+  },
+  "F35": {
+   "total": 124,
+   "n_files": 23,
+   "per_source": {
+    "computedriven": 18,
+    "invariant-r10": 106
+   },
+   "files": {
+    "invariant-r10:tools-lane/build_v2_6.py": 24,
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 13,
+    "invariant-r10:inputs-gpt-execution-adjudication-v3.md": 10,
+    "invariant-r10:package-v2.6/inputs/R10PRE_EXECUTION_V3_GPT56_ADJUDICATION.md": 10,
+    "computedriven:cd-durable/src/main.rs": 7,
+    "invariant-r10:package-v2.6/tools/drift_gate.py": 7,
+    "invariant-r10:tools-lane/drift_gate_v2_6.py": 7,
+    "invariant-r10:START_HERE_GPT.md": 6,
+    "invariant-r10:tools-lane/build_v2_5.py": 6,
+    "invariant-r10:package-v2.6/12_R10PRE_SYNTHESIS.md": 5,
+    "invariant-r10:package-v2.6/evidence_state.json": 5,
+    "computedriven:receipts/R0.8.7-FALSIFIED.md": 4,
+    "invariant-r10:CHANGELOG.md": 4,
+    "computedriven:lab/scripts/nc28_foreign_successor.sh": 2,
+    "computedriven:lab/scripts/nc29_foreign_pending_import.sh": 2,
+    "computedriven:receipts/R0.8.6-FALSIFIED.md": 2,
+    "invariant-r10:package-v2.6/11_R10PRE_OPUS_HANDOFF.md": 2,
+    "invariant-r10:package-v2.6/INV_FRONTIER_R10_PRE.md": 2,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 2,
+    "computedriven:tools/verify_battery.py": 1,
+    "invariant-r10:handoffs/FAC_CONTROL_SENSITIVITY_CANDIDATE.md": 1,
+    "invariant-r10:package-v2.6/06_R10PRE_EXPERIMENTS.md": 1,
+    "invariant-r10:package-v2.6/README.md": 1
+   }
+  },
+  "F36": {
+   "total": 22,
+   "n_files": 12,
+   "per_source": {
+    "computedriven": 12,
+    "invariant-r10": 10
+   },
+   "files": {
+    "computedriven:cd-durable/src/main.rs": 6,
+    "computedriven:receipts/R0.8.7-FALSIFIED.md": 3,
+    "invariant-r10:tools-lane/build_v2_6.py": 3,
+    "computedriven:lab/scripts/nc29_foreign_pending_import.sh": 2,
+    "computedriven:lab/scripts/nc15_repeated_crash.sh": 1,
+    "invariant-r10:START_HERE_GPT.md": 1,
+    "invariant-r10:inputs-gpt-execution-adjudication-v3.md": 1,
+    "invariant-r10:package-v2.6/11_R10PRE_OPUS_HANDOFF.md": 1,
+    "invariant-r10:package-v2.6/12_R10PRE_SYNTHESIS.md": 1,
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 1,
+    "invariant-r10:package-v2.6/evidence_state.json": 1,
+    "invariant-r10:package-v2.6/inputs/R10PRE_EXECUTION_V3_GPT56_ADJUDICATION.md": 1
+   }
+  },
+  "F30": {
+   "total": 68,
+   "n_files": 21,
+   "per_source": {
+    "computedriven": 6,
+    "invariant-r10": 62
+   },
+   "files": {
+    "invariant-r10:tools-lane/build_v2_6.py": 13,
+    "invariant-r10:inputs-gpt-execution-adjudication-v3.md": 7,
+    "invariant-r10:package-v2.6/inputs/R10PRE_EXECUTION_V3_GPT56_ADJUDICATION.md": 7,
+    "invariant-r10:CHANGELOG.md": 5,
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 4,
+    "invariant-r10:tools-lane/build_v2_5.py": 4,
+    "invariant-r10:package-v2.6/tools/drift_gate.py": 3,
+    "invariant-r10:tools-lane/build_v2_4.py": 3,
+    "invariant-r10:tools-lane/drift_gate_v2_6.py": 3,
+    "computedriven:cd-durable/src/main.rs": 2,
+    "computedriven:tools/guards.sh": 2,
+    "invariant-r10:START_HERE_GPT.md": 2,
+    "invariant-r10:inputs-gpt-execution-adjudication-v2.md": 2,
+    "invariant-r10:package-v2.6/12_R10PRE_SYNTHESIS.md": 2,
+    "invariant-r10:package-v2.6/INV_FRONTIER_R10_PRE.md": 2,
+    "invariant-r10:package-v2.6/inputs/R10PRE_EXECUTION_V2_GPT56_ADJUDICATION.md": 2,
+    "computedriven:receipts/R0.8.5-FALSIFIED.md": 1,
+    "computedriven:receipts/R0.8.6-FALSIFIED.md": 1,
+    "invariant-r10:package-v2.6/06_R10PRE_EXPERIMENTS.md": 1,
+    "invariant-r10:package-v2.6/11_R10PRE_OPUS_HANDOFF.md": 1,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 1
+   }
+  },
+  "F19": {
+   "total": 18,
+   "n_files": 8,
+   "per_source": {
+    "computedriven": 12,
+    "super": 2,
+    "invariant-r10": 4
+   },
+   "files": {
+    "computedriven:cd-durable/src/main.rs": 7,
+    "computedriven:receipts/R0.8.3-FALSIFIED.md": 2,
+    "super:ampd/test/locus_test.exs": 2,
+    "invariant-r10:experiments/distributed_currentness/cd-durable-pristine/src/main.rs": 2,
+    "invariant-r10:experiments/distributed_currentness/cd-durable-witness/src/main.rs": 2,
+    "computedriven:docs/durable-authority-model.md": 1,
+    "computedriven:lab/scripts/nc29_foreign_pending_import.sh": 1,
+    "computedriven:receipts/R0.8.7-FALSIFIED.md": 1
+   }
+  },
+  "F20": {
+   "total": 12,
+   "n_files": 5,
+   "per_source": {
+    "computedriven": 8,
+    "invariant-r10": 4
+   },
+   "files": {
+    "computedriven:cd-durable/src/main.rs": 6,
+    "invariant-r10:experiments/distributed_currentness/cd-durable-pristine/src/main.rs": 2,
+    "invariant-r10:experiments/distributed_currentness/cd-durable-witness/src/main.rs": 2,
+    "computedriven:docs/durable-authority-model.md": 1,
+    "computedriven:receipts/R0.8.3-FALSIFIED.md": 1
+   }
+  },
+  "F37": {
+   "total": 9,
+   "n_files": 3,
+   "per_source": {
+    "computedriven": 9
+   },
+   "files": {
+    "computedriven:cd-durable/src/main.rs": 6,
+    "computedriven:lab/scripts/nc30_anchor_reservation_window.sh": 2,
+    "computedriven:receipts/R0.8.7-FALSIFIED.md": 1
+   }
+  },
+  "F14": {
+   "total": 18,
+   "n_files": 8,
+   "per_source": {
+    "computedriven": 11,
+    "super": 3,
+    "invariant-r10": 4
+   },
+   "files": {
+    "computedriven:receipts/R0.8.3-FALSIFIED.md": 5,
+    "computedriven:cd-durable/src/main.rs": 4,
+    "super:ampd/test/locus_test.exs": 2,
+    "invariant-r10:experiments/distributed_currentness/cd-durable-pristine/src/main.rs": 2,
+    "invariant-r10:experiments/distributed_currentness/cd-durable-witness/src/main.rs": 2,
+    "computedriven:docs/durable-authority-model.md": 1,
+    "computedriven:lab/scripts/nc17_live_store_tamper.sh": 1,
+    "super:cockpit/ui/cockpit.js": 1
+   }
+  },
+  "NC25": {
+   "total": 28,
+   "n_files": 14,
+   "per_source": {
+    "computedriven": 6,
+    "invariant-r10": 22
+   },
+   "files": {
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 7,
+    "invariant-r10:package-v2.6/evidence_state.json": 4,
+    "invariant-r10:tools-lane/build_v2_5.py": 4,
+    "computedriven:lab/scripts/nc25_schema_contract.sh": 3,
+    "computedriven:cd-durable/src/main.rs": 1,
+    "computedriven:receipts/R0.8.5-FALSIFIED.md": 1,
+    "computedriven:tools/verify_battery.py": 1,
+    "invariant-r10:handoffs/FAC_CONTROL_SENSITIVITY_CANDIDATE.md": 1,
+    "invariant-r10:inputs-gpt-execution-adjudication-v2.md": 1,
+    "invariant-r10:package-v2.6/10_MACHINE_READABLE_LEDGER.json": 1,
+    "invariant-r10:package-v2.6/inputs/R10PRE_EXECUTION_V2_GPT56_ADJUDICATION.md": 1,
+    "invariant-r10:tools-lane/build_v2_4.py": 1,
+    "invariant-r10:tools-lane/build_v2_6.py": 1,
+    "invariant-r10:tools-lane/factory-kit/FAC-CONTROL-SENSITIVITY.claim.json": 1
+   }
+  },
+  "F34": {
+   "total": 52,
+   "n_files": 16,
+   "per_source": {
+    "computedriven": 3,
+    "invariant-r10": 49
+   },
+   "files": {
+    "invariant-r10:tools-lane/build_v2_6.py": 15,
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 10,
+    "invariant-r10:tools-lane/build_v2_5.py": 4,
+    "invariant-r10:inputs-gpt-execution-adjudication-v3.md": 3,
+    "invariant-r10:package-v2.6/evidence_state.json": 3,
+    "invariant-r10:package-v2.6/inputs/R10PRE_EXECUTION_V3_GPT56_ADJUDICATION.md": 3,
+    "invariant-r10:CHANGELOG.md": 2,
+    "invariant-r10:START_HERE_GPT.md": 2,
+    "invariant-r10:package-v2.6/12_R10PRE_SYNTHESIS.md": 2,
+    "invariant-r10:package-v2.6/INV_FRONTIER_R10_PRE.md": 2,
+    "computedriven:cd-durable/src/main.rs": 1,
+    "computedriven:receipts/R0.8.5-FALSIFIED.md": 1,
+    "computedriven:receipts/R0.8.6-FALSIFIED.md": 1,
+    "invariant-r10:package-v2.6/06_R10PRE_EXPERIMENTS.md": 1,
+    "invariant-r10:package-v2.6/11_R10PRE_OPUS_HANDOFF.md": 1,
+    "invariant-r10:tools-lane/build_v2_4.py": 1
+   }
+  },
+  "NC11": {
+   "total": 9,
+   "n_files": 3,
+   "per_source": {
+    "computedriven": 3,
+    "invariant-r10": 6
+   },
+   "files": {
+    "computedriven:cd-durable/src/main.rs": 3,
+    "invariant-r10:experiments/distributed_currentness/cd-durable-pristine/src/main.rs": 3,
+    "invariant-r10:experiments/distributed_currentness/cd-durable-witness/src/main.rs": 3
+   }
+  },
+  "F26": {
+   "total": 3,
+   "n_files": 3,
+   "per_source": {
+    "computedriven": 2,
+    "invariant-r10": 1
+   },
+   "files": {
+    "computedriven:cd-durable/src/main.rs": 1,
+    "computedriven:lab/scripts/run_r08.sh": 1,
+    "invariant-r10:inputs-gpt-execution-adjudication.md": 1
+   }
+  },
+  "F21": {
+   "total": 9,
+   "n_files": 5,
+   "per_source": {
+    "computedriven": 5,
+    "invariant-r10": 4
+   },
+   "files": {
+    "computedriven:cd-durable/src/main.rs": 2,
+    "computedriven:receipts/R0.8.3-FALSIFIED.md": 2,
+    "invariant-r10:experiments/distributed_currentness/cd-durable-pristine/src/main.rs": 2,
+    "invariant-r10:experiments/distributed_currentness/cd-durable-witness/src/main.rs": 2,
+    "computedriven:docs/durable-authority-model.md": 1
+   }
+  },
+  "F12": {
+   "total": 13,
+   "n_files": 7,
+   "per_source": {
+    "computedriven": 6,
+    "super": 3,
+    "invariant-r10": 4
+   },
+   "files": {
+    "super:ampd/test/locus_test.exs": 3,
+    "computedriven:cd-durable/src/main.rs": 2,
+    "computedriven:receipts/R0.8.3-FALSIFIED.md": 2,
+    "invariant-r10:experiments/distributed_currentness/cd-durable-pristine/src/main.rs": 2,
+    "invariant-r10:experiments/distributed_currentness/cd-durable-witness/src/main.rs": 2,
+    "computedriven:docs/durable-authority-model.md": 1,
+    "computedriven:lab/scripts/nc17_live_store_tamper.sh": 1
+   }
+  },
+  "NC6": {
+   "total": 13,
+   "n_files": 9,
+   "per_source": {
+    "computedriven": 11,
+    "invariant-r10": 2
+   },
+   "files": {
+    "computedriven:receipts/R0.8.2-reproducibility.txt": 4,
+    "computedriven:receipts/R0.8.md": 2,
+    "computedriven:cd-durable/src/main.rs": 1,
+    "computedriven:lab/scripts/nc24_root_clone.sh": 1,
+    "computedriven:lab/scripts/run_r08.sh": 1,
+    "computedriven:receipts/R0.8-FALSIFIED.md": 1,
+    "computedriven:receipts/R0.8.4-FALSIFIED.md": 1,
+    "invariant-r10:experiments/distributed_currentness/cd-durable-pristine/src/main.rs": 1,
+    "invariant-r10:experiments/distributed_currentness/cd-durable-witness/src/main.rs": 1
+   }
+  },
+  "NC7": {
+   "total": 13,
+   "n_files": 8,
+   "per_source": {
+    "computedriven": 11,
+    "invariant-r10": 2
+   },
+   "files": {
+    "computedriven:lab/scripts/run_r08.sh": 6,
+    "computedriven:cd-durable/src/main.rs": 1,
+    "computedriven:receipts/R0.8-FALSIFIED.md": 1,
+    "computedriven:receipts/R0.8.2-FINAL-20260831T225009Z.json": 1,
+    "computedriven:receipts/R0.8.3-FALSIFIED.md": 1,
+    "computedriven:receipts/R0.8.md": 1,
+    "invariant-r10:experiments/distributed_currentness/cd-durable-pristine/src/main.rs": 1,
+    "invariant-r10:experiments/distributed_currentness/cd-durable-witness/src/main.rs": 1
+   }
+  },
+  "NC14": {
+   "total": 3,
+   "n_files": 3,
+   "per_source": {
+    "computedriven": 1,
+    "invariant-r10": 2
+   },
+   "files": {
+    "computedriven:cd-durable/src/main.rs": 1,
+    "invariant-r10:experiments/distributed_currentness/cd-durable-pristine/src/main.rs": 1,
+    "invariant-r10:experiments/distributed_currentness/cd-durable-witness/src/main.rs": 1
+   }
+  },
+  "NC16": {
+   "total": 10,
+   "n_files": 6,
+   "per_source": {
+    "computedriven": 8,
+    "invariant-r10": 2
+   },
+   "files": {
+    "computedriven:docs/durable-authority-model.md": 3,
+    "computedriven:receipts/R0.8.3-FALSIFIED.md": 3,
+    "computedriven:cd-durable/src/main.rs": 1,
+    "computedriven:lab/scripts/nc17_live_store_tamper.sh": 1,
+    "invariant-r10:experiments/distributed_currentness/cd-durable-pristine/src/main.rs": 1,
+    "invariant-r10:experiments/distributed_currentness/cd-durable-witness/src/main.rs": 1
+   }
+  },
+  "F13": {
+   "total": 13,
+   "n_files": 5,
+   "per_source": {
+    "computedriven": 5,
+    "super": 2,
+    "invariant-r10": 6
+   },
+   "files": {
+    "computedriven:cd-durable/src/main.rs": 3,
+    "invariant-r10:experiments/distributed_currentness/cd-durable-pristine/src/main.rs": 3,
+    "invariant-r10:experiments/distributed_currentness/cd-durable-witness/src/main.rs": 3,
+    "computedriven:receipts/R0.8.3-FALSIFIED.md": 2,
+    "super:ampd/test/locus_test.exs": 2
+   }
+  },
+  "F11": {
+   "total": 6,
+   "n_files": 4,
+   "per_source": {
+    "computedriven": 4,
+    "invariant-r10": 2
+   },
+   "files": {
+    "computedriven:receipts/R0.8.3-FALSIFIED.md": 3,
+    "computedriven:cd-durable/src/main.rs": 1,
+    "invariant-r10:experiments/distributed_currentness/cd-durable-pristine/src/main.rs": 1,
+    "invariant-r10:experiments/distributed_currentness/cd-durable-witness/src/main.rs": 1
+   }
+  },
+  "NC13": {
+   "total": 3,
+   "n_files": 3,
+   "per_source": {
+    "computedriven": 1,
+    "invariant-r10": 2
+   },
+   "files": {
+    "computedriven:cd-durable/src/main.rs": 1,
+    "invariant-r10:experiments/distributed_currentness/cd-durable-pristine/src/main.rs": 1,
+    "invariant-r10:experiments/distributed_currentness/cd-durable-witness/src/main.rs": 1
+   }
+  },
+  "NC17": {
+   "total": 24,
+   "n_files": 12,
+   "per_source": {
+    "computedriven": 15,
+    "invariant-r10": 9
+   },
+   "files": {
+    "computedriven:lab/scripts/nc17_live_store_tamper.sh": 6,
+    "computedriven:receipts/R0.8.3-FALSIFIED.md": 4,
+    "computedriven:cd-durable/src/main.rs": 2,
+    "computedriven:docs/durable-authority-model.md": 2,
+    "invariant-r10:experiments/distributed_currentness/cd-durable-pristine/src/main.rs": 2,
+    "invariant-r10:experiments/distributed_currentness/cd-durable-witness/src/main.rs": 2,
+    "computedriven:lab/scripts/run_r08.sh": 1,
+    "invariant-r10:inputs-gpt-execution-go.md": 1,
+    "invariant-r10:package-v2.6/11_R10PRE_OPUS_HANDOFF.md": 1,
+    "invariant-r10:package-v2.6/INV_FRONTIER_R10_PRE.md": 1,
+    "invariant-r10:package-v2.6/v1-provenance/00_EXECUTIVE_FINDINGS.md": 1,
+    "invariant-r10:package-v2.6/v1-provenance/06_EXPERIMENTS_AND_MODEL_CHECKS.md": 1
+   }
+  },
+  "G2": {
+   "total": 11,
+   "n_files": 7,
+   "per_source": {
+    "computedriven": 9,
+    "invariant-r10": 2
+   },
+   "files": {
+    "computedriven:lab/scripts/run_r08.sh": 5,
+    "computedriven:cd-durable/src/main.rs": 1,
+    "computedriven:docs/durable-authority-model.md": 1,
+    "computedriven:lab/scripts/nc17_live_store_tamper.sh": 1,
+    "computedriven:receipts/R0.8.3-FALSIFIED.md": 1,
+    "invariant-r10:experiments/distributed_currentness/cd-durable-pristine/src/main.rs": 1,
+    "invariant-r10:experiments/distributed_currentness/cd-durable-witness/src/main.rs": 1
+   }
+  },
+  "NC20": {
+   "total": 6,
+   "n_files": 6,
+   "per_source": {
+    "computedriven": 4,
+    "invariant-r10": 2
+   },
+   "files": {
+    "computedriven:cd-durable/src/main.rs": 1,
+    "computedriven:docs/durable-authority-model.md": 1,
+    "computedriven:lab/scripts/nc17_live_store_tamper.sh": 1,
+    "computedriven:receipts/R0.8.3-FALSIFIED.md": 1,
+    "invariant-r10:experiments/distributed_currentness/cd-durable-pristine/src/main.rs": 1,
+    "invariant-r10:experiments/distributed_currentness/cd-durable-witness/src/main.rs": 1
+   }
+  },
+  "NC15": {
+   "total": 18,
+   "n_files": 9,
+   "per_source": {
+    "computedriven": 12,
+    "invariant-r10": 6
+   },
+   "files": {
+    "computedriven:receipts/R0.8.3-FALSIFIED.md": 5,
+    "computedriven:lab/scripts/nc15_repeated_crash.sh": 3,
+    "computedriven:cd-durable/src/main.rs": 2,
+    "invariant-r10:experiments/distributed_currentness/cd-durable-pristine/src/main.rs": 2,
+    "invariant-r10:experiments/distributed_currentness/cd-durable-witness/src/main.rs": 2,
+    "computedriven:docs/durable-authority-model.md": 1,
+    "computedriven:tools/verify_battery.py": 1,
+    "invariant-r10:CHANGELOG.md": 1,
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 1
+   }
+  },
+  "NC21": {
+   "total": 9,
+   "n_files": 6,
+   "per_source": {
+    "computedriven": 5,
+    "invariant-r10": 4
+   },
+   "files": {
+    "computedriven:cd-durable/src/main.rs": 2,
+    "invariant-r10:experiments/distributed_currentness/cd-durable-pristine/src/main.rs": 2,
+    "invariant-r10:experiments/distributed_currentness/cd-durable-witness/src/main.rs": 2,
+    "computedriven:docs/durable-authority-model.md": 1,
+    "computedriven:lab/scripts/nc17_live_store_tamper.sh": 1,
+    "computedriven:receipts/R0.8.3-FALSIFIED.md": 1
+   }
+  },
+  "NC22": {
+   "total": 9,
+   "n_files": 6,
+   "per_source": {
+    "computedriven": 5,
+    "invariant-r10": 4
+   },
+   "files": {
+    "computedriven:cd-durable/src/main.rs": 2,
+    "invariant-r10:experiments/distributed_currentness/cd-durable-pristine/src/main.rs": 2,
+    "invariant-r10:experiments/distributed_currentness/cd-durable-witness/src/main.rs": 2,
+    "computedriven:docs/durable-authority-model.md": 1,
+    "computedriven:lab/scripts/nc17_live_store_tamper.sh": 1,
+    "computedriven:receipts/R0.8.3-FALSIFIED.md": 1
+   }
+  },
+  "NC23": {
+   "total": 15,
+   "n_files": 11,
+   "per_source": {
+    "computedriven": 8,
+    "invariant-r10": 7
+   },
+   "files": {
+    "computedriven:lab/scripts/nc17_live_store_tamper.sh": 3,
+    "computedriven:receipts/R0.8.3-FALSIFIED.md": 3,
+    "computedriven:cd-durable/src/main.rs": 1,
+    "computedriven:docs/durable-authority-model.md": 1,
+    "invariant-r10:experiments/distributed_currentness/cd-durable-pristine/src/main.rs": 1,
+    "invariant-r10:experiments/distributed_currentness/cd-durable-witness/src/main.rs": 1,
+    "invariant-r10:inputs-gpt-execution-go.md": 1,
+    "invariant-r10:package-v2.6/11_R10PRE_OPUS_HANDOFF.md": 1,
+    "invariant-r10:package-v2.6/INV_FRONTIER_R10_PRE.md": 1,
+    "invariant-r10:package-v2.6/v1-provenance/00_EXECUTIVE_FINDINGS.md": 1,
+    "invariant-r10:package-v2.6/v1-provenance/06_EXPERIMENTS_AND_MODEL_CHECKS.md": 1
+   }
+  },
+  "F4": {
+   "total": 8,
+   "n_files": 6,
+   "per_source": {
+    "computedriven": 3,
+    "super": 5
+   },
+   "files": {
+    "super:ampd/lib/ampd/worktree.ex": 2,
+    "super:ampd/test/locus_test.exs": 2,
+    "computedriven:cd-node/tests/authority_vs_reachability.rs": 1,
+    "computedriven:receipts/R0.4.1.md": 1,
+    "computedriven:receipts/R0.8.3-FALSIFIED.md": 1,
+    "super:ampd/lib/ampd/locus.ex": 1
+   }
+  },
+  "NC1": {
+   "total": 18,
+   "n_files": 11,
+   "per_source": {
+    "computedriven": 18
+   },
+   "files": {
+    "computedriven:receipts/R0.7.md": 4,
+    "computedriven:receipts/R0.8.md": 3,
+    "computedriven:lab/scripts/run_r08.sh": 2,
+    "computedriven:receipts/R0.7-negative-controls.txt": 2,
+    "computedriven:docs/durable-authority-model.md": 1,
+    "computedriven:docs/failure-model.md": 1,
+    "computedriven:lab/scripts/nc17_live_store_tamper.sh": 1,
+    "computedriven:receipts/R0.8-FALSIFIED.md": 1,
+    "computedriven:receipts/R0.8-reproducibility.txt": 1,
+    "computedriven:receipts/R0.8.3-FALSIFIED.md": 1,
+    "computedriven:receipts/STATUS.md": 1
+   }
+  },
+  "F25": {
+   "total": 21,
+   "n_files": 10,
+   "per_source": {
+    "computedriven": 6,
+    "invariant-r10": 15
+   },
+   "files": {
+    "invariant-r10:tools-lane/build_v2_4.py": 6,
+    "computedriven:lab/falsifiers/F25_vacuous_r08g.sh": 3,
+    "invariant-r10:inputs-gpt-execution-adjudication.md": 3,
+    "invariant-r10:CHANGELOG.md": 2,
+    "invariant-r10:tools-lane/build_v2_5.py": 2,
+    "computedriven:lab/scripts/run_r08.sh": 1,
+    "computedriven:receipts/R0.8.4-FALSIFIED.md": 1,
+    "computedriven:receipts/R0.8.5-FALSIFIED.md": 1,
+    "invariant-r10:inputs-gpt-execution-adjudication-v2.md": 1,
+    "invariant-r10:package-v2.6/inputs/R10PRE_EXECUTION_V2_GPT56_ADJUDICATION.md": 1
+   }
+  },
+  "G1": {
+   "total": 8,
+   "n_files": 4,
+   "per_source": {
+    "computedriven": 7,
+    "invariant-r10": 1
+   },
+   "files": {
+    "computedriven:lab/scripts/run_r08.sh": 5,
+    "computedriven:lab/scripts/nc17_live_store_tamper.sh": 1,
+    "computedriven:receipts/R0.8.3-FALSIFIED.md": 1,
+    "invariant-r10:experiments/distributed_currentness/run_exp1.sh": 1
+   }
+  },
+  "NC24": {
+   "total": 33,
+   "n_files": 15,
+   "per_source": {
+    "computedriven": 9,
+    "invariant-r10": 24
+   },
+   "files": {
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 6,
+    "computedriven:lab/scripts/nc24_root_clone.sh": 4,
+    "invariant-r10:package-v2.6/evidence_state.json": 4,
+    "invariant-r10:tools-lane/build_v2_5.py": 3,
+    "computedriven:lab/scripts/nc26_stale_root_resurrection.sh": 2,
+    "computedriven:receipts/R0.8.5-FALSIFIED.md": 2,
+    "invariant-r10:inputs-gpt-execution-adjudication-v2.md": 2,
+    "invariant-r10:package-v2.6/inputs/R10PRE_EXECUTION_V2_GPT56_ADJUDICATION.md": 2,
+    "invariant-r10:tools-lane/build_v2_4.py": 2,
+    "computedriven:lab/scripts/run_r08.sh": 1,
+    "invariant-r10:CHANGELOG.md": 1,
+    "invariant-r10:handoffs/FAC_CONTROL_SENSITIVITY_CANDIDATE.md": 1,
+    "invariant-r10:package-v2.6/10_MACHINE_READABLE_LEDGER.json": 1,
+    "invariant-r10:tools-lane/build_v2_6.py": 1,
+    "invariant-r10:tools-lane/factory-kit/FAC-CONTROL-SENSITIVITY.claim.json": 1
+   }
+  },
+  "NC26": {
+   "total": 21,
+   "n_files": 14,
+   "per_source": {
+    "computedriven": 9,
+    "invariant-r10": 12
+   },
+   "files": {
+    "computedriven:lab/scripts/nc26_stale_root_resurrection.sh": 4,
+    "computedriven:receipts/R0.8.6-FALSIFIED.md": 3,
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 3,
+    "computedriven:lab/scripts/nc28_foreign_successor.sh": 1,
+    "computedriven:tools/verify_battery.py": 1,
+    "invariant-r10:CHANGELOG.md": 1,
+    "invariant-r10:handoffs/FAC_CONTROL_SENSITIVITY_CANDIDATE.md": 1,
+    "invariant-r10:inputs-gpt-execution-adjudication-v3.md": 1,
+    "invariant-r10:package-v2.6/10_MACHINE_READABLE_LEDGER.json": 1,
+    "invariant-r10:package-v2.6/evidence_state.json": 1,
+    "invariant-r10:package-v2.6/inputs/R10PRE_EXECUTION_V3_GPT56_ADJUDICATION.md": 1,
+    "invariant-r10:tools-lane/build_v2_5.py": 1,
+    "invariant-r10:tools-lane/build_v2_6.py": 1,
+    "invariant-r10:tools-lane/factory-kit/FAC-CONTROL-SENSITIVITY.claim.json": 1
+   }
+  },
+  "NC27": {
+   "total": 15,
+   "n_files": 11,
+   "per_source": {
+    "computedriven": 4,
+    "invariant-r10": 11
+   },
+   "files": {
+    "computedriven:lab/scripts/nc27_genesis_schema_contract.sh": 3,
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 3,
+    "computedriven:tools/verify_battery.py": 1,
+    "invariant-r10:handoffs/FAC_CONTROL_SENSITIVITY_CANDIDATE.md": 1,
+    "invariant-r10:inputs-gpt-execution-adjudication-v3.md": 1,
+    "invariant-r10:package-v2.6/10_MACHINE_READABLE_LEDGER.json": 1,
+    "invariant-r10:package-v2.6/evidence_state.json": 1,
+    "invariant-r10:package-v2.6/inputs/R10PRE_EXECUTION_V3_GPT56_ADJUDICATION.md": 1,
+    "invariant-r10:tools-lane/build_v2_5.py": 1,
+    "invariant-r10:tools-lane/build_v2_6.py": 1,
+    "invariant-r10:tools-lane/factory-kit/FAC-CONTROL-SENSITIVITY.claim.json": 1
+   }
+  },
+  "NC28": {
+   "total": 15,
+   "n_files": 9,
+   "per_source": {
+    "computedriven": 6,
+    "invariant-r10": 9
+   },
+   "files": {
+    "computedriven:lab/scripts/nc28_foreign_successor.sh": 4,
+    "invariant-r10:handoffs/FAC_CONTROL_SENSITIVITY_CANDIDATE.md": 2,
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 2,
+    "invariant-r10:tools-lane/factory-kit/FAC-CONTROL-SENSITIVITY.claim.json": 2,
+    "computedriven:lab/scripts/nc29_foreign_pending_import.sh": 1,
+    "computedriven:tools/verify_battery.py": 1,
+    "invariant-r10:package-v2.6/10_MACHINE_READABLE_LEDGER.json": 1,
+    "invariant-r10:tools-lane/build_v2_5.py": 1,
+    "invariant-r10:tools-lane/build_v2_6.py": 1
+   }
+  },
+  "S1": {
+   "total": 262,
+   "n_files": 48,
+   "per_source": {
+    "computedriven": 6,
+    "super": 2,
+    "invariant-r10": 251,
+    "TRVM": 3
+   },
+   "files": {
+    "invariant-r10:tools-lane/build_v2_4.py": 48,
+    "invariant-r10:inputs-gpt-execution-adjudication.md": 21,
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 19,
+    "invariant-r10:package-v2.6/INV_FRONTIER_R10_PRE.md": 19,
+    "invariant-r10:package-v2.6/12_R10PRE_SYNTHESIS.md": 14,
+    "invariant-r10:package-v2.6/10_MACHINE_READABLE_LEDGER.json": 8,
+    "invariant-r10:experiments/rust/src/bin/s6_birth.rs": 7,
+    "invariant-r10:tools-lane/build_v2_5.py": 7,
+    "invariant-r10:CHANGELOG.md": 6,
+    "invariant-r10:inputs-gpt-execution-adjudication-v2.md": 6,
+    "invariant-r10:package-v2.6/inputs/FABLE51_R10PRE_V2_GPT56_AUDIT_FOR_OPUS.md": 6,
+    "invariant-r10:package-v2.6/inputs/R10PRE_EXECUTION_V2_GPT56_ADJUDICATION.md": 6,
+    "invariant-r10:package-v2.6/witnesses/liveness_l1.py": 6,
+    "invariant-r10:experiments/rust/results/S6_locus_birth.md": 5,
+    "invariant-r10:package-v2.6/11_R10PRE_OPUS_HANDOFF.md": 5,
+    "invariant-r10:package-v2.6/inputs/FABLE51_R10PRE_V21_GPT56_FINAL_AUDIT_FOR_OPUS.md": 5,
+    "invariant-r10:experiments/s6_locus_birth/RESULT.md": 4,
+    "invariant-r10:inputs-gpt-execution-go.md": 4,
+    "invariant-r10:package-v2.6/FABLE51_R10PRE_COUNTERSIGN.md": 4,
+    "invariant-r10:package-v2.6/FABLE51_R10PRE_V21_COUNTERSIGN.md": 4,
+    "invariant-r10:tools-lane/drift_gate_v2_4.py": 4,
+    "computedriven:lab/scripts/nc28_foreign_successor.sh": 3,
+    "computedriven:receipts/R0.8.6-FALSIFIED.md": 3,
+    "invariant-r10:experiments/locus_capability_facade/RESULT.md": 3,
+    "invariant-r10:package-v2.6/06_R10PRE_EXPERIMENTS.md": 3,
+    "invariant-r10:package-v2.6/README.md": 3,
+    "invariant-r10:package-v2.6/inputs/FABLE51_RESEARCH_GPT56_ADJUDICATION_FOR_OPUS.md": 3,
+    "invariant-r10:package-v2.6/tools/drift_gate.py": 3,
+    "invariant-r10:tools-lane/drift_gate_v2_5.py": 3,
+    "invariant-r10:tools-lane/drift_gate_v2_6.py": 3,
+    "TRVM:governance/invariant-grid.json": 3,
+    "super:site/app-prototype.html": 2,
+    "invariant-r10:experiments/rust/results/EXP5_authority_merge_cdcore.md": 2,
+    "invariant-r10:experiments/rust/src/bin/authority_merge.rs": 2,
+    "invariant-r10:experiments/rust/src/lib.rs": 2,
+    "invariant-r10:handoffs/FAC_CONTROL_SENSITIVITY_CANDIDATE.md": 2,
+    "invariant-r10:inputs-gpt-execution-adjudication-v3.md": 2,
+    "invariant-r10:package-v2.6/inputs/R10PRE_EXECUTION_V3_GPT56_ADJUDICATION.md": 2,
+    "invariant-r10:drift_gate.py": 1,
+    "invariant-r10:experiments/README.md": 1,
+    "invariant-r10:experiments/authority_merge/RESULT.md": 1,
+    "invariant-r10:experiments/authority_merge/authority_merge_ampd.exs": 1,
+    "invariant-r10:experiments/authority_merge/authority_merge_ampd.output.txt": 1,
+    "invariant-r10:experiments/rust/results/EXP5_authority_merge_cdcore.FIRST-RUN-misspecified-check.md": 1,
+    "invariant-r10:package-v2.6/evidence_state.json": 1,
+    "invariant-r10:package-v2.6/v1-provenance/10_MACHINE_READABLE_LEDGER_v2_as_delivered.json": 1,
+    "invariant-r10:package-v2.6/v1-provenance/11_OPUS_IMPLEMENTATION_HANDOFF.md": 1,
+    "invariant-r10:package-v2.6/witnesses/liveness_l1.output.txt": 1
+   }
+  },
+  "NC29": {
+   "total": 5,
+   "n_files": 2,
+   "per_source": {
+    "computedriven": 5
+   },
+   "files": {
+    "computedriven:lab/scripts/nc29_foreign_pending_import.sh": 4,
+    "computedriven:tools/verify_battery.py": 1
+   }
+  },
+  "NC30": {
+   "total": 5,
+   "n_files": 2,
+   "per_source": {
+    "computedriven": 5
+   },
+   "files": {
+    "computedriven:lab/scripts/nc30_anchor_reservation_window.sh": 4,
+    "computedriven:tools/verify_battery.py": 1
+   }
+  },
+  "F29": {
+   "total": 10,
+   "n_files": 5,
+   "per_source": {
+    "computedriven": 3,
+    "invariant-r10": 7
+   },
+   "files": {
+    "invariant-r10:tools-lane/build_v2_4.py": 4,
+    "computedriven:lab/scripts/run_r08.sh": 2,
+    "invariant-r10:tools-lane/build_v2_5.py": 2,
+    "computedriven:receipts/R0.8.5-FALSIFIED.md": 1,
+    "invariant-r10:CHANGELOG.md": 1
+   }
+  },
+  "NC5": {
+   "total": 3,
+   "n_files": 2,
+   "per_source": {
+    "computedriven": 3
+   },
+   "files": {
+    "computedriven:lab/scripts/run_r08.sh": 2,
+    "computedriven:receipts/R0.8.md": 1
+   }
+  },
+  "NC2": {
+   "total": 9,
+   "n_files": 6,
+   "per_source": {
+    "computedriven": 9
+   },
+   "files": {
+    "computedriven:receipts/R0.7.md": 3,
+    "computedriven:receipts/R0.8.2-reproducibility.txt": 2,
+    "computedriven:lab/scripts/run_r08.sh": 1,
+    "computedriven:receipts/R0.7-negative-controls.txt": 1,
+    "computedriven:receipts/R0.8-FALSIFIED.md": 1,
+    "computedriven:receipts/R0.8.md": 1
+   }
+  },
+  "NC3": {
+   "total": 4,
+   "n_files": 3,
+   "per_source": {
+    "computedriven": 4
+   },
+   "files": {
+    "computedriven:lab/scripts/run_r08.sh": 2,
+    "computedriven:receipts/R0.8-FALSIFIED.md": 1,
+    "computedriven:receipts/R0.8.md": 1
+   }
+  },
+  "NC4": {
+   "total": 5,
+   "n_files": 3,
+   "per_source": {
+    "computedriven": 5
+   },
+   "files": {
+    "computedriven:lab/scripts/run_r08.sh": 2,
+    "computedriven:receipts/R0.8.md": 2,
+    "computedriven:receipts/R0.8.3-FALSIFIED.md": 1
+   }
+  },
+  "F27": {
+   "total": 2,
+   "n_files": 2,
+   "per_source": {
+    "computedriven": 1,
+    "invariant-r10": 1
+   },
+   "files": {
+    "computedriven:lab/scripts/run_r08.sh": 1,
+    "invariant-r10:inputs-gpt-execution-adjudication.md": 1
+   }
+  },
+  "G3": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "computedriven": 1
+   },
+   "files": {
+    "computedriven:lab/scripts/run_r08.sh": 1
+   }
+  },
+  "F1": {
+   "total": 40,
+   "n_files": 20,
+   "per_source": {
+    "computedriven": 10,
+    "super": 5,
+    "invariant-r10": 12,
+    "TRVM": 13
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 13,
+    "computedriven:receipts/R0.8.3-FALSIFIED.md": 4,
+    "super:ampd/test/locus_test.exs": 2,
+    "invariant-r10:package-v2.6/10_MACHINE_READABLE_LEDGER.json": 2,
+    "invariant-r10:package-v2.6/v1-provenance/02_EXISTING_INVARIANT_LEDGER.md": 2,
+    "invariant-r10:package-v2.6/v1-provenance/05_IRREDUCIBLE_BASIS_ANALYSIS.md": 2,
+    "invariant-r10:package-v2.6/v1-provenance/10_MACHINE_READABLE_LEDGER_v2_as_delivered.json": 2,
+    "computedriven:receipts/R0.4.1.md": 1,
+    "computedriven:tools/compile-fail/f1_forge_attach_record.rs": 1,
+    "computedriven:tools/compile-fail/f1_forge_custody.rs": 1,
+    "computedriven:tools/compile-fail/f1_forge_detach_receipt.rs": 1,
+    "computedriven:tools/compile-fail/f1_forge_loss_finalization.rs": 1,
+    "computedriven:tools/compile-fail/f1_forge_warden.rs": 1,
+    "super:ampd/lib/ampd/authority.ex": 1,
+    "super:ampd/lib/ampd/loci.ex": 1,
+    "super:ampd/lib/ampd/locus.ex": 1,
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 1,
+    "invariant-r10:package-v2.6/INV_FRONTIER_R10_PRE.md": 1,
+    "invariant-r10:package-v2.6/v1-provenance/03_CANDIDATE_INVARIANTS.md": 1,
+    "invariant-r10:package-v2.6/v1-provenance/12_FINAL_SYNTHESIS.md": 1
+   }
+  },
+  "F7": {
+   "total": 3,
+   "n_files": 2,
+   "per_source": {
+    "computedriven": 1,
+    "super": 2
+   },
+   "files": {
+    "super:ampd/test/locus_test.exs": 2,
+    "computedriven:receipts/R0.8.3-FALSIFIED.md": 1
+   }
+  },
+  "F8": {
+   "total": 5,
+   "n_files": 4,
+   "per_source": {
+    "computedriven": 1,
+    "super": 4
+   },
+   "files": {
+    "super:ampd/test/locus_test.exs": 2,
+    "computedriven:receipts/R0.8.3-FALSIFIED.md": 1,
+    "super:ampd/lib/ampd/control.ex": 1,
+    "super:ampd/lib/ampd/locus.ex": 1
+   }
+  },
+  "F9": {
+   "total": 4,
+   "n_files": 3,
+   "per_source": {
+    "computedriven": 1,
+    "super": 3
+   },
+   "files": {
+    "super:ampd/test/locus_test.exs": 2,
+    "computedriven:receipts/R0.8.3-FALSIFIED.md": 1,
+    "super:ampd/lib/ampd/locus.ex": 1
+   }
+  },
+  "F10": {
+   "total": 9,
+   "n_files": 5,
+   "per_source": {
+    "computedriven": 2,
+    "super": 7
+   },
+   "files": {
+    "super:ampd/test/locus_test.exs": 3,
+    "computedriven:receipts/R0.8.3-FALSIFIED.md": 2,
+    "super:ampd/lib/ampd/locus.ex": 2,
+    "super:ampd/lib/ampd/worktree/effector.ex": 1,
+    "super:ampd/test/effect_channel_test.exs": 1
+   }
+  },
+  "F18": {
+   "total": 3,
+   "n_files": 2,
+   "per_source": {
+    "computedriven": 1,
+    "super": 2
+   },
+   "files": {
+    "super:ampd/test/locus_test.exs": 2,
+    "computedriven:receipts/R0.8.3-FALSIFIED.md": 1
+   }
+  },
+  "E-13b": {
+   "total": 73,
+   "n_files": 18,
+   "per_source": {
+    "invariant-r10": 73
+   },
+   "files": {
+    "invariant-r10:package-v2.6/tools/drift_gate.py": 10,
+    "invariant-r10:tools-lane/drift_gate_v2_6.py": 10,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 8,
+    "invariant-r10:tools-lane/drift_gate_v2_5.py": 7,
+    "invariant-r10:inputs-gpt-execution-adjudication-v2.md": 5,
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 5,
+    "invariant-r10:package-v2.6/inputs/R10PRE_EXECUTION_V2_GPT56_ADJUDICATION.md": 5,
+    "invariant-r10:CHANGELOG.md": 4,
+    "invariant-r10:tools-lane/build_v2_5.py": 4,
+    "invariant-r10:tools-lane/gate-v2_5-negative-control.txt": 4,
+    "invariant-r10:package-v2.6/evidence_state.json": 2,
+    "invariant-r10:tools-lane/build_v2_4.py": 2,
+    "invariant-r10:tools-lane/build_v2_6.py": 2,
+    "invariant-r10:START_HERE_GPT.md": 1,
+    "invariant-r10:experiments/distributed_currentness/RESULT.md": 1,
+    "invariant-r10:inputs-gpt-execution-adjudication.md": 1,
+    "invariant-r10:tools-lane/drift_gate_v2_4.py": 1,
+    "invariant-r10:tools-lane/gate-negative-control.txt": 1
+   }
+  },
+  "E-14": {
+   "total": 85,
+   "n_files": 20,
+   "per_source": {
+    "invariant-r10": 85
+   },
+   "files": {
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 13,
+    "invariant-r10:package-v2.6/tools/drift_gate.py": 8,
+    "invariant-r10:tools-lane/drift_gate_v2_6.py": 8,
+    "invariant-r10:tools-lane/drift_gate_v2_5.py": 7,
+    "invariant-r10:tools-lane/build_v2_5.py": 6,
+    "invariant-r10:CHANGELOG.md": 5,
+    "invariant-r10:tools-lane/gate-v2_5-negative-control.txt": 5,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 5,
+    "invariant-r10:inputs-gpt-execution-adjudication-v2.md": 4,
+    "invariant-r10:inputs-gpt-execution-adjudication.md": 4,
+    "invariant-r10:package-v2.6/inputs/R10PRE_EXECUTION_V2_GPT56_ADJUDICATION.md": 4,
+    "invariant-r10:tools-lane/build_v2_4.py": 4,
+    "invariant-r10:inputs-gpt-execution-adjudication-v3.md": 2,
+    "invariant-r10:package-v2.6/evidence_state.json": 2,
+    "invariant-r10:package-v2.6/inputs/R10PRE_EXECUTION_V3_GPT56_ADJUDICATION.md": 2,
+    "invariant-r10:tools-lane/build_v2_6.py": 2,
+    "invariant-r10:START_HERE_GPT.md": 1,
+    "invariant-r10:package-v2.6/10_MACHINE_READABLE_LEDGER.json": 1,
+    "invariant-r10:tools-lane/factory-kit/README.md": 1,
+    "invariant-r10:tools-lane/factory-kit/check-evidence-transitions.mjs": 1
+   }
+  },
+  "E-48": {
+   "total": 30,
+   "n_files": 13,
+   "per_source": {
+    "invariant-r10": 30
+   },
+   "files": {
+    "invariant-r10:tools-lane/build_v2_5.py": 4,
+    "invariant-r10:CHANGELOG.md": 3,
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 3,
+    "invariant-r10:tools-lane/build_v2_6.py": 3,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 3,
+    "invariant-r10:package-v2.6/10_MACHINE_READABLE_LEDGER.json": 2,
+    "invariant-r10:package-v2.6/evidence_state.json": 2,
+    "invariant-r10:package-v2.6/tools/drift_gate.py": 2,
+    "invariant-r10:tools-lane/drift_gate_v2_5.py": 2,
+    "invariant-r10:tools-lane/drift_gate_v2_6.py": 2,
+    "invariant-r10:tools-lane/gate-v2_5-negative-control.txt": 2,
+    "invariant-r10:experiments/README.md": 1,
+    "invariant-r10:experiments/s5_effect_adapter/RESULT.md": 1
+   }
+  },
+  "E-50": {
+   "total": 48,
+   "n_files": 15,
+   "per_source": {
+    "invariant-r10": 48
+   },
+   "files": {
+    "invariant-r10:tools-lane/build_v2_6.py": 8,
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 7,
+    "invariant-r10:tools-lane/build_v2_5.py": 5,
+    "invariant-r10:package-v2.6/tools/drift_gate.py": 4,
+    "invariant-r10:tools-lane/drift_gate_v2_6.py": 4,
+    "invariant-r10:CHANGELOG.md": 3,
+    "invariant-r10:inputs-gpt-execution-adjudication-v3.md": 3,
+    "invariant-r10:package-v2.6/inputs/R10PRE_EXECUTION_V3_GPT56_ADJUDICATION.md": 3,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 3,
+    "invariant-r10:experiments/s5_effect_adapter/RESULT.md": 2,
+    "invariant-r10:package-v2.6/10_MACHINE_READABLE_LEDGER.json": 2,
+    "invariant-r10:START_HERE_GPT.md": 1,
+    "invariant-r10:experiments/README.md": 1,
+    "invariant-r10:tools-lane/drift_gate_v2_5.py": 1,
+    "invariant-r10:tools-lane/gate-v2_5-negative-control.txt": 1
+   }
+  },
+  "E-50a": {
+   "total": 66,
+   "n_files": 16,
+   "per_source": {
+    "invariant-r10": 66
+   },
+   "files": {
+    "invariant-r10:experiments/s5_effect_adapter/effect_identity_model.py": 12,
+    "invariant-r10:experiments/s5_effect_adapter/effect_identity_model.output.txt": 8,
+    "invariant-r10:tools-lane/build_v2_6.py": 7,
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 5,
+    "invariant-r10:package-v2.6/tools/drift_gate.py": 5,
+    "invariant-r10:tools-lane/drift_gate_v2_6.py": 5,
+    "invariant-r10:inputs-gpt-execution-adjudication-v3.md": 4,
+    "invariant-r10:package-v2.6/inputs/R10PRE_EXECUTION_V3_GPT56_ADJUDICATION.md": 4,
+    "invariant-r10:CHANGELOG.md": 3,
+    "invariant-r10:START_HERE_GPT.md": 3,
+    "invariant-r10:handoffs/SUPER_E50_EFFECT_IDENTITY.md": 3,
+    "invariant-r10:package-v2.6/evidence_state.json": 2,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 2,
+    "invariant-r10:README.md": 1,
+    "invariant-r10:experiments/s5_effect_adapter/RESULT.md": 1,
+    "invariant-r10:package-v2.6/10_MACHINE_READABLE_LEDGER.json": 1
+   }
+  },
+  "E-50b": {
+   "total": 54,
+   "n_files": 16,
+   "per_source": {
+    "invariant-r10": 54
+   },
+   "files": {
+    "invariant-r10:experiments/s5_effect_adapter/effect_identity_model.py": 7,
+    "invariant-r10:tools-lane/build_v2_6.py": 7,
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 5,
+    "invariant-r10:experiments/s5_effect_adapter/effect_identity_model.output.txt": 4,
+    "invariant-r10:handoffs/SUPER_E50_EFFECT_IDENTITY.md": 4,
+    "invariant-r10:inputs-gpt-execution-adjudication-v3.md": 4,
+    "invariant-r10:package-v2.6/inputs/R10PRE_EXECUTION_V3_GPT56_ADJUDICATION.md": 4,
+    "invariant-r10:package-v2.6/tools/drift_gate.py": 4,
+    "invariant-r10:tools-lane/drift_gate_v2_6.py": 4,
+    "invariant-r10:CHANGELOG.md": 2,
+    "invariant-r10:START_HERE_GPT.md": 2,
+    "invariant-r10:package-v2.6/evidence_state.json": 2,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 2,
+    "invariant-r10:README.md": 1,
+    "invariant-r10:experiments/s5_effect_adapter/RESULT.md": 1,
+    "invariant-r10:package-v2.6/10_MACHINE_READABLE_LEDGER.json": 1
+   }
+  },
+  "E-51": {
+   "total": 34,
+   "n_files": 12,
+   "per_source": {
+    "invariant-r10": 34
+   },
+   "files": {
+    "invariant-r10:tools-lane/build_v2_6.py": 9,
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 8,
+    "invariant-r10:package-v2.6/tools/drift_gate.py": 3,
+    "invariant-r10:tools-lane/drift_gate_v2_6.py": 3,
+    "invariant-r10:CHANGELOG.md": 2,
+    "invariant-r10:START_HERE_GPT.md": 2,
+    "invariant-r10:package-v2.6/evidence_state.json": 2,
+    "invariant-r10:experiments/README.md": 1,
+    "invariant-r10:experiments/s5_effect_adapter/RESULT.md": 1,
+    "invariant-r10:handoffs/SUPER_E50_EFFECT_IDENTITY.md": 1,
+    "invariant-r10:package-v2.6/10_MACHINE_READABLE_LEDGER.json": 1,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 1
+   }
+  },
+  "S5": {
+   "total": 225,
+   "n_files": 43,
+   "per_source": {
+    "invariant-r10": 225
+   },
+   "files": {
+    "invariant-r10:tools-lane/build_v2_5.py": 34,
+    "invariant-r10:tools-lane/build_v2_4.py": 21,
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 18,
+    "invariant-r10:tools-lane/build_v2_6.py": 15,
+    "invariant-r10:CHANGELOG.md": 12,
+    "invariant-r10:inputs-gpt-execution-adjudication-v3.md": 11,
+    "invariant-r10:package-v2.6/inputs/R10PRE_EXECUTION_V3_GPT56_ADJUDICATION.md": 11,
+    "invariant-r10:package-v2.6/12_R10PRE_SYNTHESIS.md": 10,
+    "invariant-r10:inputs-gpt-execution-adjudication.md": 9,
+    "invariant-r10:experiments/s5_effect_adapter/RESULT.md": 8,
+    "invariant-r10:package-v2.6/INV_FRONTIER_R10_PRE.md": 8,
+    "invariant-r10:package-v2.6/10_MACHINE_READABLE_LEDGER.json": 6,
+    "invariant-r10:tools-lane/gate-v2_5-negative-control.txt": 6,
+    "invariant-r10:inputs-gpt-execution-adjudication-v2.md": 5,
+    "invariant-r10:package-v2.6/inputs/R10PRE_EXECUTION_V2_GPT56_ADJUDICATION.md": 5,
+    "invariant-r10:package-v2.6/11_R10PRE_OPUS_HANDOFF.md": 4,
+    "invariant-r10:package-v2.6/EXTERNAL_RESEARCH_PINS_V3.md": 3,
+    "invariant-r10:package-v2.6/inputs/FABLE51_R10PRE_V2_GPT56_AUDIT_FOR_OPUS.md": 3,
+    "invariant-r10:package-v2.6/tools/drift_gate.py": 3,
+    "invariant-r10:tools-lane/drift_gate_v2_5.py": 3,
+    "invariant-r10:tools-lane/drift_gate_v2_6.py": 3,
+    "invariant-r10:handoffs/FAC_CONTROL_SENSITIVITY_CANDIDATE.md": 2,
+    "invariant-r10:inputs-gpt-execution-go.md": 2,
+    "invariant-r10:package-v2.6/README.md": 2,
+    "invariant-r10:package-v2.6/inputs/FABLE51_R10PRE_V21_GPT56_FINAL_AUDIT_FOR_OPUS.md": 2,
+    "invariant-r10:package-v2.6/v1-provenance/10_MACHINE_READABLE_LEDGER_v2_as_delivered.json": 2,
+    "invariant-r10:START_HERE_GPT.md": 1,
+    "invariant-r10:drift_gate.py": 1,
+    "invariant-r10:experiments/README.md": 1,
+    "invariant-r10:experiments/locus_capability_facade/RESULT.md": 1,
+    "invariant-r10:experiments/s5_effect_adapter/lib_exp/exp6.exs": 1,
+    "invariant-r10:experiments/s5_effect_adapter/run_exp6.sh": 1,
+    "invariant-r10:experiments/s5_effect_adapter/scripts/phase_crash.exs": 1,
+    "invariant-r10:experiments/s5_effect_adapter/scripts/phase_reconcile.exs": 1,
+    "invariant-r10:handoffs/SUPER_E50_EFFECT_IDENTITY.md": 1,
+    "invariant-r10:package-v2.6/06_R10PRE_EXPERIMENTS.md": 1,
+    "invariant-r10:package-v2.6/FABLE51_R10PRE_COUNTERSIGN.md": 1,
+    "invariant-r10:package-v2.6/FABLE51_R10PRE_V21_COUNTERSIGN.md": 1,
+    "invariant-r10:package-v2.6/inputs/FABLE51_RESEARCH_GPT56_ADJUDICATION_FOR_OPUS.md": 1,
+    "invariant-r10:package-v2.6/witnesses/liveness_l1.py": 1,
+    "invariant-r10:tools-lane/drift_gate_v2_4.py": 1,
+    "invariant-r10:tools-lane/factory-kit/README.md": 1,
+    "invariant-r10:tools-lane/factory-kit/check-evidence-transitions.mjs": 1
+   }
+  },
+  "E-49": {
+   "total": 19,
+   "n_files": 12,
+   "per_source": {
+    "invariant-r10": 19
+   },
+   "files": {
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 3,
+    "invariant-r10:tools-lane/build_v2_5.py": 3,
+    "invariant-r10:tools-lane/build_v2_6.py": 3,
+    "invariant-r10:CHANGELOG.md": 2,
+    "invariant-r10:experiments/README.md": 1,
+    "invariant-r10:experiments/trvm_contracts/RESULT.md": 1,
+    "invariant-r10:package-v2.6/evidence_state.json": 1,
+    "invariant-r10:package-v2.6/tools/drift_gate.py": 1,
+    "invariant-r10:tools-lane/drift_gate_v2_5.py": 1,
+    "invariant-r10:tools-lane/drift_gate_v2_6.py": 1,
+    "invariant-r10:tools-lane/gate-v2_5-negative-control.txt": 1,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 1
+   }
+  },
+  "S3": {
+   "total": 227,
+   "n_files": 46,
+   "per_source": {
+    "invariant-r10": 227
+   },
+   "files": {
+    "invariant-r10:tools-lane/build_v2_4.py": 27,
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 21,
+    "invariant-r10:CHANGELOG.md": 13,
+    "invariant-r10:package-v2.6/inputs/FABLE51_R10PRE_V21_GPT56_FINAL_AUDIT_FOR_OPUS.md": 12,
+    "invariant-r10:package-v2.6/inputs/FABLE51_R10PRE_V2_GPT56_AUDIT_FOR_OPUS.md": 10,
+    "invariant-r10:inputs-gpt-execution-adjudication.md": 9,
+    "invariant-r10:package-v2.6/INV_FRONTIER_R10_PRE.md": 9,
+    "invariant-r10:inputs-gpt-execution-go.md": 7,
+    "invariant-r10:package-v2.6/10_MACHINE_READABLE_LEDGER.json": 7,
+    "invariant-r10:package-v2.6/12_R10PRE_SYNTHESIS.md": 7,
+    "invariant-r10:tools-lane/build_v2_5.py": 7,
+    "invariant-r10:tools-lane/gate-negative-control.txt": 7,
+    "invariant-r10:package-v2.6/v1-provenance/10_MACHINE_READABLE_LEDGER_v2_as_delivered.json": 6,
+    "invariant-r10:tools-lane/drift_gate_v2_4.py": 6,
+    "invariant-r10:experiments/micro_locus_s3/micro_locus_substrates.py": 5,
+    "invariant-r10:package-v2.6/11_R10PRE_OPUS_HANDOFF.md": 5,
+    "invariant-r10:package-v2.6/FABLE51_R10PRE_COUNTERSIGN.md": 5,
+    "invariant-r10:package-v2.6/tools/drift_gate.py": 5,
+    "invariant-r10:tools-lane/drift_gate_v2_5.py": 5,
+    "invariant-r10:tools-lane/drift_gate_v2_6.py": 5,
+    "invariant-r10:inputs-gpt-execution-adjudication-v2.md": 4,
+    "invariant-r10:package-v2.6/inputs/R10PRE_EXECUTION_V2_GPT56_ADJUDICATION.md": 4,
+    "invariant-r10:drift_gate.py": 3,
+    "invariant-r10:experiments/micro_locus_s3/RESULT.md": 3,
+    "invariant-r10:experiments/micro_locus_s3/micro_locus_substrates.output.txt": 3,
+    "invariant-r10:package-v2.6/FABLE51_R10PRE_V21_COUNTERSIGN.md": 3,
+    "invariant-r10:tools-lane/build_v2_6.py": 3,
+    "invariant-r10:experiments/distributed_currentness/RESULT.md": 2,
+    "invariant-r10:experiments/locus_capability_facade/RESULT.md": 2,
+    "invariant-r10:experiments/observe_is_write/probe_observe_is_write_repro.mjs": 2,
+    "invariant-r10:handoffs/TRVM_E42_E43_CANDIDATE_LAWS.md": 2,
+    "invariant-r10:inputs-gpt-execution-adjudication-v3.md": 2,
+    "invariant-r10:package-v2.6/06_R10PRE_EXPERIMENTS.md": 2,
+    "invariant-r10:package-v2.6/inputs/R10PRE_EXECUTION_V3_GPT56_ADJUDICATION.md": 2,
+    "invariant-r10:FABLE51_R10PRE_V22_INGESTION_NOTE.md": 1,
+    "invariant-r10:experiments/observe_is_write/RESULT.md": 1,
+    "invariant-r10:experiments/observe_is_write/probe_observe_is_write.output.txt": 1,
+    "invariant-r10:experiments/rust/results/S6_locus_birth.md": 1,
+    "invariant-r10:experiments/rust/src/bin/s6_birth.rs": 1,
+    "invariant-r10:experiments/s6_locus_birth/RESULT.md": 1,
+    "invariant-r10:experiments/trvm_contracts/RESULT.md": 1,
+    "invariant-r10:package-v2.6/FABLE51_R10PRE_V22_INGESTION_NOTE.md": 1,
+    "invariant-r10:package-v2.6/README.md": 1,
+    "invariant-r10:package-v2.6/evidence_state.json": 1,
+    "invariant-r10:package-v2.6/inputs/FABLE51_RESEARCH_GPT56_ADJUDICATION_FOR_OPUS.md": 1,
+    "invariant-r10:package-v2.6/v1-provenance/06_EXPERIMENTS_AND_MODEL_CHECKS.md": 1
+   }
+  },
+  "E-15": {
+   "total": 39,
+   "n_files": 15,
+   "per_source": {
+    "invariant-r10": 39
+   },
+   "files": {
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 6,
+    "invariant-r10:inputs-gpt-execution-adjudication.md": 5,
+    "invariant-r10:CHANGELOG.md": 4,
+    "invariant-r10:tools-lane/build_v2_5.py": 4,
+    "invariant-r10:inputs-gpt-execution-adjudication-v2.md": 3,
+    "invariant-r10:package-v2.6/inputs/R10PRE_EXECUTION_V2_GPT56_ADJUDICATION.md": 3,
+    "invariant-r10:tools-lane/build_v2_4.py": 3,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 3,
+    "invariant-r10:package-v2.6/evidence_state.json": 2,
+    "invariant-r10:package-v2.6/tools/drift_gate.py": 1,
+    "invariant-r10:package-v2.6/v1-provenance/05_IRREDUCIBLE_BASIS_ANALYSIS.md": 1,
+    "invariant-r10:tools-lane/build_v2_6.py": 1,
+    "invariant-r10:tools-lane/drift_gate_v2_5.py": 1,
+    "invariant-r10:tools-lane/drift_gate_v2_6.py": 1,
+    "invariant-r10:tools-lane/gate-v2_5-negative-control.txt": 1
+   }
+  },
+  "S4": {
+   "total": 100,
+   "n_files": 32,
+   "per_source": {
+    "invariant-r10": 100
+   },
+   "files": {
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 16,
+    "invariant-r10:tools-lane/build_v2_4.py": 13,
+    "invariant-r10:CHANGELOG.md": 6,
+    "invariant-r10:inputs-gpt-execution-adjudication.md": 5,
+    "invariant-r10:tools-lane/build_v2_5.py": 5,
+    "invariant-r10:inputs-gpt-execution-adjudication-v2.md": 4,
+    "invariant-r10:package-v2.6/inputs/R10PRE_EXECUTION_V2_GPT56_ADJUDICATION.md": 4,
+    "invariant-r10:handoffs/TRVM_E42_E43_CANDIDATE_LAWS.md": 3,
+    "invariant-r10:package-v2.6/10_MACHINE_READABLE_LEDGER.json": 3,
+    "invariant-r10:package-v2.6/INV_FRONTIER_R10_PRE.md": 3,
+    "invariant-r10:package-v2.6/inputs/FABLE51_R10PRE_V2_GPT56_AUDIT_FOR_OPUS.md": 3,
+    "invariant-r10:package-v2.6/tools/drift_gate.py": 3,
+    "invariant-r10:package-v2.6/v1-provenance/10_MACHINE_READABLE_LEDGER_v2_as_delivered.json": 3,
+    "invariant-r10:tools-lane/drift_gate_v2_4.py": 3,
+    "invariant-r10:tools-lane/drift_gate_v2_5.py": 3,
+    "invariant-r10:tools-lane/drift_gate_v2_6.py": 3,
+    "invariant-r10:experiments/trvm_contracts/RESULT.md": 2,
+    "invariant-r10:package-v2.6/11_R10PRE_OPUS_HANDOFF.md": 2,
+    "invariant-r10:package-v2.6/12_R10PRE_SYNTHESIS.md": 2,
+    "invariant-r10:package-v2.6/README.md": 2,
+    "invariant-r10:drift_gate.py": 1,
+    "invariant-r10:experiments/observe_is_write/RESULT.md": 1,
+    "invariant-r10:experiments/observe_is_write/probe_observe_is_write_repro.mjs": 1,
+    "invariant-r10:inputs-gpt-execution-adjudication-v3.md": 1,
+    "invariant-r10:inputs-gpt-execution-go.md": 1,
+    "invariant-r10:package-v2.6/06_R10PRE_EXPERIMENTS.md": 1,
+    "invariant-r10:package-v2.6/FABLE51_R10PRE_COUNTERSIGN.md": 1,
+    "invariant-r10:package-v2.6/FABLE51_R10PRE_V21_COUNTERSIGN.md": 1,
+    "invariant-r10:package-v2.6/inputs/FABLE51_R10PRE_V21_GPT56_FINAL_AUDIT_FOR_OPUS.md": 1,
+    "invariant-r10:package-v2.6/inputs/FABLE51_RESEARCH_GPT56_ADJUDICATION_FOR_OPUS.md": 1,
+    "invariant-r10:package-v2.6/inputs/R10PRE_EXECUTION_V3_GPT56_ADJUDICATION.md": 1,
+    "invariant-r10:tools-lane/gate-negative-control.txt": 1
+   }
+  },
+  "E-43": {
+   "total": 98,
+   "n_files": 18,
+   "per_source": {
+    "invariant-r10": 98
+   },
+   "files": {
+    "invariant-r10:experiments/trvm_contracts/probe_contracts_e42_e43.mjs": 23,
+    "invariant-r10:experiments/trvm_contracts/probe_contracts.output.txt": 20,
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 8,
+    "invariant-r10:inputs-gpt-execution-adjudication-v3.md": 6,
+    "invariant-r10:package-v2.6/inputs/R10PRE_EXECUTION_V3_GPT56_ADJUDICATION.md": 6,
+    "invariant-r10:tools-lane/build_v2_5.py": 6,
+    "invariant-r10:CHANGELOG.md": 5,
+    "invariant-r10:experiments/trvm_contracts/RESULT.md": 5,
+    "invariant-r10:inputs-gpt-execution-adjudication-v2.md": 4,
+    "invariant-r10:package-v2.6/inputs/R10PRE_EXECUTION_V2_GPT56_ADJUDICATION.md": 4,
+    "invariant-r10:inputs-gpt-execution-adjudication.md": 3,
+    "invariant-r10:experiments/README.md": 2,
+    "invariant-r10:README.md": 1,
+    "invariant-r10:handoffs/TRVM_E42_E43_CANDIDATE_LAWS.md": 1,
+    "invariant-r10:package-v2.6/10_MACHINE_READABLE_LEDGER.json": 1,
+    "invariant-r10:package-v2.6/evidence_state.json": 1,
+    "invariant-r10:tools-lane/build_v2_6.py": 1,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 1
+   }
+  },
+  "E-42": {
+   "total": 124,
+   "n_files": 24,
+   "per_source": {
+    "invariant-r10": 124
+   },
+   "files": {
+    "invariant-r10:experiments/trvm_contracts/probe_contracts_e42_e43.mjs": 24,
+    "invariant-r10:experiments/trvm_contracts/probe_contracts.output.txt": 21,
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 10,
+    "invariant-r10:inputs-gpt-execution-adjudication-v2.md": 6,
+    "invariant-r10:inputs-gpt-execution-adjudication-v3.md": 6,
+    "invariant-r10:package-v2.6/inputs/R10PRE_EXECUTION_V2_GPT56_ADJUDICATION.md": 6,
+    "invariant-r10:package-v2.6/inputs/R10PRE_EXECUTION_V3_GPT56_ADJUDICATION.md": 6,
+    "invariant-r10:tools-lane/build_v2_4.py": 6,
+    "invariant-r10:tools-lane/build_v2_5.py": 6,
+    "invariant-r10:CHANGELOG.md": 5,
+    "invariant-r10:experiments/trvm_contracts/RESULT.md": 5,
+    "invariant-r10:inputs-gpt-execution-adjudication.md": 5,
+    "invariant-r10:tools-lane/drift_gate_v2_4.py": 3,
+    "invariant-r10:experiments/README.md": 2,
+    "invariant-r10:package-v2.6/tools/drift_gate.py": 2,
+    "invariant-r10:tools-lane/drift_gate_v2_5.py": 2,
+    "invariant-r10:tools-lane/drift_gate_v2_6.py": 2,
+    "invariant-r10:README.md": 1,
+    "invariant-r10:handoffs/TRVM_E42_E43_CANDIDATE_LAWS.md": 1,
+    "invariant-r10:package-v2.6/10_MACHINE_READABLE_LEDGER.json": 1,
+    "invariant-r10:package-v2.6/evidence_state.json": 1,
+    "invariant-r10:tools-lane/build_v2_6.py": 1,
+    "invariant-r10:tools-lane/gate-negative-control.txt": 1,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 1
+   }
+  },
+  "S2": {
+   "total": 109,
+   "n_files": 37,
+   "per_source": {
+    "invariant-r10": 105,
+    "TRVM": 4
+   },
+   "files": {
+    "invariant-r10:tools-lane/build_v2_4.py": 15,
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 14,
+    "invariant-r10:inputs-gpt-execution-adjudication.md": 8,
+    "invariant-r10:tools-lane/build_v2_5.py": 8,
+    "invariant-r10:package-v2.6/witnesses/liveness_l1.py": 6,
+    "invariant-r10:package-v2.6/12_R10PRE_SYNTHESIS.md": 5,
+    "invariant-r10:CHANGELOG.md": 4,
+    "TRVM:governance/invariant-grid.json": 4,
+    "invariant-r10:experiments/authority_merge/RESULT.md": 3,
+    "invariant-r10:package-v2.6-staging/liveness_l1_fair.py": 3,
+    "invariant-r10:package-v2.6/10_MACHINE_READABLE_LEDGER.json": 3,
+    "invariant-r10:package-v2.6/INV_FRONTIER_R10_PRE.md": 3,
+    "invariant-r10:package-v2.6/inputs/FABLE51_R10PRE_V2_GPT56_AUDIT_FOR_OPUS.md": 3,
+    "invariant-r10:package-v2.6/witnesses/liveness_l1_fair.py": 3,
+    "invariant-r10:experiments/locus_capability_facade/RESULT.md": 2,
+    "invariant-r10:inputs-gpt-execution-adjudication-v2.md": 2,
+    "invariant-r10:package-v2.6/inputs/R10PRE_EXECUTION_V2_GPT56_ADJUDICATION.md": 2,
+    "invariant-r10:package-v2.6/witnesses/liveness_l1.output.txt": 2,
+    "invariant-r10:drift_gate.py": 1,
+    "invariant-r10:experiments/rust/results/EXP5_authority_merge_cdcore.md": 1,
+    "invariant-r10:experiments/rust/src/bin/authority_merge.rs": 1,
+    "invariant-r10:inputs-gpt-execution-adjudication-v3.md": 1,
+    "invariant-r10:inputs-gpt-execution-go.md": 1,
+    "invariant-r10:package-v2.6-staging/L1Succession.tla": 1,
+    "invariant-r10:package-v2.6/11_R10PRE_OPUS_HANDOFF.md": 1,
+    "invariant-r10:package-v2.6/FABLE51_R10PRE_COUNTERSIGN.md": 1,
+    "invariant-r10:package-v2.6/README.md": 1,
+    "invariant-r10:package-v2.6/inputs/FABLE51_R10PRE_V21_GPT56_FINAL_AUDIT_FOR_OPUS.md": 1,
+    "invariant-r10:package-v2.6/inputs/FABLE51_RESEARCH_GPT56_ADJUDICATION_FOR_OPUS.md": 1,
+    "invariant-r10:package-v2.6/inputs/R10PRE_EXECUTION_V3_GPT56_ADJUDICATION.md": 1,
+    "invariant-r10:package-v2.6/tools/drift_gate.py": 1,
+    "invariant-r10:package-v2.6/v1-provenance/10_MACHINE_READABLE_LEDGER_v2_as_delivered.json": 1,
+    "invariant-r10:package-v2.6/witnesses/L1Succession.tla": 1,
+    "invariant-r10:package-v2.6/witnesses/liveness_l1_fair.output.txt": 1,
+    "invariant-r10:tools-lane/drift_gate_v2_4.py": 1,
+    "invariant-r10:tools-lane/drift_gate_v2_5.py": 1,
+    "invariant-r10:tools-lane/drift_gate_v2_6.py": 1
+   }
+  },
+  "E-13": {
+   "total": 38,
+   "n_files": 14,
+   "per_source": {
+    "invariant-r10": 38
+   },
+   "files": {
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 10,
+    "invariant-r10:tools-lane/build_v2_4.py": 5,
+    "invariant-r10:inputs-gpt-execution-adjudication.md": 3,
+    "invariant-r10:tools-lane/drift_gate_v2_4.py": 3,
+    "invariant-r10:CHANGELOG.md": 2,
+    "invariant-r10:inputs-gpt-execution-adjudication-v2.md": 2,
+    "invariant-r10:package-v2.6/inputs/R10PRE_EXECUTION_V2_GPT56_ADJUDICATION.md": 2,
+    "invariant-r10:package-v2.6/tools/drift_gate.py": 2,
+    "invariant-r10:tools-lane/drift_gate_v2_5.py": 2,
+    "invariant-r10:tools-lane/drift_gate_v2_6.py": 2,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 2,
+    "invariant-r10:package-v2.6/10_MACHINE_READABLE_LEDGER.json": 1,
+    "invariant-r10:package-v2.6/inputs/FABLE51_R10PRE_V21_GPT56_FINAL_AUDIT_FOR_OPUS.md": 1,
+    "invariant-r10:tools-lane/gate-negative-control.txt": 1
+   }
+  },
+  "E-13a": {
+   "total": 17,
+   "n_files": 14,
+   "per_source": {
+    "invariant-r10": 17
+   },
+   "files": {
+    "invariant-r10:tools-lane/build_v2_4.py": 3,
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 2,
+    "invariant-r10:CHANGELOG.md": 1,
+    "invariant-r10:inputs-gpt-execution-adjudication-v2.md": 1,
+    "invariant-r10:inputs-gpt-execution-adjudication.md": 1,
+    "invariant-r10:package-v2.6/evidence_state.json": 1,
+    "invariant-r10:package-v2.6/inputs/R10PRE_EXECUTION_V2_GPT56_ADJUDICATION.md": 1,
+    "invariant-r10:package-v2.6/tools/drift_gate.py": 1,
+    "invariant-r10:tools-lane/build_v2_5.py": 1,
+    "invariant-r10:tools-lane/drift_gate_v2_4.py": 1,
+    "invariant-r10:tools-lane/drift_gate_v2_5.py": 1,
+    "invariant-r10:tools-lane/drift_gate_v2_6.py": 1,
+    "invariant-r10:tools-lane/gate-negative-control.txt": 1,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 1
+   }
+  },
+  "E-46": {
+   "total": 31,
+   "n_files": 13,
+   "per_source": {
+    "invariant-r10": 31
+   },
+   "files": {
+    "invariant-r10:tools-lane/build_v2_4.py": 5,
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 4,
+    "invariant-r10:inputs-gpt-execution-adjudication.md": 3,
+    "invariant-r10:tools-lane/drift_gate_v2_4.py": 3,
+    "invariant-r10:CHANGELOG.md": 2,
+    "invariant-r10:inputs-gpt-execution-adjudication-v2.md": 2,
+    "invariant-r10:package-v2.6/inputs/R10PRE_EXECUTION_V2_GPT56_ADJUDICATION.md": 2,
+    "invariant-r10:package-v2.6/tools/drift_gate.py": 2,
+    "invariant-r10:tools-lane/drift_gate_v2_5.py": 2,
+    "invariant-r10:tools-lane/drift_gate_v2_6.py": 2,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 2,
+    "invariant-r10:package-v2.6/10_MACHINE_READABLE_LEDGER.json": 1,
+    "invariant-r10:tools-lane/gate-negative-control.txt": 1
+   }
+  },
+  "E-46a": {
+   "total": 15,
+   "n_files": 12,
+   "per_source": {
+    "invariant-r10": 15
+   },
+   "files": {
+    "invariant-r10:tools-lane/build_v2_4.py": 3,
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 2,
+    "invariant-r10:CHANGELOG.md": 1,
+    "invariant-r10:experiments/authority_merge/RESULT.md": 1,
+    "invariant-r10:package-v2.6/10_MACHINE_READABLE_LEDGER.json": 1,
+    "invariant-r10:package-v2.6/evidence_state.json": 1,
+    "invariant-r10:package-v2.6/tools/drift_gate.py": 1,
+    "invariant-r10:tools-lane/drift_gate_v2_4.py": 1,
+    "invariant-r10:tools-lane/drift_gate_v2_5.py": 1,
+    "invariant-r10:tools-lane/drift_gate_v2_6.py": 1,
+    "invariant-r10:tools-lane/gate-negative-control.txt": 1,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 1
+   }
+  },
+  "E-46b": {
+   "total": 13,
+   "n_files": 12,
+   "per_source": {
+    "invariant-r10": 13
+   },
+   "files": {
+    "invariant-r10:tools-lane/build_v2_4.py": 2,
+    "invariant-r10:CHANGELOG.md": 1,
+    "invariant-r10:experiments/authority_merge/RESULT.md": 1,
+    "invariant-r10:package-v2.6/10_MACHINE_READABLE_LEDGER.json": 1,
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 1,
+    "invariant-r10:package-v2.6/evidence_state.json": 1,
+    "invariant-r10:package-v2.6/tools/drift_gate.py": 1,
+    "invariant-r10:tools-lane/drift_gate_v2_4.py": 1,
+    "invariant-r10:tools-lane/drift_gate_v2_5.py": 1,
+    "invariant-r10:tools-lane/drift_gate_v2_6.py": 1,
+    "invariant-r10:tools-lane/gate-negative-control.txt": 1,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 1
+   }
+  },
+  "E-44": {
+   "total": 7,
+   "n_files": 6,
+   "per_source": {
+    "invariant-r10": 7
+   },
+   "files": {
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 2,
+    "invariant-r10:CHANGELOG.md": 1,
+    "invariant-r10:experiments/s6_locus_birth/RESULT.md": 1,
+    "invariant-r10:package-v2.6/evidence_state.json": 1,
+    "invariant-r10:tools-lane/build_v2_4.py": 1,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 1
+   }
+  },
+  "E-12": {
+   "total": 14,
+   "n_files": 10,
+   "per_source": {
+    "invariant-r10": 14
+   },
+   "files": {
+    "invariant-r10:tools-lane/drift_gate_v2_5.py": 3,
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 2,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 2,
+    "invariant-r10:CHANGELOG.md": 1,
+    "invariant-r10:package-v2.6/evidence_state.json": 1,
+    "invariant-r10:package-v2.6/inputs/FABLE51_R10PRE_V21_GPT56_FINAL_AUDIT_FOR_OPUS.md": 1,
+    "invariant-r10:package-v2.6/tools/drift_gate.py": 1,
+    "invariant-r10:package-v2.6/v1-provenance/05_IRREDUCIBLE_BASIS_ANALYSIS.md": 1,
+    "invariant-r10:tools-lane/drift_gate_v2_6.py": 1,
+    "invariant-r10:tools-lane/gate-v2_5-negative-control.txt": 1
+   }
+  },
+  "E-22": {
+   "total": 6,
+   "n_files": 4,
+   "per_source": {
+    "invariant-r10": 6
+   },
+   "files": {
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 3,
+    "invariant-r10:CHANGELOG.md": 1,
+    "invariant-r10:package-v2.6/evidence_state.json": 1,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 1
+   }
+  },
+  "E-45": {
+   "total": 5,
+   "n_files": 5,
+   "per_source": {
+    "invariant-r10": 5
+   },
+   "files": {
+    "invariant-r10:CHANGELOG.md": 1,
+    "invariant-r10:package-v2.6/10_MACHINE_READABLE_LEDGER.json": 1,
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 1,
+    "invariant-r10:package-v2.6/evidence_state.json": 1,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 1
+   }
+  },
+  "E-47": {
+   "total": 6,
+   "n_files": 5,
+   "per_source": {
+    "invariant-r10": 6
+   },
+   "files": {
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 2,
+    "invariant-r10:CHANGELOG.md": 1,
+    "invariant-r10:package-v2.6/10_MACHINE_READABLE_LEDGER.json": 1,
+    "invariant-r10:package-v2.6/evidence_state.json": 1,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 1
+   }
+  },
+  "law:world.write-mediated@1": {
+   "total": 9,
+   "n_files": 6,
+   "per_source": {
+    "invariant-r10": 5,
+    "TRVM": 4
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 4,
+    "invariant-r10:experiments/observe_is_write/RESULT.md": 1,
+    "invariant-r10:experiments/observe_is_write/probe_observe_is_write_repro.mjs": 1,
+    "invariant-r10:package-v2.6/10_MACHINE_READABLE_LEDGER.json": 1,
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 1,
+    "invariant-r10:package-v2.6/v1-provenance/10_MACHINE_READABLE_LEDGER_v2_as_delivered.json": 1
+   }
+  },
+  "law:world.version-monotone@1": {
+   "total": 3,
+   "n_files": 2,
+   "per_source": {
+    "invariant-r10": 1,
+    "TRVM": 2
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 2,
+    "invariant-r10:experiments/observe_is_write/probe_observe_is_write_repro.mjs": 1
+   }
+  },
+  "F28": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "invariant-r10": 1
+   },
+   "files": {
+    "invariant-r10:inputs-gpt-execution-adjudication.md": 1
+   }
+  },
+  "W-16": {
+   "total": 13,
+   "n_files": 7,
+   "per_source": {
+    "invariant-r10": 2,
+    "WEK": 11
+   },
+   "files": {
+    "WEK:WEK_R0_EXISTING_LAWS_MAP.md": 3,
+    "WEK:WEK_R0_PRIOR_ART_MATRIX.md": 3,
+    "WEK:WEK_R0_FLOOR_CENSUS_V0.md": 2,
+    "WEK:WEK_R0_REVIEW_BUNDLE.md": 2,
+    "invariant-r10:package-v2.6/10_MACHINE_READABLE_LEDGER.json": 1,
+    "invariant-r10:package-v2.6/v1-provenance/10_MACHINE_READABLE_LEDGER_v2_as_delivered.json": 1,
+    "WEK:WEK_R0_FINDINGS.md": 1
+   }
+  },
+  "E-01": {
+   "total": 9,
+   "n_files": 4,
+   "per_source": {
+    "invariant-r10": 9
+   },
+   "files": {
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 6,
+    "invariant-r10:package-v2.6/evidence_state.json": 1,
+    "invariant-r10:package-v2.6/inputs/FABLE51_R10PRE_V21_GPT56_FINAL_AUDIT_FOR_OPUS.md": 1,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 1
+   }
+  },
+  "E-02": {
+   "total": 11,
+   "n_files": 3,
+   "per_source": {
+    "invariant-r10": 11
+   },
+   "files": {
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 9,
+    "invariant-r10:package-v2.6/evidence_state.json": 1,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 1
+   }
+  },
+  "E-03": {
+   "total": 3,
+   "n_files": 3,
+   "per_source": {
+    "invariant-r10": 3
+   },
+   "files": {
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 1,
+    "invariant-r10:package-v2.6/evidence_state.json": 1,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 1
+   }
+  },
+  "E-04": {
+   "total": 4,
+   "n_files": 4,
+   "per_source": {
+    "invariant-r10": 4
+   },
+   "files": {
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 1,
+    "invariant-r10:package-v2.6/evidence_state.json": 1,
+    "invariant-r10:package-v2.6/v1-provenance/05_IRREDUCIBLE_BASIS_ANALYSIS.md": 1,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 1
+   }
+  },
+  "E-05": {
+   "total": 4,
+   "n_files": 4,
+   "per_source": {
+    "invariant-r10": 4
+   },
+   "files": {
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 1,
+    "invariant-r10:package-v2.6/evidence_state.json": 1,
+    "invariant-r10:package-v2.6/v1-provenance/05_IRREDUCIBLE_BASIS_ANALYSIS.md": 1,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 1
+   }
+  },
+  "E-06": {
+   "total": 4,
+   "n_files": 4,
+   "per_source": {
+    "invariant-r10": 4
+   },
+   "files": {
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 1,
+    "invariant-r10:package-v2.6/evidence_state.json": 1,
+    "invariant-r10:package-v2.6/v1-provenance/05_IRREDUCIBLE_BASIS_ANALYSIS.md": 1,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 1
+   }
+  },
+  "E-07": {
+   "total": 4,
+   "n_files": 4,
+   "per_source": {
+    "invariant-r10": 4
+   },
+   "files": {
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 1,
+    "invariant-r10:package-v2.6/evidence_state.json": 1,
+    "invariant-r10:package-v2.6/v1-provenance/05_IRREDUCIBLE_BASIS_ANALYSIS.md": 1,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 1
+   }
+  },
+  "E-08": {
+   "total": 3,
+   "n_files": 3,
+   "per_source": {
+    "invariant-r10": 3
+   },
+   "files": {
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 1,
+    "invariant-r10:package-v2.6/evidence_state.json": 1,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 1
+   }
+  },
+  "E-09": {
+   "total": 4,
+   "n_files": 4,
+   "per_source": {
+    "invariant-r10": 4
+   },
+   "files": {
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 1,
+    "invariant-r10:package-v2.6/evidence_state.json": 1,
+    "invariant-r10:package-v2.6/v1-provenance/05_IRREDUCIBLE_BASIS_ANALYSIS.md": 1,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 1
+   }
+  },
+  "E-10": {
+   "total": 5,
+   "n_files": 4,
+   "per_source": {
+    "invariant-r10": 3,
+    "TRVM": 2
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 2,
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 1,
+    "invariant-r10:package-v2.6/evidence_state.json": 1,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 1
+   }
+  },
+  "E-11": {
+   "total": 3,
+   "n_files": 3,
+   "per_source": {
+    "invariant-r10": 3
+   },
+   "files": {
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 1,
+    "invariant-r10:package-v2.6/evidence_state.json": 1,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 1
+   }
+  },
+  "E-16": {
+   "total": 5,
+   "n_files": 3,
+   "per_source": {
+    "invariant-r10": 5
+   },
+   "files": {
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 3,
+    "invariant-r10:package-v2.6/evidence_state.json": 1,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 1
+   }
+  },
+  "E-17": {
+   "total": 4,
+   "n_files": 4,
+   "per_source": {
+    "invariant-r10": 3,
+    "TRVM": 1
+   },
+   "files": {
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 1,
+    "invariant-r10:package-v2.6/evidence_state.json": 1,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 1,
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "E-18": {
+   "total": 4,
+   "n_files": 4,
+   "per_source": {
+    "invariant-r10": 4
+   },
+   "files": {
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 1,
+    "invariant-r10:package-v2.6/evidence_state.json": 1,
+    "invariant-r10:package-v2.6/v1-provenance/05_IRREDUCIBLE_BASIS_ANALYSIS.md": 1,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 1
+   }
+  },
+  "E-19": {
+   "total": 3,
+   "n_files": 3,
+   "per_source": {
+    "invariant-r10": 3
+   },
+   "files": {
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 1,
+    "invariant-r10:package-v2.6/evidence_state.json": 1,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 1
+   }
+  },
+  "E-20": {
+   "total": 4,
+   "n_files": 4,
+   "per_source": {
+    "invariant-r10": 4
+   },
+   "files": {
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 1,
+    "invariant-r10:package-v2.6/evidence_state.json": 1,
+    "invariant-r10:package-v2.6/v1-provenance/05_IRREDUCIBLE_BASIS_ANALYSIS.md": 1,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 1
+   }
+  },
+  "E-21": {
+   "total": 4,
+   "n_files": 4,
+   "per_source": {
+    "invariant-r10": 4
+   },
+   "files": {
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 1,
+    "invariant-r10:package-v2.6/evidence_state.json": 1,
+    "invariant-r10:package-v2.6/v1-provenance/05_IRREDUCIBLE_BASIS_ANALYSIS.md": 1,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 1
+   }
+  },
+  "E-23": {
+   "total": 4,
+   "n_files": 3,
+   "per_source": {
+    "invariant-r10": 4
+   },
+   "files": {
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 2,
+    "invariant-r10:package-v2.6/evidence_state.json": 1,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 1
+   }
+  },
+  "law:digest.adequacy@2": {
+   "total": 3,
+   "n_files": 2,
+   "per_source": {
+    "invariant-r10": 1,
+    "TRVM": 2
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 2,
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 1
+   }
+  },
+  "E-24": {
+   "total": 4,
+   "n_files": 3,
+   "per_source": {
+    "invariant-r10": 4
+   },
+   "files": {
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 2,
+    "invariant-r10:package-v2.6/evidence_state.json": 1,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 1
+   }
+  },
+  "law:kappa.support-equivariance@1": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "invariant-r10": 1
+   },
+   "files": {
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 1
+   }
+  },
+  "E-25": {
+   "total": 4,
+   "n_files": 4,
+   "per_source": {
+    "invariant-r10": 4
+   },
+   "files": {
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 1,
+    "invariant-r10:package-v2.6/evidence_state.json": 1,
+    "invariant-r10:package-v2.6/v1-provenance/05_IRREDUCIBLE_BASIS_ANALYSIS.md": 1,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 1
+   }
+  },
+  "law:state.exec-identity@1": {
+   "total": 6,
+   "n_files": 2,
+   "per_source": {
+    "invariant-r10": 1,
+    "TRVM": 5
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 5,
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 1
+   }
+  },
+  "law:state.semantic-quotient@1": {
+   "total": 8,
+   "n_files": 2,
+   "per_source": {
+    "invariant-r10": 1,
+    "TRVM": 7
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 7,
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 1
+   }
+  },
+  "E-26": {
+   "total": 3,
+   "n_files": 3,
+   "per_source": {
+    "invariant-r10": 3
+   },
+   "files": {
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 1,
+    "invariant-r10:package-v2.6/evidence_state.json": 1,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 1
+   }
+  },
+  "law:warrant.freshness@1": {
+   "total": 3,
+   "n_files": 2,
+   "per_source": {
+    "invariant-r10": 1,
+    "TRVM": 2
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 2,
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 1
+   }
+  },
+  "law:warrant.footprint-soundness@1": {
+   "total": 3,
+   "n_files": 2,
+   "per_source": {
+    "invariant-r10": 1,
+    "TRVM": 2
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 2,
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 1
+   }
+  },
+  "law:warrant.phantom-scope@1": {
+   "total": 3,
+   "n_files": 2,
+   "per_source": {
+    "invariant-r10": 1,
+    "TRVM": 2
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 2,
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 1
+   }
+  },
+  "E-27": {
+   "total": 3,
+   "n_files": 3,
+   "per_source": {
+    "invariant-r10": 3
+   },
+   "files": {
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 1,
+    "invariant-r10:package-v2.6/evidence_state.json": 1,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 1
+   }
+  },
+  "law:warrant.support-soundness@1": {
+   "total": 3,
+   "n_files": 2,
+   "per_source": {
+    "invariant-r10": 1,
+    "TRVM": 2
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 2,
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 1
+   }
+  },
+  "E-28": {
+   "total": 3,
+   "n_files": 3,
+   "per_source": {
+    "invariant-r10": 3
+   },
+   "files": {
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 1,
+    "invariant-r10:package-v2.6/evidence_state.json": 1,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 1
+   }
+  },
+  "law:derivation.entry-snapshot@1": {
+   "total": 2,
+   "n_files": 2,
+   "per_source": {
+    "invariant-r10": 1,
+    "TRVM": 1
+   },
+   "files": {
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 1,
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "law:derivation.owned-snapshot@1": {
+   "total": 2,
+   "n_files": 2,
+   "per_source": {
+    "invariant-r10": 1,
+    "TRVM": 1
+   },
+   "files": {
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 1,
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "law:derivation.acceptance-authority@1": {
+   "total": 2,
+   "n_files": 2,
+   "per_source": {
+    "invariant-r10": 1,
+    "TRVM": 1
+   },
+   "files": {
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 1,
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "E-29": {
+   "total": 4,
+   "n_files": 4,
+   "per_source": {
+    "invariant-r10": 4
+   },
+   "files": {
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 1,
+    "invariant-r10:package-v2.6/evidence_state.json": 1,
+    "invariant-r10:package-v2.6/v1-provenance/05_IRREDUCIBLE_BASIS_ANALYSIS.md": 1,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 1
+   }
+  },
+  "law:maintenance.atomicity@1": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "invariant-r10": 1
+   },
+   "files": {
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 1
+   }
+  },
+  "E-30": {
+   "total": 3,
+   "n_files": 3,
+   "per_source": {
+    "invariant-r10": 3
+   },
+   "files": {
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 1,
+    "invariant-r10:package-v2.6/evidence_state.json": 1,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 1
+   }
+  },
+  "E-31": {
+   "total": 3,
+   "n_files": 3,
+   "per_source": {
+    "invariant-r10": 3
+   },
+   "files": {
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 1,
+    "invariant-r10:package-v2.6/evidence_state.json": 1,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 1
+   }
+  },
+  "E-32": {
+   "total": 3,
+   "n_files": 3,
+   "per_source": {
+    "invariant-r10": 3
+   },
+   "files": {
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 1,
+    "invariant-r10:package-v2.6/evidence_state.json": 1,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 1
+   }
+  },
+  "E-33": {
+   "total": 3,
+   "n_files": 3,
+   "per_source": {
+    "invariant-r10": 3
+   },
+   "files": {
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 1,
+    "invariant-r10:package-v2.6/evidence_state.json": 1,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 1
+   }
+  },
+  "E-34": {
+   "total": 3,
+   "n_files": 3,
+   "per_source": {
+    "invariant-r10": 3
+   },
+   "files": {
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 1,
+    "invariant-r10:package-v2.6/evidence_state.json": 1,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 1
+   }
+  },
+  "E-35": {
+   "total": 3,
+   "n_files": 3,
+   "per_source": {
+    "invariant-r10": 3
+   },
+   "files": {
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 1,
+    "invariant-r10:package-v2.6/evidence_state.json": 1,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 1
+   }
+  },
+  "W-1": {
+   "total": 8,
+   "n_files": 4,
+   "per_source": {
+    "invariant-r10": 2,
+    "TRVM": 3,
+    "WEK": 3
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 3,
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 2,
+    "WEK:WEK_R0_EXISTING_LAWS_MAP.md": 2,
+    "WEK:WEK_R0_REVIEW_BUNDLE.md": 1
+   }
+  },
+  "E-36": {
+   "total": 5,
+   "n_files": 4,
+   "per_source": {
+    "invariant-r10": 5
+   },
+   "files": {
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 2,
+    "invariant-r10:package-v2.6/evidence_state.json": 1,
+    "invariant-r10:tools-lane/build_v2_4.py": 1,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 1
+   }
+  },
+  "W-6": {
+   "total": 7,
+   "n_files": 5,
+   "per_source": {
+    "invariant-r10": 2,
+    "WEK": 5
+   },
+   "files": {
+    "WEK:WEK_R0_EXISTING_LAWS_MAP.md": 2,
+    "WEK:WEK_R0_REPO_MAP.md": 2,
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 1,
+    "invariant-r10:package-v2.6/v1-provenance/05_IRREDUCIBLE_BASIS_ANALYSIS.md": 1,
+    "WEK:WEK_R0_FINDINGS.md": 1
+   }
+  },
+  "W-14": {
+   "total": 5,
+   "n_files": 4,
+   "per_source": {
+    "invariant-r10": 2,
+    "WEK": 3
+   },
+   "files": {
+    "WEK:WEK_R0_FINDINGS.md": 2,
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 1,
+    "invariant-r10:package-v2.6/v1-provenance/05_IRREDUCIBLE_BASIS_ANALYSIS.md": 1,
+    "WEK:WEK_R0_EXISTING_LAWS_MAP.md": 1
+   }
+  },
+  "E-37": {
+   "total": 3,
+   "n_files": 3,
+   "per_source": {
+    "invariant-r10": 3
+   },
+   "files": {
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 1,
+    "invariant-r10:package-v2.6/evidence_state.json": 1,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 1
+   }
+  },
+  "E-38": {
+   "total": 4,
+   "n_files": 4,
+   "per_source": {
+    "invariant-r10": 4
+   },
+   "files": {
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 1,
+    "invariant-r10:package-v2.6/evidence_state.json": 1,
+    "invariant-r10:package-v2.6/v1-provenance/05_IRREDUCIBLE_BASIS_ANALYSIS.md": 1,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 1
+   }
+  },
+  "W-10": {
+   "total": 3,
+   "n_files": 2,
+   "per_source": {
+    "invariant-r10": 1,
+    "WEK": 2
+   },
+   "files": {
+    "WEK:WEK_R0_EXISTING_LAWS_MAP.md": 2,
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 1
+   }
+  },
+  "E-39": {
+   "total": 3,
+   "n_files": 3,
+   "per_source": {
+    "invariant-r10": 3
+   },
+   "files": {
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 1,
+    "invariant-r10:package-v2.6/evidence_state.json": 1,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 1
+   }
+  },
+  "E-40": {
+   "total": 3,
+   "n_files": 3,
+   "per_source": {
+    "invariant-r10": 3
+   },
+   "files": {
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 1,
+    "invariant-r10:package-v2.6/evidence_state.json": 1,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 1
+   }
+  },
+  "E-41": {
+   "total": 3,
+   "n_files": 3,
+   "per_source": {
+    "invariant-r10": 3
+   },
+   "files": {
+    "invariant-r10:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json": 1,
+    "invariant-r10:package-v2.6/evidence_state.json": 1,
+    "invariant-r10:tools-lane/gate-v2_6-negative-control.txt": 1
+   }
+  },
+  "W-2": {
+   "total": 10,
+   "n_files": 5,
+   "per_source": {
+    "invariant-r10": 1,
+    "TRVM": 2,
+    "WEK": 7
+   },
+   "files": {
+    "WEK:WEK_R0_EXISTING_LAWS_MAP.md": 5,
+    "TRVM:governance/invariant-grid.json": 2,
+    "invariant-r10:package-v2.6/v1-provenance/05_IRREDUCIBLE_BASIS_ANALYSIS.md": 1,
+    "WEK:WEK_R0_PRIOR_ART_MATRIX.md": 1,
+    "WEK:WEK_R0_REVIEW_BUNDLE.md": 1
+   }
+  },
+  "W-11": {
+   "total": 2,
+   "n_files": 2,
+   "per_source": {
+    "invariant-r10": 1,
+    "WEK": 1
+   },
+   "files": {
+    "invariant-r10:package-v2.6/v1-provenance/05_IRREDUCIBLE_BASIS_ANALYSIS.md": 1,
+    "WEK:WEK_R0_EXISTING_LAWS_MAP.md": 1
+   }
+  },
+  "W-8": {
+   "total": 5,
+   "n_files": 4,
+   "per_source": {
+    "invariant-r10": 1,
+    "WEK": 4
+   },
+   "files": {
+    "WEK:WEK_R0_FINDINGS.md": 2,
+    "invariant-r10:package-v2.6/v1-provenance/05_IRREDUCIBLE_BASIS_ANALYSIS.md": 1,
+    "WEK:WEK_R0_EXISTING_LAWS_MAP.md": 1,
+    "WEK:WEK_R0_PRIOR_ART_MATRIX.md": 1
+   }
+  },
+  "law:sched.free.float@1": {
+   "total": 6,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 6
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 6
+   }
+  },
+  "law:sched.adversarial.float@1": {
+   "total": 4,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 4
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 4
+   }
+  },
+  "law:plane.rule-partition@1": {
+   "total": 5,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 5
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 5
+   }
+  },
+  "law:plane.separation.fixpoint@1": {
+   "total": 3,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 3
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 3
+   }
+  },
+  "law:film.evidence-chain@5": {
+   "total": 3,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 3
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 3
+   }
+  },
+  "law:film.terminal-witness@1": {
+   "total": 7,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 7
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 7
+   }
+  },
+  "law:sched.certificate@2": {
+   "total": 3,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 3
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 3
+   }
+  },
+  "law:cert.field-discipline@1": {
+   "total": 5,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 5
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 5
+   }
+  },
+  "law:refine.alloc-portability@1": {
+   "total": 5,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 5
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 5
+   }
+  },
+  "law:kernel.identity@2": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 1
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "law:grid.consistency@2": {
+   "total": 2,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 2
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 2
+   }
+  },
+  "law:warrant.invalidation-trichotomy@1": {
+   "total": 2,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 2
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 2
+   }
+  },
+  "law:footprint.shared@1": {
+   "total": 2,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 2
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 2
+   }
+  },
+  "law:warrant.composition@1": {
+   "total": 2,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 2
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 2
+   }
+  },
+  "law:warrant.frame@1": {
+   "total": 3,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 3
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 3
+   }
+  },
+  "law:kernel.identity@1": {
+   "total": 2,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 2
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 2
+   }
+  },
+  "law:warrant.fresh-replay-coherence@1": {
+   "total": 3,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 3
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 3
+   }
+  },
+  "law:sched.free.ast-term@1": {
+   "total": 3,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 3
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 3
+   }
+  },
+  "law:collapse.progress@1": {
+   "total": 3,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 3
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 3
+   }
+  },
+  "law:sched.certificate@1": {
+   "total": 2,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 2
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 2
+   }
+  },
+  "law:film.evidence-chain@4": {
+   "total": 2,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 2
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 2
+   }
+  },
+  "law:deriv.count-invariance.float@1": {
+   "total": 3,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 3
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 3
+   }
+  },
+  "law:maintenance.capability-confinement@1": {
+   "total": 3,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 3
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 3
+   }
+  },
+  "law:evidence.instrument-nonvacuity@1": {
+   "total": 2,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 2
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 2
+   }
+  },
+  "law:derivation.environment-confinement@1": {
+   "total": 2,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 2
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 2
+   }
+  },
+  "E-1": {
+   "total": 7,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 7
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 7
+   }
+  },
+  "E-2": {
+   "total": 2,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 2
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 2
+   }
+  },
+  "E-3": {
+   "total": 2,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 2
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 2
+   }
+  },
+  "E-4": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 1
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "E-5": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 1
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "E-8": {
+   "total": 20,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 20
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 20
+   }
+  },
+  "E-9": {
+   "total": 2,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 2
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 2
+   }
+  },
+  "E-1a": {
+   "total": 7,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 7
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 7
+   }
+  },
+  "E-1b": {
+   "total": 13,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 13
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 13
+   }
+  },
+  "E-2b": {
+   "total": 7,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 7
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 7
+   }
+  },
+  "E-8b": {
+   "total": 4,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 4
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 4
+   }
+  },
+  "E-0": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 1
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "E-10b": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 1
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "law:proof.semantic-vocabulary-closed@1": {
+   "total": 3,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 3
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 3
+   }
+  },
+  "law:proof.verifier-input-owned@1": {
+   "total": 2,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 2
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 2
+   }
+  },
+  "law:proof.mount-is-a-closed-artifact@1": {
+   "total": 2,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 2
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 2
+   }
+  },
+  "law:proof.blind-package-bound@1": {
+   "total": 3,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 3
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 3
+   }
+  },
+  "law:proof.evidence-shape-unambiguous@1": {
+   "total": 2,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 2
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 2
+   }
+  },
+  "law:proof.measurement-authority-frozen@1": {
+   "total": 2,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 2
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 2
+   }
+  },
+  "law:digest.canonical-bytes@1": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 1
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "law:derivation.grant-footprint-separation@1": {
+   "total": 2,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 2
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 2
+   }
+  },
+  "law:derivation.core-semantics@1": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 1
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "law:derivation.serialized-boundary@3": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 1
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "law:derivation.implementation-provenance@2": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 1
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "law:film.native-emission@1": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 1
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "law:derivation.implementation-provenance@3": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 1
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "law:derivation.canonical-lowering@1": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 1
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "law:derivation.target-decoding@1": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 1
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "law:derivation.lowering-refinement@1": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 1
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "law:derivation.host-ownership@1": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 1
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "law:derivation.observation-multiplicity@1": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 1
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "law:derivation.instantiation-identity@1": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 1
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "law:evidence.phase-pinned-target@1": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 1
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "law:derivation.emission-conformance@1": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 1
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "law:derivation.emission-conformance@2": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 1
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "law:derivation.emission-conformance@3": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 1
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "law:derivation.emission-conformance@4": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 1
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "law:derivation.emission-conformance@5": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 1
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "law:proof.release-manifest-owned@1": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 1
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "law:proof.release-identity-binds-all-commitments@1": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 1
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "law:proof.protocol-oracle-is-environment-independent@1": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 1
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "law:proof.spec-release-bound@1": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 1
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "law:proof.conformance-oracle-frozen@1": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 1
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "law:proof.byte-budget-before-parse@1": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 1
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "law:proof.canonical-wire@1": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 1
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "law:proof.reference-is-not-claim@1": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 1
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "law:proof.verifier-policy-owned@1": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 1
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "law:proof.content-address-is-not-a-warrant@1": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 1
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "law:proof.release-id-canonically-encoded@1": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 1
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "law:proof.release-archive-immutable@1": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 1
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "law:proof.run-selects-one-release@1": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 1
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "law:proof.scorer-implementation-free@1": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 1
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "law:proof.instrument-content-bound@1": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 1
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "law:proof.candidate-frozen-before-reveal@1": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 1
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "law:proof.interop-observed-not-scored@1": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 1
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "law:proof.observation-boundary-enforced@1": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 1
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "law:proof.reveal-gates-secret-execution@1": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 1
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "law:proof.executed-subject-is-frozen-subject@1": {
+   "total": 2,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 2
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 2
+   }
+  },
+  "law:proof.transition-preconditions-live@1": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 1
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "law:proof.emitted-mount-exact@1": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 1
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "law:proof.run-completes-on-measurement@1": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 1
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "law:proof.state-transition-witnessed@1": {
+   "total": 2,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 2
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 2
+   }
+  },
+  "law:proof.falsifier-runs-on-a-sandbox@1": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 1
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "law:proof.authority-bound-to-its-world@1": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 1
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "law:proof.terminal-claim-witnessed@1": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 1
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "law:proof.terminal-claim-replayed@1": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 1
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "law:proof.subject-label-is-an-identifier@1": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 1
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "law:evidence.brief-identity-derived@1": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 1
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "law:proof.evidence-bytes-unambiguous@1": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 1
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "law:proof.run-record-vocabulary-closed@1": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 1
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "law:proof.mount-is-a-private-object@1": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "TRVM": 1
+   },
+   "files": {
+    "TRVM:governance/invariant-grid.json": 1
+   }
+  },
+  "W-7": {
+   "total": 12,
+   "n_files": 4,
+   "per_source": {
+    "WEK": 12
+   },
+   "files": {
+    "WEK:WEK_R0_EXISTING_LAWS_MAP.md": 5,
+    "WEK:WEK_R0_FINDINGS.md": 3,
+    "WEK:WEK_R0_REVIEW_BUNDLE.md": 3,
+    "WEK:WEK_R0_REPO_MAP.md": 1
+   }
+  },
+  "W-3": {
+   "total": 4,
+   "n_files": 2,
+   "per_source": {
+    "WEK": 4
+   },
+   "files": {
+    "WEK:WEK_R0_EXISTING_LAWS_MAP.md": 3,
+    "WEK:WEK_R0_FINDINGS.md": 1
+   }
+  },
+  "M0-5": {
+   "total": 8,
+   "n_files": 5,
+   "per_source": {
+    "WEK": 8
+   },
+   "files": {
+    "WEK:WEK_R0_REVIEW_BUNDLE.md": 3,
+    "WEK:WEK_R0_REPO_MAP.md": 2,
+    "WEK:WEK_R0_EXISTING_LAWS_MAP.md": 1,
+    "WEK:WEK_R0_FINDINGS.md": 1,
+    "WEK:WEK_R0_PRIOR_ART_MATRIX.md": 1
+   }
+  },
+  "W-4": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "WEK": 1
+   },
+   "files": {
+    "WEK:WEK_R0_EXISTING_LAWS_MAP.md": 1
+   }
+  },
+  "W-5": {
+   "total": 7,
+   "n_files": 3,
+   "per_source": {
+    "WEK": 7
+   },
+   "files": {
+    "WEK:WEK_R0_EXISTING_LAWS_MAP.md": 5,
+    "WEK:WEK_R0_PRIOR_ART_MATRIX.md": 1,
+    "WEK:WEK_R0_REVIEW_BUNDLE.md": 1
+   }
+  },
+  "N0-6": {
+   "total": 3,
+   "n_files": 3,
+   "per_source": {
+    "WEK": 3
+   },
+   "files": {
+    "WEK:WEK_R0_EXISTING_LAWS_MAP.md": 1,
+    "WEK:WEK_R0_FINDINGS.md": 1,
+    "WEK:WEK_R0_REPO_MAP.md": 1
+   }
+  },
+  "M0-4": {
+   "total": 6,
+   "n_files": 4,
+   "per_source": {
+    "WEK": 6
+   },
+   "files": {
+    "WEK:WEK_R0_REVIEW_BUNDLE.md": 3,
+    "WEK:WEK_R0_EXISTING_LAWS_MAP.md": 1,
+    "WEK:WEK_R0_FINDINGS.md": 1,
+    "WEK:WEK_R0_PRIOR_ART_MATRIX.md": 1
+   }
+  },
+  "M0-2": {
+   "total": 6,
+   "n_files": 3,
+   "per_source": {
+    "WEK": 6
+   },
+   "files": {
+    "WEK:WEK_R0_REVIEW_BUNDLE.md": 3,
+    "WEK:WEK_R0_FINDINGS.md": 2,
+    "WEK:WEK_R0_EXISTING_LAWS_MAP.md": 1
+   }
+  },
+  "W-9": {
+   "total": 2,
+   "n_files": 1,
+   "per_source": {
+    "WEK": 2
+   },
+   "files": {
+    "WEK:WEK_R0_EXISTING_LAWS_MAP.md": 2
+   }
+  },
+  "W-12": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "WEK": 1
+   },
+   "files": {
+    "WEK:WEK_R0_EXISTING_LAWS_MAP.md": 1
+   }
+  },
+  "W-13": {
+   "total": 2,
+   "n_files": 2,
+   "per_source": {
+    "WEK": 2
+   },
+   "files": {
+    "WEK:WEK_R0_EXISTING_LAWS_MAP.md": 1,
+    "WEK:WEK_R0_PRIOR_ART_MATRIX.md": 1
+   }
+  },
+  "W-15": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "WEK": 1
+   },
+   "files": {
+    "WEK:WEK_R0_EXISTING_LAWS_MAP.md": 1
+   }
+  },
+  "N0-5": {
+   "total": 4,
+   "n_files": 4,
+   "per_source": {
+    "WEK": 4
+   },
+   "files": {
+    "WEK:WEK_R0_EXISTING_LAWS_MAP.md": 1,
+    "WEK:WEK_R0_FINDINGS.md": 1,
+    "WEK:WEK_R0_REPO_MAP.md": 1,
+    "WEK:WEK_R0_REVIEW_BUNDLE.md": 1
+   }
+  },
+  "N0-2": {
+   "total": 3,
+   "n_files": 3,
+   "per_source": {
+    "WEK": 3
+   },
+   "files": {
+    "WEK:WEK_R0_EXISTING_LAWS_MAP.md": 1,
+    "WEK:WEK_R0_FINDINGS.md": 1,
+    "WEK:WEK_R0_REVIEW_BUNDLE.md": 1
+   }
+  },
+  "M0-1": {
+   "total": 8,
+   "n_files": 4,
+   "per_source": {
+    "WEK": 8
+   },
+   "files": {
+    "WEK:WEK_R0_REVIEW_BUNDLE.md": 3,
+    "WEK:WEK_R0_FINDINGS.md": 2,
+    "WEK:WEK_R0_PRIOR_ART_MATRIX.md": 2,
+    "WEK:WEK_R0_FLOOR_CENSUS_V0.md": 1
+   }
+  },
+  "M0-3": {
+   "total": 7,
+   "n_files": 4,
+   "per_source": {
+    "WEK": 7
+   },
+   "files": {
+    "WEK:WEK_R0_REVIEW_BUNDLE.md": 3,
+    "WEK:WEK_R0_REPO_MAP.md": 2,
+    "WEK:WEK_R0_FINDINGS.md": 1,
+    "WEK:WEK_R0_PRIOR_ART_MATRIX.md": 1
+   }
+  },
+  "N0-1": {
+   "total": 3,
+   "n_files": 3,
+   "per_source": {
+    "WEK": 3
+   },
+   "files": {
+    "WEK:WEK_R0_FINDINGS.md": 1,
+    "WEK:WEK_R0_REPO_MAP.md": 1,
+    "WEK:WEK_R0_REVIEW_BUNDLE.md": 1
+   }
+  },
+  "N0-3": {
+   "total": 5,
+   "n_files": 4,
+   "per_source": {
+    "WEK": 5
+   },
+   "files": {
+    "WEK:WEK_R0_REPO_MAP.md": 2,
+    "WEK:WEK_R0_FINDINGS.md": 1,
+    "WEK:WEK_R0_FLOOR_CENSUS_V0.md": 1,
+    "WEK:WEK_R0_REVIEW_BUNDLE.md": 1
+   }
+  },
+  "N0-4": {
+   "total": 4,
+   "n_files": 3,
+   "per_source": {
+    "WEK": 4
+   },
+   "files": {
+    "WEK:WEK_R0_REVIEW_BUNDLE.md": 2,
+    "WEK:WEK_R0_FINDINGS.md": 1,
+    "WEK:WEK_R0_REPO_MAP.md": 1
+   }
+  },
+  "N0-7": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "WEK": 1
+   },
+   "files": {
+    "WEK:WEK_R0_FINDINGS.md": 1
+   }
+  },
+  "N0-8": {
+   "total": 3,
+   "n_files": 3,
+   "per_source": {
+    "WEK": 3
+   },
+   "files": {
+    "WEK:WEK_R0_FINDINGS.md": 1,
+    "WEK:WEK_R0_REPO_MAP.md": 1,
+    "WEK:WEK_R0_REVIEW_BUNDLE.md": 1
+   }
+  },
+  "N0-9": {
+   "total": 4,
+   "n_files": 3,
+   "per_source": {
+    "WEK": 4
+   },
+   "files": {
+    "WEK:WEK_R0_REVIEW_BUNDLE.md": 2,
+    "WEK:WEK_R0_FINDINGS.md": 1,
+    "WEK:WEK_R0_REPO_MAP.md": 1
+   }
+  },
+  "Q0-1": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "WEK": 1
+   },
+   "files": {
+    "WEK:WEK_R0_FINDINGS.md": 1
+   }
+  },
+  "Q0-2": {
+   "total": 1,
+   "n_files": 1,
+   "per_source": {
+    "WEK": 1
+   },
+   "files": {
+    "WEK:WEK_R0_FINDINGS.md": 1
+   }
+  },
+  "Q0-3": {
+   "total": 4,
+   "n_files": 3,
+   "per_source": {
+    "WEK": 4
+   },
+   "files": {
+    "WEK:WEK_R0_REVIEW_BUNDLE.md": 2,
+    "WEK:WEK_R0_FINDINGS.md": 1,
+    "WEK:WEK_R0_PRIOR_ART_MATRIX.md": 1
+   }
+  }
+ }
+}

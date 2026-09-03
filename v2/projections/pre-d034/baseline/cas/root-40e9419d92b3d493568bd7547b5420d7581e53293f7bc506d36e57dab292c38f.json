@@ -1,0 +1,1 @@
+{"attrs":{"reason":"prose","text":"S5 / representation adequacy: an attempt terminal must not carry an intent-level fact"},"code":"UNRESOLVED_LINK","concerns":["claim:crosswalk:E-50b"],"lid":"fault:g0:UNRESOLVED_LINK:0031","message":"E-50b link 0 is prose, not a reference","rule":"crosswalk.derivation_links","snapshot":"snapshot:g0:baseline-ba4e625"}

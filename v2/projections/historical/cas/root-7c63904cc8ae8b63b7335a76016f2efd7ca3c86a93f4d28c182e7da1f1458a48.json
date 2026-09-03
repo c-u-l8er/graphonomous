@@ -1,0 +1,1 @@
+{"assertions":["asrt:g0:obligation:inv:S1:loc:crosswalk:4639a28d888a54abe5c2a804f4bcfc4278566139:package-v2.6/CROSS_REGISTRY_CLAIM_MAP.json#/semantic_obligations"],"attrs":{"axis":"safety","code":"S1","name":"admission singularity","promotion":"working"},"basis":"observed","kind":"OBLIGATION","lid":"obligation:inv:S1","snapshot":"snapshot:g0:historical-699fbc2"}

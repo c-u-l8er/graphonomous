@@ -1,0 +1,1 @@
+{"code":"DANGLING_WITNESS","concerns":["claim:crosswalk:E-15"],"lid":"fault:g0:DANGLING_WITNESS:0055","message":"\"EVIDENCE-nc17-19-23-AFTER-efa8881.txt\" resolves under no pinned root (package, lane, computedriven, super, trvm, wrl, factory)","rule":"crosswalk.witness_paths","snapshot":"snapshot:g0:historical-699fbc2"}

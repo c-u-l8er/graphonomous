@@ -1,0 +1,1 @@
+{"attrs":{"reason":"prose","text":"C-4 indeterminacy is a legal terminal: UNKNOWN reached live and refused re-claim by name"},"code":"UNRESOLVED_LINK","concerns":["claim:crosswalk:E-48"],"lid":"fault:g0:UNRESOLVED_LINK:0011","message":"E-48 link 1 is prose, not a reference","rule":"crosswalk.derivation_links","snapshot":"snapshot:g0:historical-699fbc2"}

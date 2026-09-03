@@ -1,0 +1,558 @@
+{
+ "profile_id": "graphonomous.semantic.v0",
+ "state": "PROPOSED — authored by the G0-C spike (2026-09-03, D-036); D-034 ruled by D-037 (2026-09-03: transition → claim is STATE_TRANSITION_OF, SUPERSEDES frozen to comparable kinds); identities minted under it stay PROVISIONAL until WRL-P0 seals the profile (GAP-W11)",
+ "shape": "WRL §D6.1 eight items plus role declarations (the spec-text hole R5 found, GAP-W1); enforced by G0's own validator (lib/wrl_world.mjs) until WRL can load a profile (D-017)",
+ "ir_version": "2.0",
+ "semantic_policies": {
+  "rulepack_id": "graphonomous.semantic.rules.v0"
+ },
+ "roles": {
+  "note": "one role per spec §3.1 node kind; SOURCE_LOCATION is an object so LOCATED_IN has a terminal; one nominal port `node` per object (GAP-W7 adapter); static_config carries the lid and the observed attrs",
+  "kinds": [
+   "OBLIGATION",
+   "ENFORCEMENT_PROPERTY",
+   "CLAIM",
+   "LAW",
+   "MECHANISM",
+   "DEFINITION",
+   "REPRESENTATION",
+   "PROFILE",
+   "ASSUMPTION",
+   "WITNESS",
+   "FALSIFIER",
+   "FINDING",
+   "EXPERIMENT",
+   "RECEIPT",
+   "ARTIFACT",
+   "ADJUDICATION",
+   "EVIDENCE_STATE_TRANSITION",
+   "ROUND",
+   "CELL",
+   "REGISTRY",
+   "SOURCE_LOCATION"
+  ],
+  "ports": [
+   "node"
+  ]
+ },
+ "object_id_encoding": {
+  "rule": "the kernel requires object_id to match ^\\w+$ (GAP-W12); a lid is encoded reversibly: `_` becomes `__`; every other character outside [A-Za-z0-9] becomes `_` followed by two uppercase hex digits per UTF-8 byte; decoding reads `__` as `_` and `_HH` as a byte. The raw lid is also kept in static_config.lid.",
+  "example": {
+   "lid": "claim:crosswalk:E-48",
+   "object_id": "claim_3Acrosswalk_3AE_2D48"
+  }
+ },
+ "types": {
+  "primitive": [
+   "lid",
+   "sha256",
+   "decimal-string",
+   "bool",
+   "safe-int",
+   "string"
+  ],
+  "enumerations": {
+   "note": "each registry's evidence vocabulary is its own enumeration and is never merged (Q-10); the values are the registry's own tokens carried on evidence_state.token with evidence_state.vocabulary naming the registry"
+  }
+ },
+ "units": {},
+ "relation_signatures": {
+  "domain": "semantic",
+  "orientation": "directed",
+  "texture": "solid",
+  "arity": 2,
+  "endpoint_roles": [
+   "source",
+   "target"
+  ],
+  "kinds": [
+   "STATES",
+   "IMPLEMENTS",
+   "DERIVES_FROM",
+   "REDUCES_TO",
+   "REFINES",
+   "SPLIT_FROM",
+   "SUPERSEDES",
+   "RETRACTS",
+   "REQUIRES",
+   "WITNESSES",
+   "SUPPORTS",
+   "FALSIFIES",
+   "ATTACKS",
+   "TESTED_UNDER",
+   "SCOPED_BY",
+   "ASSUMES",
+   "CLOSES",
+   "OPENS",
+   "PRODUCED_BY",
+   "ADJUDICATED_BY",
+   "LOCATED_IN",
+   "MEMBER_OF",
+   "BINDS",
+   "CITES",
+   "INDEPENDENT_OF",
+   "CONFLICTS_WITH",
+   "EQUIVALENT_TO",
+   "DEFINES",
+   "REPRESENTS",
+   "CROSS_CUTS",
+   "STATE_TRANSITION_OF"
+  ],
+  "attributes": "the relation record's proposition-level attrs (D-029): relation_field on the six relation-field kinds; from_text/to_text (token-history steps) and typed (typed promotions) on STATE_TRANSITION_OF (D-037; they rode on SUPERSEDES before the ruling); otherwise {}. Occurrence data (assertions) never enters a revision (WRL D8.3)."
+ },
+ "endpoint_constraints": {
+  "note": "D-037 PAIRS form: each kind lists its allowed [source kind, target kind] pairs explicitly (the former [srcKinds, tgtKinds] product is expanded); `*` = any object kind. Spec §3.2 from → to, widened only where both pins show a real triple (REPRESENTS → LAW: E-46a is a representation record in the CROSS category). SUPERSEDES is frozen as a REPLACEMENT between semantically comparable entities (claim→claim, round→round, transition→transition) stated by a source, never inferred from temporal order; transition → claim is STATE_TRANSITION_OF. The G0 validator (lib/wrl_world.mjs) refuses a relation whose endpoints are not a listed pair.",
+  "STATES": [
+   [
+    "CLAIM",
+    "OBLIGATION"
+   ],
+   [
+    "CLAIM",
+    "DEFINITION"
+   ],
+   [
+    "CLAIM",
+    "REPRESENTATION"
+   ],
+   [
+    "CLAIM",
+    "LAW"
+   ]
+  ],
+  "IMPLEMENTS": [
+   [
+    "CLAIM",
+    "OBLIGATION"
+   ],
+   [
+    "CLAIM",
+    "ENFORCEMENT_PROPERTY"
+   ],
+   [
+    "CLAIM",
+    "DEFINITION"
+   ],
+   [
+    "CLAIM",
+    "REPRESENTATION"
+   ],
+   [
+    "CLAIM",
+    "LAW"
+   ],
+   [
+    "MECHANISM",
+    "OBLIGATION"
+   ],
+   [
+    "MECHANISM",
+    "ENFORCEMENT_PROPERTY"
+   ],
+   [
+    "MECHANISM",
+    "DEFINITION"
+   ],
+   [
+    "MECHANISM",
+    "REPRESENTATION"
+   ],
+   [
+    "MECHANISM",
+    "LAW"
+   ]
+  ],
+  "DERIVES_FROM": [
+   [
+    "CLAIM",
+    "CLAIM"
+   ],
+   [
+    "CLAIM",
+    "OBLIGATION"
+   ],
+   [
+    "CLAIM",
+    "DEFINITION"
+   ],
+   [
+    "CLAIM",
+    "REPRESENTATION"
+   ],
+   [
+    "CLAIM",
+    "LAW"
+   ]
+  ],
+  "REDUCES_TO": [
+   [
+    "OBLIGATION",
+    "OBLIGATION"
+   ],
+   [
+    "CLAIM",
+    "OBLIGATION"
+   ]
+  ],
+  "REFINES": [
+   [
+    "CLAIM",
+    "CLAIM"
+   ]
+  ],
+  "SPLIT_FROM": [
+   [
+    "CLAIM",
+    "CLAIM"
+   ]
+  ],
+  "SUPERSEDES": [
+   [
+    "CLAIM",
+    "CLAIM"
+   ],
+   [
+    "ROUND",
+    "ROUND"
+   ],
+   [
+    "EVIDENCE_STATE_TRANSITION",
+    "EVIDENCE_STATE_TRANSITION"
+   ]
+  ],
+  "RETRACTS": [
+   [
+    "ADJUDICATION",
+    "*"
+   ],
+   [
+    "ROUND",
+    "*"
+   ]
+  ],
+  "REQUIRES": [
+   [
+    "CLAIM",
+    "CLAIM"
+   ]
+  ],
+  "WITNESSES": [
+   [
+    "WITNESS",
+    "CLAIM"
+   ],
+   [
+    "WITNESS",
+    "OBLIGATION"
+   ],
+   [
+    "WITNESS",
+    "EVIDENCE_STATE_TRANSITION"
+   ],
+   [
+    "RECEIPT",
+    "CLAIM"
+   ],
+   [
+    "RECEIPT",
+    "OBLIGATION"
+   ],
+   [
+    "RECEIPT",
+    "EVIDENCE_STATE_TRANSITION"
+   ]
+  ],
+  "SUPPORTS": [
+   [
+    "WITNESS",
+    "CLAIM"
+   ],
+   [
+    "WITNESS",
+    "LAW"
+   ],
+   [
+    "RECEIPT",
+    "CLAIM"
+   ],
+   [
+    "RECEIPT",
+    "LAW"
+   ],
+   [
+    "FINDING",
+    "CLAIM"
+   ],
+   [
+    "FINDING",
+    "LAW"
+   ]
+  ],
+  "FALSIFIES": [
+   [
+    "FALSIFIER",
+    "CLAIM"
+   ],
+   [
+    "FALSIFIER",
+    "LAW"
+   ],
+   [
+    "FINDING",
+    "CLAIM"
+   ],
+   [
+    "FINDING",
+    "LAW"
+   ],
+   [
+    "WITNESS",
+    "CLAIM"
+   ],
+   [
+    "WITNESS",
+    "LAW"
+   ],
+   [
+    "RECEIPT",
+    "CLAIM"
+   ],
+   [
+    "RECEIPT",
+    "LAW"
+   ]
+  ],
+  "ATTACKS": [
+   [
+    "FALSIFIER",
+    "CLAIM"
+   ],
+   [
+    "FALSIFIER",
+    "MECHANISM"
+   ]
+  ],
+  "TESTED_UNDER": [
+   [
+    "CLAIM",
+    "PROFILE"
+   ]
+  ],
+  "SCOPED_BY": [
+   [
+    "CLAIM",
+    "PROFILE"
+   ],
+   [
+    "CLAIM",
+    "ASSUMPTION"
+   ]
+  ],
+  "ASSUMES": [
+   [
+    "CLAIM",
+    "ASSUMPTION"
+   ]
+  ],
+  "CLOSES": [
+   [
+    "ROUND",
+    "FINDING"
+   ],
+   [
+    "ADJUDICATION",
+    "FINDING"
+   ],
+   [
+    "RECEIPT",
+    "FINDING"
+   ]
+  ],
+  "OPENS": [
+   [
+    "ROUND",
+    "FINDING"
+   ],
+   [
+    "ADJUDICATION",
+    "FINDING"
+   ],
+   [
+    "RECEIPT",
+    "FINDING"
+   ]
+  ],
+  "PRODUCED_BY": [
+   [
+    "RECEIPT",
+    "EXPERIMENT"
+   ],
+   [
+    "RECEIPT",
+    "ROUND"
+   ],
+   [
+    "RECEIPT",
+    "ARTIFACT"
+   ],
+   [
+    "ARTIFACT",
+    "EXPERIMENT"
+   ],
+   [
+    "ARTIFACT",
+    "ROUND"
+   ],
+   [
+    "ARTIFACT",
+    "ARTIFACT"
+   ],
+   [
+    "CLAIM",
+    "EXPERIMENT"
+   ],
+   [
+    "CLAIM",
+    "ROUND"
+   ],
+   [
+    "CLAIM",
+    "ARTIFACT"
+   ],
+   [
+    "EVIDENCE_STATE_TRANSITION",
+    "EXPERIMENT"
+   ],
+   [
+    "EVIDENCE_STATE_TRANSITION",
+    "ROUND"
+   ],
+   [
+    "EVIDENCE_STATE_TRANSITION",
+    "ARTIFACT"
+   ]
+  ],
+  "ADJUDICATED_BY": [
+   [
+    "EVIDENCE_STATE_TRANSITION",
+    "ADJUDICATION"
+   ],
+   [
+    "CLAIM",
+    "ADJUDICATION"
+   ],
+   [
+    "ROUND",
+    "ADJUDICATION"
+   ]
+  ],
+  "LOCATED_IN": [
+   [
+    "*",
+    "SOURCE_LOCATION"
+   ]
+  ],
+  "MEMBER_OF": [
+   [
+    "*",
+    "REGISTRY"
+   ],
+   [
+    "*",
+    "ROUND"
+   ]
+  ],
+  "BINDS": [
+   [
+    "CLAIM",
+    "CELL"
+   ]
+  ],
+  "CITES": [
+   [
+    "*",
+    "*"
+   ]
+  ],
+  "INDEPENDENT_OF": [
+   [
+    "ENFORCEMENT_PROPERTY",
+    "ENFORCEMENT_PROPERTY"
+   ]
+  ],
+  "CONFLICTS_WITH": [
+   [
+    "CLAIM",
+    "CLAIM"
+   ]
+  ],
+  "EQUIVALENT_TO": [
+   [
+    "CLAIM",
+    "CLAIM"
+   ]
+  ],
+  "DEFINES": [
+   [
+    "CLAIM",
+    "DEFINITION"
+   ],
+   [
+    "CLAIM",
+    "OBLIGATION"
+   ]
+  ],
+  "REPRESENTS": [
+   [
+    "CLAIM",
+    "REPRESENTATION"
+   ],
+   [
+    "CLAIM",
+    "OBLIGATION"
+   ],
+   [
+    "CLAIM",
+    "LAW"
+   ]
+  ],
+  "CROSS_CUTS": [
+   [
+    "CLAIM",
+    "LAW"
+   ],
+   [
+    "CLAIM",
+    "OBLIGATION"
+   ]
+  ],
+  "STATE_TRANSITION_OF": [
+   [
+    "EVIDENCE_STATE_TRANSITION",
+    "CLAIM"
+   ]
+  ]
+ },
+ "bounded_resources": {},
+ "resolution_tables": {},
+ "validators": [
+  "relation_name (identity_seed) unique per world",
+  "every terminal names an object of the world",
+  "endpoint kinds within endpoint_constraints",
+  "no float / undefined / NaN / non-ASCII in any hashed value (spec §6.2)",
+  "no key named x, y, position, layout, started_at, finished_at, host anywhere in the artifact"
+ ],
+ "canonical_defaults": {
+  "texture": "solid",
+  "policy": "graphonomous.semantic.rules.v0",
+  "omitted_attributes": "omitted, never defaulted to a value"
+ },
+ "world_identity": {
+  "prefix": "gsem-",
+  "rule": "sha256 over WRL serializeArtifact(canonical artifact); objects sorted identity-first (object_id, role); relations sorted by serializeArtifact(identity_seed); duplicate seeds refused; NEVER `sem-` (D-009, D-017); a later real WRL seal is a supersession with recorded equivalence, not a rename"
+ },
+ "relation_identity": {
+  "rev": "WRL kernel relationRevisionId over the canonical revision (kernel-minted)",
+  "provisional_allocation_preimage_id": "G0-computed, prefix `grelpre-` (GAP-W11 relabel, D-037: a value the kernel cannot mint is not presented as a `rel-`): sha256 over serializeArtifact({tag: WRL_RELATION, variant: named-initial, world_id: <gsem->, relation_name: <statement lid>}) — the D8.1 preimage with the gsem- as world scope, because the kernel's validateAllocation refuses any world_id that is not `sem-`. The hex is what the kernel WOULD mint for this preimage; only the prefix differs. Labelled adapter; not kernel-minted; not a WRL rel-. World-scoped by D8.5: every grelpre- moves when the gsem- moves; the stable cross-world name is the statement lid."
+ }
+}

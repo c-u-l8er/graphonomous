@@ -1,0 +1,1 @@
+{"attrs":{"reason":"prose","text":"S3 enforcement property (a) currentness/exclusivity"},"code":"UNRESOLVED_LINK","concerns":["claim:crosswalk:E-13a"],"lid":"fault:g0:UNRESOLVED_LINK:0027","message":"E-13a link 0 is prose, not a reference","rule":"crosswalk.derivation_links","snapshot":"snapshot:g0:baseline-ba4e625"}

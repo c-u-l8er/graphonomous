@@ -1,0 +1,1 @@
+{"attrs":{"text":"meta_laws.ADEQUACY"},"code":"UNRESOLVED_LINK","concerns":["claim:crosswalk:E-23"],"lid":"fault:g0:UNRESOLVED_LINK:0051","message":"E-23 source_id \"meta_laws.ADEQUACY\" is a label, not a resolvable reference","rule":"crosswalk.source_ids","snapshot":"snapshot:g0:baseline-ba4e625"}

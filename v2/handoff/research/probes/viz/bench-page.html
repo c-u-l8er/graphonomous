@@ -1,0 +1,78 @@
+<!doctype html><meta charset="utf-8"><title>G0.5 viz bench</title>
+<style>body{margin:8px;font:12px monospace} #cy,#sig,#svgwrap{width:1200px;height:700px;border:1px solid #888;margin:6px 0} #svgwrap{overflow:hidden} pre{white-space:pre-wrap;background:#f4f4f4;padding:6px}</style>
+<h1>G0.5 viz bench</h1><pre id="out">starting…</pre>
+<div id="cy"></div><div id="sig"></div><div id="svgwrap"></div>
+<script type="module">
+(async function main(){
+const out=document.getElementById('out'); out.textContent='';
+const log=(o)=>{out.textContent+=JSON.stringify(o)+"\n"; console.log(JSON.stringify(o));};
+const q=new URLSearchParams(location.search); const N=+(q.get('n')||2000), M=+(q.get('m')||10000); const doFcose=q.get('fcose')!=='0'; const doDagre=q.get('dagre')!=='0'; const doViz=q.get('viz')!=='0';
+function lcg(seed){let s=seed>>>0;return()=>(s=(Math.imul(s,1664525)+1013904223)>>>0)/4294967296;}
+function gen(n,m,seed=42){const rnd=lcg(seed);const edges=new Set();const list=[];const layers=40,per=Math.ceil(n/layers);let guard=0;while(list.length<m&&guard<m*200){guard++;const u=Math.floor(rnd()*n);const ru=Math.floor(u/per);const dr=1+Math.floor(rnd()*rnd()*6);const rv=ru+dr;if(rv>=layers)continue;const v=rv*per+Math.floor(rnd()*per);if(v>=n||v===u)continue;const k=u+'->'+v;if(edges.has(k))continue;edges.add(k);list.push([u,v]);}return{nodes:Array.from({length:n},(_,i)=>'n'+i),edges:list.map(([u,v],i)=>({id:'e'+i,source:'n'+u,target:'n'+v}))};}
+const g=gen(N,M); const rnd=lcg(7); const pos=Object.fromEntries(g.nodes.map(id=>[id,{x:rnd()*4000,y:rnd()*3000}]));
+const kinds=['CLAIM','OBLIGATION','LAW','MECHANISM','RECEIPT','EXPERIMENT','FALSIFIER','ADJUDICATION']; const prov=['imported','derived','proposed'];
+const raf=()=>new Promise(r=>requestAnimationFrame(()=>r()));
+const withTimeout=(p,ms,label)=>Promise.race([p,new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout '+label+' '+ms+'ms')),ms))]);
+async function frameTimes(fn,count=30){const ts=[];for(let i=0;i<count;i++){const t0=performance.now();fn(i);await raf();await raf();ts.push(performance.now()-t0);}ts.sort((a,b)=>a-b);return{median_ms:+ts[ts.length>>1].toFixed(1),p90_ms:+ts[Math.floor(ts.length*0.9)].toFixed(1)};}
+log({ua:navigator.userAgent.slice(0,80), n:N, m:g.edges.length, dpr:devicePixelRatio, cores:navigator.hardwareConcurrency});
+
+try{
+ const t0=performance.now();
+ const [{default:cytoscape},{default:fcose},{default:dagre}]=await Promise.all([
+   import('https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.34.2/cytoscape.esm.min.mjs'),
+   import('https://cdn.jsdelivr.net/npm/cytoscape-fcose@2.2.0/+esm'),
+   import('https://cdn.jsdelivr.net/npm/cytoscape-dagre@4.0.1/dist/cytoscape-dagre.mjs')]);
+ const tImport=performance.now()-t0;
+ cytoscape.use(fcose); cytoscape.use(dagre);
+ const els=[...g.nodes.map((id,i)=>({data:{id,kind:kinds[i%8],prov:prov[i%3],label:id},position:{...pos[id]}})),...g.edges.map((e,i)=>({data:{...e,prov:prov[i%3]}}))];
+ const style=[{selector:'node',style:{'width':24,'height':24,'label':'data(label)','font-size':8,'min-zoomed-font-size':6,'text-valign':'bottom'}},
+  {selector:'node[kind="CLAIM"]',style:{shape:'rectangle'}},{selector:'node[kind="FALSIFIER"]',style:{shape:'diamond'}},{selector:'node[kind="RECEIPT"]',style:{shape:'round-rectangle'}},
+  {selector:'edge',style:{'curve-style':'haystack','width':1,'line-color':'#999'}},
+  {selector:'edge[prov="derived"]',style:{'line-style':'dashed'}},{selector:'edge[prov="proposed"]',style:{'line-style':'dotted'}},
+  {selector:'.faded',style:{'opacity':0.15}}];
+ const t1=performance.now(); const cy=cytoscape({container:document.getElementById('cy'),elements:els,style,layout:{name:'preset'}});
+ await withTimeout(new Promise(r=>cy.one('render',r)),20000,'cy-render'); const tFirstRender=performance.now()-t1;
+ cy.fit(); await raf(); await raf();
+ const pan=await frameTimes(i=>cy.panBy({x:i%2?15:-15,y:0}));
+ const zoom=await frameTimes(i=>cy.zoom({level:cy.zoom()*(i%2?1.05:1/1.05),renderedPosition:{x:600,y:350}}));
+ const t2=performance.now(); const n0=cy.$id('n1000'); const hood=n0.closedNeighborhood(); cy.batch(()=>{cy.elements().addClass('faded'); hood.removeClass('faded');}); await raf(); await raf(); const tHighlight=performance.now()-t2;
+ cy.batch(()=>cy.elements().removeClass('faded'));
+ const t3=performance.now(); cy.style().selector('edge').style({'curve-style':'straight','target-arrow-shape':'triangle','arrow-scale':0.6}).update(); await raf(); await raf(); const tStraightArrows=performance.now()-t3;
+ const panArrows=await frameTimes(i=>cy.panBy({x:i%2?15:-15,y:0}));
+ cy.style().selector('edge').style({'curve-style':'haystack','target-arrow-shape':'none'}).update(); await raf();
+ const layoutTime=(opts)=>new Promise(res=>{const t=performance.now();const l=cy.layout(opts);l.on('layoutstop',()=>res(+(performance.now()-t).toFixed(0)));l.run();});
+ const tDagre=doDagre?await layoutTime({name:'dagre',rankDir:'TB',animate:false,fit:true}):'skipped';
+ const tFcose=doFcose?await layoutTime({name:'fcose',animate:false,randomize:true,quality:'default',fit:true}):'skipped';
+ log({lib:'cytoscape 3.34.2 (cdnjs esm) + fcose 2.2.0 (jsDelivr +esm) + dagre 4.0.1 (.mjs)', import_ms:Math.round(tImport), first_render_ms:Math.round(tFirstRender), pan_frame:pan, zoom_frame:zoom, neighbourhood_highlight_ms:Math.round(tHighlight), switch_to_straight_arrows_ms:Math.round(tStraightArrows), pan_frame_straight_arrows:panArrows, dagre_layout_ms:tDagre, fcose_layout_ms:tFcose});
+ window.cy=cy;
+}catch(e){log({lib:'cytoscape',error:String(e&&e.stack||e).slice(0,300)});}
+
+try{
+ const t0=performance.now();
+ const [{default:Sigma},{default:Graph}]=await Promise.all([import('https://cdn.jsdelivr.net/npm/sigma@3.0.3/+esm'),import('https://cdn.jsdelivr.net/npm/graphology@0.26.0/+esm')]);
+ const tImport=performance.now()-t0;
+ const G=new Graph({type:'directed'}); g.nodes.forEach((id,i)=>G.addNode(id,{x:pos[id].x,y:pos[id].y,size:3,label:id,color:i%3?'#888':'#c33'})); g.edges.forEach(e=>G.addEdgeWithKey(e.id,e.source,e.target,{size:1,type:'arrow'}));
+ const t1=performance.now(); const sigma=new Sigma(G,document.getElementById('sig'),{renderEdgeLabels:false,enableEdgeEvents:true}); const tCtor=performance.now()-t1; await withTimeout(new Promise(r=>{sigma.once('afterRender',r); sigma.refresh();}),20000,'sigma-first-render'); const tFirst=performance.now()-t1;
+ const cam=sigma.getCamera();
+ const pan=await frameTimes(i=>cam.setState({...cam.getState(),x:cam.getState().x+(i%2?0.01:-0.01)}));
+ const zoom=await frameTimes(i=>cam.setState({...cam.getState(),ratio:cam.getState().ratio*(i%2?1.05:1/1.05)}));
+ const t2=performance.now(); const hood=new Set(G.neighbors('n1000')); hood.add('n1000'); sigma.setSetting('nodeReducer',(n,d)=>hood.has(n)?d:{...d,color:'#eee',label:''}); sigma.setSetting('edgeReducer',(e,d)=>(hood.has(G.source(e))&&hood.has(G.target(e)))?d:{...d,hidden:true}); await withTimeout(new Promise(r=>{sigma.once('afterRender',r); sigma.refresh();}),20000,'sigma-reducer'); const tHighlight=performance.now()-t2;
+ log({lib:'sigma 3.0.3 (jsDelivr +esm) + graphology 0.26.0 (+esm)', import_ms:Math.round(tImport), constructor_ms:Math.round(tCtor), first_render_ms:Math.round(tFirst), pan_frame:pan, zoom_frame:zoom, reducer_highlight_ms:Math.round(tHighlight)});
+ window.sigma=sigma;
+}catch(e){log({lib:'sigma',error:String(e&&e.stack||e).slice(0,300)});}
+
+if(doViz) try{
+ const t0=performance.now(); const Viz=await import('https://cdn.jsdelivr.net/npm/@viz-js/viz@3.30.0/dist/viz.js'); const tImport=performance.now()-t0;
+ const t1=performance.now(); const viz=await Viz.instance(); const tInst=performance.now()-t1;
+ const dot='digraph G {\nnode [shape=box width=0.6 height=0.3 fixedsize=true label=""];\n'+g.nodes.map(x=>x+' [id="'+x+'" class="kind"];').join('\n')+'\n'+g.edges.map(e=>e.source+' -> '+e.target+' [id="'+e.id+'"];').join('\n')+'\n}';
+ const t2=performance.now(); const svg=viz.renderSVGElement(dot); const tLayout=performance.now()-t2;
+ const wrap=document.getElementById('svgwrap'); const t3=performance.now(); svg.setAttribute('width','1200'); svg.setAttribute('height','700'); wrap.appendChild(svg); await raf(); await raf(); const tInject=performance.now()-t3;
+ await new Promise((res,rej)=>{const s=document.createElement('script'); s.src='https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.2/dist/svg-pan-zoom.min.js'; s.onload=res; s.onerror=rej; document.head.appendChild(s);});
+ const pz=window.svgPanZoom(svg,{controlIconsEnabled:false,fit:true,center:true});
+ const pan=await frameTimes(i=>pz.panBy({x:i%2?15:-15,y:0}));
+ const zoom=await frameTimes(i=>pz.zoomBy(i%2?1.05:1/1.05));
+ log({lib:'@viz-js/viz 3.30.0 (dist/viz.js ESM) + svg-pan-zoom 3.6.2 (UMD)', graphviz:viz.graphvizVersion, import_ms:Math.round(tImport), instance_ms:Math.round(tInst), dot_layout_to_svg_ms:Math.round(tLayout), svg_inject_ms:Math.round(tInject), svg_elements:svg.querySelectorAll('*').length, pan_frame:pan, zoom_frame:zoom});
+}catch(e){log({lib:'viz',error:String(e&&e.stack||e).slice(0,300)});}
+log({done:true});
+})();
+</script>
