@@ -1,0 +1,1 @@
+{"attrs":{"reason":"prose","text":"E-50b (SUPERSEDED; attribution by attempt id)"},"code":"UNRESOLVED_LINK","concerns":["claim:crosswalk:E-51"],"lid":"fault:g0:UNRESOLVED_LINK:0017","message":"E-51 link 1 is prose, not a reference","rule":"crosswalk.derivation_links","snapshot":"snapshot:g0:multi-ba4e625-d217ee2"}

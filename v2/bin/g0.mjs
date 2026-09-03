@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 /* g0 — the G0 command line.
- *   g0 snapshot --label <l> --r10 <commit> --package <dir> [--computedriven <c>] [--super <c>] [--trvm <c>] [--wrl <c>] --out <file>
+ *   g0 snapshot --label <l> --r10 <commit> --package <dir> [--computedriven <c>] [--super <c>] [--trvm <c>] [--wrl <c>] [--factory <c> [--factory-ledger]] --out <file>
+ *               --factory-ledger (G0-F): the factory source pins EVERY file adapters/factory.mjs reads (ledger, mosaic
+ *               assumptions/sources, the 20 receipts, cells.json, every witness path) and params.adapters = [crosswalk, factory]
  *   g0 project  --snapshot <file> --out <dir> [--shuffle <seed>] [--reverse-adapters]
  *   g0 verify   --dir <dir>
  *   g0 census   --dir <dir>
@@ -21,6 +23,7 @@ import { openRepo } from "../adapters/git.mjs";
 import { project, verify } from "../lib/project.mjs";
 import { canonicalBytesG0, sortSet } from "../lib/canon.mjs";
 import { makeLid } from "../lib/lid.mjs";
+import { factoryFiles } from "../adapters/factory.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url)); const AMP = resolve(HERE, "../../..");
 const args = process.argv.slice(2); const cmd = args.shift();
@@ -36,12 +39,14 @@ if (cmd === "snapshot") {
   const HOME = process.env.HOME;
   for (const [ns, dir, name, key] of [["computedriven", "computedriven", "computedriven", "computedriven"], ["super", "super", "super", "super"], ["trvm", "TRVM", "TRVM", "trvm"], ["wrl", "WRL", "WRL", "wrl"], ["factory", `${HOME}/.invariant-factory/canonical.git`, "invariant-factory", "factory"]]) {
     const c = opt(key); if (!c) continue; const repoDir = dir.startsWith("/") ? dir : resolve(AMP, dir); const repo = openRepo(name, repoDir, c);
-    const files = ns === "computedriven" ? ["docs/admission-model.md", "docs/durable-authority-model.md", "docs/failure-model.md", "cd-core/src/locus.rs", "cd-core/src/authority.rs", "receipts/R0.7.md"] : ns === "super" ? ["README.md", "ampd/README.md"] : ns === "trvm" ? ["governance/invariant-grid.json", "LAWS.md", "WRL_CORE_0.2.md"] : ns === "wrl" ? ["wrl.js"] : ["CLAIM_LEDGER.json", "mosaic/embodiment.json", "scripts/emb-support.mjs"];
+    const files = ns === "computedriven" ? ["docs/admission-model.md", "docs/durable-authority-model.md", "docs/failure-model.md", "cd-core/src/locus.rs", "cd-core/src/authority.rs", "receipts/R0.7.md"] : ns === "super" ? ["README.md", "ampd/README.md"] : ns === "trvm" ? ["governance/invariant-grid.json", "LAWS.md", "WRL_CORE_0.2.md"] : ns === "wrl" ? ["wrl.js"] : flag("factory-ledger") ? [...new Set(["CLAIM_LEDGER.json", "mosaic/embodiment.json", "scripts/emb-support.mjs", ...factoryFiles(repo)])] : ["CLAIM_LEDGER.json", "mosaic/embodiment.json", "scripts/emb-support.mjs"];
     const src = { namespace: ns, registry: makeLid("REGISTRY", ns, `${repo.name}@${repo.commit.slice(0, 12)}`).lid, repo: repo.name, commit: repo.commit, tree: repo.tree, files: sortSet(files.filter((p) => repo.has(p)).map((p) => ({ path: p, blob: repo.blobOid(p), sha256: repo.sha256(p), bytes: repo.bytes(p).length }))) };
     if (dir.startsWith("/")) src.repo_dir = repoDir;
     sources.push(src);
   }
-  const snap = { id: `snapshot:g0:${label}`, spec: "G0_G1_SPEC.md@2026-09-02", label, params: { package_dir: pkg }, sources: sortSet(sources), taken_at: new Date().toISOString() };
+  const params = { package_dir: pkg, ...(flag("factory-ledger") ? { adapters: ["crosswalk", "factory"] } : {}) };
+  if (flag("factory-ledger") && !sources.some((s) => s.namespace === "factory")) { console.error("--factory-ledger needs --factory <commit>"); process.exit(2); }
+  const snap = { id: `snapshot:g0:${label}`, spec: "G0_G1_SPEC.md@2026-09-02", label, params, sources: sortSet(sources), taken_at: new Date().toISOString() };
   writeFileSync(outFile, JSON.stringify(snap, null, 1) + "\n");
   console.log(`snapshot ${snap.id}: ${sources.length} sources, ${sources.reduce((n, s) => n + s.files.length, 0)} pinned files → ${outFile}`);
 } else if (cmd === "project") {

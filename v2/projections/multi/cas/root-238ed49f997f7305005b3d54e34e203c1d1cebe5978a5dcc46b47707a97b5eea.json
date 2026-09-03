@@ -1,0 +1,1 @@
+{"attrs":{"reason":"prose","text":"FED-Q2-D3-LOCALITY (the |D| = 3 instance)"},"code":"UNRESOLVED_LINK","concerns":["claim:factory:FED-Q2-DK-LOCALITY"],"lid":"fault:g0:UNRESOLVED_LINK:0020","message":"FED-Q2-DK-LOCALITY: supersedes is prose, not a claim id (never parsed — D-021)","rule":"factory.claims.supersedes","snapshot":"snapshot:g0:multi-ba4e625-d217ee2"}

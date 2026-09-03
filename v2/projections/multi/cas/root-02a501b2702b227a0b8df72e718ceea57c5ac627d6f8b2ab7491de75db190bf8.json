@@ -1,0 +1,1 @@
+{"attrs":{"text":"meta_laws.EQUIVARIANCE"},"code":"UNRESOLVED_LINK","concerns":["claim:crosswalk:E-24"],"lid":"fault:g0:UNRESOLVED_LINK:0077","message":"E-24 source_id \"meta_laws.EQUIVARIANCE\" is a label, not a resolvable reference","rule":"crosswalk.source_ids","snapshot":"snapshot:g0:multi-ba4e625-d217ee2"}

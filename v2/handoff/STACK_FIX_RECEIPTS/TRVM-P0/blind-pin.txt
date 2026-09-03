@@ -1,0 +1,8 @@
+BLIND-RUN: PINNED — brun-74f54466247c3ccbfcf15ada42242605c7a299961a8b7413e1c914f18fe8c264
+  release    srel-4844df97e124474e30f100cbe9f8422a99213ac9288f8fcc149086a9a434c952
+  package    bpkg-9ad5de9420259a6bf247a3629bb69419d53dd1d178bf98beabb270865b22e585 (65 files)
+  instrument 1f763b5b0b48329505c22c4f… over 11 files
+  reference  javascript 142e8a8884a4ed31cfdfcf6c…
+  supersedes brun-740403c760e4cadb8131ad208795258eacd3e8af095ba8b5c516b0542d586a1a (ABORTED)
+  receipt    receipts/brun-74f54466247c3ccbfcf15ada42242605c7a299961a8b7413e1c914f18fe8c264.PINNED.json
+THIS IS A HUMAN ACT and no gate performs it.

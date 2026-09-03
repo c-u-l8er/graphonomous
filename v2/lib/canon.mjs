@@ -28,7 +28,7 @@ export const TRVM_DIR = resolve(HERE, "../../../TRVM");
 /** The TRVM revision this module was written against (spec §14 pins). A moved blob is a refusal, not a warning:
  *  a canonicalizer that changed under us would move every identity G0 has ever minted. */
 export const TRVM_PIN = Object.freeze({
-  commit: "fd0df4cdf6ea196f4b48c07b777fdbbfba1e2873",
+  commit: "9e91c96f2d50f3c3bd143fc94ec4267a6b03195a",
   branch: "merge/governance-plane",
   blobs: Object.freeze({
     "governance/derive_protocol.mjs": "8ec73d9b3401e1e013388c6daf9d8b2c63d43954",

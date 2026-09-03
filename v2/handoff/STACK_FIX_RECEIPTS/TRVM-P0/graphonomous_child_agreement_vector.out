@@ -1,0 +1,13 @@
+child TRVM-TEST-ALIEN-LEAF-v1 stored at root-eb76f15b4e9890ac2ba28fea8f40fb5191d5e83a1cdb38eed29c9c99c1e59801
+certificate vclaim-35e8ec674f9768acf2f3a0e4b11e84d96d61aecaf4c0090ba567e73f18efb0a0  cited by operand 0: true
+
+WITH child_protocols → VERIFIED (bytes boundary VERIFIED); checker_evaluations=1
+  child_protocol_set = {"builtin":["TRVM-BOUNDED-PROOF-v1","TRVM-BOUNDED-DOMAIN-PROOF-v1","TRVM-NESTED-COMPOSITION-v2"],"supplied":[{"protocol":"TRVM-TEST-ALIEN-LEAF-v1","checker_id":"trvm-test-alien-checker-v1"}],"child_protocol_set_id":"nestcps-63fa8d314e960f4c22f8e8197b537eff4d0887912ca5adb269f015dde4ae1dbc"}
+  verifier_policy_id = nestpol-2701be218db86a07730f762664cf5d21795c7a3939939fdc706af3c148becd27  (shipped nestpol-d36eb7e46479971ccf3a59c693ff0d8a84926284f6b3d70b1516e8abed485130)
+
+WITHOUT child_protocols → REFUSED; codes = [nest-chain-ids-mismatch, nest-child-protocol-unsupported, nest-child-refused, nest-count-inconsistent, nest-structure-mismatch]; checker_evaluations=0; child_protocol_set=undefined
+  operand 0: child protocol "TRVM-TEST-ALIEN-LEAF-v1"; this checker implements [TRVM-BOUNDED-PROOF-v1, TRVM-BOUNDED-DOMAIN-PROOF-v1, TRVM-NESTED-COMPOSITION-v2]
+
+LYING checker over a cross-wired citation → REFUSED; codes = [nest-citation-cross-wired, nest-structure-mismatch]
+
+AGREEMENT-VECTOR: PASS — with table true, without table true, liar refused true

@@ -1,0 +1,1 @@
+{"attrs":{"reason":"absent","text":"SRC-MUTATION-ADEQUACY"},"code":"UNRESOLVED_LINK","concerns":["claim:factory:CONTROL-DISCRIMINATION"],"lid":"fault:g0:UNRESOLVED_LINK:0011","message":"CONTROL-DISCRIMINATION: SRC-MUTATION-ADEQUACY is not an id in mosaic/sources.json","rule":"factory.claims.citations","snapshot":"snapshot:g0:multi-ba4e625-d217ee2"}

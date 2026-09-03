@@ -1,0 +1,3 @@
+==== [governance] negative battery — every forgery must be caught ====
+NEGATIVE BATTERY: 392/392 forgeries caught
+rc=0

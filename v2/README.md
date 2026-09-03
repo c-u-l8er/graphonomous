@@ -56,11 +56,14 @@ lib/wrl_world_spike.mjs  HISTORICAL: the D-036/D-037 spike canonicalizer (gsem-/
 lib/certificate.mjs  G0-D: the GRAPHONOMOUS-PROJECTION-v0 certificate — build <projection>/certificate/{bundle.json,VCLAIM} (TRVM verifiedClaimSemId over claim/aggregate/chain) and the checker that re-derives every plane from the directory, writes nothing, returns TRVM's public result shape; `childProtocolEntry(dirs)` is the entry a TRVM nest verifier supplies after TRVM-P0 (D-054/D-055, R13 §6)
 adapters/git.mjs     pinned, read-only git access (never the working tree)
 adapters/crosswalk.mjs  the first authoritative adapter (crosswalk + evidence_state, v2.6 and v2.7; bare ids per D-031; transition → claim is STATE_TRANSITION_OF, never SUPERSEDES — D-037)
-bin/g0.mjs           g0 snapshot | project | verify | census | eval | verify-eval | query | world | certify | check-cert
+adapters/factory.mjs    G0-F: the SECOND authoritative adapter — the invariant factory ledger at d217ee2 (CLAIM_LEDGER.json + mosaic assumptions/sources + 20 receipts + cells.json), scope exactly D-056 (1)–(7); prose verbatim, `§n` witness anchors resolved to a banner line, free-text assumptions in the crosswalk's `text` namespace; run only when a snapshot's params.adapters names it
+bin/g0.mjs           g0 snapshot [--factory-ledger] | project | verify | census | eval | verify-eval | query | world | certify | check-cert
 rules/g0.rules.json  spec §13, D-022 names, assertion-aware (D-032)
 schemas/*.schema.json  record schemas incl. derived_fact + evaluation (regenerate with node schemas/build_schemas.mjs)
-snapshots/*.json     the two pins (baseline ba4e625 / historical 699fbc2)
-projections/         baseline + historical (each: records, cas (+ the snapshot record beside the manifest), derived/, world/ = the WRL-sealed world, world-spike/ = the D-037 spike receipt, certificate/ = the G0-D certificate) · pre-b1/ and pre-d034/ receipts (superseded, preserved) · EVIDENCE.md
+snapshots/*.json     the two pins (baseline ba4e625 / historical 699fbc2) + multi.json (G0-F: the baseline pins with the factory source widened to every file adapters/factory.mjs reads, params.adapters = [crosswalk, factory])
+projections/         baseline + historical + multi (each: records, cas (+ the snapshot record beside the manifest), derived/, world/ = the WRL-sealed world, certificate/ = the G0-D certificate; baseline/historical also world-spike/ = the D-037 spike receipt) · pre-b1/, pre-d034/ and pre-g0f/ receipts (superseded, preserved) · EVIDENCE.md
+handoff/G0F_EVIDENCE_PROFILE_NOTE.md  G0-F measurement note on `graphonomous.evidence.v0` (D-053): shared vs source-specific provenance concepts, and the recommendation
+handoff/G0F_V1_OBLIGATION.md  the deferred factory layer (arguments, defeaters, incidents, …) as a `graphonomous.semantic.v1` PROPOSAL with R12 counts and the v0 non-regression statement (D-050) — no code
 handoff/WRL_SCHEMA_OR_PROFILE/graphonomous.semantic.v0.json  the SUBMITTED profile declaration (SEALED by WRL-P0; the admitted one is WRL's V2_PROFILES row, held equal by test)
 handoff/G0C_IDENTITY_MATRIX.md  the measured identity-change matrix (tools/identity_matrix.mjs)
 handoff/G0D_GOLDEN_VECTORS.md  the G0-D certificate ids per pin + sensitivity table (tools/g0d_vectors.mjs; labelled with the TRVM pin — re-minted when it moves)
@@ -75,5 +78,6 @@ Run: `npm test`; `node bin/g0.mjs project --snapshot snapshots/baseline.json --o
 `node bin/g0.mjs world --dir projections/baseline` (seals through WRL; prints the `sem-`);
 `node bin/g0.mjs certify --dir projections/baseline && node bin/g0.mjs check-cert --dir projections/baseline` (G0-D: mints and re-checks the certificate; exit 1 on REFUSED). Zero runtime dependencies; the TRVM encoder/CAS and the WRL
 relation layer (`relation-v2.js`, which imports the kernel and the spine) are imported from the pinned sibling checkouts and their blob OIDs are checked at test time. The tests that need
-only the shipped projections (canon, lid, schema, rules, eval, b1, query, wrl_world, certificate, certificate_trvm) run from the handoff ZIP;
-`test/projection.test.mjs` rebuilds from the pinned registries and needs the real tree.
+only the shipped projections (canon, lid, schema, rules, eval, b1, query, wrl_world, certificate, certificate_trvm, factory_certificate, and factory except its A8 case) run from the handoff ZIP;
+`test/projection.test.mjs` and the A8 case of `test/factory.test.mjs` rebuild from the pinned registries and need the real tree.
+G0-F: `node bin/g0.mjs snapshot --label multi-ba4e625-d217ee2 --r10 ba4e625… --package package-v2.7 --computedriven efa8881… --super 7651697… --trvm fd0df4c… --wrl 1f4c5fd… --factory d217ee2… --factory-ledger --out snapshots/multi.json`, then `project | eval | world | certify` with `--dir projections/multi`.

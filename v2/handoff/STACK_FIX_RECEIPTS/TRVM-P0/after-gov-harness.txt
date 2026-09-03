@@ -1,0 +1,4 @@
+==== [governance] harness self-test — the apparatus is measured too ====
+HARNESS SELFTEST: 14/14 known apparatus failure species caught
+RUNNER CONTRACT: 3/3 — the runner hears success, failure and crash
+rc=0

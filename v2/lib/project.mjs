@@ -14,6 +14,7 @@ import { LidTable, parseLid, checkRelationEndpoints } from "./lid.mjs";
 import { loadRules } from "./rules.mjs";
 import { openRepo } from "../adapters/git.mjs";
 import { ingestCrosswalk } from "../adapters/crosswalk.mjs";
+import { ingestFactory } from "../adapters/factory.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = resolve(HERE, "..");
@@ -88,14 +89,26 @@ export function project(snapshotPath, opts = {}) {
   const { repos, drift } = openSources(snap);
   const packageDir = snap.params?.package_dir; if (!packageDir) throw new G0Error("SNAPSHOT_PARAMS", "snapshot.params.package_dir is required");
   const treeRegistries = Object.fromEntries(snap.sources.map((s) => [s.namespace, s.registry]));
-  const adapters = [{ name: "crosswalk", file: "adapters/crosswalk.mjs", run: () => ingestCrosswalk({ snapshot, repos, packageDir, treeRegistries }) }];
+  // The adapters a snapshot runs are named by `params.adapters` (G0-F, D-056); a snapshot that names none runs the crosswalk
+  // alone, so the frozen baseline/historical projections reconstruct unchanged (D-049). An unknown name is refused, loud.
+  const ADAPTERS = {
+    crosswalk: { file: "adapters/crosswalk.mjs", run: () => ingestCrosswalk({ snapshot, repos, packageDir, treeRegistries }) },
+    factory: { file: "adapters/factory.mjs", run: () => ingestFactory({ snapshot, repos, treeRegistries }) },
+  };
+  const names = Array.isArray(snap.params?.adapters) ? snap.params.adapters.map(String) : ["crosswalk"];
+  for (const n of names) if (!ADAPTERS[n]) throw new G0Error("SNAPSHOT_PARAMS", `snapshot.params.adapters names ${JSON.stringify(n)}; known: ${Object.keys(ADAPTERS).join(", ")}`);
+  if (new Set(names).size !== names.length) throw new G0Error("SNAPSHOT_PARAMS", "snapshot.params.adapters lists an adapter twice");
+  const adapters = names.map((name) => ({ name, ...ADAPTERS[name] }));
   const order = opts.reverseAdapters ? adapters.slice().reverse() : adapters;
   let nodesIn = [], relsIn = [], faultsIn = [], locsIn = []; const runs = [];
   for (const ad of order) {
     const res = ad.run();
     for (const part of Object.values(res).filter((p) => p && p.nodes)) { nodesIn.push(...part.nodes); relsIn.push(...part.relations); faultsIn.push(...part.faults); locsIn.push(...part.locations); }
     const adapterBytes = readFileSync(resolve(ROOT_DIR, ad.file));
-    runs.push({ lid: `run:g0:${ad.name}`, adapter: { uri: `file:${ad.file}`, digest: { gitBlob: gitBlobOid(adapterBytes) } }, inputs: sortSet(snap.sources.flatMap((s) => s.files.map((f) => ({ uri: `git:${s.repo}@${s.commit}:${f.path}`, digest: { gitBlob: f.blob } })))), params: { package_dir: packageDir, order_index: order.indexOf(ad) }, snapshot, outputs: { records: 0, faults: 0 } });
+    // `order_index` is the adapter's position in the snapshot's DECLARED list (data), never the run order: the A8 gate reverses
+    // the run order and the root must not move (with one adapter the two coincide, so the frozen roots are unchanged);
+    // the run order itself is a witness (witness.json `reverse_adapters`).
+    runs.push({ lid: `run:g0:${ad.name}`, adapter: { uri: `file:${ad.file}`, digest: { gitBlob: gitBlobOid(adapterBytes) } }, inputs: sortSet(snap.sources.flatMap((s) => s.files.map((f) => ({ uri: `git:${s.repo}@${s.commit}:${f.path}`, digest: { gitBlob: f.blob } })))), params: { package_dir: packageDir, order_index: adapters.indexOf(ad) }, snapshot, outputs: { records: 0, faults: 0 } });
   }
   if (opts.shuffleSeed !== undefined) { nodesIn = shuffled(nodesIn, opts.shuffleSeed); relsIn = shuffled(relsIn, opts.shuffleSeed + 1); faultsIn = shuffled(faultsIn, opts.shuffleSeed + 2); locsIn = shuffled(locsIn, opts.shuffleSeed + 3); }
   const faults = faultsIn.map((f) => ({ ...f }));

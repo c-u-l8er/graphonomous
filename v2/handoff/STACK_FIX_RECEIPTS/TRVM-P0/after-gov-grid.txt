@@ -1,0 +1,3 @@
+==== [governance] invariant grid — registry, citations, engine-free receipts ====
+GRID-CONSISTENCY-2: PASS — registry valid (138 entries), 488 citations resolved across 16 artifacts, no banned stale claims, structure coherent with v1.69.0. [root /home/travis/ProjectAmp2/TRVM/governance]
+rc=0

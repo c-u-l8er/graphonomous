@@ -929,3 +929,89 @@ DEFERRED until post-G0-F evidence · G0-D AUTHORIZED NEXT · G0-F AUTHORIZED AFT
 - **Consequence for the profile.** The core ledger sealing under v0 is itself the D-050 test passing for the second
   source; the argument/defeater layer is the first measured **v1 obligation** (`SUPPORTS [CLAIM, CLAIM]` or an
   ARGUMENT role; `ATTACKS` to ASSUMPTION/WITNESS/RECEIPT) — proposed, not built, in this round's handoff.
+
+## D-057 — TRVM-P0 as built: a verifier-supplied `child_protocols` registry; two deviations recorded (2026-09-03; TRVM `fd0df4c` → `9e91c96`, receipt `STACK_FIX_RECEIPTS/TRVM-P0.md`)
+
+- **Decision (TRVM-owned, recorded for the lane).** Design (a′) of D-055 as specified: `child_protocols` beside `store`
+  in `checkNestBundle`/`checkNestBytes`/`buildNestBundle`; exact-shape entries; built-ins unoverridable; composition
+  stays the checker's; the effective set named in the measured record and folded into the reported policy id only when
+  supplied; `compose_check.mjs` left unchanged (superseded carriage model, not symmetric). Failing-first (6/7 new
+  vectors fail at `fd0df4c`); after: NEST-FORGERIES 43/43, SPEC-AGREEMENT 28 codes unchanged, all six batteries green
+  incl. gov-negative 392/392; every regenerated bundle and the `cas/` listing byte-identical; the R13 reproducer prints
+  a byte-identical refusal set without a table.
+- **Deviation 1 (honest stand-in).** New refusal codes cannot be minted without a normative schema revision
+  (`spec_agreement.mjs` pins the emitted code set to `nested-composition-v2.json`, digested by the release), so the
+  malformed-entry and override refusals ride under `nest-policy-weakened` with distinguishing detail, asserted by code
+  AND detail. R13 §4's prediction that `spec_agreement` was unaffected missed this gate. Filed as GAP-T14 / TRVM-P0.1
+  (spec revision, TRVM-owned, non-blocking) — the same shape as WRL-P0.1.
+- **Deviation 2 (the tree's own remedy).** `blind-run.json` pins a package digest over the nest files; the ruled
+  remedy was `--abort` with the TRVM-P0 reason then `--pin` (deterministic, no holdout scoring implied): superseded
+  `brun-c39b708f…` → ABORTED `brun-740403c7…` → PINNED `brun-74f54466…`; the superseded id is recorded in the receipt
+  because the TRVM ledger is outside this lane.
+- **Consequence for G0-D.** The TRVM pin moves to `9e91c96` (the five Graphonomous-pinned blobs are unchanged; the
+  commit is in `chain_ids`), so every G0-D certificate is re-minted and the golden vectors are recorded at the new pin;
+  the TRVM agreement test runs against the committed checker. GAP-T9 **CLOSED**.
+
+## D-058 — G0-F as built: the factory ledger is the second authoritative source; the core seals under frozen v0; certificates re-minted at the TRVM-P0 pin (2026-09-03)
+
+- **Pin.** Factory `d217ee29a3322c68db0d43be47491f0e9d4fbc64` (= `refs/heads/invariant-canonical` = tag `INV-R9.4`), tree
+  `11ab2c61…`, `CLAIM_LEDGER.json` blob `23141cd1…`; read only through the bare repository. `adapters/factory.mjs`
+  implements D-056 (1)–(7) and nothing more; the contract's measured deviations are appended to
+  `INGESTION_CONTRACTS/factory-ledger.md` (registry lid `registry:factory:factory-ledger@INV-R9.4`; unsettled witness
+  `outcome = {unknown: "not-stated"}`; every `_settled` status → `pass`; no `ROUND SUPERSEDES ROUND` — the receipt
+  parent chain is lineage, not replacement; inverse statements `cited_by`/`used_by` enter as second assertions;
+  `mosaic/evidence.json` not read).
+- **Multi snapshot** `snapshot:g0:multi-ba4e625-d217ee2` (`snapshots/multi.json`, `params.adapters: [crosswalk,
+  factory]`, 6 sources / 101 files — the factory source widened from 3 to 66 files), commitment
+  `gsnap-2e5252881fc3192a912d95b0b8ccf010be619ece8cb9a3dc6ccb0ddfd35a944e`. Projection root
+  **`root-48ac3e32dfc56cd1450e43b92c7a38d83d71a95113da8b243951dfa305fd2213`** — 7,639 manifest entries (node 778, relation
+  1,574, assertion 3,270, loc 1,929, fault 86, run 2); `g0 verify` 7,639/7,639, Python twin equal; four-order A8 holds
+  (a latent defect found and fixed on the way: `order_index` recorded the *run* order, so reversing two adapters moved
+  the root — it is now the declared position; single-adapter roots unaffected, the frozen roots reproduce). Evaluation
+  root `root-472a5d32b783051536703b4149838bd38d395a7d91c0b6e6e3af91f5592a912f` (1,011 facts; checker 1,016/0).
+  Faults: UNRESOLVED_LINK 56 (42 baseline + 14 factory), UNSUPPORTED_SOURCE_FORM 11, **SETTLED_WITHOUT_WITNESS 8** (new;
+  a fact about the source, legal by its own gate), TRUNCATED_FIELD 5, UNQUALIFIED_REFERENCE 3, DANGLING_WITNESS 2,
+  AMBIGUOUS_IDENTIFIER 1; STATUS_OUTSIDE_VOCABULARY 0, DANGLING_CELL_BINDING 0, CONTRADICTION 0.
+- **Cross-source identity, measured** (`test/factory.test.mjs`): the 4 crosswalk-cited factory ids are ONE node each
+  with assertions from both registries and 0 CONTRADICTION; the folded nodes are exactly `cell:cells:27a` + those 4
+  claims; only `obligation:inv:S4` exists — no `claim:factory:S4`/F1/F4/F5 node or edge; E-40 / EMB-CUT-EMPTY and E-41 /
+  TAX-RELATIONAL-2 stay two nodes joined only by the crosswalk's CITES; **0 relations carry assertions from both
+  registries** (the census prediction held); the two-assertion mechanism is exercised intra-factory (SUPERSEDES 8/14,
+  typed ASSUMES 45/52, SRC CITES 20/45); 105 `assumption:text:*` (97 factory, 8 crosswalk), **0 shared verbatim**.
+- **Frozen-profile guard (D-050) passed:** the multi semantic world seals under v0 unchanged —
+  **`sem-b8d828278e9ba411bc375da4b03754e87210b78cb106d25422fd94e8526622ea`**, 2,707 objects / 1,574 relations / 2,721,943
+  canonical bytes, kernel `rel-` 1,574/1,574, `rev-` 1,574/1,574; the v0 golden worlds are untouched.
+- **Certificate sensitivity, measured** (`test/factory_certificate.test.mjs`): the multi commitment ≠ baseline's; multi
+  root and certificate ≠ baseline's; dropping the factory source — or narrowing it back to the baseline's 3 files —
+  refuses `gproj-snapshot-commitment-mismatch` (a source's file set is part of its identity); reordering sources and
+  file lists gives the same commitment and the SAME certificate.
+- **Re-mints, recorded for traceability.** Adding the second adapter moved the projector code id and two fault codes
+  moved the schema set, so the fd0df4c-era G0-D certificates (`vclaim-897ec409…` baseline, `vclaim-a6ba3b33…`
+  historical; D-055-era vectors) were superseded twice within this round: first at fd0df4c + G0-F code
+  (`vclaim-5252b9c4…` / `vclaim-29fbcc64…` / multi `vclaim-d9f0eaf9…`), then by the TRVM-P0 re-pin (`TRVM_PIN.commit`
+  `fd0df4c` → `9e91c96`, the five pinned blobs unchanged) to the **final vectors: baseline
+  `vclaim-c90547a6de6d46e5a79750ca897a58f3f4305971c300c567cab712436b7bd851`, historical
+  `vclaim-bf81cc6d8deaa393638f0d13028cf4a6c9f737b7bf4a7c7869bd651fa880e0cf`, multi
+  `vclaim-cf3b25705404e1a3d62bf09d26565db0c3362ff8a74b7d7ee25aa6e20d6929b2`** (`G0D_GOLDEN_VECTORS.md`). Root,
+  snapshot commitment, adapter contract and aggregate of baseline/historical never moved.
+- **The old certificate still verifies — under the checker that minted it.** Measured by the main session: the
+  pre-G0-F baseline bundle (`vclaim-897ec409…`, preserved under `projections/pre-g0f/`) checked with the Graphonomous
+  code at commit `14f77e0` against the unchanged baseline directory → **VERIFIED**; the same bundle under the current
+  checker → REFUSED on exactly `gproj-certificate-stale + gproj-chain-id-mismatch + gproj-schema-set-mismatch`, never on
+  root, snapshot, adapter contract or aggregate (tested). This is the TRVM `chainIds()` discipline: chain ids are
+  relations to the live checker, so a certificate names *under which code* it was reconstructed, and a newer checker
+  says precisely which coordinate moved.
+
+## D-059 — After G0-F: `graphonomous.semantic.v1` is PROPOSED, `graphonomous.evidence.v0` is NOT justified yet (2026-09-03)
+
+- **v1 obligation (`handoff/G0F_V1_OBLIGATION.md`, proposal only, D-050).** The factory's argument / defeater /
+  incident layer and five registries have no v0 home. Smallest new obligation measured at `d217ee2`: **two roles
+  (`ARGUMENT`, `DEFEATER`), one kind (`DISCHARGED_BY`), nine endpoint pairs**. v1 is a new profile id, so every v0 golden
+  identity (`sem-0f952f03…`, `sem-3ae051cf…`, `sem-b8d82827…`) is unchanged by construction; nothing is built.
+- **Evidence profile (`handoff/G0F_EVIDENCE_PROFILE_NOTE.md`): NOT YET.** Across two source families every requirement
+  of this round — cross-source co-reference, snapshot-relative provenance, exact source locations, the certificate's
+  source-set commitment — was met by assertion records + projection root + semantic-world separation; no consumer of a
+  provenance *identity* exists. Shared provenance concepts (assertion shape, pinned locations, executed flags, raw
+  status/outcome vocabularies) and source-specific ones are listed for the next source family to test against.
+- **Next after acceptance.** Unchanged from D-046/D-054: no UI/G0.5, no broad G1, no evidence.v0, no primitive-basis
+  round in this lane without a ruling.

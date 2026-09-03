@@ -1,7 +1,7 @@
 /* certificate.test.mjs — G0-D: the eight D-054 acceptance items and the seven refusal families for
  * `GRAPHONOMOUS-PROJECTION-v0`, measured over the SHIPPED projections (read-only) and temp copies (mutated). Every id
  * compared here is re-derived — the `vclaim-` by hand from the preimage bytes, the `gclaim-`/`gagg-` from their canonical
- * preimages — so nothing is trusted because lib/certificate.mjs said it. TRVM at the pin in lib/canon.mjs (fd0df4c). */
+ * preimages — so nothing is trusted because lib/certificate.mjs said it. TRVM at the pin in lib/canon.mjs (9e91c96 after TRVM-P0). */
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync, writeFileSync, mkdtempSync, rmSync, cpSync, readdirSync, statSync, existsSync, unlinkSync } from "node:fs";
