@@ -1,0 +1,20 @@
+{
+ "profile_id": "graphonomous.semantic.v0",
+ "canonical_bytes": "{\"ir_version\":\"2.0\",\"objects\":[{\"object_id\":\"claim_3Acrosswalk_3AE_2D48\",\"ports\":[\"node\"],\"role\":\"CLAIM\",\"static_config\":{\"attrs\":{},\"lid\":\"claim:crosswalk:E-48\"}},{\"object_id\":\"receipt_3Asha256_3Aabc\",\"ports\":[\"node\"],\"role\":\"RECEIPT\",\"static_config\":{\"attrs\":{},\"lid\":\"receipt:sha256:abc\"}}],\"profile_id\":\"graphonomous.semantic.v0\",\"relations\":[{\"identity_seed\":{\"relation_name\":\"rel:WITNESSES:receipt:sha256:abc:claim:crosswalk:E-48\",\"variant\":\"named-initial\"},\"revision\":{\"attributes\":{},\"domain\":\"semantic\",\"endpoints\":[{\"role\":\"source\",\"terminal\":{\"object_id\":\"receipt_3Asha256_3Aabc\",\"port\":\"node\"}},{\"role\":\"target\",\"terminal\":{\"object_id\":\"claim_3Acrosswalk_3AE_2D48\",\"port\":\"node\"}}],\"kind\":\"WITNESSES\",\"orientation\":\"directed\",\"policy\":\"graphonomous.semantic.rules.v0\",\"texture\":\"solid\"}}],\"semantic_policies\":{\"rulepack_id\":\"graphonomous.semantic.rules.v0\"}}",
+ "canonical_bytes_length": 870,
+ "sem": "sem-282c71b69c1c637f1e386424e83986fbc323237177190573e08da4e724d95bc2",
+ "world_id_is_sem": true,
+ "relations": [
+  {
+   "relation_name": "rel:WITNESSES:receipt:sha256:abc:claim:crosswalk:E-48",
+   "relation_id": "rel-b1180b9bb63ff2deb88f51b71098906193e82cee38db54e4506ac9576c69ac97",
+   "revision_id": "rev-8da1d819f998fe57d1ac5f55668404b0a9e3fa00f8bd5d0a5c43f3a178c6ad21",
+   "kernel_agrees": true
+  }
+ ],
+ "seedsInArtifactBytes": true,
+ "idsInArtifactBytes": false,
+ "rev_bytes": [
+  "{\"attributes\":{},\"domain\":\"semantic\",\"endpoints\":[{\"role\":\"source\",\"terminal\":{\"object_id\":\"receipt_3Asha256_3Aabc\",\"port\":\"node\"}},{\"role\":\"target\",\"terminal\":{\"object_id\":\"claim_3Acrosswalk_3AE_2D48\",\"port\":\"node\"}}],\"kind\":\"WITNESSES\",\"orientation\":\"directed\",\"policy\":\"graphonomous.semantic.rules.v0\",\"texture\":\"solid\"}"
+ ]
+}

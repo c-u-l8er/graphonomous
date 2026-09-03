@@ -1,0 +1,38 @@
+
+> wallriderlang-site@0.1.2 test
+> node test/conformance.mjs
+
+
+  891 passed, 9 failed (70 annotated doc blocks of 115 swept, 26/26 capabilities cited)
+  not-current: 9 complete world(s), 54 fragment(s) -- a fragment's non-acceptance is weak evidence, and needs a fixture context to become a positive test when its capability ships
+
+  FAIL  relation/v2/profile/static/a-declared-static-profile-seals
+      the minimized graphonomous.semantic.v0 world -> WRL_UNSUPPORTED_PROFILE; canonicalizeV2Artifact -> WRL_UNSUPPORTED_PROFILE. A static profile derives { rulepack_id } and nothing else: no runtime policy, no film schema, no state schema is implied by it
+  FAIL  relation/v2/profile/static/the-kernel-mints-rel-and-rev
+      deriveV2Relations -> WRL_UNSUPPORTED_PROFILE. The application must not have to compute its own preimage: the seed expands to an allocation the kernel validates and hashes, under a world id the kernel accepts
+  FAIL  relation/v2/profile/static/order-is-not-in-the-bytes
+      declared order -> WRL_UNSUPPORTED_PROFILE, reversed objects and relations -> WRL_UNSUPPORTED_PROFILE
+  FAIL  relation/v2/profile/static/the-profile-data-refuses-with-typed-codes
+      an undeclared kind -> WRL_UNSUPPORTED_PROFILE (want WRL_UNDECLARED_KIND)
+      an endpoint pair outside the kind's constraints -> WRL_UNSUPPORTED_PROFILE (want WRL_UNDECLARED_ENDPOINT_PAIR)
+      a terminal naming no object -> WRL_UNSUPPORTED_PROFILE (want WRL_UNKNOWN_ENDPOINT)
+      an undeclared port -> WRL_UNSUPPORTED_PROFILE (want WRL_UNDECLARED_PORT)
+      a domain the profile does not declare -> WRL_UNSUPPORTED_PROFILE (want WRL_PROFILE_SIGNATURE_MISMATCH)
+      an orientation outside the signature -> WRL_UNSUPPORTED_PROFILE (want WRL_PROFILE_SIGNATURE_MISMATCH)
+      an undeclared role -> WRL_UNSUPPORTED_PROFILE (want WRL_UNDECLARED_ROLE)
+      a duplicate object id -> WRL_UNSUPPORTED_PROFILE (want WRL_DUPLICATE_ID)
+      a stated port list the role does not declare -> WRL_UNSUPPORTED_PROFILE (want WRL_V2_WORLD_MISMATCH)
+      a static_config value the serializer cannot write exactly -> WRL_UNSUPPORTED_PROFILE (want WRL_NUMERIC_RANGE)
+      a static_config value that is undefined -> WRL_UNSUPPORTED_PROFILE (want WRL_BAD_V2_ARTIFACT)
+      UNREGISTERED: WRL_UNDECLARED_KIND, WRL_UNDECLARED_ENDPOINT_PAIR, WRL_UNDECLARED_PORT, WRL_PROFILE_SIGNATURE_MISMATCH, WRL_UNDECLARED_ROLE
+  FAIL  relation/v2/profile/static/a-stated-runtime-claim-is-a-mismatch
+      stated schemas -> WRL_UNSUPPORTED_PROFILE, stated runtime policy tuple -> WRL_UNSUPPORTED_PROFILE; want WRL_V2_WORLD_MISMATCH for both. A static profile derives { rulepack_id } and no schemas; anything more is a claim about a runtime that does not exist
+  FAIL  relation/v2/profile/an-undeclared-policy-does-not-seal
+      forge relation with policy "anything.at.all" -> sem-b9b0c08987e28696c0cba7179de31288e3bfce7f5e3a971e6b785b0a67f8cdab; graphonomous.semantic.v0 relation with the same -> WRL_UNSUPPORTED_PROFILE; want WRL_UNDECLARED_POLICY for both (registered: false). The unmutated forge world seals: true. A policy that sealed into rev- identity without the profile ever declaring it is GAP-W9
+  FAIL  relation/v2/profile/forge-stays-the-lowered-family-default
+      V2_PROFILES[forge.world.core.v1] = undefined; family rulepack forge.world.core.rules.v1; a forge world without schemas -> WRL_V2_WORLD_MISMATCH (want WRL_V2_WORLD_MISMATCH)
+  FAIL  relation/v2/profile/static/a-static-profile-has-no-runtime
+      deriveRuntimeProjection -> WRL_UNSUPPORTED_PROFILE, downgradeV2ToV1 -> WRL_UNSUPPORTED_PROFILE; want WRL_UNSUPPORTED_FEATURE for both. A seal is not a run: nothing about a static profile says how its world executes
+  FAIL  relation/v2/profile/static/the-row-is-frozen-data-not-a-branch
+      row present: false, deep-frozen: false, roles: undefined, kinds: undefined, source lines comparing a profile id to a literal: none
+

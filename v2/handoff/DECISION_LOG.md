@@ -699,3 +699,63 @@ right thing by stopping instead of freezing over D-034 / GAP-W11..W13."
   update the Graphonomous WRL pin → final G0-C through real WRL sealing → mint real `sem-` + kernel-minted `rel-` →
   verify statement/revision/allocation identity laws → clean GPT handoff. **Stop before G0-D/F/UI.** The WRL repair and
   the first real sealed Graphonomous world are reviewed as a milestone.
+
+## D-047 — WRL-P0 as built: a profile table with two row kinds, and GAP-W9 closed at the world gate (2026-09-03; WRL `1f4c5fd` → `b072db0`, receipt `STACK_FIX_RECEIPTS/WRL-P0.md`)
+
+- **Decision (WRL-owned, recorded here for the lane).** `relation-v2.js` gains `V2_PROFILES`, frozen data keyed by
+  `profile_id`, each row tagged `derivation: "lowered" | "static"`. `forge.world.core.v1` is the lowered row (declares
+  nothing; the frozen spine's registries are its declaration, reached through `v2WorldAsV1 → graphToIr` as before; its
+  rulepack is read from `V2_RELATION_SOURCE_FAMILIES["2.0"]`, which stays the ir_version's default profile, and its domain
+  from the kernel's `profileDefaultDomain`). `graphonomous.semantic.v0` is the static row: roles + ports, domain,
+  signature, 31 kinds → explicit (source role, target role) pairs, policies. `v2WorldOfStaticProfile` reads the row and
+  never asks which row it reads; a static profile derives `semantic_policies = {rulepack_id}` and nothing else (no
+  `schemas`, no `state_schema_ref`, no admit/film/numeric policy — D-017), and the downgrade, runtime projection and text
+  surface refuse a static world (a seal is not a run). GAP-W9: every relation's `revision.policy` must be in the profile's
+  declared vocabulary (`WRL_UNDECLARED_POLICY`), validation only.
+- **Alternatives rejected.** Keying by `ir_version` (every profile would be a new encoding); a `deriveWorld` function per
+  row (a branch in a costume); deriving runtime fields from defaults for a static row (a no-op runtime claim sealed into
+  identity); widening `validateAllocation` to `gsem-` (D-038); a separate served data module (no deploy story).
+- **Evidence.** Failing-first: with the 10 new checks and the old code, `891 passed, 9 failed` — the graphonomous seal
+  refused `WRL_UNSUPPORTED_PROFILE` and a forge world with `policy: "anything.at.all"` sealed to `sem-b9b0c089…`. After:
+  `900 passed, 0 failed`; five projection vectors, DEMO/STARTER ids, migration `rel-`/`rev-` lists byte-identical
+  (`NO BYTE OR ID MOVED`). Kernel and spine blobs unchanged; TRVM untouched. Minimized world seals to `sem-282c71b6…`
+  with kernel `rel-b1180b9b…` / `rev-8da1d819…`, `kernel_agrees: true`.
+- **What this settles for G0-C.** Graphonomous submits the artifact; WRL canonicalizes, validates the profile, seals the
+  `sem-` and mints every `rel-`/`rev-` (`canonicalizeV2Artifact` / `v2WorldIdOfArtifact` / `deriveV2Relations`). The lane's
+  own canonicalizer, `gsem-` and `grelpre-` leave the live path and remain as the historical spike (D-038, D-041).
+- **Open for the WRL owner.** `OBJECT_ID_RE` restates the kernel's private `IDENT_RE`; no `spec.html` pending-register row
+  exists for static profiles because no D8 rule number states them — a spec-text follow-up.
+
+## D-048 — Final G0-C: both worlds SEALED by WRL; the spike's bytes turned out identical to WRL's canonical bytes (2026-09-03, measured, not assumed)
+
+- **Decision.** G0-C now runs through the real WRL path at pin `b072db0` (`canonicalizeV2Artifact` → `v2WorldIdOfArtifact`
+  → `deriveV2Relations`): baseline `sem-0f952f03804c73152b762e4a09570ce37adb35039203c5c4c501507bd0ab17be` (1,080
+  objects / 588 relations / 960,827 canonical bytes), historical `sem-3ae051cf2a4ab35436eedeb1b15cae759bd3001652d55d67a3f29ae23f5d0e23`
+  (1,052 / 566 / 920,425). Every `rel-` and `rev-` is the kernel's (`minted_by: wrl-kernel@b072db0`; 588/588 and 566/566
+  re-derived through `relationIdFromAllocation(namedInitialAllocation(sem, name))` and `relationRevisionId`). G0 no longer
+  canonicalizes, sorts, refuses duplicates or hashes a world; `lib/wrl_world_spike.mjs` reproduces the historical
+  `gsem-`/`grelpre-` only for the mapping test. The D-037 spike output is preserved byte-identical under
+  `projections/*/world-spike/`; `world/identities.json` carries `supersedes.historical_spike_gsem`.
+- **The measurement GPT v3 §5 said was not required — and which happened anyway.** The `sem-` hex equals the spike's
+  `gsem-` hex at both pins: the spike (D-036) had mirrored WRL's canonicalization exactly (identity-first object order,
+  seed-byte relation order, kernel-canonical revisions, `serializeArtifact` key order), and WRL-P0's static derivation
+  adds nothing to the envelope (no `schemas`, `semantic_policies = {rulepack_id}`, `ports` from the role — which the spike
+  had already stated). D-041 ruled the equality is *not required*; it did not forbid it. What matters is **who minted**:
+  the `sem-` was computed by WRL from bytes WRL canonicalized and validated, and the test asserts the equality per pin as
+  a measurement, never as a rule — the spike is not a seal, whatever its bytes. This is not a rename (D-017): the
+  mapping is explicit and the two ids have different owners and preimage authorities. Every `grelpre-` differs from its
+  kernel `rel-` (588/588, 566/566), because the allocation scope string differs (`gsem-` vs `sem-`).
+- **Identity laws (D-043), measured on the baseline (`handoff/G0C_IDENTITY_MATRIX.md`, `tools/identity_matrix.mjs`):**
+  none / shuffle → `sem-` stable, 0/588 `rev-`, 0/588 `rel-`; assertion-only edit → `sem-` stable, 0/0, but the
+  projection root moves (recomputed); one relation attribute edit → `sem-` moves, 1/588 `rev-`, 588/588 `rel-`, lids
+  stable; one node attribute edit → `sem-` moves, 0/588 `rev-`, 588/588 `rel-`. Refusals measured through WRL:
+  transition→claim `SUPERSEDES` `WRL_UNDECLARED_ENDPOINT_PAIR`; undeclared kind `WRL_UNDECLARED_KIND`; unknown profile
+  `WRL_UNSUPPORTED_PROFILE`; undeclared policy `WRL_UNDECLARED_POLICY`; stated `schemas`/`ports` `WRL_V2_WORLD_MISMATCH`;
+  duplicate seed `WRL_DUPLICATE_RELATION_SEED`; dangling terminal `WRL_UNKNOWN_ENDPOINT`; undeclared role
+  `WRL_UNDECLARED_ROLE`; duplicate object `WRL_DUPLICATE_ID`. Every measured (kind, source role, target role) triple at
+  both pins is covered by the WRL row's pairs; the WRL row and the submitted declaration agree on all 8 facets.
+- **Status of the identities.** `SEALED` by WRL-P0; **FROZEN only when GPT accepts this round** (D-042). Projection and
+  evaluation roots are unchanged by the seal (the world is outside both).
+- **Open.** Whether GPT wants `identities.json` to keep the spike mapping once the round is accepted, or retire it to
+  `world-spike/` alone; and whether the measured equality should be promoted to a stated property of the profile
+  ("a conforming submitter's bytes are WRL's bytes") or left as a per-pin measurement.

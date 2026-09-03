@@ -7,7 +7,8 @@
  *   g0 eval     --dir <dir>                       run the rule program; writes <dir>/derived (G0-E)
  *   g0 verify-eval --dir <dir>                    replay every stored derivation through the independent checker
  *   g0 query    --dir <dir>[,<dir>…] <fn> <args…>  node|neighbors|path|facts|explain|as_of (JSON args; JSON out)
- *   g0 world    --dir <dir>                       G0-C spike: writes <dir>/world (gsem-, kernel rev-, G0 rel-; PROVISIONAL)
+ *   g0 world    --dir <dir>                       G0-C: seals the semantic world through WRL — writes <dir>/world (sem-, kernel rel-/rev-);
+ *                                                 a D-037 spike world/ is moved to world-spike/ first
  */
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -70,5 +71,5 @@ if (cmd === "snapshot") {
   else { console.error("usage: g0 query --dir <dir>[,<dir>] [--as-of <snapshot>] node|neighbors|path|facts|explain|as_of <json args…>"); process.exit(2); }
 } else if (cmd === "world") {
   const { buildWorld } = await import("../lib/wrl_world.mjs");
-  const w = await buildWorld(opt("dir")); console.log(JSON.stringify({ gsem: w.gsem, projection_root: w.projection_root, objects: w.objects, relations: w.relations.length, bytes: w.bytes, wrl_pin: w.wrl_pin, sample: w.relations.slice(0, 2) }, null, 1));
+  const w = await buildWorld(opt("dir")); console.log(JSON.stringify({ sem: w.sem, projection_root: w.projection_root, objects: w.objects, relations: w.relations.length, canonical_bytes: w.bytes, wrl: w.wrl, state: w.state, supersedes: w.supersedes, spike_reproduced: w.spike_reproduced, sample: w.relations.slice(0, 3) }, null, 1));
 } else { console.error("usage: g0 snapshot|project|verify|census|eval|verify-eval|query|world …"); process.exit(2); }

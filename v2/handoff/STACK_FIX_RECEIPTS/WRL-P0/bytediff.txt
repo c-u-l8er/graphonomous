@@ -1,0 +1,31 @@
+SAME  V1 DEMO_WORLD sem-
+SAME  V1 DEMO_WORLD pinned constant
+SAME  V2 migrate(DEMO_WORLD) bytes
+SAME  V2 migrate(DEMO_WORLD) sem-
+SAME  V2 migrate(DEMO_WORLD) rel-/rev- list
+SAME  V1 STARTER_WORLD sem-
+SAME  V1 STARTER_WORLD pinned constant
+SAME  V2 migrate(STARTER_WORLD) bytes
+SAME  V2 migrate(STARTER_WORLD) sem-
+SAME  V2 migrate(STARTER_WORLD) rel-/rev- list
+SAME  forge named specimen bytes
+SAME  forge named specimen sem-
+SAME  5 projection vectors: old==new true, new==pinned wire true
+SAME  export V2_IR_VERSION
+SAME  export V2_RELATION_SOURCE_FAMILIES
+SAME  export V2_IR_VERSIONS
+SAME  export V2_INITIAL_SEED_VARIANTS
+SAME  export V2_SEED_FIELDS
+SAME  export V2_AUTHORABLE_SEED_VARIANTS
+SAME  export V2_RELATION_FIELDS
+SAME  export V2_REQUIRED_KEYS
+SAME  export LEGACY_EDGE_ADOPTION_FIELDS
+SAME  export RUNTIME_PROJECTION_VERSION
+SAME  export RUNTIME_PROJECTION_FIELDS
+SAME  export RELATION_NAME_RE
+SAME  export ADMISSION_FAMILIES
+codes: old 18, new 24; old ⊂ new: true; added: WRL_UNDECLARED_POLICY, WRL_UNDECLARED_ROLE, WRL_UNDECLARED_KIND, WRL_UNDECLARED_PORT, WRL_UNDECLARED_ENDPOINT_PAIR, WRL_PROFILE_SIGNATURE_MISMATCH
+exports: old 47, new 52; removed: none; added: V2_PROFILES, V2_PROFILE_DERIVATIONS, V2_PROFILE_IDS, v2ProfileOf, v2WorldOfStaticProfile
+GAP-W9 forge policy "anything.at.all": pinned -> sem-b9b0c08987e28696c0cba7179de31288e3bfce7f5e3a971e6b785b0a67f8cdab; repaired -> WRL_UNDECLARED_POLICY
+
+verdict: NO BYTE OR ID MOVED

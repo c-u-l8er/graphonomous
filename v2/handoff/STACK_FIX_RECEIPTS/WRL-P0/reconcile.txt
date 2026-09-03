@@ -1,0 +1,9 @@
+AGREE rulepack: wrl=graphonomous.semantic.rules.v0 graphonomous=graphonomous.semantic.rules.v0
+AGREE policy_vocab_vs_canonical_default: wrl=graphonomous.semantic.rules.v0 graphonomous=graphonomous.semantic.rules.v0
+AGREE domain: wrl=semantic graphonomous=semantic
+AGREE signature: wrl={"orientation":"directed","texture":"solid","arity":2,"endpoint_roles":["source","target"]} graphonomous={"orientation":"directed","texture":"solid","arity":2,"endpoint_roles":["source","target"]}
+AGREE roles: wrl=21 graphonomous=21
+AGREE ports_every_role: wrl=["[\"node\"]"] graphonomous=["node"]
+AGREE kinds: wrl=31 graphonomous=31
+AGREE endpoint_pairs: wrl=92 graphonomous=92
+verdict: ROW == GRAPHONOMOUS JSON (D-037 form)

@@ -7,3 +7,7 @@ the exposing case.
 **G-PR0 (2026-09-02): none.** No stack layer was modified. Two changes are *proposed* to their owners instead —
 a WRL profile mechanism with a static profile kind (GAP-W1/W6) and a TRVM `prim` catalog with five entries
 (GAP-T1…T3, T6) — because both are architect-ruled additions to frozen surfaces, not implementation bugs.
+
+**WRL-P0 (2026-09-03): one receipt — `WRL-P0.md`** (evidence files under `WRL-P0/`). WRL `1f4c5fd` → `b072db0`: a
+generic static-profile table admits `graphonomous.semantic.v0` as data, GAP-W9 is closed at the world gate, no byte or
+id of `forge.world.core.v1` moved, conformance 890 → 900. Authorized by D-039; kernel, spine and TRVM untouched.

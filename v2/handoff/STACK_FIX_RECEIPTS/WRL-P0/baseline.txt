@@ -1,0 +1,5 @@
+
+
+  890 passed, 0 failed (70 annotated doc blocks of 115 swept, 26/26 capabilities cited)
+  not-current: 9 complete world(s), 54 fragment(s) -- a fragment's non-acceptance is weak evidence, and needs a fixture context to become a positive test when its capability ships
+
