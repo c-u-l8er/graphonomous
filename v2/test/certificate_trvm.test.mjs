@@ -66,7 +66,7 @@ test("AGREEMENT (post-TRVM-P0): checkNestBundle(nest, {store, child_protocols}) 
   assert.deepEqual(codes(checkNestBytes(canonicalWireBytes(nest), { store, child_protocols: CHILD_PROTOCOLS_SUPPLIED })), []);
 });
 
-test("AGREEMENT (post-TRVM-P0): on a forged child (chain forged and re-sealed, filed under its own root, cited by its own certificate) both checkers refuse with the same gproj- code set; a child whose certificate no longer matches the citation is nest-certificate-stale; a table naming a built-in is refused as an override and a malformed entry as malformed", (t) => {
+test("AGREEMENT (post-TRVM-P0): on a forged child (chain forged and re-sealed, filed under its own root, cited by its own certificate) both checkers refuse with the same gproj- code set; a child whose certificate no longer matches the citation is nest-certificate-stale; a table naming a built-in is refused as an override and a malformed entry as malformed, each under its OWN code since TRVM-P0.1", (t) => {
   if (!TRVM_P0) { t.skip("pending TRVM-P0: nest_check does not yet accept child_protocols (nest-policy-weakened)"); return; }
   const forged = clone(child); forged.chain_ids.trvm_commit = "deadbeef".repeat(5); forged.claim[CLAIM_FIELD] = claimSemId(forged.claim);
   const st2 = memoryStore(new Map()); st2.put(forged);
@@ -76,8 +76,12 @@ test("AGREEMENT (post-TRVM-P0): on a forged child (chain forged and re-sealed, f
   // the honest nest citing the honest certificate, with the store now serving the FORGED bytes under the honest root
   const lying = memoryStore(new Map()); lying.entries.set(childRoot, canonicalWireBytes(forged));
   const rl = checkNestBundle(nest, { store: lying, child_protocols: CHILD_PROTOCOLS_SUPPLIED }); assert.ok(codes(rl).includes("nest-artifact-root-mismatch"), "a store answering the honest root with other bytes is caught by the CAS");
-  // TRVM-P0 as landed refuses both under the frozen vocabulary (`nest-policy-weakened`); R13 (a′) proposed two new codes — either spelling is the same refusal
-  const ro = checkNestBundle(nest, { store, child_protocols: { ...CHILD_PROTOCOLS_SUPPLIED, "TRVM-BOUNDED-PROOF-v1": CHILD_PROTOCOLS_SUPPLIED[PROTOCOL] } }); assert.ok(codes(ro).some((c) => ["nest-policy-weakened", "nest-child-protocol-override-refused"].includes(c)), codes(ro).join()); assert.equal(ro.verdict, "REFUSED");
-  const rm = checkNestBundle(nest, { store, child_protocols: { [PROTOCOL]: { claim_field: CLAIM_FIELD } } }); assert.ok(codes(rm).some((c) => ["nest-policy-weakened", "nest-child-protocol-malformed"].includes(c)), codes(rm).join()); assert.equal(rm.verdict, "REFUSED");
+  /* TRVM-P0 refused both of these under the frozen vocabulary (`nest-policy-weakened`) because a release pins it;
+     TRVM-P0.1 (TRVM 8816e59, spec revision 2) issued the release and the two faults now have their own codes. This
+     asserted an either-or while the names were unruled — it asserts the names now, because an either-or over a code
+     set is exactly the weakening D-061 forbids. */
+  const ro = checkNestBundle(nest, { store, child_protocols: { ...CHILD_PROTOCOLS_SUPPLIED, "TRVM-BOUNDED-PROOF-v1": CHILD_PROTOCOLS_SUPPLIED[PROTOCOL] } }); assert.deepEqual(codes(ro), ["nest-child-protocol-override-refused"], codes(ro).join()); assert.equal(ro.verdict, "REFUSED");
+  const rm = checkNestBundle(nest, { store, child_protocols: { [PROTOCOL]: { claim_field: CLAIM_FIELD } } }); assert.deepEqual(codes(rm), ["nest-child-protocol-registration-malformed"], codes(rm).join()); assert.equal(rm.verdict, "REFUSED");
+  assert.notEqual(codes(ro)[0], codes(rm)[0], "two faults, two codes: a refusal SET is what conformance compares");
   assert.deepEqual(codes(probe), R13_3A, "an empty supplied table adds nothing: the [3a] set, byte-identical to the shipped checker");
 });

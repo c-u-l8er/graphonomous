@@ -29,15 +29,32 @@ export const WRL_DIR = resolve(HERE, "../../../WRL");
 /** The WRL commit that carries WRL-P0 (STACK_FIX_RECEIPTS/WRL-P0.md) and the three files this lane imports, blob-pinned.
  *  `relation-v2.js` is now a live import (the seal); the kernel and the spine are imported by it and are unchanged by P0. */
 export const WRL_PIN = Object.freeze({
-  commit: "b072db0a983a33108b9a0c4429b978cb07e54148",
-  blobs: Object.freeze({ "relation-v2.js": "fd1babc5459206c4de1ac1c994b880d24e18ef81", "relation-identity.js": "880cfe0406ab570f4963dbb3a9b6a7cc0ab39f01", "wrl.js": "19e94ad97acec633f7a83bcff4e3a01acd867b07" }),
+  commit: "53e5e8995913995189f7017d2a94351ff69d5b31",
+  blobs: Object.freeze({ "relation-v2.js": "a222eb9bd94afd8839e78eca27ea96f37017ab08", "relation-identity.js": "880cfe0406ab570f4963dbb3a9b6a7cc0ab39f01", "wrl.js": "19e94ad97acec633f7a83bcff4e3a01acd867b07" }),
 });
+/* b072db0 → 53e5e89: WRL admitted `graphonomous.semantic.v1` as a SECOND static profile row. Only relation-v2.js moved,
+ * and it moved by GAINING a row: v0 is 21 roles / 31 kinds / 92 pairs at both commits and every v0 golden world
+ * reproduces (test/wrl_world.test.mjs). The kernel and the spine are byte-identical. */
 export const MINTED_BY = "wrl-kernel@" + WRL_PIN.commit.slice(0, 7);
 export function assertWrlPinned() { const seen = {}; for (const [rel, want] of Object.entries(WRL_PIN.blobs)) { const got = gitBlobOid(readFileSync(resolve(WRL_DIR, rel))); seen[rel] = got; if (got !== want) throw new G0Error("WRL_MOVED", `${rel} is blob ${got}, pinned ${want} (commit ${WRL_PIN.commit})`); } return seen; }
 
 /** Graphonomous's SUBMITTED declaration (handoff/WRL_SCHEMA_OR_PROFILE) and WRL's ADMITTED one (the frozen row). The test
  *  suite holds them facet-for-facet equal; the G0 pre-check below reads the submitted one, WRL reads its own. */
-export const PROFILE = JSON.parse(readFileSync(resolve(HERE, "../handoff/WRL_SCHEMA_OR_PROFILE/graphonomous.semantic.v0.json"), "utf8"));
+export const PROFILE_DIR = resolve(HERE, "../handoff/WRL_SCHEMA_OR_PROFILE");
+/** A submitted declaration by id. One file per profile; the id in the file must be the id asked for, so a mis-named file
+ *  is a refusal and not a silent substitution. */
+export function loadProfile(id) {
+  const file = join(PROFILE_DIR, `${id}.json`);
+  if (!existsSync(file)) throw new G0Error("PROFILE_UNKNOWN", `no submitted declaration for ${id} at ${file}`);
+  const doc = JSON.parse(readFileSync(file, "utf8"));
+  if (doc.profile_id !== id) throw new G0Error("PROFILE_ID_MISMATCH", `${file} declares ${doc.profile_id}`);
+  if (!V2.V2_PROFILES[id]) throw new G0Error("PROFILE_NOT_ADMITTED", `WRL at ${WRL_PIN.commit.slice(0, 7)} does not declare ${id} (has ${V2.V2_PROFILE_IDS.join(", ")})`);
+  return doc;
+}
+export const DEFAULT_PROFILE_ID = "graphonomous.semantic.v0";
+/** The v0 declaration stays a module constant: every caller that does not ask for a profile gets exactly what it got
+ *  before v1 existed, so the frozen worlds are reproduced by the same expression that produced them. */
+export const PROFILE = loadProfile(DEFAULT_PROFILE_ID);
 export const PROFILE_ID = PROFILE.profile_id, POLICY = PROFILE.canonical_defaults.policy;
 export const WRL_ROW = V2.V2_PROFILES[PROFILE_ID];
 const FORBIDDEN_KEYS = new Set(["x", "y", "position", "layout", "started_at", "finished_at", "host"]);
@@ -52,7 +69,8 @@ function refuse(code, wrlCode, msg) { const e = new G0Error(code, msg); e.wrl_co
 
 /** Build the SUBMISSION: the `graphonomous.semantic.v0` artifact in projection order, uncanonicalized. WRL decides object
  *  order, seed order, duplicates, endpoint pairs, the policy vocabulary and the bytes. */
-export function semanticArtifact(p) {
+export function semanticArtifact(p, profile = PROFILE) {
+  const PROFILE = profile, PROFILE_ID = profile.profile_id, POLICY = profile.canonical_defaults.policy;
   const kinds = new Map(); const objects = [];
   for (const n of p.nodes) { kinds.set(n.lid, n.kind); objects.push({ object_id: encodeObjectId(n.lid), role: n.kind, static_config: { lid: n.lid, attrs: n.attrs, ...(n.evidence_state ? { evidence_state: n.evidence_state } : {}) }, ports: PROFILE.roles.ports }); }
   for (const l of p.locations) { kinds.set(l.lid, "SOURCE_LOCATION"); objects.push({ object_id: encodeObjectId(l.lid), role: "SOURCE_LOCATION", static_config: { lid: l.lid, registry: l.registry, pinned_identity: l.pinned_identity, path: l.path, ...(l.fragment ? { fragment: l.fragment } : {}), precision: l.precision }, ports: PROFILE.roles.ports }); }
@@ -77,15 +95,19 @@ function scanKeys(v, path) { if (Array.isArray(v)) v.forEach((x, i) => scanKeys(
  *  `v2WorldIdOfArtifact`, each `rel-`/`rev-` is `deriveV2Relations` (kernel path). A WRL refusal propagates as the typed
  *  WrlError (`e.code`, `e.fieldPath`) — G0 does not translate it. */
 export async function seal(artifact) {
+  /* No profile pre-check here, deliberately. `loadProfile` refuses an id WRL does not declare BEFORE a submission is
+     built, which is where a caller error belongs; but once an artifact exists, WRL is the authority on whether its
+     profile_id is one WRL declares, and it says so as WRL_UNSUPPORTED_PROFILE. A G0 guard at this point shadowed that
+     code with a G0 one — caught by test (9), which exists precisely to hold G0 to naming WRL's codes and not its own. */
   const canonical = V2.canonicalizeV2Artifact(artifact);
   const bytes = Buffer.from(V2.serializeV2Artifact(artifact), "utf8");
   const sem = await V2.v2WorldIdOfArtifact(artifact);
   const view = await V2.deriveV2Relations(artifact, sem);
   if (!view.derived || !view.seedsInArtifactBytes || view.idsInArtifactBytes || view.world_id !== sem) throw new G0Error("WORLD_SEAL_SHAPE", "deriveV2Relations did not answer in the shape this lane relies on");
-  return { sem, profile_id: PROFILE_ID, bytes, canonical, objects: canonical.objects.length, relations: view.relations.map((r) => ({ relation_name: r.identity_seed.relation_name, rel: r.relation_id, rev: r.revision_id, minted_by: MINTED_BY })) };
+  return { sem, profile_id: artifact.profile_id, bytes, canonical, objects: canonical.objects.length, relations: view.relations.map((r) => ({ relation_name: r.identity_seed.relation_name, rel: r.relation_id, rev: r.revision_id, minted_by: MINTED_BY })) };
 }
 /** Convenience: submission + seal of a loaded projection. */
-export async function sealProjection(p) { return seal(semanticArtifact(p)); }
+export async function sealProjection(p, profile = PROFILE) { return seal(semanticArtifact(p, profile)); }
 
 const WORLD_STATE = "SEALED by WRL (WRL-P0); FROZEN only when GPT accepts this round";
 /** The identities document (canonical G0 bytes). `supersedes` is the only place a historical `gsem-` may appear. */
@@ -102,9 +124,9 @@ export function identitiesDocument(sealed, p, historicalSpikeGsem) {
 /** Build and write `<projection>/world/`: artifact.json (WRL canonical bytes, exactly serializeV2Artifact), identities.json,
  *  SEM. A D-036/D-037 spike `world/` (it has a GSEM and no SEM) is MOVED to `world-spike/` first, bytes untouched, and its
  *  GSEM is recorded under `supersedes`. */
-export async function buildWorld(dir, { out = join(dir, "world"), spikeOut = join(dir, "world-spike") } = {}) {
+export async function buildWorld(dir, { out = join(dir, "world"), spikeOut = join(dir, "world-spike"), profile = PROFILE } = {}) {
   assertWrlPinned();
-  const p = loadProjection(dir); const artifact = semanticArtifact(p); const sealed = await seal(artifact);
+  const p = loadProjection(dir); const artifact = semanticArtifact(p, profile); const sealed = await seal(artifact);
   if (existsSync(join(out, "GSEM")) && !existsSync(join(out, "SEM"))) { if (existsSync(spikeOut)) throw new G0Error("WORLD_SPIKE_EXISTS", `${spikeOut} already exists; refusing to overwrite a historical receipt`); renameSync(out, spikeOut); }
   const historical = existsSync(join(spikeOut, "GSEM")) ? readFileSync(join(spikeOut, "GSEM"), "utf8").trim() : null;
   const doc = identitiesDocument(sealed, p, historical);

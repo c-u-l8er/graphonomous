@@ -1,0 +1,1 @@
+{"attrs":{"text":"vector #27"},"code":"UNRESOLVED_LINK","concerns":["claim:crosswalk:E-37"],"lid":"fault:g0:UNRESOLVED_LINK:0078","message":"E-37 source_id \"vector #27\" is a label, not a resolvable reference","rule":"crosswalk.source_ids","snapshot":"snapshot:g0:multi-v1-ba4e625-d217ee2"}

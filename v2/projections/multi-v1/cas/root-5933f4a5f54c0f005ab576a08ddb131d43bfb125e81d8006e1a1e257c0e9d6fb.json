@@ -1,0 +1,1 @@
+{"attrs":{"reason":"prose","text":"E-50a (the key-state rule; REPLAY_RISK_AUTHORIZED is pre-outcome)"},"code":"UNRESOLVED_LINK","concerns":["claim:crosswalk:E-51"],"lid":"fault:g0:UNRESOLVED_LINK:0016","message":"E-51 link 0 is prose, not a reference","rule":"crosswalk.derivation_links","snapshot":"snapshot:g0:multi-v1-ba4e625-d217ee2"}

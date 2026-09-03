@@ -15,6 +15,7 @@ import { loadRules } from "./rules.mjs";
 import { openRepo } from "../adapters/git.mjs";
 import { ingestCrosswalk } from "../adapters/crosswalk.mjs";
 import { ingestFactory } from "../adapters/factory.mjs";
+import { ingestFactoryMosaic } from "../adapters/factory_mosaic.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = resolve(HERE, "..");
@@ -94,6 +95,9 @@ export function project(snapshotPath, opts = {}) {
   const ADAPTERS = {
     crosswalk: { file: "adapters/crosswalk.mjs", run: () => ingestCrosswalk({ snapshot, repos, packageDir, treeRegistries }) },
     factory: { file: "adapters/factory.mjs", run: () => ingestFactory({ snapshot, repos, treeRegistries }) },
+    // graphonomous.semantic.v1 (D-064): the factory's argument/defeater/instrument layer. A SEPARATE row so that a v0
+    // snapshot naming ["crosswalk", "factory"] reconstructs byte-identically and this layer is switchable per snapshot.
+    factory_mosaic: { file: "adapters/factory_mosaic.mjs", run: () => ingestFactoryMosaic({ snapshot, repos, treeRegistries }) },
   };
   const names = Array.isArray(snap.params?.adapters) ? snap.params.adapters.map(String) : ["crosswalk"];
   for (const n of names) if (!ADAPTERS[n]) throw new G0Error("SNAPSHOT_PARAMS", `snapshot.params.adapters names ${JSON.stringify(n)}; known: ${Object.keys(ADAPTERS).join(", ")}`);

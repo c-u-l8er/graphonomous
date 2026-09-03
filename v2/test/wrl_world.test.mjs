@@ -28,9 +28,14 @@ const revMap = (S) => new Map(S.relations.map((r) => [r.relation_name, r.rev])),
 const moved = (a, b) => [...a].filter(([k, v]) => b.get(k) !== v).map(([k]) => k);
 const codeOf = async (artifact) => { try { await seal(artifact); return "SEALED"; } catch (e) { return e.code; } };
 
-test("the WRL pin is b072db0 with three blobs (relation-v2.js is now a live import); every object_id is \\w+, decodes back to its lid, and the encoding is injective; a colliding object id is refused by G0 naming WRL_DUPLICATE_ID and by WRL with that code", async () => {
+test("the WRL pin is 53e5e89 with three blobs (relation-v2.js is now a live import); every object_id is \\w+, decodes back to its lid, and the encoding is injective; a colliding object id is refused by G0 naming WRL_DUPLICATE_ID and by WRL with that code", async () => {
   const seen = assertWrlPinned(); assert.deepEqual(Object.keys(seen).sort(), ["relation-identity.js", "relation-v2.js", "wrl.js"]);
-  assert.equal(WRL_PIN.commit, "b072db0a983a33108b9a0c4429b978cb07e54148"); assert.equal(WRL_PIN.blobs["relation-v2.js"], "fd1babc5459206c4de1ac1c994b880d24e18ef81");
+  /* b072db0 → 53e5e89: WRL admitted graphonomous.semantic.v1 as a SECOND static row. relation-v2.js moved by GAINING a
+     row; the kernel (relation-identity.js) and the spine (wrl.js) are byte-identical at both commits, which is why the
+     v0 golden worlds below still reproduce. */
+  assert.equal(WRL_PIN.commit, "53e5e8995913995189f7017d2a94351ff69d5b31"); assert.equal(WRL_PIN.blobs["relation-v2.js"], "a222eb9bd94afd8839e78eca27ea96f37017ab08");
+  assert.equal(WRL_PIN.blobs["relation-identity.js"], "880cfe0406ab570f4963dbb3a9b6a7cc0ab39f01", "the kernel did not move");
+  assert.equal(WRL_PIN.blobs["wrl.js"], "19e94ad97acec633f7a83bcff4e3a01acd867b07", "the spine did not move");
   const lids = [...P.nodes.map((n) => n.lid), ...P.locations.map((l) => l.lid)]; const ids = lids.map(encodeObjectId);
   assert.ok(ids.every((id) => /^\w+$/.test(id))); assert.equal(new Set(ids).size, lids.length);
   lids.forEach((lid, i) => assert.equal(decodeObjectId(ids[i]), lid));
@@ -93,17 +98,17 @@ test("(6) the kernel mints: for 5 sampled relations and then the whole set, rel-
   for (const r of sample) { assert.equal(await relationIdFromAllocation(namedInitialAllocation(S0.sem, r.relation_name)), r.rel); assert.equal(await relationRevisionId(canon.get(r.relation_name)), r.rev); }
   let agree = 0; for (const r of S0.relations) if ((await relationIdFromAllocation(namedInitialAllocation(S0.sem, r.relation_name))) === r.rel && (await relationRevisionId(canon.get(r.relation_name))) === r.rev) agree++;
   assert.equal(agree, n, `kernel agrees on ${agree}/${n}`);
-  assert.ok(S0.relations.every((r) => r.minted_by === MINTED_BY && MINTED_BY === "wrl-kernel@b072db0"));
+  assert.ok(S0.relations.every((r) => r.minted_by === MINTED_BY && MINTED_BY === "wrl-kernel@53e5e89"));
 });
 
-test("(7) no gsem-/grelpre- masquerades at either pin: identities.json carries a historical gsem- ONLY under supersedes.historical_spike_gsem; artifact.json carries no id of any family; sem matches ^sem-[0-9a-f]{64}$; every rel-/rev- is kernel-shaped and labelled wrl-kernel@b072db0", () => {
+test("(7) no gsem-/grelpre- masquerades at either pin: identities.json carries a historical gsem- ONLY under supersedes.historical_spike_gsem; artifact.json carries no id of any family; sem matches ^sem-[0-9a-f]{64}$; every rel-/rev- is kernel-shaped and labelled wrl-kernel@53e5e89", () => {
   for (const name of Object.keys(PINS)) {
     const W = shipped(name); const hits = [];
     const walk = (v, path) => { if (typeof v === "string") { if (/gsem-|grelpre-/.test(v)) hits.push(path); } else if (Array.isArray(v)) v.forEach((x, i) => walk(x, `${path}/${i}`)); else if (v && typeof v === "object") for (const [k, x] of Object.entries(v)) { assert.ok(!/provisional|never/.test(k), `${name}: spike-era key ${k}`); walk(x, `${path}/${k}`); } };
     walk(W.identities, "");
     assert.deepEqual(hits, ["/supersedes/historical_spike_gsem"], `${name}: gsem-/grelpre- only in the supersession mapping`);
     assert.match(W.sem, /^sem-[0-9a-f]{64}$/); assert.equal(W.identities.sem, W.sem); assert.equal(W.identities.wrl.commit, WRL_PIN.commit);
-    assert.ok(W.identities.relations.every((r) => ID.test(r.rel) && r.rel.startsWith("rel-") && ID.test(r.rev) && r.rev.startsWith("rev-") && r.minted_by === "wrl-kernel@b072db0" && Object.keys(r).sort().join() === "minted_by,rel,relation_name,rev"));
+    assert.ok(W.identities.relations.every((r) => ID.test(r.rel) && r.rel.startsWith("rel-") && ID.test(r.rev) && r.rev.startsWith("rev-") && r.minted_by === "wrl-kernel@53e5e89" && Object.keys(r).sort().join() === "minted_by,rel,relation_name,rev"));
     assert.ok(!/\b(sem|rel|rev|gsem|grelpre)-[0-9a-f]{64}\b/.test(W.artifact.toString("utf8")), `${name}: no id of any family in the sealed bytes (idsInArtifactBytes: false)`);
     assert.equal(W.identities.state, "SEALED by WRL (WRL-P0); FROZEN only when GPT accepts this round");
   }

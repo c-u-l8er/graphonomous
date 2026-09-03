@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>G0.5 — Graphonomous read-only inspector</title>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<div id="shell">
+
+  <header id="top">
+    <div class="brand">G<span>0.5</span> &nbsp;inspector</div>
+    <div class="ro-badge">READ ONLY</div>
+    <div class="where" id="where"></div>
+  </header>
+
+  <div id="main">
+
+    <aside id="rail">
+      <section class="sec">
+        <h3>world &mdash; one snapshot root each</h3>
+        <div class="worlds" id="worlds"></div>
+        <div class="body hint" style="padding-top:0">
+          A world file holds records from exactly one projection. Switching worlds replaces the view; nothing is merged.
+        </div>
+      </section>
+
+      <section class="sec">
+        <h3>search lids</h3>
+        <div class="body">
+          <input id="search" type="search" placeholder="substring of a lid, rule or fact&hellip;" autocomplete="off" spellcheck="false">
+          <div id="searchOut"></div>
+        </div>
+      </section>
+
+      <section class="sec">
+        <h3>node roles</h3>
+        <div class="body">
+          <div class="filterbar">
+            <button class="btn sm" data-all="roles">all</button>
+            <button class="btn sm" data-none="roles">none</button>
+          </div>
+          <div class="filters" id="roleFilters"></div>
+        </div>
+      </section>
+
+      <section class="sec">
+        <h3>relation kinds</h3>
+        <div class="body">
+          <div class="filterbar">
+            <button class="btn sm" data-all="kinds">all</button>
+            <button class="btn sm" data-none="kinds">none</button>
+          </div>
+          <div class="filters" id="kindFilters"></div>
+        </div>
+      </section>
+
+      <section class="sec">
+        <h3>counts</h3>
+        <div class="body" id="counts"></div>
+      </section>
+    </aside>
+
+    <section id="centre">
+      <nav id="tabs">
+        <button data-view="graph" class="on">graph</button>
+        <button data-view="faults">faults</button>
+        <button data-view="acceptance">A1&ndash;A7</button>
+      </nav>
+      <div id="view"></div>
+    </section>
+
+    <aside id="right">
+      <section class="sec" id="identSec">
+        <h3>identity &mdash; four distinct coordinate systems</h3>
+        <div class="body" id="identity"></div>
+      </section>
+      <section class="sec" id="explainSec">
+        <h3>explain &mdash; the deterministic explanation, as <span class="mono">Graph.explain()</span> returned it</h3>
+        <div id="explain"></div>
+      </section>
+    </aside>
+
+  </div>
+
+  <footer id="foot">
+    <b>Read-only inspector.</b>
+    Every value on this page was computed by <span class="mono">lib/query.mjs</span> in Node and is displayed, not recomputed.
+    UI state is not part of any identity.
+  </footer>
+
+</div>
+<script type="module" src="app.js"></script>
+</body>
+</html>

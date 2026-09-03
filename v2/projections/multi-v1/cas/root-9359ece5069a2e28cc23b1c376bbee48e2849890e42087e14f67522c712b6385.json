@@ -1,0 +1,1 @@
+{"code":"AMBIGUOUS_IDENTIFIER","concerns":["claim:crosswalk:E-03"],"lid":"fault:g0:AMBIGUOUS_IDENTIFIER:0079","message":"cells.json:16 ⊥: trailing text after the cell number","rule":"crosswalk.source_ids","snapshot":"snapshot:g0:multi-v1-ba4e625-d217ee2"}

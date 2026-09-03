@@ -28,7 +28,7 @@ export const TRVM_DIR = resolve(HERE, "../../../TRVM");
 /** The TRVM revision this module was written against (spec §14 pins). A moved blob is a refusal, not a warning:
  *  a canonicalizer that changed under us would move every identity G0 has ever minted. */
 export const TRVM_PIN = Object.freeze({
-  commit: "9e91c96f2d50f3c3bd143fc94ec4267a6b03195a",
+  commit: "8816e59055322fc608c9bc7dae9723c02d8402b7",
   branch: "merge/governance-plane",
   blobs: Object.freeze({
     "governance/derive_protocol.mjs": "8ec73d9b3401e1e013388c6daf9d8b2c63d43954",
@@ -36,6 +36,12 @@ export const TRVM_PIN = Object.freeze({
     "governance/observed_execution_host.mjs": "29df27f703021baa5cccc9bb24acea52c31c1873",
     // G0-D (lib/certificate.mjs): the certificate identity and the checker grammar/ownership/result helpers. ONE pin
     // constant on purpose — TRVM-P0 lands as a new TRVM commit; re-pin here and re-mint the certificates (G0D_GOLDEN_VECTORS).
+    // TRVM-P0.1 (8816e59) is the sharpest case of that discipline so far: it moved the COMMIT and not ONE of these five
+    // blobs, so `assertTrvmPinned` — which reads blobs — would never have noticed, and every certificate would have gone
+    // on naming a commit that no longer describes the checker's normative release (spec revision 1 → 2, 28 refusal codes
+    // → 30). The commit is in the chain precisely so that a change to the OWNING LAYER's release is visible here even
+    // when the imported bytes are identical. Re-pinned, and the three TRVM-P0 certificates are preserved under
+    // projections/pre-trvmp01/ as receipts that verify under their pinned verifier coordinates (D-060).
     "governance/certificate.mjs": "2ee734896519e1d9e7a50f4fbda92c74c9c032d3",
     "governance/schema.mjs": "4b821c2889bfa3c01d9ccb4b05e66817bb3bc0ed",
   }),

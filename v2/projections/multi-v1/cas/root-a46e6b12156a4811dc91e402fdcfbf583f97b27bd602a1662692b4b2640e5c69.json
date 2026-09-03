@@ -1,0 +1,1 @@
+{"attrs":{"reason":"prose","text":"S1 admission singularity applied at the consumption point"},"code":"UNRESOLVED_LINK","concerns":["claim:crosswalk:E-46c"],"lid":"fault:g0:UNRESOLVED_LINK:0032","message":"E-46c link 0 is prose, not a reference","rule":"crosswalk.derivation_links","snapshot":"snapshot:g0:multi-v1-ba4e625-d217ee2"}

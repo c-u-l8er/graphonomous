@@ -16,7 +16,7 @@
  *   g0 check-cert --dir <dir> [--bundle <file>]   re-derives everything from <dir> and checks the bundle; exit 1 on REFUSED; writes nothing
  */
 import { readFileSync, writeFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { resolve, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { dirname } from "node:path";
 import { openRepo } from "../adapters/git.mjs";
@@ -78,8 +78,11 @@ if (cmd === "snapshot") {
   else if (["node", "neighbors", "path", "facts", "explain"].includes(fn)) console.log(JSON.stringify(g[fn](...fnArgs.map(parse)), null, 1));
   else { console.error("usage: g0 query --dir <dir>[,<dir>] [--as-of <snapshot>] node|neighbors|path|facts|explain|as_of <json args…>"); process.exit(2); }
 } else if (cmd === "world") {
-  const { buildWorld } = await import("../lib/wrl_world.mjs");
-  const w = await buildWorld(opt("dir")); console.log(JSON.stringify({ sem: w.sem, projection_root: w.projection_root, objects: w.objects, relations: w.relations.length, canonical_bytes: w.bytes, wrl: w.wrl, state: w.state, supersedes: w.supersedes, spike_reproduced: w.spike_reproduced, sample: w.relations.slice(0, 3) }, null, 1));
+  const { buildWorld, loadProfile, DEFAULT_PROFILE_ID } = await import("../lib/wrl_world.mjs");
+  // --profile selects the WRL profile row to seal under; absent it is graphonomous.semantic.v0, so every existing
+  // invocation reproduces the world it produced before v1 existed (D-064).
+  const profile = loadProfile(opt("profile", DEFAULT_PROFILE_ID));
+  const w = await buildWorld(opt("dir"), { profile, out: opt("out", join(opt("dir"), "world")) }); console.log(JSON.stringify({ sem: w.sem, profile_id: w.profile_id, projection_root: w.projection_root, objects: w.objects, relations: w.relations.length, canonical_bytes: w.bytes, wrl: w.wrl, state: w.state, supersedes: w.supersedes, spike_reproduced: w.spike_reproduced, sample: w.relations.slice(0, 3) }, null, 1));
 } else if (cmd === "certify") {
   const { buildCertificate } = await import("../lib/certificate.mjs");
   const c = buildCertificate(opt("dir"));

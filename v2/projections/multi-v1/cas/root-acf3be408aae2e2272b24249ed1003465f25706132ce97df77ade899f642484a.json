@@ -1,0 +1,1 @@
+{"attrs":{"text":"WEK_FABLE_REVIEW_R3_1 M3-1"},"code":"UNRESOLVED_LINK","concerns":["claim:crosswalk:E-37"],"lid":"fault:g0:UNRESOLVED_LINK:0074","message":"E-37 source_id \"WEK_FABLE_REVIEW_R3_1 M3-1\" is a label, not a resolvable reference","rule":"crosswalk.source_ids","snapshot":"snapshot:g0:multi-v1-ba4e625-d217ee2"}

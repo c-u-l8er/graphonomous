@@ -1015,3 +1015,128 @@ DEFERRED until post-G0-F evidence · G0-D AUTHORIZED NEXT · G0-F AUTHORIZED AFT
   status/outcome vocabularies) and source-specific ones are listed for the next source family to test against.
 - **Next after acceptance.** Unchanged from D-046/D-054: no UI/G0.5, no broad G1, no evidence.v0, no primitive-basis
   round in this lane without a ruling.
+
+## D-060 — GPT Adjudication v5 recorded: G0-D and G0-F are TESTED, `GRAPHONOMOUS-PROJECTION-v0` semantics are FROZEN, and three certificates + the multi v0 world are golden vectors (2026-09-03, GPT v5 §0–§3, §6)
+
+- **Independent verification.** GPT verified the submitted ZIP (`80c4af99…`) against its internal `SHA256SUMS`:
+  **28,630 entries, 0 missing, 0 mismatches**, and reran the self-contained suites file-by-file from the ZIP —
+  **101 pass / 0 fail / 3 skip**, the skips being the cases that need the real pinned repositories rather than the
+  verification copies. The full-tree receipts (Graphonomous 121/0/1, WRL 900/900, TRVM batteries green) are accepted as
+  **submitted receipt evidence**, explicitly not claimed as independently rerun. Freeze commit `b61ff2e` is accepted as
+  a historical checkpoint; D-049…D-054 are accepted as a correct record of GPT v4.
+- **`GRAPHONOMOUS-PROJECTION-v0` — protocol semantics FROZEN.** The frozen meaning is: *under the certificate's exact
+  pinned source/snapshot commitment and bound Graphonomous reconstruction protocol coordinates, the verifier
+  reconstructs the exact projection root and structural aggregate claimed by the certificate.* It does **not** certify
+  truth of the graph's claims, evidence sufficiency, promotion of evidence state, authority to mutate any registry,
+  TRVM derivation of G0-E facts, or the correctness of an LLM adjudication. The checker-owned `scope` fields
+  (`truth_claimed:false`, `evidence_sufficiency_claimed:false`, `state_promoted:false`, `registry_written:false`,
+  `trvm_derivation:false`) are accepted as the mechanism that makes that list refusable. **A change to this meaning
+  requires a new protocol version, never a silent edit.**
+- **Golden certificate vectors, at the exact certificate/verifier coordinates recorded in the bundle** (TRVM
+  `9e91c96`): baseline `vclaim-c90547a6de6d46e5a79750ca897a58f3f4305971c300c567cab712436b7bd851`, historical
+  `vclaim-bf81cc6d8deaa393638f0d13028cf4a6c9f737b7bf4a7c7869bd651fa880e0cf`, multi
+  `vclaim-cf3b25705404e1a3d62bf09d26565db0c3362ff8a74b7d7ee25aa6e20d6929b2`. The corresponding `gclaim-`, `gsnap-`,
+  projection roots, aggregate identities and chain identities are **part of each vector** and must remain reproducible.
+- **G0-F multi v0 world is golden**: snapshot `snapshot:g0:multi-ba4e625-d217ee2`, projection root
+  `root-48ac3e32dfc56cd1450e43b92c7a38d83d71a95113da8b243951dfa305fd2213`, certificate `vclaim-cf3b2570…`, WRL world
+  `sem-b8d828278e9ba411bc375da4b03754e87210b78cb106d25422fd94e8526622ea`, **and the exact shipped v0 `rel-`/`rev-` set
+  for the multi world**. Factory pin `d217ee29a3322c68db0d43be47491f0e9d4fbc64` is accepted for this vector. The
+  baseline/historical v0 worlds remain unchanged.
+- **Vocabulary rule, now binding.** Of a historical code-bound certificate, write **"verifies under its pinned verifier
+  coordinates"** — never the unqualified "still verifies". D-058's re-mint semantics are accepted as stated: an old
+  certificate remains valid evidence of the reconstruction performed under the coordinates that minted it; a newer
+  checker may refuse it when chain/schema/checker coordinates moved; that refusal does **not** make the old projection
+  root, source commitment or aggregate retroactively false; re-minting creates a **new** certificate, never a mutation,
+  renewal or rename; old and new receipts coexist. **Never make the current checker accept historical certificates by
+  ignoring chain ids.** An archival verifier-resolver that locates the pinned checker by chain id is permitted but is
+  not to be built without a concrete consumer.
+
+## D-061 — TRVM-P0 accepted; TRVM-P0.1 is required owning-layer closure (2026-09-03, GPT v5 §4–§5)
+
+- **TRVM-P0 ACCEPTED** at `9e91c96f2d50f3c3bd143fc94ec4267a6b03195a` as the second Graphonomous-driven owning-layer
+  stack repair. The design is accepted **because the extension point belongs to the verifier, not the child artifact**:
+  artifacts cannot name or inject executable checker code, built-ins cannot be overridden, supplied child checkers are
+  explicit verifier configuration, the effective checker set is measured, `child_protocol_set_id` contributes to the
+  verifier-policy identity, and absent the extension table the prior behaviour and vectors are byte-identical.
+- **Critical interpretation, to be kept explicit in docs and tests.** A supplied checker returning `VERIFIED` does not
+  create universal TRVM truth; the result is scoped to the exact `verifier_policy_id`, `child_protocol_set_id`, checker
+  id and certificate chain. Downstream code must never consume the bare token `VERIFIED` while discarding the
+  verifier-policy coordinate. The general rule: **verification without verifier identity is incomplete evidence.**
+- **Deviation 1 — overloaded `nest-policy-weakened`: accepted for P0, REQUIRED follow-up.** Refusal did occur and the
+  tests assert both code and distinguishing detail, so no false verification is possible from the naming debt — but this
+  is real normative spec debt, not optional cleanup. **TRVM-P0.1 must add dedicated refusal semantics** distinguishing
+  at minimum (a) malformed child-protocol registration and (b) attempted built-in child-protocol override, through the
+  proper normative schema/release revision. **Do not merely loosen `spec_agreement`.** All old valid vectors and all old
+  refusal meanings must remain stable.
+- **Deviation 2 — blind-run re-pin: accepted, ledger closure required.** The re-pin followed TRVM's own abort/pin
+  mechanism and the superseded/aborted/new ids are preserved in the stack-fix receipt, which suffices for accepting
+  TRVM-P0. The next TRVM-owner pass must also record the supersession in whatever **authoritative TRVM ledger** the
+  blind-run protocol requires — superseded `brun-c39b708f1d96f2b6df1562d66c33c3eee3d13e2307274e42adbff79025b13ad8`,
+  aborted `brun-740403c7…`, current pinned
+  `brun-74f54466247c3ccbfcf15ada42242605c7a299961a8b7413e1c914f18fe8c264`. If TRVM has no authoritative place for it,
+  **do not invent a ledger** — document precisely why the existing receipt is canonical enough. This closes GAP-T14.
+
+## D-062 — `graphonomous.semantic.v1` is OPEN NOW; the 2-role/1-kind/9-pair surface is a CANDIDATE pending a target-completeness audit (2026-09-03, GPT v5 §7)
+
+- **OPEN IT NOW. Do not wait for a third source family.** This is exactly the condition the frozen-v0 guard was designed
+  to expose. G0-F measured authoritative factory structures that could not be represented under v0 and were
+  **intentionally omitted rather than forced**: 27 ARGUMENT records, 68 DEFEATER records, argument
+  premise/evidence/assumption structure, defeaters targeting claims / arguments / assumptions / witnesses / receipts and
+  consumption-rule/code targets, assumption discharge relations, incident semantics, and additional instrument/process
+  vocabularies. **The fact that the v0-safe subset seals successfully does not prove v0 is semantically sufficient** —
+  it proves the adapter respected the frozen contract.
+- **Accepted now as design direction** (use unless the census finds a direct contradiction): `ARGUMENT` is a **distinct
+  role**, not a CLAIM sub-kind — it has premises/conclusion/evidence and is not merely another asserted claim, and the
+  alternative would need `SUPPORTS [CLAIM, CLAIM]`, changing what every existing CLAIM→CLAIM edge could mean.
+  `DEFEATER` is a **distinct role**, not a FALSIFIER synonym — a v0 FALSIFIER is an executable construction that
+  falsifies claim/law semantics, while defeaters frequently attack things other than claims. `DISCHARGED_BY` is a
+  **distinct relation kind** for the measured assumption→claim relation, because overloading `SUPPORTS` in the opposite
+  direction weakens its existing meaning more than a specific discharge kind does.
+- **Do NOT freeze the submitted "2 roles / 1 kind / 9 pairs" surface yet.** Before v1 is frozen, run a **v1
+  target-completeness audit** over the refused factory layer — especially the 34 `consumption_rule` defeater targets,
+  the argument-target dictionaries carrying file/revision/digest/section/symbol, and the exact semantic status of
+  incident FINDING records. **Every authoritative refused structure must receive exactly one explicit disposition:**
+  (1) REPRESENTED in v1; (2) DEFERRED because no current semantic consumer requires it, with raw/source evidence
+  preserved; (3) SOURCE-REPAIR because the source form cannot support a semantic identity honestly; (4) OUT-OF-SCOPE
+  process metadata, with a stated reason.
+- **Prohibited shortcuts.** Do not invent a `CONSUMPTION_RULE` role, do not abuse `SOURCE_LOCATION`, and do not widen
+  `MECHANISM` merely to make the counts fit. If the source supplies only code coordinates, the honest v1 may preserve
+  the target as source-addressed evidence while **deferring a semantic ATTACKS endpoint**. If the audit shows a tenth
+  endpoint pair or another role is the smallest honest representation, **change the v1 proposal before freezing it**.
+  Incident FINDINGs must not be merged with crosswalk FINDINGs by textual similarity; if `finding_source` is merely
+  provenance, keep it out of semantic identity unless a query demonstrates otherwise.
+- **v0 non-regression is absolute.** Never edit `graphonomous.semantic.v0`. v1 must be a new WRL profile row/id. All v0
+  baseline/historical/multi golden identities remain byte-identical. Statement LIDs shared by v0 and v1 remain
+  cross-world semantic names.
+
+## D-063 — `graphonomous.evidence.v0` stays NOT YET; G0.5 is a READ-ONLY UI, authorized after v1 (2026-09-03, GPT v5 §8–§10)
+
+- **`graphonomous.evidence.v0`: KEEP `NOT YET`.** G0-F was the second-source measurement asked for and it still does not
+  demonstrate a concrete requirement for provenance/assertion occurrence to participate in WRL world identity. The
+  present four-way separation remains sufficient: projection root = complete observed evidence/provenance; G0-E root =
+  derived understanding; WRL semantic world = statement/object semantics; G0-D certificate = reconstruction receipt over
+  the projection. **Do not create an evidence WRL profile merely for symmetry.** Re-open only when a concrete consumer
+  requires provenance relation allocation that must be world-addressable through WRL, evidence-world identity
+  independent of the projection/CAS root, cross-world composition of assertion/provenance objects, or a
+  query/authority/certificate operation impossible to state correctly under the current separation. **G0.5 does not
+  automatically count** — it may display projection assertions directly.
+- **Development order, authorized.** `record v5` → `TRVM-P0.1 spec/ledger closure` → `semantic.v1 target-completeness
+  audit` → `semantic.v1 profile + factory argument/defeater ingestion` → rebuild projection/evaluation/certificate →
+  seal v1 world through WRL → `G0.5 minimal read-only Graphonomous UI` → stop for GPT adjudication. TRVM-P0.1 and the v1
+  pre-freeze research may run in parallel but remain **separate owning-layer work** with separate commits/receipts.
+  **Do not start broad G1, autonomous mutation, evidence.v0, or the TRVM primitive-basis round in this round.**
+- **G0.5 authority boundary — READ ONLY.** The UI may not promote or reject evidence, modify authoritative registries,
+  mint claims, rewrite factory/crosswalk state, trigger stack repair autonomously, or label an advisory LLM answer as
+  deterministic derivation. No LLM-generated explanation may replace the deterministic G0-E `explain` tree in the
+  acceptance demo; an LLM summary may be layered later and labelled advisory. No write controls disguised as disabled
+  future buttons unless clearly labelled nonfunctional. **Layout coordinates, open panels, filters and viewport state
+  are non-semantic UI state and must not move projection or WRL identities.** The UI's implementation
+  language/framework is host machinery and need not be WRL; the demo claim is that *the displayed semantic graph is
+  derived from authoritative sources, deterministically projected, certified, and sealed as a real WRL world.*
+- **Required G0.5 surfaces** (GPT v5 §10): snapshot/world selector (baseline v0, historical v0, multi v0, multi v1);
+  semantic graph over statement LIDs; node inspector (role, semantic attrs, evidence state, source-family assertions,
+  source locations); relation inspector separating statement LID / WRL `rev-` / world-scoped `rel-` / assertion
+  occurrences; explain panel distinguishing `observed` vs `derived` and showing `trvm_derivation:false`;
+  provenance/source-location drill-down; fault panel navigable to the affected record; A1–A7 executable; identity panel
+  showing projection root, evaluation root, G0-D certificate/verifier coordinate and WRL `sem-` together; and, if v1 is
+  built, ARGUMENT/DEFEATER exploration.

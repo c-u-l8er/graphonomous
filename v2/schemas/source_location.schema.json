@@ -133,7 +133,10 @@
     "REGISTRY",
     "SOURCE_LOCATION",
     "FAULT",
-    "PROPOSAL"
+    "PROPOSAL",
+    "ARGUMENT",
+    "DEFEATER",
+    "INSTRUMENT"
    ]
   },
   "relation_kind": {
@@ -168,7 +171,8 @@
     "DEFINES",
     "REPRESENTS",
     "CROSS_CUTS",
-    "STATE_TRANSITION_OF"
+    "STATE_TRANSITION_OF",
+    "DISCHARGED_BY"
    ]
   },
   "digest_set": {

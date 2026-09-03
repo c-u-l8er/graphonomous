@@ -1,0 +1,1 @@
+{"attrs":{"reason":"prose","text":"the status-inferred obligation rule shipped in R5"},"code":"UNRESOLVED_LINK","concerns":["claim:factory:MOS-CLAIM-OBLIGATION"],"lid":"fault:g0:UNRESOLVED_LINK:0057","message":"MOS-CLAIM-OBLIGATION: supersedes is prose, not a claim id (never parsed — D-021)","rule":"factory.claims.supersedes","snapshot":"snapshot:g0:multi-v1-ba4e625-d217ee2"}

@@ -16,6 +16,10 @@ export const KIND_PREFIX = Object.freeze({
   ARTIFACT: "artifact", ADJUDICATION: "adjudication", EVIDENCE_STATE_TRANSITION: "transition", ROUND: "round",
   CELL: "cell", REGISTRY: "registry", SOURCE_LOCATION: "loc", FAULT: "fault", PROPOSAL: "proposal",
   RELATION: "rel", ASSERTION: "asrt", SNAPSHOT: "snapshot", ADAPTER_RUN: "run",
+  // graphonomous.semantic.v1 (2026-09-03, D-064): three roles the frozen v0 profile has no home for. A lid prefix is
+  // NOT profile-scoped — a lid is a statement name and carries no profile (that is what makes v0/v1 lids comparable) —
+  // so these live in the one table, and it is the PROFILE that decides whether a world may contain them.
+  ARGUMENT: "argument", DEFEATER: "defeater", INSTRUMENT: "instrument",
 });
 export const PREFIX_KIND = Object.freeze(Object.fromEntries(Object.entries(KIND_PREFIX).map(([k, v]) => [v, k])));
 export const PREFIXES = Object.freeze(Object.values(KIND_PREFIX));
@@ -64,6 +68,10 @@ export const RELATION_KINDS = Object.freeze([
   // D-037 (the D-034 ruling, GPT adjudication v3 2026-09-03): a transition MOVES THE STATE OF a claim, it does not
   // replace it — transition → claim is STATE_TRANSITION_OF, never SUPERSEDES.
   "STATE_TRANSITION_OF",
+  // v1 (D-064): an assumption is discharged BY a claim. A new kind rather than SUPPORTS [CLAIM, ASSUMPTION] reversed,
+  // because widening SUPPORTS' target set costs more than a specific kind. Minted only where the source's
+  // discharge_state.status says the assumption IS discharged — 7 of 9 records at d217ee2 say `undischarged`.
+  "DISCHARGED_BY",
 ]);
 /** ENDPOINT CONSTRAINTS the kernel of G0 enforces at emission AND projection time (D-037). `SUPERSEDES` is frozen as a
  *  REPLACEMENT relation between semantically comparable entities — claim → claim, revision → revision, round → round,

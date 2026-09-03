@@ -52,8 +52,15 @@ test("relation lids are propositions (D-029): no kind takes a citation qualifier
   assert.throws(() => relationLid("WITNESSES", "witness:crosswalk:x", a, "role=sensitivity"), /QUALIFIER_NOT_ALLOWED/);
   assert.deepEqual(RELATION_QUALIFIERS, {}, "no field of the first source changes a proposition; the table is declared empty, not absent");
   assert.throws(() => relationLid("LOVES", a, b), /BAD_RELATION_KIND/);
-  assert.equal(RELATION_KINDS.length, 31, "30 of spec §3.2 + D-027 plus STATE_TRANSITION_OF (D-037)");
+  assert.equal(RELATION_KINDS.length, 32, "30 of spec §3.2 + D-027, STATE_TRANSITION_OF (D-037), DISCHARGED_BY (D-064, semantic.v1)");
   assert.ok(RELATION_KINDS.includes("STATE_TRANSITION_OF"));
+  assert.ok(RELATION_KINDS.includes("DISCHARGED_BY"), "v1 adds exactly one kind; the profile, not this table, decides which world may carry it");
+  // A lid prefix is NOT profile-scoped: a lid is a statement NAME and carries no profile, which is what makes a v0 lid
+  // and a v1 lid comparable across worlds (measured: 1,574/1,574 shared statements, same rev-, different rel-).
+  for (const role of ["ARGUMENT", "DEFEATER", "INSTRUMENT"]) assert.ok(KIND_PREFIX[role], role);
+  assert.equal(makeLid("ARGUMENT", "factory", "ARG-FED-1PA-DEC-CITATION").lid, "argument:factory:ARG-FED-1PA-DEC-CITATION");
+  assert.equal(makeLid("DEFEATER", "factory", "DEF-R83-UNTRUSTED-COUNT").lid, "defeater:factory:DEF-R83-UNTRUSTED-COUNT");
+  assert.equal(makeLid("INSTRUMENT", "factory", "INS-PANEL").lid, "instrument:factory:INS-PANEL");
 });
 
 test("context-bound anonymous identity (D-030): same container + same sentence => one lid; another container or another sentence => another lid", () => {
