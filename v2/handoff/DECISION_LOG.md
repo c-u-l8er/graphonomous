@@ -851,3 +851,81 @@ DEFERRED until post-G0-F evidence · G0-D AUTHORIZED NEXT · G0-F AUTHORIZED AFT
   additions move root and certificate; the pre-G0-F certificate still verifies against its frozen snapshot;
   reordering/dropping a source cannot alias a certificate); seals under frozen v0 or stops with a v1 proposal (D-050).
 - Not this round: UI/G0.5, broad G1, `graphonomous.evidence.v0`, the TRVM primitive-basis round.
+
+## D-055 — GAP-T9 classified from a reproducer: the gap is real; `TRVM-P0 — Checked Child Protocol Registration` is executed as design (a′) (2026-09-03, R13, D-054 discipline)
+
+- **Reproducer** (`research/probes/g0d/probe_g0d_nest_child.mjs`, TRVM `fd0df4c`, read-only): `verifiedClaimSemId` mints
+  for `GRAPHONOMOUS-PROJECTION-v0` (`vclaim-c278d3b2…`, preimage re-derived by hand, equal); every judge-side path is
+  closed — `IMPLEMENTED_CHILD_PROTOCOLS` is frozen (`nest_check.mjs:151-159`; assignment → `TypeError`), an opts
+  registry is refused `nest-policy-weakened` (`effectivePolicy :129-133`), the producer throws
+  `nest-bundle-unknown-child-protocol` (`nest_bundle.mjs:220`), and `checkNestBundle` returns
+  `nest-child-protocol-unsupported` plus five consequential codes with `checker_evaluations = 0`; `compose_check`
+  refuses identically. **Class: INTEROP_GAP confirmed** — TRVM can mint but cannot check or register a child protocol
+  except by the hard-coded table.
+- **Why the table is hard-coded, honoured.** `round-11-ledger.md:3601-3604`: the artifact must never name its own claim
+  field or checker (P1.1/P2.1/P3 lineage); `spec_agreement.mjs:91-97` pins the table against the normative schema. The
+  rule protected is *a VERIFIER names the checker set*, so a caller-supplied registry is lawful when the caller is the
+  verifier, built-ins cannot be overridden, and the verdict names which checker set produced it.
+- **Design (a′) chosen.** `checkNestBundle(bundle, {store, child_protocols})` / `checkNestBytes(raw, {store,
+  child_protocols})`: `child_protocols` destructured beside `store` so it never reaches `effectivePolicy`; each entry
+  `{claim_field, check, composed:false, checker_id}` validated (`nest-child-protocol-malformed`); a key already in
+  `IMPLEMENTED_CHILD_PROTOCOLS` refused (`nest-child-protocol-override-refused`); `composed:true` refused; the effective
+  table built inside `checkOwned` and used at the dispatch; `measured.child_protocol_set` reported and a
+  `child_protocol_set_id` folded into the reported verifier policy id **only when a set is supplied**, so every existing
+  verdict, vector and id is byte-identical. The producer `buildNestBundle` accepts the same supplied table so an
+  agreement vector can be built. Rejected: (b) module-level `registerChildProtocol` (global mutable authority channel;
+  a second registrant collides), (c) a CAS descriptor (the CAS holds JSON, never a checker; letting the citation supply
+  the claim field is the P3 defect — acceptable only as the `checker_id` identity).
+- **Batteries that must stay green:** `gov-nest`, `gov-proof`, `gov-spec`, `gov-negative`, `gov-harness`, `gov-grid`
+  (Makefile); `nest_bundle`/`proof_bundle`/`domain_bundle` write into the tree (deterministic — a re-run must leave
+  `git status` clean); no new governance file (`artifacts.json`/`grid_check` refuse an undeclared one); no ledger or
+  grid edits by this lane; separate local TRVM commit, not pushed; receipt in `STACK_FIX_RECEIPTS/`.
+- **G0-D protocol** follows R13 §6: claim = projection root + order-independent, dropped-source-sensitive
+  `snapshot_commitment` (measured: reorder HOLDS, drop MOVES, duplicate refused — needed because the manifest binds only
+  the snapshot *label* and the stored snapshot hash is order-dependent) + ruleset + schema set + adapter contract + spec
+  + checker-owned `scope` (D-054's "must not mean" list as refusable values); `chain_ids` = the TRVM pin + projector/
+  checker ids; `aggregate_id` = manifest facts; certificate = `verifiedClaimSemId`. **Projection and evaluation roots
+  must not move** (D-049): the snapshot identity record enters the CAS as an artifact beside the manifest, never as a
+  manifest entry.
+
+## D-056 — G0-F scope decided from the factory-ledger census (2026-09-03, R12 at `d217ee2`, read-only)
+
+- **Pin.** `d217ee29a3322c68db0d43be47491f0e9d4fbc64` = `refs/heads/invariant-canonical` = tag `INV-R9.4`; tree `11ab2c61…`;
+  `CLAIM_LEDGER.json` blob `23141cd1…` (458,585 B); 10 mosaic blobs, 20 receipts; `cells.json` is in the same tree,
+  byte-identical to the site repo. Read only via `git show`.
+- **What the census measured.** 208 claims, 0 duplicate ids, 0 statuses outside `_statuses`, 84 settled; witnesses
+  269/269 resolve and all 137 `§n` anchors exist; `cell:NN` 54/54 and `assumption_refs` 46/46 resolve; `assumptions[]`
+  is 110 free-text items; `supersedes`/`superseded_by` agree on 8 pairs, one-sided on 6; dangles: 2 `prior_art`
+  `SRC-MUTATION-ADEQUACY`, 8 prose `supersedes`.
+- **Cross-source identity (the point of G0-F).** The registries meet only at the 4 ids the crosswalk already cites
+  (EMB-AUTH-NONAMP qualified; EMB-CUT-EMPTY, TAX-RELATIONAL-2, TAX-FLOW bare — D-031); the factory tree mentions the
+  E-world **zero** times (re-verified). Text near-duplicates: 0 exact, 0 at Jaccard ≥ 0.5; three name-level
+  coincidences (E-40's `name` *is* the token `EMB-CUT-EMPTY`; E-41 paraphrases TAX-RELATIONAL-2) **stay distinct nodes**
+  — text equality is not identity. Collisions that the lid namespaces keep apart: `S4` (crosswalk safety obligation vs a
+  factory exhaustive-search-space label), `F1/F4/F5` (R0.8 findings vs "Fable R5.2" review findings), intra-factory
+  `INC-` (3 claims vs 46 incidents). **No same-proposition (kind, source, target) case exists across the registries at
+  this pin**; what folds is node-level (the 4 `claim:factory:*` stubs gain a second assertion; `cell:cells:27a`; one
+  `loc:factory:` object). The factory's `obligation` vocabulary (9 logical shapes) is a different axis from S1..S6 and
+  is never merged (Q-10). The one real two-assertion *relation* case is intra-factory: 8 `SUPERSEDES` pairs stated by
+  both `supersedes` and `superseded_by` — one relation, two assertions (D-029).
+- **v0 fit (D-050 guard).** The core ledger seals under frozen v0: REGISTRY/CLAIM/MEMBER_OF, WITNESS→WITNESSES→CLAIM (+
+  LOCATED_IN), ASSUMES, BINDS→CELL, CLAIM→SUPERSEDES→CLAIM, CITES→ARTIFACT (`artifact:factory:SRC-*` — the contract's
+  `cite:` prefix does not exist in the lid grammar), ROUND/RECEIPT with PRODUCED_BY. **Does not fit v0:** arguments
+  (`SUPPORTS` has no `[CLAIM, CLAIM]` pair), 62 of 68 defeaters (`ATTACKS` reaches only CLAIM/MECHANISM), instruments,
+  objectives, occupancy, operations, embodiment (no role), `ASSUMPTION → CLAIM` discharge refs (no kind).
+- **Decision.** G0-F ingests the v0-safe core — (1) REGISTRY + 208 CLAIM (full attrs, `evidence_state {token,
+  vocabulary: factory-ledger}`) + MEMBER_OF; (2) WITNESS nodes/edges with `outcome` from status + LOCATED_IN at the
+  pinned blob with `§n` anchors; (3) ASSUMES — typed `ASM-*` ids to `assumption:factory:*`, free text under the existing
+  `text` namespace (so a sentence shared with the crosswalk co-refers by D-030, never by a per-registry prefix); (4) BINDS
+  → `cell:cells:NN`; (5) SUPERSEDES from both fields (one relation, two assertions); (6) CITES → `artifact:factory:SRC-*`;
+  (7) ROUND/RECEIPT from the 20 receipts with PRODUCED_BY and `invariants.established` → CLAIM PRODUCED_BY ROUND. The 4
+  crosswalk stubs must fold without CONTRADICTION (the adapter emits the same attr values for `claim_id`,
+  `registry_hint`, `present_in_pinned_ledger`, or omits them). **Deferred to a v1 proposal, recorded as measurement:**
+  arguments, defeaters (the 6 claim-targeted ones may enter as FALSIFIER→ATTACKS), incidents-as-FINDING, instruments,
+  objectives, occupancy, operations, embodiment, `retyped` transitions (prose), `mosaic/derived/`. Faults expected:
+  `SETTLED_WITHOUT_WITNESS` 8 (new; a fact about the source, legal by the factory's own gate), `UNRESOLVED_LINK` ~11,
+  `STATUS_OUTSIDE_VOCABULARY` 0 (new), `DANGLING_CELL_BINDING` 0, `DANGLING_WITNESS` 0; `implementation_binding` stays
+  an attribute (81 `UNSUPPORTED_SOURCE_FORM` avoided by not inventing locations from prose).
+- **Consequence for the profile.** The core ledger sealing under v0 is itself the D-050 test passing for the second
+  source; the argument/defeater layer is the first measured **v1 obligation** (`SUPPORTS [CLAIM, CLAIM]` or an
+  ARGUMENT role; `ATTACKS` to ASSUMPTION/WITNESS/RECEIPT) — proposed, not built, in this round's handoff.

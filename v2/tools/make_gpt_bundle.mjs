@@ -29,7 +29,7 @@ for (const f of v2files) { const rel = relative(V2, f); mkdirSync(dirname(join(S
 
 // 2. transitive sibling imports from every .mjs/.js under v2 (import ... from "../../../X/…")
 const IMPORT_RE = /from\s+["']((?:\.\.\/)+(?:TRVM|WRL|[A-Za-z0-9_.-]+)\/[^"']+)["']/g;
-const CODE_DIRS = ["lib", "adapters", "bin", "test", "schemas"].map((d) => join(V2, d) + "/");
+const CODE_DIRS = ["lib", "adapters", "bin", "test", "schemas", "tools"].map((d) => join(V2, d) + "/");
 const seen = new Map(); const queue = v2files.filter((f) => /\.(mjs|js)$/.test(f) && CODE_DIRS.some((d) => f.startsWith(d))).map((f) => ({ file: f, importer: relative(AMP, f) }));
 while (queue.length) {
   const { file, importer } = queue.shift(); const src = readFileSync(file, "utf8");
@@ -52,7 +52,7 @@ for (const [abs, importers] of [...seen.entries()].sort()) {
 }
 mkdirSync(join(STAGE, name, "REPRO_DEPENDENCIES"), { recursive: true });
 writeFileSync(join(STAGE, name, "REPRO_DEPENDENCIES/MANIFEST.json"), JSON.stringify({ generated_for: name, rule: "verification copies only (D-033); production imports the real sibling checkout and canon.mjs refuses a moved TRVM blob", files: deps }, null, 1) + "\n");
-writeFileSync(join(STAGE, name, "REPRO_DEPENDENCIES/README.md"), `# REPRO_DEPENDENCIES\n\nByte-exact copies of every sibling file the shipped Graphonomous code imports, placed at their ProjectAmp2-relative paths so the imports resolve unchanged from inside this ZIP. \`MANIFEST.json\` records repository, HEAD commit, blob OID at HEAD, blob OID of the copied bytes (they must agree), sha256 and importers.\n\nRe-run from the zip (no git needed): \`cd ${name}/graphonomous/v2 && node --test test/canon.test.mjs test/lid.test.mjs test/schema.test.mjs test/rules.test.mjs test/eval.test.mjs test/b1.test.mjs test/query.test.mjs test/wrl_world.test.mjs && python3 test/canon_twin.py --manifest projections/baseline && node bin/g0.mjs verify --dir projections/baseline && node bin/g0.mjs verify-eval --dir projections/baseline\`. \`test/projection.test.mjs\` rebuilds from the pinned registries and needs the real ProjectAmp2 checkout.\n`);
+writeFileSync(join(STAGE, name, "REPRO_DEPENDENCIES/README.md"), `# REPRO_DEPENDENCIES\n\nByte-exact copies of every sibling file the shipped Graphonomous code imports, placed at their ProjectAmp2-relative paths so the imports resolve unchanged from inside this ZIP. \`MANIFEST.json\` records repository, HEAD commit, blob OID at HEAD, blob OID of the copied bytes (they must agree), sha256 and importers.\n\nRe-run from the zip (no git needed): \`cd ${name}/graphonomous/v2 && node --test test/canon.test.mjs test/lid.test.mjs test/schema.test.mjs test/rules.test.mjs test/eval.test.mjs test/b1.test.mjs test/query.test.mjs test/wrl_world.test.mjs test/certificate.test.mjs test/certificate_trvm.test.mjs && python3 test/canon_twin.py --manifest projections/baseline && node bin/g0.mjs verify --dir projections/baseline && node bin/g0.mjs verify-eval --dir projections/baseline\`. \`test/projection.test.mjs\` rebuilds from the pinned registries and needs the real ProjectAmp2 checkout.\n`);
 cpSync(resolve(report), join(STAGE, name, report.split("/").pop()));
 // 3. SHA256SUMS + zip
 const all = walk(join(STAGE, name)).sort(); const sums = all.map((f) => `${sha256(readFileSync(f))}  ${relative(join(STAGE, name), f)}`).join("\n") + "\n";

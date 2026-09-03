@@ -1,0 +1,29 @@
+[1] baseline ROOT = root-da4f3d7a534801e0aedbfee4853cba989e24e5107c28e02ad83507a044afef85  artifactRoot(manifest) equal: true
+    manifest keys = adapter_runs, count, entries, faults, kind, per_kind, ruleset, snapshot, spec
+    manifest.snapshot = snapshot:g0:baseline-ba4e625  ruleset = g0rule-279caadc7dec1b030…  adapter_runs = 1
+    snapshot sources (declared order) = wrl → super → r10 → factory → computedriven → trvm
+
+[2] snapshot commitment (sorted set of source identities) = gsnap-d67431565fa32b7de8a19b9bdda5e30adfcd74e54ce2eca2b97d41820b05146b
+    reversed source order → HOLDS (order-independent)
+    dropped source 'trvm' → MOVED (dropped source refused)
+    for contrast, hashRecord(snapshot) as stored: reversed order → MOVED (the stored snapshot hash is ORDER-DEPENDENT)
+    duplicate source → refused: G0_SET_DUPLICATE
+
+[3] schema_set_id = gschema-a3a2ad28d2927482ac42d3… over 12 schemas
+    adapter_contract_id = gadapt-3b9e4e555ca5654099262b0… over crosswalk.mjs, git.mjs
+    ruleset (loaded) = g0rule-279caadc7dec1b030ba3657… equals manifest.ruleset: true
+    TRVM pin verified: {"governance/derive_protocol.mjs":"8ec73d9b3401e1e013388c6daf9d8b2c63d43954","governance/c…
+
+[4] projection_claim_sem_id = gclaim-ff2c5fb9cafdc9c422190f9fecd19a5372c771fd1ae395655079b37cee963eaf
+    aggregate_id = gagg-02ce97b7b9d9f1664cce6862b8529c6f57a579d5af513976cafcb9960d334548
+    verified_claim_sem_id = vclaim-a5223d69d6be2a570afc162d546fe141264afc83e8394c13184fda4b11610b97
+    projection_root changed            claim MOVED · certificate MOVED
+    snapshot: source dropped           claim MOVED · certificate MOVED
+    snapshot: sources reordered        claim HOLDS · certificate HOLDS
+    ruleset changed                    claim MOVED · certificate MOVED
+    schema set changed                 claim MOVED · certificate MOVED
+    adapter contract changed           claim MOVED · certificate MOVED
+    protocol id bumped to v1           claim MOVED · certificate MOVED
+    witness.json / README / prose changed  claim HOLDS · certificate HOLDS (not in any bound value)
+    TRVM pin moved (chain)                 claim HOLDS · certificate MOVED
+    certificate copied to another snapshot: the checker recomputes claim from the projection dir it is handed; a different ROOT ⇒ different projection_root ⇒ nest-style 'certificate-stale' refusal (relation, not value)

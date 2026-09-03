@@ -37,7 +37,7 @@ beside the v0.4 Elixir memory engine in this same repository and does not modify
 - A stack defect found by this work is reproduced minimally, fixed in the owning layer only when the evidence supports it, tested there, receipted under `handoff/STACK_FIX_RECEIPTS/`, and then the interrupted Graphonomous acceptance case is re-run. No private "Graphonomous semantics" layer that duplicates WRL/TRVM.
 - No LLM output is evidence. Deterministic, content-addressed, replayable transforms only.
 
-## The code (G0-A/G0-B 2026-09-02 · G0-B.1, G0-E, G0-C spike, WRL-P0 + G0-C sealed 2026-09-03)
+## The code (G0-A/G0-B 2026-09-02 · G0-B.1, G0-E, G0-C spike, WRL-P0 + G0-C sealed, G0-D certificate 2026-09-03)
 
 ```
 lib/canon.mjs        canonical bytes = TRVM canonicalBytes over the G0 value domain; the strict source reader; hashes
@@ -53,24 +53,27 @@ lib/evaluation.mjs   run/verify an evaluation: <projection>/derived/ with its ow
 lib/query.mjs        node · neighbors · path · facts · explain · as_of                              (G0-E)
 lib/wrl_world.mjs    G0-C: builds the graphonomous.semantic.v0 SUBMISSION; WRL seals it (canonicalizeV2Artifact → v2WorldIdOfArtifact → deriveV2Relations): real sem-, kernel rel-/rev- (WRL-P0, pin b072db0; D-041/D-047)
 lib/wrl_world_spike.mjs  HISTORICAL: the D-036/D-037 spike canonicalizer (gsem-/grelpre-), kept only to reproduce the supersession mapping (D-038)
+lib/certificate.mjs  G0-D: the GRAPHONOMOUS-PROJECTION-v0 certificate — build <projection>/certificate/{bundle.json,VCLAIM} (TRVM verifiedClaimSemId over claim/aggregate/chain) and the checker that re-derives every plane from the directory, writes nothing, returns TRVM's public result shape; `childProtocolEntry(dirs)` is the entry a TRVM nest verifier supplies after TRVM-P0 (D-054/D-055, R13 §6)
 adapters/git.mjs     pinned, read-only git access (never the working tree)
 adapters/crosswalk.mjs  the first authoritative adapter (crosswalk + evidence_state, v2.6 and v2.7; bare ids per D-031; transition → claim is STATE_TRANSITION_OF, never SUPERSEDES — D-037)
-bin/g0.mjs           g0 snapshot | project | verify | census | eval | verify-eval | query | world
+bin/g0.mjs           g0 snapshot | project | verify | census | eval | verify-eval | query | world | certify | check-cert
 rules/g0.rules.json  spec §13, D-022 names, assertion-aware (D-032)
 schemas/*.schema.json  record schemas incl. derived_fact + evaluation (regenerate with node schemas/build_schemas.mjs)
 snapshots/*.json     the two pins (baseline ba4e625 / historical 699fbc2)
-projections/         baseline + historical (each: records, cas, derived/, world/ = the WRL-sealed world, world-spike/ = the D-037 spike receipt) · pre-b1/ and pre-d034/ receipts (superseded, preserved) · EVIDENCE.md
+projections/         baseline + historical (each: records, cas (+ the snapshot record beside the manifest), derived/, world/ = the WRL-sealed world, world-spike/ = the D-037 spike receipt, certificate/ = the G0-D certificate) · pre-b1/ and pre-d034/ receipts (superseded, preserved) · EVIDENCE.md
 handoff/WRL_SCHEMA_OR_PROFILE/graphonomous.semantic.v0.json  the SUBMITTED profile declaration (SEALED by WRL-P0; the admitted one is WRL's V2_PROFILES row, held equal by test)
 handoff/G0C_IDENTITY_MATRIX.md  the measured identity-change matrix (tools/identity_matrix.mjs)
+handoff/G0D_GOLDEN_VECTORS.md  the G0-D certificate ids per pin + sensitivity table (tools/g0d_vectors.mjs; labelled with the TRVM pin — re-minted when it moves)
 test/                node --test; canon_twin.py is the independent Python twin; helpers/fake_repo.mjs for synthetic sources
-tools/               evidence.py (regenerates EVIDENCE.md) · identity_matrix.mjs (G0C_IDENTITY_MATRIX.md) · make_gpt_bundle.mjs (handoff ZIP + REPRO_DEPENDENCIES)
+tools/               evidence.py (regenerates EVIDENCE.md) · identity_matrix.mjs (G0C_IDENTITY_MATRIX.md) · g0d_vectors.mjs (G0D_GOLDEN_VECTORS.md) · make_gpt_bundle.mjs (handoff ZIP + REPRO_DEPENDENCIES)
 ```
 
 Run: `npm test`; `node bin/g0.mjs project --snapshot snapshots/baseline.json --out projections/baseline`;
 `node bin/g0.mjs verify --dir projections/baseline`; `python3 test/canon_twin.py --manifest projections/baseline`;
 `node bin/g0.mjs eval --dir projections/baseline && node bin/g0.mjs verify-eval --dir projections/baseline`;
 `node bin/g0.mjs query --dir projections/baseline,projections/historical --as-of snapshot:g0:historical-699fbc2 neighbors round:computedriven:R0.8 OPENS out`;
-`node bin/g0.mjs world --dir projections/baseline` (seals through WRL; prints the `sem-`). Zero runtime dependencies; the TRVM encoder/CAS and the WRL
+`node bin/g0.mjs world --dir projections/baseline` (seals through WRL; prints the `sem-`);
+`node bin/g0.mjs certify --dir projections/baseline && node bin/g0.mjs check-cert --dir projections/baseline` (G0-D: mints and re-checks the certificate; exit 1 on REFUSED). Zero runtime dependencies; the TRVM encoder/CAS and the WRL
 relation layer (`relation-v2.js`, which imports the kernel and the spine) are imported from the pinned sibling checkouts and their blob OIDs are checked at test time. The tests that need
-only the shipped projections (canon, lid, schema, rules, eval, b1, query, wrl_world) run from the handoff ZIP;
+only the shipped projections (canon, lid, schema, rules, eval, b1, query, wrl_world, certificate, certificate_trvm) run from the handoff ZIP;
 `test/projection.test.mjs` rebuilds from the pinned registries and needs the real tree.

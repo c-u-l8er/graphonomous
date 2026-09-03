@@ -9,6 +9,9 @@
  *   g0 query    --dir <dir>[,<dir>…] <fn> <args…>  node|neighbors|path|facts|explain|as_of (JSON args; JSON out)
  *   g0 world    --dir <dir>                       G0-C: seals the semantic world through WRL — writes <dir>/world (sem-, kernel rel-/rev-);
  *                                                 a D-037 spike world/ is moved to world-spike/ first
+ *   g0 certify  --dir <dir>                       G0-D: writes <dir>/certificate/{bundle.json,VCLAIM} (GRAPHONOMOUS-PROJECTION-v0); puts the
+ *                                                 snapshot record into <dir>/cas beside the manifest (the root does not move)
+ *   g0 check-cert --dir <dir> [--bundle <file>]   re-derives everything from <dir> and checks the bundle; exit 1 on REFUSED; writes nothing
  */
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -72,4 +75,15 @@ if (cmd === "snapshot") {
 } else if (cmd === "world") {
   const { buildWorld } = await import("../lib/wrl_world.mjs");
   const w = await buildWorld(opt("dir")); console.log(JSON.stringify({ sem: w.sem, projection_root: w.projection_root, objects: w.objects, relations: w.relations.length, canonical_bytes: w.bytes, wrl: w.wrl, state: w.state, supersedes: w.supersedes, spike_reproduced: w.spike_reproduced, sample: w.relations.slice(0, 3) }, null, 1));
-} else { console.error("usage: g0 snapshot|project|verify|census|eval|verify-eval|query|world …"); process.exit(2); }
+} else if (cmd === "certify") {
+  const { buildCertificate } = await import("../lib/certificate.mjs");
+  const c = buildCertificate(opt("dir"));
+  console.log(JSON.stringify({ verified_claim_sem_id: c.verified_claim_sem_id, artifact_root: c.artifact_root, bundle_bytes: c.bytes.length, protocol: c.bundle.protocol, claim: c.bundle.claim, aggregate_id: c.bundle.aggregate.aggregate_id, chain_ids: c.bundle.chain_ids, references: c.bundle.references, structure: c.bundle.structure }, null, 1));
+} else if (cmd === "check-cert") {
+  const { checkCertificate } = await import("../lib/certificate.mjs");
+  const bundle = opt("bundle") ? readFileSync(resolve(opt("bundle"))) : undefined;
+  const r = checkCertificate(opt("dir"), bundle);
+  const m = r.measured;
+  console.log(JSON.stringify({ ok: r.ok, verdict: r.verdict, codes: r.codes, refusals: r.refusals, verified_claim_sem_id: m.verified_claim_sem_id, stated_verified_claim_sem_id: m.stated_verified_claim_sem_id, projection_root: m.projection_root, snapshot_commitment: m.snapshot_commitment, projection_claim_sem_id: m.projection_claim_sem_id, aggregate_id: m.aggregate_id, schema_set_id: m.schema_set_id, adapter_contract_id: m.adapter_contract_id, ruleset: m.ruleset, entries_checked: m.entries_checked, cas_objects: m.cas_objects, writes: m.writes }, null, 1));
+  process.exit(r.ok ? 0 : 1);
+} else { console.error("usage: g0 snapshot|project|verify|census|eval|verify-eval|query|world|certify|check-cert …"); process.exit(2); }

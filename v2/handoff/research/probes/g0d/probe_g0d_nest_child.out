@@ -1,0 +1,43 @@
+[2] certificateOf(child, 'projection_claim_sem_id') = {"protocol":"GRAPHONOMOUS-PROJECTION-v0","claim_sem_id":"gclaim-54f7c0063fe2980fc4c14d14b083baad28ba94a29da038988835f4f61978eaec","aggregate_id":"gagg-a73803067…
+    preimage bytes (555 octets):
+    TRVM-VERIFIED-CLAIM-v1|{"aggregate_id":"gagg-a7380306706fd7722e6da3a80b112bc936a37ba8e875065d0d2598032144ad06","certificate_protocol":"TRVM-VERIFIED-CLAIM-v1","chain_ids":{"projector":"graphonomous.g0.project.v0","trvm_blobs":{"governance/cas.mjs":"4b84dff4b4d1fd68412c579cd9683b8dc4075d7f","governance/derive_protocol.mjs":"8ec73d9b3401e1e013388c6daf9d8b2c63d43954"},"trvm_commit":"fd0df4cdf6ea196f4b48c07b777fdbbfba1e2873"},"claim_sem_id":"gclaim-54f7c0063fe2980fc4c14d14b083baad28ba94a29da038988835f4f61978eaec","protocol":"GRAPHONOMOUS-PROJECTION-v0"}
+    verifiedClaimSemId = vclaim-c278d3b204595d8710a323798298e805530384d4a6768c0c5e2d5aa6ac1d30ab
+    re-derived by hand   = vclaim-c278d3b204595d8710a323798298e805530384d4a6768c0c5e2d5aa6ac1d30ab  equal: true
+    reword annotations →  HOLDS
+    change chain_ids.projector →  MOVED
+    change claim_sem_id →  MOVED
+    missing chain_ids → certificate-incomplete: chain_ids
+
+[3] child stored: root-a3cd9f1d1731889b2cc914590ca60d6837a4929469fdee40270c262aacad8c07  resolve: ok  bytes: 1254
+    IMPLEMENTED_CHILD_PROTOCOLS = TRVM-BOUNDED-PROOF-v1, TRVM-BOUNDED-DOMAIN-PROOF-v1, TRVM-NESTED-COMPOSITION-v2
+    Object.isFrozen(IMPLEMENTED_CHILD_PROTOCOLS) = true
+    buildNestBundle([child]) → nest-bundle-unknown-child-protocol: GRAPHONOMOUS-PROJECTION-v0
+    nest bundle chain_ids (derived from the child) = {"leaf_chains":[{"trvm_commit":"fd0df4cdf6ea196f4b48c07b777fdbbfba1e2873","trvm_blobs":{"governance/cas.mjs":"4b84dff4b4…
+
+[3a] checkNestBundle(nest, {store}) → ok: false verdict: REFUSED
+     nest-child-protocol-unsupported: operand 0: child protocol "GRAPHONOMOUS-PROJECTION-v0"; this checker implements [TRVM-BOUNDED-PROOF-v1, TRVM-BOUNDED-DOMAIN-PROOF-v1, TRVM-NESTED-COMPOSITION-v2]
+     nest-chain-ids-mismatch: chain_ids does not identify the compilers of the artifacts this checker resolved — a composition's chain is DERIVED from its children and may not be declared
+     nest-count-inconsistent: aggregate.child_verdicts says {"vclaim-c278d3b204595d8710a323798298e805530384d4a6768c0c5e2d5aa6ac1d30ab":"VERIFIED"}, this checker derives {}
+     nest-count-inconsistent: aggregate.nested_verdict says "VERIFIED", this checker derives "REFUSED"
+     nest-structure-mismatch: structure.unique_artifacts says 1, this checker derives 0
+     nest-structure-mismatch: structure.max_depth_below says 1, this checker derives 0
+     nest-structure-mismatch: structure.unique_bytes says 1254, this checker derives 0
+     nest-child-refused: the claim is a CONJUNCTION of 1 child claims and 0 are verified
+     measured.refusal_codes_transitive = ["nest-chain-ids-mismatch","nest-child-protocol-unsupported","nest-child-refused","nest-count-inconsistent","nest-structure-mismatch"]
+     checker_evaluations = 0  unique_artifact_resolutions = 1
+
+[4] registration routes:
+    (a) assignment to the frozen table → TypeError: Cannot add property GRAPHONOMOUS-PROJECTION-v0, object is not extensible
+        table still = TRVM-BOUNDED-PROOF-v1, TRVM-BOUNDED-DOMAIN-PROOF-v1, TRVM-NESTED-COMPOSITION-v2
+    (b) checkNestBundle(nest, {store, child_protocols:{…}}) → effectivePolicy: {"refusal":"child_protocols is not a field of this verifier's policy"}
+        → verdict: REFUSED refusals: nest-policy-weakened
+    (c) SHIPPED_POLICY fields = max_depth, max_artifact_bytes, max_total_resolved_bytes, max_operands_per_node, max_artifact_resolutions, derivation_reuse — no registry field exists
+    (d) producer table CHILD_PROTOCOLS frozen: true ; nest_check declares its own copy and does not import it (nest_check.mjs:151)
+    (e) the bytes boundary is the same checker: nest-child-protocol-unsupported, nest-chain-ids-mismatch, nest-count-inconsistent, nest-count-inconsistent, nest-structure-mismatch, nest-structure-mismatch, nest-structure-mismatch, nest-child-refused
+
+[5] checkComposeBundle over the same child → codes: compose-vocabulary-unknown, compose-scope-mismatch, compose-child-protocol-unsupported, compose-claim-id-mismatch, compose-count-inconsistent, compose-child-refused
+
+[6] leaf chain_ids() keys = lowering_sem_id, instantiation_sem_id, emission_sem_id, emission_rules_sem_id, target_template_encoding_sem_id, target_executable_encoding_sem_id, decode_sem_id, canonical_emitter_profile_id, canonical_emitter_artifact_id, lowering_version
+    e.g. lowering_version = 0.13.0  canonical_emitter_profile_id = cemp-e0a333a957121be7d25396d4f49343c1f23…
+    nest GRAMMAR.bundle.required = protocol, claim, chain_ids, references, aggregate, structure | optional = type, version, annotations
+    nest GRAMMAR.operand.required = protocol, claim_sem_id, aggregate_id, verified_claim_sem_id
