@@ -23,7 +23,10 @@ const sha256 = (b) => createHash("sha256").update(b).digest("hex");
 const git = (dir, args) => execFileSync("git", ["-C", dir, ...args], { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 }).trim();
 
 // 1. the v2 tree (skip node_modules, nothing else — projections and pre-b1 receipts travel)
-const walk = (d, acc = []) => { for (const e of readdirSync(d)) { const p = join(d, e); if (e === "node_modules" || e === ".git") continue; if (statSync(p).isDirectory()) walk(p, acc); else acc.push(p); } return acc; };
+/* `ui/data` is a BUILD PRODUCT of tools/g05_build.mjs (36 MB, four worlds) and is gitignored; the receiver
+ * regenerates it with one command and test/g05.test.mjs rebuilds it into a temp dir to check it anyway. */
+const SKIP_DIRS = new Set(["node_modules", ".git"]);
+const walk = (d, acc = []) => { for (const e of readdirSync(d)) { const p = join(d, e); if (SKIP_DIRS.has(e)) continue; if (relative(V2, p) === "ui/data") continue; if (statSync(p).isDirectory()) walk(p, acc); else acc.push(p); } return acc; };
 const v2files = walk(V2);
 for (const f of v2files) { const rel = relative(V2, f); mkdirSync(dirname(join(STAGE, name, "graphonomous/v2", rel)), { recursive: true }); cpSync(f, join(STAGE, name, "graphonomous/v2", rel)); }
 
