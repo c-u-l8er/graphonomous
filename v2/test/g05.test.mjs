@@ -9,30 +9,52 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { readFileSync, readdirSync, mkdtempSync, rmSync, existsSync } from "node:fs";
+import { readFileSync, readdirSync, mkdtempSync, rmSync, existsSync, mkdirSync, copyFileSync } from "node:fs";
 import { tmpdir } from "node:os";
+import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve, join } from "node:path";
 import { openGraph } from "../lib/query.mjs";
 import { runAcceptance } from "../lib/acceptance.mjs";
 
 const V = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-/* The four worlds the selector offers (GPT v5 §10.1): three under the frozen graphonomous.semantic.v0 and the v1
- * successor over the same six pinned sources. The list is here and in tools/g05_build.mjs's DEFAULT_DIRS and NOWHERE
+/* The five worlds the selector offers: three under the frozen graphonomous.semantic.v0, the v1 successor over the
+ * same six pinned sources, and `tri` — the same six plus TRVM governance as a third source family (D-073). The list is here and in tools/g05_build.mjs's DEFAULT_DIRS and NOWHERE
  * ELSE — the page reads ui/data/index.json and knows none of these names. */
-const PROJECTIONS = ["baseline", "historical", "multi", "multi-v1"].map((n) => ({ name: n, dir: join(V, "projections", n) }));
+const PROJECTIONS = ["baseline", "historical", "multi", "multi-v1", "tri"].map((n) => ({ name: n, dir: join(V, "projections", n) }));
 const REL_ID = /^rel-[0-9a-f]{64}$/;
 const REV_ID = /^rev-[0-9a-f]{64}$/;
 const json = (p) => JSON.parse(readFileSync(p, "utf8"));
 const round = (v) => JSON.parse(JSON.stringify(v));
 
-/* Build once into a throwaway directory: the tests measure the compiler's output, not a file someone edited. */
-const OUT = mkdtempSync(join(tmpdir(), "g05-"));
+/* Build once into a throwaway directory: the tests measure the compiler's output, not a file someone edited.
+ *
+ * `ui/data` is a 36 MB BUILD PRODUCT — gitignored, and excluded from the handoff ZIP on purpose. Nothing in this file
+ * may require it to already exist (GPT v6 §7 G0.5-R1, D-069). So the temp directory is shaped as a COMPLETE `ui/`
+ * fixture — the three shipped page files beside a generated `data/` — and the server test serves that fixture. The
+ * developer's own `ui/data` is compared only if it happens to be there, as a staleness check. */
+const FIXTURE = mkdtempSync(join(tmpdir(), "g05-"));
+const OUT = join(FIXTURE, "data");
+const PAGE_FILES = ["index.html", "app.js", "app.css"];
+mkdirSync(OUT, { recursive: true });
+for (const f of PAGE_FILES) copyFileSync(join(V, "ui", f), join(FIXTURE, f));
 const stdout = execFileSync(process.execPath, [join(V, "tools", "g05_build.mjs"), "--out", OUT], { cwd: V, encoding: "utf8" });
 const summary = JSON.parse(stdout);
 const INDEX = json(join(OUT, "index.json"));
 const worlds = INDEX.worlds.map((w) => ({ entry: w, data: json(join(OUT, w.file)) }));
-process.on("exit", () => rmSync(OUT, { recursive: true, force: true }));
+process.on("exit", () => rmSync(FIXTURE, { recursive: true, force: true }));
+
+/* Byte equality of two files, reported by hash and first differing offset. NOT assert.deepEqual on two Buffers: on a
+   mismatch that assertion renders a diff of every byte, and on the 15 MB world files it was measured at 6.4 GB of
+   resident memory for one comparison (2026-09-05, tools/mem_probe.mjs) — the whole reason this suite could take a 30 GB
+   machine down when ui/data was stale. A stale payload is a one-line fact; it must cost one line to report. */
+function assertSameBytes(a, b, msg) {
+  const A = readFileSync(a), B = readFileSync(b);
+  if (A.equals(B)) return;
+  const h = (x) => createHash("sha256").update(x).digest("hex").slice(0, 16);
+  let i = 0; const n = Math.min(A.length, B.length); while (i < n && A[i] === B[i]) i++;
+  assert.fail(`${msg}: ${A.length} vs ${B.length} bytes, sha256 ${h(A)}… vs ${h(B)}…, first difference at byte ${i}`);
+}
 
 test("the compiler emits one file per projection, each naming its own snapshot id and roots", () => {
   assert.equal(readdirSync(OUT).filter((f) => f.endsWith(".json")).length, PROJECTIONS.length + 1, "one world file each, plus index.json");
@@ -63,19 +85,25 @@ test("the compiler emits one file per projection, each naming its own snapshot i
   assert.equal(summary.worlds.length, PROJECTIONS.length, "the printed summary describes every file it wrote");
 });
 
-test("the build is deterministic and ui/data is what the compiler produces right now", () => {
+test("the build is deterministic: two independent temp builds are byte-identical", () => {
   const second = mkdtempSync(join(tmpdir(), "g05-again-"));
   try {
     execFileSync(process.execPath, [join(V, "tools", "g05_build.mjs"), "--out", second], { cwd: V });
+    assert.deepEqual(readdirSync(second).sort(), readdirSync(OUT).sort(), "the two builds do not even emit the same file names");
     for (const f of readdirSync(OUT)) {
-      assert.deepEqual(readFileSync(join(second, f)), readFileSync(join(OUT, f)), `${f} is not byte-identical on a rebuild`);
+      assertSameBytes(join(second, f), join(OUT, f), `${f} is not byte-identical on a rebuild`);
     }
   } finally { rmSync(second, { recursive: true, force: true }); }
+});
 
+/* A DEVELOPER staleness check, not a correctness gate. In a clean checkout or the handoff ZIP there is no ui/data and
+   this skips with the command that would create one; in a working tree it catches a payload someone forgot to rebuild. */
+test("developer staleness: if ui/data exists, it is what the compiler produces right now", (t) => {
   const served = join(V, "ui", "data");
-  assert.ok(existsSync(served), "ui/data has not been built: node tools/g05_build.mjs --out ui/data");
+  if (!existsSync(served)) { t.skip("ui/data is absent — it is a gitignored build product; `node tools/g05_build.mjs --out ui/data` creates it. The payload itself was already built and checked into a temp directory by this file."); return; }
   for (const f of readdirSync(OUT)) {
-    assert.deepEqual(readFileSync(join(served, f)), readFileSync(join(OUT, f)), `ui/${f.replace(/^/, "data/")} is stale — rebuild it`);
+    assert.ok(existsSync(join(served, f)), `ui/data/${f} is missing — rebuild: node tools/g05_build.mjs --out ui/data`);
+    assertSameBytes(join(served, f), join(OUT, f), `ui/data/${f} is stale — rebuild: node tools/g05_build.mjs --out ui/data`);
   }
 });
 
@@ -238,7 +266,7 @@ test("the page is read-only and offline: no absolute fetch, no eval, no write ve
 test("the server refuses to leave its directory", async () => {
   const { spawn } = await import("node:child_process");
   const port = 8979;
-  const srv = spawn(process.execPath, [join(V, "bin", "g05.mjs"), "--port", String(port), "--dir", join(V, "ui")], { stdio: ["ignore", "pipe", "pipe"] });
+  const srv = spawn(process.execPath, [join(V, "bin", "g05.mjs"), "--port", String(port), "--dir", FIXTURE], { stdio: ["ignore", "pipe", "pipe"] });
   try {
     await new Promise((ok, no) => {
       srv.stdout.once("data", (d) => (String(d).includes("http://") ? ok() : no(new Error("no url printed"))));
