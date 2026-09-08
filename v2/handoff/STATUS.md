@@ -14,9 +14,13 @@ state string still "SEALED by WRL (WRL-P0); FROZEN only when GPT accepts this ro
 `WRL_SCHEMA_OR_PROFILE/FROZEN.md`. The table below still shows `tri` as the v1 seal (`sem-b50742ea…`, 2,469): that
 was true when the table was written and is kept; the v2 numbers above are measured from
 `projections/tri/world/identities.json`. Committed as found on 2026-09-08 (`32bad457`) after `npm run test:full-tree`
-→ GREEN 182 / 1 skipped / 0 failing; the sessions that built it ended 2026-09-06 without committing. Not started:
-WRL as the fourth source family (authorized, D-077), a write surface, `graphonomous.evidence.v0`, the TRVM
-primitive-basis round.
+→ GREEN 182 / 1 skipped / 0 failing; the sessions that built it ended 2026-09-06 without committing. **WRL as the fourth source family: the read-only INVENTORY is done (2026-09-08, `handoff/research/R17_WRL_SOURCE_INVENTORY.md`,
+measured at WRL `32160fe`)** — four admitted profile rows, 24 relation codes, the spine's 6 roles / 2 kinds / 22 codes, 924/0
+conformance, 5 + 38 projection vectors; the family SPLITS: its world-level objects (profiles, registries, vectors) fit v2,
+its VOCABULARY (roles, kinds, endpoint pairs, codes, policy ids) does not, so the inventory returns the minimal
+`graphonomous.semantic.v3` obligation (one role `VOCABULARY_ITEM`, two kinds `ADMITS` and `REFUSES_WITH`) for adjudication
+rather than widening v2 (D-077). No adapter, no snapshot, no projection yet. Not started: a write surface,
+`graphonomous.evidence.v0`, the TRVM primitive-basis round.
 
 **Stage (2026-09-03, after GPT Adjudication v6 — D-065…D-074): `GRAPHONOMOUS-PROJECTION-v1` → G1 cross-registry
 consistency → TRVM governance as the third source family is reached and stops here for review.** v6 recorded
