@@ -6,6 +6,18 @@ Nothing is called TESTED because code exists. Every count below is copied from a
 `python3 test/canon_twin.py --selftest`, `node tools/g05_build.mjs`, WRL `node test/conformance.mjs`, TRVM
 `make governance`).
 
+**Stage (2026-09-08, read from the artifacts, not from this file's history): the `tri` projection is SEALED under
+`graphonomous.semantic.v2`** at WRL `6a8304c` (WRL-P1, `STACK_FIX_RECEIPTS/WRL-P1.md`, D-077) — `objects 3,928 ·
+relations 2,494` (the 2,469 of the v1 seal plus the 25 law→law `SUPERSEDES` propositions TRVM states at `8816e59`),
+projection root `root-ad27b735…`, `sem-3a80601c…`, certificates `vclaim-332109b0…` (v0) / `vclaim-c8801a54…` (v1),
+state string still "SEALED by WRL (WRL-P0); FROZEN only when GPT accepts this round" by the rule in
+`WRL_SCHEMA_OR_PROFILE/FROZEN.md`. The table below still shows `tri` as the v1 seal (`sem-b50742ea…`, 2,469): that
+was true when the table was written and is kept; the v2 numbers above are measured from
+`projections/tri/world/identities.json`. Committed as found on 2026-09-08 (`32bad457`) after `npm run test:full-tree`
+→ GREEN 182 / 1 skipped / 0 failing; the sessions that built it ended 2026-09-06 without committing. Not started:
+WRL as the fourth source family (authorized, D-077), a write surface, `graphonomous.evidence.v0`, the TRVM
+primitive-basis round.
+
 **Stage (2026-09-03, after GPT Adjudication v6 — D-065…D-074): `GRAPHONOMOUS-PROJECTION-v1` → G1 cross-registry
 consistency → TRVM governance as the third source family is reached and stops here for review.** v6 recorded
 (D-065…D-071) → **G0.5-R1/R2** clean-checkout reproducibility closed → **`GRAPHONOMOUS-PROJECTION-v1`** with a
