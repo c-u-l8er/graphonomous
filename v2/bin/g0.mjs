@@ -11,9 +11,21 @@
  *   g0 query    --dir <dir>[,<dir>…] <fn> <args…>  node|neighbors|path|facts|explain|as_of (JSON args; JSON out)
  *   g0 world    --dir <dir>                       G0-C: seals the semantic world through WRL — writes <dir>/world (sem-, kernel rel-/rev-);
  *                                                 a D-037 spike world/ is moved to world-spike/ first
- *   g0 certify  --dir <dir>                       G0-D: writes <dir>/certificate/{bundle.json,VCLAIM} (GRAPHONOMOUS-PROJECTION-v0); puts the
- *                                                 snapshot record into <dir>/cas beside the manifest (the root does not move)
- *   g0 check-cert --dir <dir> [--bundle <file>]   re-derives everything from <dir> and checks the bundle; exit 1 on REFUSED; writes nothing
+ *   g0 certify  --dir <dir> [--protocol v0|v1]    G0-D: writes <dir>/certificate/{bundle.json,VCLAIM} (GRAPHONOMOUS-PROJECTION-v0); puts the
+ *                                                 snapshot record into <dir>/cas beside the manifest (the root does not move).
+ *                                                 --protocol v1 writes <dir>/certificate-v1/ instead: GRAPHONOMOUS-PROJECTION-v1,
+ *                                                 which binds the verifier-derived REQUIRED SCHEMA CLOSURE (D-068) rather than
+ *                                                 every schema file in the checkout. The two receipts coexist for one root.
+ *   g0 check-cert --dir <dir> [--bundle <file>] [--protocol v0|v1]
+ *                                                 re-derives everything from <dir> and checks the bundle; exit 1 on REFUSED; writes nothing
+ *   g0 closure  --dir <dir>                       print the required schema closure this projection's adapters imply (read-only)
+ *   g0 linkage  --dir <dir> [--write]             G1 LINKAGE: derive cross-family co-reference links; --write emits
+ *                                                 <dir>/linkage/ (its OWN root). DERIVED; a link resolves an identity,
+ *                                                 it never merges nodes or gives a source authority over another.
+ *   g0 consistency --dir <dir> [--write] [--rulepack v0|v1]
+ *                                                 G1: run the cross-registry consistency rules; --write emits <dir>/consistency/
+ *                                                 (its OWN root). DERIVED, non-authoritative, no repair: a finding can change
+ *                                                 nothing. Prints per-rule counts including the zeroes.
  */
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve, join } from "node:path";
@@ -84,14 +96,50 @@ if (cmd === "snapshot") {
   const profile = loadProfile(opt("profile", DEFAULT_PROFILE_ID));
   const w = await buildWorld(opt("dir"), { profile, out: opt("out", join(opt("dir"), "world")) }); console.log(JSON.stringify({ sem: w.sem, profile_id: w.profile_id, projection_root: w.projection_root, objects: w.objects, relations: w.relations.length, canonical_bytes: w.bytes, wrl: w.wrl, state: w.state, supersedes: w.supersedes, spike_reproduced: w.spike_reproduced, sample: w.relations.slice(0, 3) }, null, 1));
 } else if (cmd === "certify") {
-  const { buildCertificate } = await import("../lib/certificate.mjs");
-  const c = buildCertificate(opt("dir"));
+  const { buildCertificate, PROTOCOLS } = await import("../lib/certificate.mjs");
+  const proto = PROTOCOLS[String(opt("protocol", "v0"))]; if (!proto) { console.error("--protocol must be v0 or v1"); process.exit(2); }
+  const c = buildCertificate(opt("dir"), { protocol: proto });
   console.log(JSON.stringify({ verified_claim_sem_id: c.verified_claim_sem_id, artifact_root: c.artifact_root, bundle_bytes: c.bytes.length, protocol: c.bundle.protocol, claim: c.bundle.claim, aggregate_id: c.bundle.aggregate.aggregate_id, chain_ids: c.bundle.chain_ids, references: c.bundle.references, structure: c.bundle.structure }, null, 1));
 } else if (cmd === "check-cert") {
-  const { checkCertificate } = await import("../lib/certificate.mjs");
+  const { checkCertificate, PROTOCOLS } = await import("../lib/certificate.mjs");
+  const proto = PROTOCOLS[String(opt("protocol", "v0"))]; if (!proto) { console.error("--protocol must be v0 or v1"); process.exit(2); }
   const bundle = opt("bundle") ? readFileSync(resolve(opt("bundle"))) : undefined;
-  const r = checkCertificate(opt("dir"), bundle);
+  const r = checkCertificate(opt("dir"), bundle, { protocol: proto });
   const m = r.measured;
-  console.log(JSON.stringify({ ok: r.ok, verdict: r.verdict, codes: r.codes, refusals: r.refusals, verified_claim_sem_id: m.verified_claim_sem_id, stated_verified_claim_sem_id: m.stated_verified_claim_sem_id, projection_root: m.projection_root, snapshot_commitment: m.snapshot_commitment, projection_claim_sem_id: m.projection_claim_sem_id, aggregate_id: m.aggregate_id, schema_set_id: m.schema_set_id, adapter_contract_id: m.adapter_contract_id, ruleset: m.ruleset, entries_checked: m.entries_checked, cas_objects: m.cas_objects, writes: m.writes }, null, 1));
+  console.log(JSON.stringify({ ok: r.ok, verdict: r.verdict, codes: r.codes, refusals: r.refusals, verified_claim_sem_id: m.verified_claim_sem_id, stated_verified_claim_sem_id: m.stated_verified_claim_sem_id, projection_root: m.projection_root, snapshot_commitment: m.snapshot_commitment, projection_claim_sem_id: m.projection_claim_sem_id, aggregate_id: m.aggregate_id, schema_set_id: m.schema_set_id, schema_closure_id: m.schema_closure_id, projection_contract_id: m.projection_contract_id, schema_closure: m.schema_closure, adapter_contract_id: m.adapter_contract_id, ruleset: m.ruleset, entries_checked: m.entries_checked, cas_objects: m.cas_objects, writes: m.writes }, null, 1));
   process.exit(r.ok ? 0 : 1);
-} else { console.error("usage: g0 snapshot|project|verify|census|eval|verify-eval|query|world|certify|check-cert …"); process.exit(2); }
+} else if (cmd === "linkage") {
+  const { contextFor } = await import("../lib/consistency.mjs");
+  const { liveChainIds } = await import("../lib/certificate.mjs");
+  const { runLinkage, writeLinkage, RULES: LRULES, RULEPACK_ID: LPACK, LINK_RELATION } = await import("../lib/linkage.mjs");
+  const dir = resolve(opt("dir"));
+  const ctx = contextFor(dir, { liveChain: liveChainIds() });
+  const r = flag("write") ? writeLinkage(dir, ctx) : runLinkage(ctx);
+  console.log(JSON.stringify({ rulepack: LPACK, relation: LINK_RELATION, snapshot: ctx.where.snapshot, projection_root: ctx.where.projection_root,
+    rules: LRULES.map((x) => x.id), counts: r.counts, links: r.links.length, ambiguous: r.ambiguous.length, root: r.root ?? null,
+    listing: r.links.map((l) => ({ lid: l.lid, external_identity: l.external_identity, families: l.families, endpoints: l.endpoints })) }, null, 1));
+} else if (cmd === "consistency") {
+  const { contextFor, writeConsistency, runConsistency, rulesOf, REJECTED, RETIRED, RULEPACK_V0, RULEPACK_V1 } = await import("../lib/consistency.mjs");
+  const { liveChainIds } = await import("../lib/certificate.mjs");
+  const { loadProfile, submittedFacets, admittedFacets } = await import("../lib/wrl_world.mjs");
+  const dir = resolve(opt("dir"));
+  const profiles = [];
+  for (const id of ["graphonomous.semantic.v0", "graphonomous.semantic.v1"]) {
+    try { profiles.push({ id, at: `handoff/WRL_SCHEMA_OR_PROFILE/${id}.json`, submitted: submittedFacets(loadProfile(id)), admitted: admittedFacets(id) }); } catch { /* WRL may not declare it */ }
+  }
+  const rulepack = { v0: RULEPACK_V0, v1: RULEPACK_V1 }[String(opt("rulepack", "v1"))];
+  if (!rulepack) { console.error("--rulepack must be v0 or v1"); process.exit(2); }
+  const { readLinkage } = await import("../lib/linkage.mjs");
+  const linkage = readLinkage(dir);
+  const ctx = contextFor(dir, { liveChain: liveChainIds(), profiles, linkageRoot: linkage ? linkage.root : null });
+  const r = flag("write") ? writeConsistency(dir, ctx, undefined, { rulepack }) : runConsistency(ctx, { rulepack });
+  console.log(JSON.stringify({ rulepack: r.rulepack, snapshot: ctx.where.snapshot, projection_root: ctx.where.projection_root, rules_run: rulesOf(rulepack).map((x) => x.id), rules_rejected: REJECTED.map((x) => x.id), rules_retired: RETIRED.filter((x) => x.retired_in === rulepack).map((x) => x.id), linkage_root: linkage ? linkage.root : null, links: linkage ? linkage.links.length : null, counts: r.counts, by_class: r.by_class, findings: r.findings.length, root: r.root ?? null,
+    listing: r.findings.map((f) => ({ lid: f.lid, rule: f.rule, class: f.class, families: f.families, detail: f.detail })) }, null, 1));
+} else if (cmd === "closure") {
+  const { deriveClosure } = await import("../lib/closure.mjs");
+  const runs = readFileSync(join(resolve(opt("dir")), "records/adapter_run.jsonl"), "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l));
+  const manifest = JSON.parse(readFileSync(join(resolve(opt("dir")), "manifest.json"), "utf8"));
+  const d = deriveClosure(runs, { ruleset: typeof manifest.ruleset === "string" && !!manifest.ruleset });
+  console.log(JSON.stringify({ contract_version: d.contract_version, adapters: d.adapters, indexed: d.indexed, required: d.members.length, schema_closure_id: d.closure_id, projection_contract_id: d.contract_id, members: d.members, problems: d.problems }, null, 1));
+  process.exit(d.problems.length ? 1 : 0);
+} else { console.error("usage: g0 snapshot|project|verify|census|eval|verify-eval|query|world|certify|check-cert|closure|linkage|consistency …"); process.exit(2); }

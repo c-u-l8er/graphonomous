@@ -1,0 +1,90 @@
+{
+ "contract_id": "graphonomous.projection.contract.v1",
+ "contract_version": "g0-projection-contract/v1",
+ "protocol": "GRAPHONOMOUS-PROJECTION-v1",
+ "note": [
+  "DATA, NOT CODE. This file is the LAYOUT half of the link/layout split (R16 \u00a74, in-toto): a projection's own",
+  "adapter_run records say WHAT RAN; this file says what that IMPLIES about required schemas. The artifact selects a",
+  "point in this space and can never supply or widen the space itself (D-068 law 8).",
+  "Every list below is MEASURED, not asserted. `record_kinds` is lib/certificate.mjs RECORD_KINDS and the per_kind",
+  "lists in every shipped manifest. `structural` and `ruleset` are the schemas lib/project.mjs and lib/rules.mjs",
+  "actually compile on the projection path. The three `emits` lists were measured by running each adapter ALONE over",
+  "the multi-v1 source set \u2014 handoff/research/probes/c1/probe_adapter_emits.out \u2014 and all three currently emit all six",
+  "kinds, so the per-adapter closure does not discriminate TODAY. It is stated per adapter anyway, because the moment",
+  "an adapter emits a kind the others do not (a G1 consistency-finding record is the next candidate) the closure must",
+  "already be the thing that moves.",
+  "THERE IS DELIBERATELY NO `active` FLAG. Activeness is not a property of this tree \u2014 it is the selector the",
+  "projection supplies through its own adapter_run records. That is what makes D-068 law 4 hold without a flag anyone",
+  "could flip."
+ ],
+ "record_kinds": {
+  "node": "https://graphonomous.com/g0/schemas/node.schema.json",
+  "relation": "https://graphonomous.com/g0/schemas/relation.schema.json",
+  "assertion": "https://graphonomous.com/g0/schemas/assertion.schema.json",
+  "source_location": "https://graphonomous.com/g0/schemas/source_location.schema.json",
+  "fault": "https://graphonomous.com/g0/schemas/fault.schema.json",
+  "adapter_run": "https://graphonomous.com/g0/schemas/adapter_run.schema.json"
+ },
+ "structural": [
+  "https://graphonomous.com/g0/schemas/manifest.schema.json",
+  "https://graphonomous.com/g0/schemas/snapshot.schema.json"
+ ],
+ "ruleset": [
+  "https://graphonomous.com/g0/schemas/rules.schema.json"
+ ],
+ "adapters": {
+  "adapters/crosswalk.mjs": {
+   "name": "crosswalk",
+   "emits": [
+    "adapter_run",
+    "assertion",
+    "fault",
+    "node",
+    "relation",
+    "source_location"
+   ],
+   "measured": "probe c1/1, alone over multi-v1: node 289 \u00b7 relation 588 \u00b7 assertion 1272 \u00b7 source_location 791 \u00b7 fault 64 \u00b7 adapter_run 1"
+  },
+  "adapters/factory.mjs": {
+   "name": "factory",
+   "emits": [
+    "adapter_run",
+    "assertion",
+    "fault",
+    "node",
+    "relation",
+    "source_location"
+   ],
+   "measured": "probe c1/1, alone over multi-v1: node 494 \u00b7 relation 986 \u00b7 assertion 1998 \u00b7 source_location 1139 \u00b7 fault 22 \u00b7 adapter_run 1"
+  },
+  "adapters/factory_mosaic.mjs": {
+   "name": "factory_mosaic",
+   "emits": [
+    "adapter_run",
+    "assertion",
+    "fault",
+    "node",
+    "relation",
+    "source_location"
+   ],
+   "measured": "probe c1/1, alone over multi-v1: node 179 \u00b7 relation 449 \u00b7 assertion 650 \u00b7 source_location 476 \u00b7 fault 338 \u00b7 adapter_run 1"
+  },
+  "adapters/trvm.mjs": {
+   "name": "trvm",
+   "emits": [
+    "adapter_run",
+    "assertion",
+    "fault",
+    "node",
+    "relation",
+    "source_location"
+   ],
+   "measured": "probe c1/2, alone over the tri source set \u2014 see handoff/research/probes/c1/probe_trvm_emits.out"
+  }
+ },
+ "excluded": {
+  "https://graphonomous.com/g0/schemas/common.schema.json": "a GENERATOR input, not a runtime schema. schemas/build_schemas.mjs inlines its $defs into all twelve outputs, so its content is already inside every member's bytes; nothing in lib/ or adapters/ compiles it. Including it would double-count and make the certificate depend on a build tool.",
+  "https://graphonomous.com/g0/schemas/derived_fact.schema.json": "the G0-E evaluation lane. lib/evaluation.mjs compiles it, writes <dir>/derived/ under a SEPARATE root, and deriveFromDirectory never reads that directory. Not part of what this protocol reconstructs.",
+  "https://graphonomous.com/g0/schemas/evaluation.schema.json": "the G0-E evaluation lane's own manifest schema. lib/evaluation.mjs compiles it to validate <dir>/derived/manifest.json, which is committed to under the evaluation root and is not a member of the projection manifest this protocol reconstructs."
+ }
+}

@@ -13,11 +13,12 @@ import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { resolve, join, dirname, relative } from "node:path";
 import { fileURLToPath } from "node:url";
+import { tmpdir } from "node:os";
 
 const HERE = dirname(fileURLToPath(import.meta.url)); const V2 = resolve(HERE, ".."); const AMP = resolve(V2, "../..");
 const [name, report] = process.argv.slice(2);
 if (!name || !report) { console.error("usage: make_gpt_bundle.mjs <name> <report.md>"); process.exit(2); }
-const OUT = resolve(process.env.HOME, "Downloads"); const STAGE = resolve(process.env.TMPDIR || "/tmp/claude-1000/-home-travis-ProjectAmp2/21673ead-a5fe-401c-80ba-a5175ab628ee/scratchpad", "bundle-" + name);
+const OUT = resolve(process.env.HOME, "Downloads"); const STAGE = resolve(process.env.TMPDIR || tmpdir(), "bundle-" + name);
 rmSync(STAGE, { recursive: true, force: true }); mkdirSync(join(STAGE, name), { recursive: true });
 const sha256 = (b) => createHash("sha256").update(b).digest("hex");
 const git = (dir, args) => execFileSync("git", ["-C", dir, ...args], { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 }).trim();
@@ -55,7 +56,7 @@ for (const [abs, importers] of [...seen.entries()].sort()) {
 }
 mkdirSync(join(STAGE, name, "REPRO_DEPENDENCIES"), { recursive: true });
 writeFileSync(join(STAGE, name, "REPRO_DEPENDENCIES/MANIFEST.json"), JSON.stringify({ generated_for: name, rule: "verification copies only (D-033); production imports the real sibling checkout and canon.mjs refuses a moved TRVM blob", files: deps }, null, 1) + "\n");
-writeFileSync(join(STAGE, name, "REPRO_DEPENDENCIES/README.md"), `# REPRO_DEPENDENCIES\n\nByte-exact copies of every sibling file the shipped Graphonomous code imports, placed at their ProjectAmp2-relative paths so the imports resolve unchanged from inside this ZIP. \`MANIFEST.json\` records repository, HEAD commit, blob OID at HEAD, blob OID of the copied bytes (they must agree), sha256 and importers.\n\nRe-run from the zip (no git needed): \`cd ${name}/graphonomous/v2 && node --test test/canon.test.mjs test/lid.test.mjs test/schema.test.mjs test/rules.test.mjs test/eval.test.mjs test/b1.test.mjs test/query.test.mjs test/wrl_world.test.mjs test/certificate.test.mjs test/certificate_trvm.test.mjs && python3 test/canon_twin.py --manifest projections/baseline && node bin/g0.mjs verify --dir projections/baseline && node bin/g0.mjs verify-eval --dir projections/baseline\`. \`test/projection.test.mjs\` rebuilds from the pinned registries and needs the real ProjectAmp2 checkout.\n`);
+writeFileSync(join(STAGE, name, "REPRO_DEPENDENCIES/README.md"), `# REPRO_DEPENDENCIES\n\nByte-exact copies of every sibling file the shipped Graphonomous code imports, placed at their ProjectAmp2-relative paths so the imports resolve unchanged from inside this ZIP. \`MANIFEST.json\` records repository, HEAD commit, blob OID at HEAD, blob OID of the copied bytes (they must agree), sha256 and importers.\n\n**Re-run from the zip with ONE command (no git, no network):** \`cd ${name}/graphonomous/v2 && npm run test:repro\`. It runs every test file, the Python canonicalizer twin, and \`verify\` / \`verify-eval\` / \`check-cert\` over the four shipped projections, and prints \`VERDICT: GREEN\` only when nothing failed. Tests that rebuild a projection from the pinned SOURCE REGISTRIES (\`test/projection.test.mjs\`, and parts of \`certificate\`/\`factory\`) SKIP here **with a printed reason** — those registries are intentionally absent from this bundle (D-069 R2). In the real ProjectAmp2 checkout use \`npm run test:full-tree\`, which additionally asserts the pinned registries are reachable so a skip cannot hide a regression. \`ui/data\` is a 36 MB build product excluded on purpose: \`npm run build:ui\` regenerates it, and \`test/g05.test.mjs\` builds its own copy into a temp directory either way.\n`);
 cpSync(resolve(report), join(STAGE, name, report.split("/").pop()));
 // 3. SHA256SUMS + zip
 const all = walk(join(STAGE, name)).sort(); const sums = all.map((f) => `${sha256(readFileSync(f))}  ${relative(join(STAGE, name), f)}`).join("\n") + "\n";

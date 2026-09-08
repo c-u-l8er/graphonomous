@@ -38,12 +38,14 @@ import { resolve, join, dirname, basename } from "node:path";
 import { fileURLToPath } from "node:url";
 import { openGraph } from "../lib/query.mjs";
 import { runAcceptance } from "../lib/acceptance.mjs";
+import { RULES, REJECTED } from "../lib/consistency.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const V2 = resolve(HERE, "..");
 /* The four worlds GPT v5 §10.1 asks the selector to offer: three v0 and the v1 successor. Adding a world is adding a
  * directory here — the page is driven entirely by ui/data/index.json and knows none of these names. */
-const DEFAULT_DIRS = ["baseline", "historical", "multi", "multi-v1"].map((d) => join(V2, "projections", d));
+/* G1 (D-074): `tri` is the three-source-family world — crosswalk + factory + factory_mosaic + TRVM governance. */
+const DEFAULT_DIRS = ["baseline", "historical", "multi", "multi-v1", "tri"].map((d) => join(V2, "projections", d));
 
 /* The exact phrasing the adjudicator requires next to a certificate: what a G0-D bundle establishes is that the
  * projection reconstructs under the verifier coordinates it pins — never that it is "still valid" or "still verifies",
@@ -180,6 +182,16 @@ export function buildWorld(dir, { compareGraph = null, compareName = null, graph
 
   /* ---- A1–A7, run in Node against this root (and, where a question needs two pins, one named compare root) ---- */
   const acceptance = runAcceptance({ primary: g, ...(compareGraph ? { compare: compareGraph } : {}) });
+  const cdir = join(dir, "consistency");
+  const consistency = existsSync(join(cdir, "manifest.json"))
+    ? {
+        root: readFileSync(join(cdir, "ROOT"), "utf8").trim(),
+        manifest: JSON.parse(readFileSync(join(cdir, "manifest.json"), "utf8")),
+        findings: readFileSync(join(cdir, "findings.jsonl"), "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l)),
+        rules: RULES.map((r) => ({ id: r.id, version: r.version, class: r.class, states: r.states, decidable_absence: r.decidable_absence })),
+        rejected: REJECTED.map((r) => ({ id: r.id, why: r.why, reopen_when: r.reopen_when })),
+      }
+    : null;
 
   return {
     schema: "graphonomous.g0.5.world.v0",
@@ -200,6 +212,10 @@ export function buildWorld(dir, { compareGraph = null, compareName = null, graph
     facts,
     factIndex,
     explain,
+    /* G1: the CONSISTENCY plane. DERIVED, under its own root, and kept beside `faults` rather than merged with them —
+       a fault is what an adapter could not normalize; a finding is what two normalized sources disagree about. Read
+       from <dir>/consistency/ when it exists; a world without one simply has no findings to show. */
+    consistency,
     acceptance: {
       compare: compareGraph ? { name: compareName, snapshot: compareGraph.snapshot, root: compareGraph.root } : null,
       compare_note: compareGraph

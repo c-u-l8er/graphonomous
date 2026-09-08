@@ -1140,3 +1140,549 @@ DEFERRED until post-G0-F evidence · G0-D AUTHORIZED NEXT · G0-F AUTHORIZED AFT
   provenance/source-location drill-down; fault panel navigable to the affected record; A1–A7 executable; identity panel
   showing projection root, evaluation root, G0-D certificate/verifier coordinate and WRL `sem-` together; and, if v1 is
   built, ARGUMENT/DEFEATER exploration.
+
+## D-065 — GPT Adjudication v6 recorded (1/7): TRVM-P0.1 ACCEPTED and GAP-T14 CLOSED; the blind-run ledger question closes without a write (2026-09-03, GPT v6 §0–§2)
+
+- **Independent verification.** GPT verified the submitted ZIP against its internal `SHA256SUMS`: **39,190 entries,
+  0 missing, 0 mismatches**, and reran the self-contained suites from the extracted bundle. Measured there:
+  `test/g05.test.mjs` **8 pass / 2 fail** before `ui/data` existed, **10 pass / 0 fail** after
+  `node tools/g05_build.mjs --out ui/data`, the build emitting **37,427,667 bytes** across the four world payloads;
+  and **130 pass / 0 fail / 3 skips** over the self-contained files. That 8/10 is a real defect **in this lane's test
+  harness**, not in the semantics, and it is D-069's obligation. The full-tree receipts (151/150/0/1, WRL 901/901,
+  TRVM `make governance` 32/32) are accepted as submitted receipt evidence, not as independently rerun.
+- **TRVM-P0.1 ACCEPTED / TESTED / GAP-T14 CLOSED** at TRVM `8816e59055322fc608c9bc7dae9723c02d8402b7`, spec release
+  `srel-f5720a3d0ee9dbb95670c9cd66672bf70c7dbe353df0c114a18c8a982f203629`. Both judgement calls are accepted:
+  - the two code names `nest-child-protocol-override-refused` and `nest-child-protocol-registration-malformed` stand,
+    **and are not to be renamed for style** — they name two materially different verifier-side refusal conditions and
+    they preserve the old meaning of `nest-policy-weakened`;
+  - **enlarging `spec_agreement`** with the minted-id-prefix comparison is a *strengthening*, not scope creep, because
+    `constants.id_prefixes` was already normative and previously had nothing to be compared against.
+- **Frozen principle (cross-stack, binding on Graphonomous too).** *A normative identity prefix declared by a spec must
+  be falsifiable against an identity actually minted by the implementation.* The measurement stays side-effect-free:
+  an agreement test may invoke pure identity constructors, and **must not create durable authority or state merely to
+  observe a prefix**.
+- **`proof.verdict-names-its-verifier` accepted as law**, with its measured rule: *`VERIFIED` without the
+  verifier-policy / checker-set coordinates is incomplete evidence.* This is why Graphonomous writes
+  "verifies under its pinned verifier coordinates" (D-060) and never the unqualified "still verifies", and it is a
+  premise the G1 `CERTIFICATE_COORDINATE_STALE` rule rests on (D-071).
+- **Blind-run ledger: CLOSED, and no new ledger write is required.** The measured direction is the protocol's:
+  **an ABORT names the run it ended; a PIN starts the next chain.** The 0/17 PINNED vs 14/18 ABORTED
+  `previous_run_id` census is consistent with that, and `--pin` structurally requiring a prior ABORTED/COMPLETE state
+  is the link's enforcement. **Do not duplicate `previous_run_id` onto PINNED receipts to make the graph visually
+  symmetric.** A prose clarification in the owning protocol's documentation is acceptable; a semantic ledger mutation
+  is not.
+
+## D-066 — GPT Adjudication v6 recorded (2/7): `graphonomous.semantic.v1` is FROZEN at 24 roles / 32 kinds / 102 endpoint pairs, and the v1 multi world is a golden vector (2026-09-03, GPT v6 §3–§4)
+
+- **FROZEN.** `graphonomous.semantic.v1` is frozen at WRL `53e5e8995913995189f7017d2a94351ff69d5b31` and factory
+  `d217ee29a3322c68db0d43be47491f0e9d4fbc64`, with the **corrected** delta the audit produced — 3 roles, 1 kind,
+  10 endpoint pairs, not the candidate's 2 / 1 / 9:
+  - roles `ARGUMENT`, `DEFEATER`, `INSTRUMENT`; kind `DISCHARGED_BY`;
+  - pairs `SUPPORTS [ARGUMENT, CLAIM]` · `WITNESSES [WITNESS, ARGUMENT]` · `ASSUMES [ARGUMENT, ASSUMPTION]` ·
+    `ASSUMES [INSTRUMENT, ASSUMPTION]` · `ATTACKS [DEFEATER, CLAIM]` · `ATTACKS [DEFEATER, ARGUMENT]` ·
+    `ATTACKS [DEFEATER, ASSUMPTION]` · `ATTACKS [DEFEATER, INSTRUMENT]` · `ATTACKS [DEFEATER, RECEIPT]` ·
+    `DISCHARGED_BY [ASSUMPTION, CLAIM]`.
+  The submitted/admitted **24 roles / 32 kinds / 102 endpoint pairs** are the v1 contract. **Never widen this row
+  silently.** A future incompatible requirement is `graphonomous.semantic.v2`, never an edit here.
+- **Golden vector.** The v1 multi world
+  `sem-e186186ea55e9e9a9d10a7676dd31180e248837db54fb66e388d594ff5406e66` is golden, with its projection root
+  `root-44659ae753a5396fbec7f064cd4349811d577c1d3957703fd8b65fac20c5236d`, evaluation root `root-57405697…`,
+  certificate `vclaim-1a029671389206f7051b7acd651c29acc56b7f991288fe96e0f63fdf4ada9b19` and snapshot commitment
+  `gsnap-2e525288…` — which is **identical to multi v0's**, because the two worlds commit to the same six sources
+  byte for byte.
+- **The four dispositions stand as measured.**
+  - `INSTRUMENT` is **REQUIRED, not deferred**: the source's own `target_type: "evidence"` resolves its five measured
+    targets to `INS-*` instrument records, and recasting them as WITNESS would contradict the source model.
+  - The 34 `consumption_rule` targets stay **DEFERRED**, their coordinates preserved as DEFEATER attributes with
+    **no ATTACKS edge**: the source supplies a revision/file digest plus an unbound symbol/section locator, not a
+    stable semantic rule identity. Do not mint a `CONSUMPTION_RULE`, stretch `MECHANISM`, or attack `SOURCE_LOCATION`.
+    Re-open only when the factory gives the target a stable semantic identity.
+  - The 3 `claim_evidence` targets stay **DEFERRED even though the CLAIM endpoint resolves**, because the source
+    explicitly distinguishes an attack on a claim's *evidence/support* from an attack on the proposition, and
+    `ATTACKS [DEFEATER, CLAIM]` would erase that distinction.
+  - `DISCHARGED_BY` is emitted for **exactly the 2 records whose status says discharged**. Status gates relation truth
+    here; a reference inside an `undischarged` record is not a discharge.
+- **New binding law: `resolvable endpoint ≠ semantically valid edge`.** An endpoint resolving is a necessary condition
+  for an edge, never a sufficient one. This is now a lane-wide rule and is the first thing to check whenever a
+  deferral is proposed for promotion.
+- **The weaker deferrals stay deferred**: the one `conclusion_defeater`, the one `subsumption`, the vocabulary
+  definitions and the three `OCC-*` records. The `OCC-*` three are the **first candidate to reconsider** after this
+  milestone, because their claim references resolve and the audit itself ranks them weakest. Any promotion goes into a
+  successor profile or an already-legal existing relation proved by measurement — **not into frozen v1**.
+- **The v0/v1 identity result is accepted and its interpretation frozen.** Over the 1,574 statements the v0 and v1
+  multi worlds share: **1,574/1,574 share the statement LID · 1,574/1,574 share the `rev-` · 0/1,574 share the
+  `rel-`**, with 433 v1-only statements that alter none of the shared identities. Therefore: a **statement LID is the
+  proposition across worlds and profiles**; **`rev-` is revision/content identity independent of allocation world**;
+  **`rel-` is allocation under one exact `sem-`**.
+- **Sealed bytes are not edited to record this.** `handoff/WRL_SCHEMA_OR_PROFILE/graphonomous.semantic.v1.json` still
+  reads `state: "PROPOSED …"` and each `world/identities.json` still reads `"SEALED by WRL (WRL-P0); FROZEN only when
+  GPT accepts this round"`. Those strings are accurate **as receipts of the sealing moment**; the freeze is a later
+  ruling and is recorded here and in `handoff/WRL_SCHEMA_OR_PROFILE/FROZEN.md`, which is the pointer a reader should
+  follow. Rewriting a sealed artifact to make it agree with a ruling made after it was sealed is exactly the habit
+  this lane refuses.
+
+## D-067 — GPT Adjudication v6 recorded (3/7): `graphonomous.semantic.rules.v0` stays on BOTH profile rows; profile version and rulepack version are orthogonal axes (2026-09-03, GPT v6 §5)
+
+- **KEEP the shared rulepack id.** Do **not** mint `graphonomous.semantic.rules.v1` merely because the profile version
+  became v1.
+- **Why.** v1 widened the set of admitted roles/kinds/endpoint pairs. It did **not** change the semantic policy carried
+  by the existing relation revisions. Reusing `graphonomous.semantic.rules.v0` is therefore the honest statement of
+  what changed. **The 1,574/1,574 shared `rev-` result is the consequence of that honesty, not its justification** —
+  if the policy had moved, the right answer would be a new rulepack and moved `rev-` values, and the shared-`rev-`
+  result would have been the wrong thing to protect.
+- **The rule for the future.** Profile vocabulary/admissibility changes → **new profile version**. Relation
+  semantic-policy / rule meaning changes → **new rulepack version**. The two coordinates move independently; a change
+  to one is not evidence about the other.
+- **Obligation.** Keep an explicit test proving the two version axes are independent (a v1 profile row carrying a v0
+  rulepack is legal and seals; the shared-`rev-` equality is measured, not assumed).
+
+## D-068 — GPT Adjudication v6 recorded (4/7): `GRAPHONOMOUS-PROJECTION-v0` stays frozen; `GRAPHONOMOUS-PROJECTION-v1` is OPEN with a verifier-derived required schema closure (2026-09-03, GPT v6 §6)
+
+- **The diagnostic is accepted as a real dependency-boundary defect, not a bug in v0.** `schemaSetId()` hashes every
+  `schemas/*.schema.json` in the checkout, so adding v1 vocabulary reminted the certificates of frozen v0 projections
+  whose source bytes, projection roots, snapshot commitments and records had not moved. That was diagnostic and legal
+  under the frozen v0 protocol; it is **not the dependency boundary this lane wants going forward**.
+- **Do not change `GRAPHONOMOUS-PROJECTION-v0`.** Narrowing `schema_set_id`'s meaning inside v0 would violate the D-060
+  freeze. v0 stays **exactly reproducible** at its pinned coordinates.
+- **`GRAPHONOMOUS-PROJECTION-v1` is OPEN and REQUIRED NEXT.** Its reconstruction meaning is v0's, with exactly one
+  coordinate redefined:
+  > `schema_set_id` in v1 = the content identity of the exact versioned schema/vocabulary closure **the verifier
+  > determines is required** by the projection's active, trusted adapter/projection contracts.
+  A good candidate closure is `core projection schemas` + `the schema contract of each adapter named by the
+  projection's own adapter_run records` + `the versioned vocabulary artifacts those contracts explicitly require`,
+  hashed as a sorted content-addressed manifest.
+- **The bundle must not be able to choose or weaken that closure.** The verifier derives it independently from
+  versioned, trusted local contracts. **Research the smallest compatible implementation before coding** — it may
+  require turning today's mutable global schema files into versioned logical schema artifacts rather than merely
+  filtering their filenames. Filtering a directory by filename is explicitly **not** sufficient when the files left in
+  the filter are themselves mutable supersets.
+- **Do not bind a WRL semantic profile id into the projection certificate to solve this.** Projection reconstruction
+  and WRL sealing are separate stages; the required schema closure is a property of the Graphonomous
+  projection/adapters, not of which WRL view later renders it.
+- **The eleven acceptance laws** (ten from GPT v6 §6 plus the coexistence law, restated as this lane's obligations):
+  1. same projection + same required closure → same claim/certificate;
+  2. add an unrelated schema not reachable from the active projection contract → certificate **HOLDS**;
+  3. add/change a schema genuinely required by an active adapter/record contract → certificate **MOVES**;
+  4. add a new **inactive** adapter and its schemas → old certificate **HOLDS**;
+  5. add that adapter to the snapshot/projection → adapter contract and required schema closure **MOVE**;
+  6. reordering the closure traversal → **HOLDS**;
+  7. duplicate/ambiguous logical schema identity → **REFUSED**;
+  8. a bundle-supplied schema list cannot weaken the verifier-derived closure;
+  9. every `GRAPHONOMOUS-PROJECTION-v0` golden certificate stays byte-for-byte reproducible at its pinned coordinates;
+  10. v0 and v1 certificates may coexist for the same projection root, as intentionally distinct receipts;
+  11. all four existing projections certify under v1.
+- **If this needs a genuine TRVM child-protocol change, stop and reduce it first.** Do not make TRVM changes from
+  inside Graphonomous. A new child protocol id registered with TRVM is owning-layer work with its own receipt.
+
+## D-069 — GPT Adjudication v6 recorded (5/7): G0.5 is ACCEPTED AS TESTED; R1/R2 clean-checkout reproducibility is required before its harness is FROZEN (2026-09-03, GPT v6 §7)
+
+- **G0.5 ACCEPTED AS TESTED.** The successful surfaces named: explicit world/snapshot selector; a relation inspector
+  that visibly separates statement LID / relation kind+endpoints / WRL `rev-` / world-scoped `rel-`; an identity panel
+  carrying projection, evaluation, certificate and world coordinates together; A1–A7 as deterministic query results
+  with explanation trees; observed-vs-derived visible; `trvm_derivation:false` not hidden; read-only authority visually
+  explicit. **The UI's visual design is not frozen** — it is an inspector, not the final public product.
+- **G0.5-R1 — clean-checkout build-product dependency. REQUIRED.** `ui/data` is gitignored and excluded from the ZIP by
+  design, and `test/g05.test.mjs` requires it to already exist. Repair so `node --test test/g05.test.mjs` passes in a
+  clean checkout with no pre-generated `ui/data`: build the payload into a temp directory in setup, build a second temp
+  copy and compare byte-for-byte for determinism, serve/test a temp `ui/` fixture whose `data/` is the generated
+  output, and compare against the developer's `ui/data` **only when it exists**, as a staleness check.
+  **Do not commit the 36 MB build product to make a test pass.**
+- **G0.5-R2 — explicit bundle test target. REQUIRED.** Provide one documented command (`npm run test:repro` or
+  equivalent) guaranteed green from the handoff ZIP without live git repositories. Repository-backed rebuild tests must
+  either detect the absent checkout and **SKIP with an explicit reason**, or live under a separate `test:full-tree`
+  target. **A clean verification bundle must never look red merely because it intentionally ships verification copies
+  instead of `.git` history.**
+- After R1/R2 are green the G0.5 **harness** may be marked FROZEN. This is Graphonomous test/handoff work and gets a
+  small receipt — it is **not** a stack repair and does not get a `STACK_FIX_RECEIPTS/` entry.
+
+## D-070 — GPT Adjudication v6 recorded (6/7): `graphonomous.evidence.v0` stays NOT YET; the four-way separation holds (2026-09-03, GPT v6 §8)
+
+- **STILL NOT YET.** G0.5 supplied a useful **negative** result: the UI displays assertions and provenance directly
+  from the projection without those occurrences needing to become a separate WRL world. That is evidence *against*
+  the profile, not for it.
+- **Keep the four-way separation**: (1) projection root — observed evidence/provenance; (2) G0-E root — derived
+  understanding; (3) WRL `sem-` — semantic statement world; (4) G0-D certificate — reconstruction receipt.
+- Do not implement an evidence profile until a concrete operation requires provenance to have its own WRL-world
+  identity and allocation semantics. Symmetry is not a requirement.
+
+## D-071 — GPT Adjudication v6 recorded (7/7): G1 cross-registry consistency is AUTHORIZED, with TRVM governance as the third authoritative source family, and a FINDING is not a FAULT (2026-09-03, GPT v6 §9–§14)
+
+- **The next step is NOT a write surface.** G0.5 proved humans can inspect the graph; the next capability is for
+  Graphonomous to **detect semantic inconsistencies across authoritative registries while remaining read-only**. The
+  authorized order is: record/freeze v6 → G0.5-R1/R2 → `GRAPHONOMOUS-PROJECTION-v1` → G1-A consistency model over the
+  existing sources → G1-B ingest TRVM governance as the third source → run G1 over all three families → expose
+  deterministic findings in the inspector → stop for adjudication.
+- **FAULT and CONSISTENCY_FINDING are different objects and must stay different.**
+  - **FAULT** — the adapter could not deterministically normalize or resolve a source *as written*.
+  - **CONSISTENCY_FINDING** — the sources normalized successfully, but their jointly observed statements violate an
+    explicit cross-registry rule, or leave a required cross-registry relation unresolved.
+  Do not silently reuse `FINDING` if that would imply authoritative source status; a derived consistency finding must
+  remain **visibly derived**.
+- **Every consistency finding carries**: a content-bound id; the selected snapshot/root; rule id and version; the exact
+  observed premises; the affected source families; a deterministic derivation/explanation that bottoms out in observed
+  source assertions; `basis: derived`; `trvm_derivation:false`; and **no authority effect** — it cannot promote,
+  rewrite or repair a source. **"GPT thinks these disagree" is not a consistency finding**, and neither is textual
+  similarity.
+- **Seven candidate rules, to be reduced against actual data before any is accepted** — a rule is not implemented
+  because its English sounds useful: `QUALIFIED_ID_COLLISION` · `AUTHORITY_STATE_CONFLICT` · `REFERENCE_TARGET_DRIFT` ·
+  `PROFILE_DECLARATION_DRIFT` · `CERTIFICATE_COORDINATE_STALE` (a **status** finding, never an invalidity claim) ·
+  `LAW_REFERENCE_UNRESOLVED` · `VOCABULARY_MEANING_CONFLICT`. Each accepted rule needs a positive fixture, a
+  counterexample/refusal fixture, a stated decidability condition for absence, order-independent finding ids, and an
+  `explain` that bottoms out in observed premises. **Mere absence is not conflict unless absence is decidable under the
+  owning source's contract.**
+- **TRVM governance is the third source family**, chosen because Graphonomous already depends on TRVM and has caused
+  TRVM-P0 and TRVM-P0.1. **Inventory the real repository at the accepted pin first; do not assume a markdown file is
+  authoritative because it has a useful name.** Write `handoff/research/R15_TRVM_SOURCE_INVENTORY.md` and an ingestion
+  contract with the exact source pin and file set **before** emitting records. **No prose-law parsing** unless the
+  owning TRVM source itself defines a deterministic grammar for that prose. The adapter is read-only and is **not**
+  authoritative over TRVM: native ids, native release/version/status vocabulary, source locations and exact
+  commit/blob identities are preserved as the source states them.
+- **Semantic-profile guard.** Try to seal the third-source projection under frozen `graphonomous.semantic.v1`. If TRVM
+  introduces a genuinely new semantic role/kind/endpoint requirement: **do not edit v1** — preserve the
+  projection and certificate, produce the smallest `graphonomous.semantic.v2` obligation, stop the seal at the guard,
+  and report it.
+- **Self-observation acceptance questions** the graph must answer deterministically: which TRVM law/spec release
+  governs the verifier coordinates on a selected Graphonomous certificate; which TRVM release introduced checked
+  child-protocol registration; which release introduced the P0.1 refusal codes; why an old certificate is stale under
+  the current verifier and **which exact coordinate moved**; which blind-run receipt records the TRVM-P0/P0.1
+  succession; whether the Graphonomous pinned TRVM coordinate matches the represented release/law set; and which
+  Graphonomous stack-fix receipt corresponds to the TRVM change while the owning TRVM source stays authoritative.
+  Where a relationship exists only in Graphonomous prose and not in authoritative TRVM data, show it as
+  **advisory/unresolved** rather than fabricating an owning edge.
+- **UI.** Extend G0.5 minimally with a `CONSISTENCY` view showing, per finding: code/type, derived status, snapshot,
+  involved source families, observed premises, deterministic explanation, exact locations, and the
+  **stale/historical vs actual-contradiction** distinction. FAULTS stay separate. **No repair button** — a
+  proposal/write surface is a separate authority milestone and is not started here.
+- **At least one acceptance test must prove that changing a source pin can change a consistency finding while the old
+  snapshot's result is preserved.** No finding may mutate a registry.
+
+## D-072 — `GRAPHONOMOUS-PROJECTION-v1` is IMPLEMENTED: the required schema closure narrows 12 → 9, and a SECOND coupled coordinate was measured that v1 does not close (2026-09-03, GPT v6 §6 / D-068 discharged in part)
+
+- **The design, after research.** `handoff/research/R16_SCHEMA_CLOSURE_PRIOR_ART.md` compared protobuf/Buf, JSON Schema
+  bundling, OCI, Nix, Confluent, Avro, in-toto and SLSA. Three measurements decided it, and they are this tree's, not
+  the prior art's:
+  1. **The JSON Schema reference graph has NO edges.** Every `$ref` in all twelve schemas is a local `#/$defs/…`
+     pointer, because `schemas/build_schemas.mjs` **inlines `common.schema.json`'s `$defs` into every output**. A
+     `$ref`-derived closure returns `{self}` for every schema and discriminates nothing. The real edge is
+     **projection contract → active adapters → record kinds → schemas**.
+  2. **Every schema already carries a logical `$id`.** Nothing had to be authored to get path-independent identity.
+  3. **`common.schema.json` is compiled by no runtime module at all** — it is a generator input, and its content is
+     already inside the bytes of all twelve outputs.
+- **ADOPTED**: in-toto's **layout/link split** (the artifact says what it DID; a versioned local contract says what
+  that IMPLIES); Buf's **sort-inside-the-hash** digest shape and named-root discipline; OCI/in-toto's
+  `(logical id, digest)` descriptor pair; Nix's principle that *the tree is not an input*; Bazel's hermeticity as the
+  only mechanism that actually prevents under-declaration. **REJECTED**: every wire format, every registry that
+  assigns ids server-side, JSON Schema bundling, and SLSA's `resolvedDependencies` — whose own spec says
+  *"Completeness is best effort"*, which is not a guarantee a reconstruction certificate can rest on.
+- **Implemented.** `contracts/projection.v1.json` (data, no `active` flag — activeness is the selector the projection
+  supplies through its own `adapter_run` records, which is what makes law 4a hold without a flag anyone could flip) ·
+  `lib/closure.mjs` (`schemaIndex` keyed on `$id`, `requiredSchemaClosure`, `schemaClosureId`, `projectionContractId`) ·
+  `lib/certificate.mjs` parameterised on protocol · `bin/g0.mjs certify|check-cert --protocol v1` and a new
+  `g0 closure --dir` · `test/projection_v1.test.mjs` (15 tests) · `childProtocolEntryV1`.
+- **Measured: the closure is 9 of 12.** Required: `node relation assertion source_location fault adapter_run manifest
+  snapshot rules`. Excluded with a stated reason each: `common` (generator input), `derived_fact` and `evaluation`
+  (the G0-E lane, a separate root `deriveFromDirectory` never reads).
+- **`schema_closure_id` is `gschema-25c33684…` for ALL FOUR projections** — correct, because probe c1/1 measured that
+  all three adapters emit the same six record kinds. `projection_contract_id` takes **three** values:
+  `gpcon-8a31a4b9…` (baseline and historical, `[crosswalk]`), `gpcon-45fa731a…` (multi), `gpcon-497da936…` (multi-v1).
+- **The hash domain does NOT move with the protocol.** `tag()` is now `ID_DOMAIN`, permanently the v0 string, because
+  `gsnap-` commits to a source set, `gagg-` to the records and `gstruct-` to their shape — none is a property of which
+  receipt protocol later describes them. Measured consequence: for every projection the v0 and v1 receipts carry the
+  **same** `snapshot_commitment`, `aggregate`, `structure`, `adapter_contract_id` and `chain_ids`, and differ in
+  exactly `gclaim-`, `vclaim-` and the one schema coordinate. Only the CLAIM mixes in the live protocol.
+- **v0 did not move, and could not have.** `lib/certificate.mjs` is in neither `PROJECTOR_MODULES` nor
+  `CHECKER_IMPORTS`, so implementing v1 entirely inside it, `lib/closure.mjs` and `contracts/` left every v0 code
+  identity untouched. All four v0 goldens are byte-identical on disk and still VERIFIED
+  (`vclaim-67038bf9… · vclaim-e148f86d… · vclaim-7bbcc6d2… · vclaim-1a029671…`). This was chosen deliberately over the
+  larger design: **the alternative touched `lib/project.mjs`, which would have re-minted the certificates GPT froze in
+  the same round it froze them.**
+- **The eleven laws, measured.** 1 ✓ · 2 ✓ (an unrelated schema is indexed and does not enter the closure) · 3 ✓ (a
+  required schema moves it; an excluded one does not) · **4a ✓** (a new adapter file + schemas, activated by nothing,
+  HOLDS) · 5 ✓ **as sharpened below** · 6 ✓ (a contract listing its roots backwards gives the identical id) · 7 ✓
+  (a byte-identical duplicate `$id` is still refused, at index time) · 8 ✓ (a forged closure id draws
+  `gproj-schema-closure-mismatch`; an undeclared adapter draws `gschema-unknown-adapter`; `lib/closure.mjs` never
+  receives the bundle) · 9 ✓ · 10 ✓ · 11 ✓.
+- **Law 5 is sharpened, not fudged.** As written it asks that activating an adapter move "adapter contract + schema
+  closure + certificate". If the activated adapter emits only kinds already required, **the schema closure genuinely
+  does not move, and should not** — no schema dependency changed. The restatement:
+  > activating an adapter MUST move `projection_contract_id`, and therefore the certificate; it moves
+  > `schema_closure_id` **iff** it introduces a schema not already required.
+  Forcing the closure to move here would require smuggling the adapter list into the schema member set, which makes
+  `schema_closure_id` stop meaning *"the schemas required"*. Both halves are measured: on the three real projections
+  the closure holds and the contract id takes three values; on a fixture adapter that emits a new kind, the closure
+  moves and gains exactly one member.
+- **THE FINDING THIS ROUND PRODUCED, and it is a correction to this lane's own record.** D-068 law 4 has a second
+  reading — *"inactive"* meaning **registered but not run** — and **v1 does not satisfy it.** To be addable to a
+  snapshot an adapter needs a row in `lib/project.mjs`'s `ADAPTERS` table, and `lib/project.mjs` is inside
+  `codeId(PROJECTOR_MODULES)` → `chain_ids.projector.code` → `vclaim-`. **This is not hypothetical: measured on the
+  shipped receipts, the `pre-v1 → current` transition moved `chain_ids.projector` for all three v0 projections.**
+  `STATUS.md`'s table said that step moved **"`schema_set_id` only"**, and `test/factory_certificate.test.mjs:164`
+  computed `moved` over the **claim plane alone**, so neither was measuring the coordinate that also moved. Both are
+  corrected. The residue is asserted by a test so that removing the coupling forces this entry to be updated.
+- **The reduction, NOT taken unilaterally.** Closing law 4b means moving the `ADAPTERS` registry (and the `lib/lid.mjs`
+  vocabulary enums, which are the second copy of `common.schema.json`'s `node_kind`/`relation_kind`) out of projector
+  code into versioned data. That is a one-time move which **re-mints every v0 certificate**, including the four GPT
+  froze as golden hours ago. **This lane does not move a frozen thing to close a law on its own authority.** The
+  measurement is handed up; the ruling is GPT's.
+- **No TRVM change was required, and the stop condition was checked rather than assumed.** R15 §7 measured that
+  `childProtocolSet` validates only the entry's shape and refuses an override of its own three built-ins — there is no
+  registry of allowed protocol names, and Graphonomous was already an extension-table protocol, not a registered one.
+  `GRAPHONOMOUS-PROJECTION-v1` is a second table entry Graphonomous supplies at call time. **Zero files under `TRVM/`
+  changed.**
+- **What v1 does NOT solve, stated rather than papered over.** (a) *def granularity* — the generator's inlining means a
+  change to one shared `$def` moves the bytes of all twelve schemas, so any closure touching any schema re-mints; law 2
+  holds for an unrelated *file*, not for an unrelated *def*, and fixing it means real cross-file `$ref`s, which is a v2
+  move. (b) A read-only verifier cannot observe what the producer actually **loaded**, only recompute what the contract
+  implies; the hermetic accessor that would close this lives in `lib/project.mjs` and is deferred with law 4b.
+  (c) There is **no cryptographic trust boundary** — producer and verifier are one codebase. The guarantee is that the
+  closure cannot change without moving a pinned code identity, which is the same strength `adapter_contract_id` claims.
+
+## D-073 — TRVM governance is the third authoritative source family; `graphonomous.semantic.v1` ADMITTED it, and the one thing it could not represent is a measured `semantic.v2` obligation (2026-09-03, GPT v6 §11 / D-071 Phase E)
+
+- **Inventory first, and it corrected two things.** `handoff/research/R15_TRVM_SOURCE_INVENTORY.md` was written before a
+  record was emitted, by reading the CONSUMER of each file rather than trusting a filename. Re-measured by this session
+  at `8816e59`: grid **1.70.0 with 139 entries** (107 canonical; status `PROPERTY-TESTED` 127 · `REGRESSION-LOCKED` 6 ·
+  `FALSIFIED` 4 · `PROVED` 2, over an 8-value closed vocabulary), **30 refusal codes and the array is NOT sorted**,
+  **7 id prefixes**, 3 built-in child protocols, **39 receipts (18 ABORTED · 17 PINNED · 2 CANDIDATE_FROZEN ·
+  2 REVEALED · 0 COMPLETE)**, and `srel-f5720a3d…` recomputed from its own bytes at `spec_revision: 2`. **No bundle
+  carries `law_refs`** — verified for all four.
+- **Two things the inventory found that matter to anyone reading TRVM.** (a) **`make governance` WRITES to the
+  repository** — `nest_bundle.mjs`, the other three `*_bundle.mjs` and `experiment_falsifiers.mjs` (86 write calls) are
+  unconditional generators, so a read-only adapter must never invoke it and a freshness check is *"is the committed
+  blob still `<sha>`"*, never *"re-run the harness"*. (b) **CI runs no governance target at all**, so a green badge
+  says nothing about grid consistency, the spec release or the blind run.
+- **The adapter.** `adapters/trvm.mjs`, read-only, in its **own namespace `trvm-gov`** at its own pin — because the
+  crosswalk already reads TRVM as an *evidence* source at `fd0df4c`, and the two coordinates must stay visibly
+  distinct rather than being silently merged. `snapshots/tri.json` pins **66 governance files** by path, blob, sha256
+  and byte length. Emitted: **139 LAW · 53 DEFINITION · 44 RECEIPT · 18 ARTIFACT · 2 REGISTRY · 1 EXPERIMENT**, with
+  **231 CITES · 192 MEMBER_OF · 39 PRODUCED_BY**, and **zero new faults** — every `law_refs` citation and every
+  `previous_run_id` resolved.
+- **No prose-law parsing.** `statement`, `evidence`, `revision_note`, every `note` and all ~90 `changelog_from_*`
+  arrays travel as opaque attributes with a `prose_fields` list beside them. `LAWS.md` has a TRVM-defined grammar
+  (`tools/laws_check.py`) but that file is wired into neither `make` nor CI and its integers never cross the `law:`
+  namespace, so it is **out of scope rather than half-parsed**.
+- **Native vocabulary is preserved exactly.** `PROVED`/`PROPERTY-TESTED`/`REGRESSION-LOCKED` are not collapsed into
+  "passing" and **`FALSIFIED` is not collapsed into "failing"** — four laws are red by design and TRVM's build fails if
+  one starts *passing*. `PINNED`/`ABORTED`/`CANDIDATE_FROZEN`/`REVEALED`/`COMPLETE` likewise.
+- **THE SEMANTIC GUARD, and what it caught.** TRVM structurally states **24 law→law supersessions**. `SUPERSEDES` is
+  frozen same-kind at `[CLAIM,CLAIM]` / `[ROUND,ROUND]` / `[EVIDENCE_STATE_TRANSITION,…]` (D-037), and `lib/lid.mjs`
+  refuses any other pair **at emission time** — so a `SUPERSEDES [LAW, LAW]` cannot be emitted at all under the frozen
+  profile. **v1 was NOT widened.** The supersession is DEFERRED exactly as the v1 audit deferred the 34
+  `consumption_rule` targets: both coordinates preserved as attributes on the source law, a stated reason, and **no
+  edge**. This is the mirror of D-066's law: *a stated edge whose pair the frozen profile does not admit is deferred
+  with its coordinates preserved, not smuggled in under a different kind.*
+- **`graphonomous.semantic.v2` obligation, minimal, and it is exactly one line:** admit
+  `SUPERSEDES [LAW, LAW]`. Nothing else about the third source needed a new role, kind or pair.
+- **The seal SUCCEEDED under frozen v1** — the guard did not have to stop it, because the deferral removed the only
+  inadmissible edge. New world `sem-b50742ead8a877ca568431420ae99cac33847dd26cec3a2f8aea001b33de00d6` at
+  `graphonomous.semantic.v1`, 3,880 objects, 2,469 relations, over projection root
+  `root-2f50a00dd3870145e91335d45ce1a13d81a9a6daa477c8446010969daa0d3d8c`
+  (1,189 nodes · 2,469 relations · 4,680 assertions · 2,691 locations · 86 faults · 4 adapter runs; evaluation
+  1,427 derivations replayed). Certificates: v0 `vclaim-48b19fab…`, v1 `vclaim-47e59e34…`, closure `gschema-25c33684…`
+  (HELD — the TRVM adapter emits the same six record kinds), contract `gpcon-db5b75e8…` (MOVED — a fourth active
+  adapter). **Law 5 as sharpened, on a real fourth adapter.**
+- **D-072's law-4b residue happened, for real, in this milestone, and the receipts are kept.** Registering
+  `adapters/trvm.mjs` needed one row in `lib/project.mjs`, which is inside `codeId(PROJECTOR_MODULES)`. Measured on all
+  eight receipts of the four existing projections: **exactly one coordinate moved — `chain_ids.projector` — and
+  nothing else did.** Not a claim field, not the schema closure, not the adapter contract, not the aggregate, not the
+  structure, not the checker, not the TRVM pin. `projections/pre-trvm/` preserves the four v0 goldens GPT froze in v6
+  §0 byte-for-byte, and the live checker refuses each of them on exactly `gproj-chain-id-mismatch` +
+  `gproj-certificate-stale` while reporting the unchanged projection root. **What moved was the projector, not the
+  projection.** This is no longer a fixture argument for closing law 4b; it is a receipt.
+- **No TRVM state was created or mutated.** R15 §7: registering a child protocol produces **no durable TRVM record** —
+  the table is a runtime API parameter. Any "Graphonomous is a registered child protocol" edge is Graphonomous-owned
+  and must never be attributed to TRVM, and by TRVM's own `proof.verdict-names-its-verifier@1` a verdict obtained that
+  way is meaningless without `verifier_policy_id` and `child_protocol_set_id` stored beside it.
+
+## D-074 — G1-A: six consistency rules ACCEPTED, three of GPT's seven candidates REDUCED TO ZERO and not implemented, and 15 findings over three source families (2026-09-03, GPT v6 §10/§12/§13 → D-071 Phases D, F, G)
+
+- **`graphonomous.consistency.rules.v0`** — `lib/consistency.mjs`. A finding lives under its **own root**
+  (`<dir>/consistency/`), never inside the projection root, and carries `basis: derived`, `trvm_derivation: false`,
+  `authority: none`, a content-bound `cfind-` id over (rulepack, rule, version, snapshot, sorted premises), the
+  snapshot and projection root, the affected families, exact observed premises, and a deterministic explanation. A test
+  asserts no finding may contain the strings `repair`, `proposal`, `promote`, `fix` or `apply`.
+- **Four classes, because the news is different**: `contradiction` (two sources assert incompatible things) ·
+  `drift` (one subject read at two coordinates) · `stale` (a historical record names coordinates the live system has
+  moved past — **a STATUS, never an invalidity claim**, and the D-060 caveat travels inside the finding) ·
+  `unresolved` (a structured cross-registry reference has no target under the owning contract).
+- **ACCEPTED (6), each reduced against the real data first:** `REFERENCE_TARGET_DRIFT` · `SOURCE_PIN_DIVERGENCE` ·
+  `CROSS_REGISTRY_COREFERENCE_UNLINKED` · `LAW_REFERENCE_UNRESOLVED` · `CERTIFICATE_COORDINATE_STALE` ·
+  `PROFILE_DECLARATION_DRIFT`. Every rule states **when absence is decidable**, and a rule with no decidable absence
+  does not emit on absence.
+- **REDUCED TO ZERO AND NOT IMPLEMENTED (3), with the measurement:**
+  - **`QUALIFIED_ID_COLLISION`** — the architecture prevents it. Every statement lid carries its source namespace, so
+    two families cannot mint one qualified identity with incompatible meanings; within one namespace the projector's
+    own fold raises `DUPLICATE_ID` as a FAULT before a finding could exist. What the data *does* show is co-reference
+    **without** collision, which is why `CROSS_REGISTRY_COREFERENCE_UNLINKED` exists instead.
+  - **`AUTHORITY_STATE_CONFLICT`** — measured: the crosswalk's 13 TRVM law nodes carry only `citation` and
+    `registry_hint`, no status, no revision resolution, no canonicality. There is nothing for the governance family's
+    `status`/`canonical` to conflict WITH, and emitting a conflict would be **inventing an assertion the crosswalk
+    never made**.
+  - **`VOCABULARY_MEANING_CONFLICT`** — the refusal codes, id prefixes, status words and child protocols are each
+    declared by exactly ONE owning registry. A conflict needs two owners of one vocabulary id and there is not one.
+  Each carries a stated **re-open condition**, and all three are displayed in the inspector so the negative space is
+  visible rather than hidden.
+- **Two rule names are NOT on GPT's list, and were added because the data asked**: `SOURCE_PIN_DIVERGENCE` and
+  `CROSS_REGISTRY_COREFERENCE_UNLINKED`. Neither of GPT's seven names means what these detect.
+- **Measured over the three families, at `snapshot:g0:tri-ba4e625-d217ee2-8816e59`: 15 findings.**
+  - **1 `REFERENCE_TARGET_DRIFT`** — one snapshot reads `TRVM/governance/invariant-grid.json` at **two different
+    blobs**: `9739bcc64b` (706,417 bytes, `fd0df4c`, the crosswalk's evidence view) and `667799ff06` (712,426 bytes,
+    `8816e59`, the governance family). *This is the finding the round was for.*
+  - **1 `SOURCE_PIN_DIVERGENCE`** — TRVM at two commits in one snapshot; the finding says in so many words that this
+    is **legal** and is recorded as a coordinate a reader must know, not as a contradiction.
+  - **13 `CROSS_REGISTRY_COREFERENCE_UNLINKED`** — the crosswalk and the governance family each name the same TRVM law
+    (`law:digest.adequacy@2` and twelve others), in two namespaces, with **no relation linking them**. All 13 resolve
+    and all 13 are canonical, so this is unresolved co-reference, **not** a contradiction, and nothing proposes a fix.
+  - **0 `LAW_REFERENCE_UNRESOLVED`** — measured zero: all 13 citations resolve at the pin and every target is
+    canonical. **A rule that ran and found nothing is a measurement and is reported.** Two fixtures prove it fires:
+    one on a revision the registry does not hold, one on an id it has never heard of.
+  - **0 `PROFILE_DECLARATION_DRIFT`** — both profiles agree facet for facet; a fixture that bends one facet fires it.
+  - **`CERTIFICATE_COORDINATE_STALE`** fires on the older projections instead — **5 on baseline, 5 on historical,
+    4 on multi, 2 on multi-v1** — and names the exact coordinate that moved, including the `pre-trvm` re-mint whose
+    only moved coordinate is `chain_ids.projector`.
+- **The acceptance test GPT required is measured, not asserted**: multi-v1 and tri commit to the same six sources; tri
+  adds a seventh declaration reading one of the same repositories at a different commit, and that one change moves
+  `REFERENCE_TARGET_DRIFT` 0 → 1, `SOURCE_PIN_DIVERGENCE` 0 → 1 and the co-reference rule 0 → 13, **while re-running
+  multi-v1 gives exactly what it gave before**. Every finding names which snapshot it is about.
+- **Order independence is measured, not claimed**: shuffling nodes, relations, sources, per-source files and preserved
+  receipts gives a byte-identical finding set.
+- **The inspector gained a `CONSISTENCY` tab** (`ui/app.js`, a fifth world `tri`). It shows per rule: what the rule
+  detects, its class, its decidable-absence condition, and **its count including zero**; per finding: detail, class,
+  families, `cfind-` id, every observed premise as a clickable lid with its exact source location and observed values,
+  the deterministic explanation, and the `basis / trvm_derivation / authority` chips. **FAULTS stay on their own tab.
+  There is no repair control and none is stubbed.** The reduced candidates render with their measurements.
+
+## D-075 — GPT Adjudication v7 recorded (1/3): `GRAPHONOMOUS-PROJECTION-v1` is FROZEN, and D-068 law 4 is SUPERSEDED by a three-part law that separates the semantic coordinates from the trusted-code ones (2026-09-04, GPT v7 §1–§5)
+
+- **Independent verification.** GPT verified the ZIP (`b2b50937…`): **51,817 entries, 0 missing, 0 mismatches**, and
+  reproduced the clean-bundle summary **183 / 161 / 0 / 22 explained skips**. The per-projection loop exceeded its
+  command-time cap, so GPT ran the **tri** verifiers separately and all five passed: `verify` 11,119/11,119 zero
+  problems · `verify-eval` 1,422 facts / 1,427 derivations zero problems · v0 certificate VERIFIED · v1 certificate
+  VERIFIED · consistency 6 rules, 15 findings, exactly 1 / 1 / 13 / 0 / 0 / 0. Independently reproduced coordinates:
+  `root-2f50a00d…`, `vclaim-48b19fab…`, `vclaim-47e59e34…`, `root-10d593a5…`, `sem-b50742ea…`.
+- **G0.5-R1/R2 CLOSED**, and the reproducibility boundary is frozen: *a review bundle may be GREEN with explicit skips
+  for unavailable owning repositories; a full-tree run may not use those skips to hide a regression.*
+- **`GRAPHONOMOUS-PROJECTION-v1` ACCEPTED / TESTED / FROZEN.** The accepted design is: the artifact chooses **which
+  adapters actually ran** through observed `adapter_run` records; a trusted local `contracts/projection.v1.json`
+  determines what those active adapters imply; schemas are indexed by logical `$id` and content digest; the verifier
+  derives the closure; an artifact-supplied list cannot weaken it; duplicate logical ids are refused; unrelated files
+  do not enter the closure merely by existing; and projection reconstruction stays separate from WRL profile
+  selection. **The measured closure of 9 of 12 schemas is a golden vector for the current adapter set.**
+- **Law 5's sharpening is accepted verbatim** (D-072). *Do not force a schema-set hash to move when the dependency set
+  did not change.*
+- **D-068 law 4 was TOO STRONG and is SUPERSEDED, not silently edited.** Its sentence — *"add a new inactive adapter
+  and its schemas → old certificate HOLDS"* — conflated two different kinds of dependency. The corrected law, frozen:
+
+  | | what changes | certificate |
+  |---|---|---|
+  | **4a** an unregistered adapter file + unrelated schemas, selected by no snapshot | nothing: root, closure, contract and projector code all HOLD | **HOLDS** |
+  | **4b** registering an adapter in the **trusted projector**, even if no snapshot runs it | root, snapshot commitment, adapter contract and required closure all HOLD; **projector code identity MOVES** | **MOVES — and that is desired** |
+  | **4c** a snapshot actually selects it | `projection_contract_id` MUST move; the root may move with the emitted records; the closure moves **iff** a new required schema enters | **MOVES** |
+
+- **The corrected reading, stated so it cannot be lost:** *the certificate has always meant reconstruction under exact
+  implementation and verifier coordinates. A trusted code change is a legitimate reason to re-mint even when its
+  output for one old input is identical.* **Do NOT move the `ADAPTERS` table or the `lib/lid.mjs` vocabulary out of
+  projector code to make a certificate hold** — that was D-072's proposed reduction and it is **refused**. The
+  `projections/pre-trvm/` receipts are the evidence of the distinction and stay.
+- **Five projection-v1 certificate vectors are GOLDEN**, at the code coordinates that minted them:
+  baseline `vclaim-d5a10210172beee78d8176de8fdf41c08b6a527b8c0092084d891e1f48567d00` ·
+  historical `vclaim-c86f2f033748f997c8ceb3d86fa1f490f344784d792b5c0df07291d076114262` ·
+  multi `vclaim-58bbe816b4a0efb62338e767451d4c6605da2d74c097ca6f2d8f919b69c87b93` ·
+  multi-v1 `vclaim-6c688e705c39e12d776f8351868c72681f151da869267486fbd967ab375cb2ba` ·
+  tri `vclaim-47e59e341c81b64ad365835371635079e36445cdbca0b8ab856a8869052e702e`.
+  They are preserved byte-for-byte in **`projections/pre-v2/`**, taken before any code moved this round.
+  Protocol-v0 remains frozen historical behaviour and v1 does not retroactively replace its receipts.
+- **Obligation, now discharged by `test/projection_v1.test.mjs`:** a regression test that independently classifies
+  **semantic projection coordinates** (root, snapshot commitment, adapter contract, schema closure, projection
+  contract, aggregate, structure) from **trusted code-chain coordinates** (`trvm_commit`, `trvm_blobs`, `projector`,
+  `checker`), and **accepts a result that moves only the projector-chain coordinate, saying so**.
+- **TRVM governance third-source ingestion ACCEPTED / TESTED**, and the snapshot
+  `snapshot:g0:tri-ba4e625-d217ee2-8816e59` is the first three-family self-observation vector. **The two TRVM pins are
+  not an adapter bug** — they are exactly the coordinate difference Graphonomous should make visible.
+
+## D-076 — GPT Adjudication v7 recorded (2/3): exact cross-family co-reference is DERIVED LINKAGE, not a consistency problem; `consistency.rules.v0` is TESTED PRE-LINKAGE and NOT frozen (2026-09-04, GPT v7 §7, §8, §11)
+
+- **The two data-driven rule names are ACCEPTED and are not synonyms.** `SOURCE_PIN_DIVERGENCE` says two source
+  declarations read **one repository at different commits**; `REFERENCE_TARGET_DRIFT` says **the same file in that
+  repository resolves to different blobs**. A commit can differ while a referenced file is identical, and in a
+  generalised source system the reverse. Both keep class `drift`: neither asserts that either source is wrong.
+- **The three reductions to zero are ACCEPTED**, with their measured rejection and re-open conditions preserved as
+  metadata: `QUALIFIED_ID_COLLISION` (same-namespace duplicate identity is already a projection FAULT) ·
+  `AUTHORITY_STATE_CONFLICT` (the second source does not assert the state dimension) ·
+  `VOCABULARY_MEANING_CONFLICT` (each vocabulary has exactly one owner, so there are not two meanings to compare).
+  **Do not implement a merely hypothetical rule, and do not add a replacement to keep the count at six.**
+- **THE ONTOLOGY CORRECTION OF THE ROUND.** The 13 `CROSS_REGISTRY_COREFERENCE_UNLINKED` cases are **not**
+  contradictions, drifts, stale coordinates, or genuinely unresolved references. Both families are present and
+  deterministically name **the same exact external qualified identity**. What is missing is a *Graphonomous-derived*
+  cross-family linkage, and **neither authoritative source should be forced to own that edge**. The corrected
+  architecture is three layers, not two:
+
+  ```
+  projection   observed source-specific records
+      ↓
+  linkage      derived cross-family identity resolution
+      ↓
+  consistency  actual disagreement / staleness / unresolved cases
+  ```
+
+- **Graphonomous owns the link as DERIVED KNOWLEDGE; the sources own only their own observed statements.** Open
+  `graphonomous.linkage.rules.v0`. The relation means **only**: *these two source-specific records independently name
+  the same exact external qualified identity under deterministic source grammars.* It is **not** `EQUIVALENT_TO` in
+  every attribute, not a source-authored relation, not authority to merge or fold the nodes, and not permission to
+  rewrite either source. Requirements: a canonical ordered pair, content-bound; the exact external identity stored;
+  source-specific node lids preserved; `basis: derived` · `authority: none` · `trvm_derivation: false`;
+  snapshot/root bound; deterministic explanation to **both** observed identity assertions; and **ambiguous multiple
+  canonical targets REFUSE linkage rather than guessing**.
+- **`graphonomous.consistency.rules.v0` is TESTED PRE-LINKAGE and is NOT frozen.** Its current roots and the 13
+  findings are preserved as **pre-linkage receipts**. After linkage exists, mint `graphonomous.consistency.rules.v1`
+  carrying forward exactly `REFERENCE_TARGET_DRIFT` · `SOURCE_PIN_DIVERGENCE` · `LAW_REFERENCE_UNRESOLVED` ·
+  `CERTIFICATE_COORDINATE_STALE` · `PROFILE_DECLARATION_DRIFT`, and **freeze v1 only after the tri finding set and
+  fixtures are re-measured**.
+- **A source that claims an external identity with no target, or an ambiguous one, stays a consistency condition** —
+  it does not become a link. `LAW_REFERENCE_UNRESOLVED` already covers the current law case.
+
+## D-077 — GPT Adjudication v7 recorded (3/3): `graphonomous.semantic.v2` opens with ONE endpoint pair; the historical crosswalk is NOT re-pinned; TRVM prose stays research; WRL is the fourth source family (2026-09-04, GPT v7 §6, §9, §10, §12–§14)
+
+- **`graphonomous.semantic.v2` is OPEN with exactly one required delta: `SUPERSEDES [LAW, LAW]`.** D-037 already gives
+  `SUPERSEDES` the meaning of replacement between comparable entity kinds, so LAW → LAW is **not a new relation
+  meaning — it is a missing admitted endpoint pair.** No new role, no new relation kind, **no new rulepack version**:
+  `graphonomous.semantic.rules.v0` stays unless implementation discovers an actual semantic-policy change rather than
+  an endpoint-admission change. Acceptance: v0 and v1 rows byte-identical; v2 = v1 + exactly one pair; the
+  source-stated TRVM law supersessions become observed semantic relations; previously deferred coordinates disappear
+  **only** because the exact relations are now represented; shared statement LIDs and `rev-` identities stay stable;
+  the v2 world gets a new `sem-` and world-scoped `rel-`; and **no other deferred TRVM structure is promoted merely
+  because v2 exists**. *If implementation requires more than this one-line contract, stop and report why.*
+- **CORRECTION TO THE COUNT, measured by this session at TRVM `8816e59` before implementing anything (GPT v7 §6's
+  audit obligation).** The registry states **25 unique law→law supersession propositions**, not 24. Measured:
+  **24 entries carry a `supersedes` field · 25 carry a `superseded_by` field · 24 propositions are stated by both ·
+  exactly 1 is stated ONLY by `superseded_by`** — `kernel.identity@1.superseded_by = "kernel.identity@2"`, where
+  `kernel.identity@2` carries no reciprocal `supersedes`. TRVM's `grid_check` enforces lineage symmetry **only where
+  both sides are populated**, so this is legal in the owning layer and is a real proposition the source states. Every
+  pointer resolves; one supersession is **cross-id** (`kappa.internal-edge.monotonicity@4` supersedes
+  `kappa.carrier-preserving.monotonicity@2`), which is why `canonical` tests `superseded_by == null` rather than
+  max-revision. **The obligation is unchanged — still exactly one endpoint pair — so v2 proceeds; only the number
+  moves, and it moves from 24 to 25.**
+- **DO NOT re-pin or rewrite the historical crosswalk source.** The crosswalk at its frozen coordinate genuinely read
+  TRVM at `fd0df4c`; governance is observed at `8816e59`. **Re-pinning inside the same authoritative record would
+  retroactively change what that source meant and destroy the temporal distinction Graphonomous exists to preserve.**
+  The finding closes legitimately only when (1) the owning crosswalk/invariant registry publishes a new authoritative
+  version updating its TRVM coordinate, or (2) a future snapshot intentionally names only one coordinate. Then
+  Graphonomous shows *old snapshot → drift present · owner-issued newer snapshot → drift closed*, which is far
+  stronger evidence than editing history until the dashboard turns green. The UI may label it
+  **`standing coordinate drift; no source judged wrong`** and **may not offer a repair button**.
+- **The two TRVM prose discrepancies stay research-only.** The "28 refusal codes" prose and the unchecked grid `date`
+  are source-quality observations, not valid G1 consistency premises: the files are outside the structured ingestion
+  contract, no stable grammar gives the phrase a machine-checkable field, and `grid_check` never consumes `date`, so
+  its intended meaning is not established by the owning machinery. **Do not turn a text grep into a semantic
+  contradiction.** Re-open only if TRVM defines those documents as current normative projections, supplies a
+  deterministic grammar, or gives `date` a checked contract.
+- **WRL is the fourth authoritative source family, AUTHORIZED NEXT.** Rationale: Graphonomous now has frozen submitted
+  profiles, WRL owns the admitted rows and the sealing rules, `PROFILE_DECLARATION_DRIFT` today partly depends on
+  host-provided profile data rather than a first-class source family, and WRL-P0 was the first Graphonomous-driven
+  stack repair — so this closes another self-observation loop. **Inventory first; do not assume a JavaScript source
+  file is an authoritative registry merely because it contains the data.** Read-only, own namespace and pin, and **no
+  mutation-capable tooling may be invoked to ingest it**. If WRL needs a role/kind v2 cannot represent, **do not widen
+  v2** — preserve everything and return a minimal `graphonomous.semantic.v3` obligation.
+- **Not opened by any of this:** source write authority · automatic repair · evidence-state promotion ·
+  `graphonomous.evidence.v0` · the TRVM primitive basis · broad G2 reduction/experiment machinery. G2
+  dependency/impact reasoning is the likely step **after** linkage and consistency stay stable over four families.

@@ -4,10 +4,17 @@
   "private": true,
   "type": "module",
   "description": "Graphonomous G0: a deterministic, content-addressed semantic/evidence projection over the ComputeDriven invariant registries. Zero runtime dependencies; imports the TRVM canonical encoder and CAS from the pinned sibling checkout.",
-  "engines": { "node": ">=22" },
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
-    "test": "node --test test/*.test.mjs",
-    "test:twin": "python3 test/canon_twin.py --selftest"
+    "test": "node --test --test-concurrency=2 test/*.test.mjs",
+    "test:repro": "node tools/test_repro.mjs",
+    "test:full-tree": "node tools/test_repro.mjs --full-tree",
+    "test:twin": "python3 test/canon_twin.py --selftest",
+    "build:ui": "node tools/g05_build.mjs --out ui/data",
+    "ui": "node bin/g05.mjs",
+    "test:serial": "node --test --test-concurrency=1 test/*.test.mjs"
   },
   "license": "MIT"
 }

@@ -81,7 +81,12 @@ export const RELATION_KINDS = Object.freeze([
  *  derived from the lid prefix (parseLid(...).kind), so the check needs no lookup. The world profile
  *  (handoff/WRL_SCHEMA_OR_PROFILE/graphonomous.semantic.v0.json) states the same pairs in its `endpoint_constraints`. */
 export const RELATION_ENDPOINTS = Object.freeze({
-  SUPERSEDES: Object.freeze([["CLAIM", "CLAIM"], ["ROUND", "ROUND"], ["EVIDENCE_STATE_TRANSITION", "EVIDENCE_STATE_TRANSITION"]]),
+  /* `["LAW", "LAW"]` arrives with graphonomous.semantic.v2 (D-077). Like the v1 role prefixes above, this table is
+     NOT profile-scoped — a lid is a statement name and carries no profile, which is what makes v0/v1/v2 lids
+     comparable — so the pair lives here once and it is the PROFILE that decides whether a world may contain it. A v0
+     or v1 seal still REFUSES a LAW -> LAW supersession with WRL_UNDECLARED_ENDPOINT_PAIR; only a v2 world admits it.
+     What this table forbids is a pair NO profile admits, which is the D-037 guarantee it was built for. */
+  SUPERSEDES: Object.freeze([["CLAIM", "CLAIM"], ["ROUND", "ROUND"], ["EVIDENCE_STATE_TRANSITION", "EVIDENCE_STATE_TRANSITION"], ["LAW", "LAW"]]),
   STATE_TRANSITION_OF: Object.freeze([["EVIDENCE_STATE_TRANSITION", "CLAIM"]]),
 });
 export function checkRelationEndpoints(kind, sourceLid, targetLid) {

@@ -1,0 +1,10 @@
+crosswalk                              root-1be36711e7fab1c…  nonempty=node,relation,assertion,source_location,fault,adapter_run
+                                        {'node': 289, 'relation': 588, 'assertion': 1272, 'source_location': 791, 'fault': 64, 'adapter_run': 1}
+factory                                root-adf47dc51a9867d…  nonempty=node,relation,assertion,source_location,fault,adapter_run
+                                        {'node': 494, 'relation': 986, 'assertion': 1998, 'source_location': 1139, 'fault': 22, 'adapter_run': 1}
+factory_mosaic                         root-2e9b0989ea462ba…  nonempty=node,relation,assertion,source_location,fault,adapter_run
+                                        {'node': 179, 'relation': 449, 'assertion': 650, 'source_location': 476, 'fault': 338, 'adapter_run': 1}
+crosswalk+factory                      root-4197ec33f34a36e…  nonempty=node,relation,assertion,source_location,fault,adapter_run
+                                        {'node': 778, 'relation': 1574, 'assertion': 3270, 'source_location': 1929, 'fault': 86, 'adapter_run': 2}
+crosswalk+factory+factory_mosaic       root-298f2f0317223c9…  nonempty=node,relation,assertion,source_location,fault,adapter_run
+                                        {'node': 932, 'relation': 2007, 'assertion': 3920, 'source_location': 2389, 'fault': 86, 'adapter_run': 3}

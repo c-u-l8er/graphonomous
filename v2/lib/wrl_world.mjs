@@ -29,12 +29,16 @@ export const WRL_DIR = resolve(HERE, "../../../WRL");
 /** The WRL commit that carries WRL-P0 (STACK_FIX_RECEIPTS/WRL-P0.md) and the three files this lane imports, blob-pinned.
  *  `relation-v2.js` is now a live import (the seal); the kernel and the spine are imported by it and are unchanged by P0. */
 export const WRL_PIN = Object.freeze({
-  commit: "53e5e8995913995189f7017d2a94351ff69d5b31",
-  blobs: Object.freeze({ "relation-v2.js": "a222eb9bd94afd8839e78eca27ea96f37017ab08", "relation-identity.js": "880cfe0406ab570f4963dbb3a9b6a7cc0ab39f01", "wrl.js": "19e94ad97acec633f7a83bcff4e3a01acd867b07" }),
+  commit: "6a8304c9a598bb5ae97f920aeae457532cdd99a5",
+  blobs: Object.freeze({ "relation-v2.js": "68029bc10280a0a3db4d17bad09c74e984214b48", "relation-identity.js": "880cfe0406ab570f4963dbb3a9b6a7cc0ab39f01", "wrl.js": "19e94ad97acec633f7a83bcff4e3a01acd867b07" }),
 });
 /* b072db0 → 53e5e89: WRL admitted `graphonomous.semantic.v1` as a SECOND static profile row. Only relation-v2.js moved,
  * and it moved by GAINING a row: v0 is 21 roles / 31 kinds / 92 pairs at both commits and every v0 golden world
- * reproduces (test/wrl_world.test.mjs). The kernel and the spine are byte-identical. */
+ * reproduces (test/wrl_world.test.mjs). The kernel and the spine are byte-identical.
+ * 53e5e89 → 6a8304c: a THIRD static row, `graphonomous.semantic.v2` (D-077, receipt STACK_FIX_RECEIPTS/WRL-P1.md).
+ * Again only relation-v2.js moved and again by gaining a row: v0 stays 21/31/92, v1 stays 24/32/102, v2 is 24/32/103
+ * — v1 plus exactly `SUPERSEDES [LAW, LAW]` — and all three share `graphonomous.semantic.rules.v0`. The kernel and
+ * the spine are byte-identical at all three commits, which is why every v0 and v1 golden world reproduces here. */
 export const MINTED_BY = "wrl-kernel@" + WRL_PIN.commit.slice(0, 7);
 export function assertWrlPinned() { const seen = {}; for (const [rel, want] of Object.entries(WRL_PIN.blobs)) { const got = gitBlobOid(readFileSync(resolve(WRL_DIR, rel))); seen[rel] = got; if (got !== want) throw new G0Error("WRL_MOVED", `${rel} is blob ${got}, pinned ${want} (commit ${WRL_PIN.commit})`); } return seen; }
 
@@ -135,4 +139,31 @@ export async function buildWorld(dir, { out = join(dir, "world"), spikeOut = joi
   writeFileSync(join(out, "identities.json"), canonicalBytesG0(doc));
   writeFileSync(join(out, "SEM"), sealed.sem + "\n");
   return { ...doc, bytes: sealed.bytes.length, spike_reproduced: historical ? spikeIdentities(artifact).gsem : null };
+}
+
+/* ── the two declarations, reduced to comparable facets (G1 PROFILE_DECLARATION_DRIFT, D-074) ──────────────────────
+ * `submittedFacets` reads Graphonomous's own declaration file; `admittedFacets` reads WRL's row. The reconcile test
+ * in test/wrl_world.test.mjs asserts facet by facet that they agree TODAY; the consistency rule is the same
+ * comparison expressed as a derived finding, so that a future disagreement becomes visible in the inspector instead
+ * of only in a red test. Both return the SAME shape, and neither is authoritative over the other. */
+const _pairs = (o) => Object.fromEntries(Object.entries(o).filter(([k]) => k !== "note").map(([k, v]) => [k, v.map((p) => p.join(">")).sort()]));
+export function submittedFacets(profile) {
+  return {
+    rulepack_id: profile.semantic_policies.rulepack_id,
+    roles: [...profile.roles.kinds].sort(),
+    kinds: [...profile.relation_signatures.kinds].sort(),
+    endpoint_pairs: _pairs(profile.endpoint_constraints),
+    policies: [profile.canonical_defaults.policy],
+  };
+}
+export function admittedFacets(id) {
+  const row = V2.V2_PROFILES[id];
+  if (!row) throw new G0Error("PROFILE_NOT_ADMITTED", `WRL at ${WRL_PIN.commit.slice(0, 7)} does not declare ${id}`);
+  return {
+    rulepack_id: row.rulepack_id,
+    roles: Object.keys(row.roles).sort(),
+    kinds: Object.keys(row.endpoints).sort(),
+    endpoint_pairs: _pairs(row.endpoints),
+    policies: [...row.policies],
+  };
 }

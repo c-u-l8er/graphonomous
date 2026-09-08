@@ -334,12 +334,85 @@ function renderIdentity() {
             h("td", { class: "num", text: src.files }))))))));
 }
 
+
+/* ------------------------------------------------------------------ G1 consistency (D-074)
+ * DERIVED findings across source families. Kept in its own pane, never merged with faults: a FAULT is what an adapter
+ * could not normalize; a FINDING is what two normalized sources disagree about, or where one coordinate has moved past
+ * another. Read-only like everything else here — there is no repair control and no proposal, by ruling. */
+const CLASS_NOTE = {
+  contradiction: "two sources assert incompatible things about one subject",
+  drift: "one subject is read at two coordinates that are not the same bytes",
+  stale: "a historical record names coordinates the live system has moved past — a STATUS, not an invalidity claim",
+  unresolved: "a structured cross-registry reference has no target under the owning source's contract",
+};
+function consistencyPane() {
+  const C = W.consistency;
+  if (!C) return h("div", { class: "empty", text: "this world has no consistency run: node bin/g0.mjs consistency --dir <dir> --write" });
+  const byRule = new Map();
+  for (const f of C.findings) { if (!byRule.has(f.rule)) byRule.set(f.rule, []); byRule.get(f.rule).push(f); }
+  const wrap = h("div", null,
+    h("div", { class: "graphbar" },
+      h("span", { class: "faint", text: `${C.findings.length} findings · ${C.rules.length} rules run · ${C.rejected.length} candidates reduced and NOT implemented` }),
+      Object.entries(C.manifest.by_class ? Object.fromEntries(C.manifest.by_class) : {}).map(([c, n]) => h("span", { class: "chip", text: `${c} ${n}` }))),
+    h("div", { class: "hint", style: "padding:6px 10px" },
+      "Derived, non-authoritative, snapshot-specific. A finding is not a fault: faults are on their own tab. Nothing here can promote, rewrite or repair a source, and no repair control exists.",
+      h("div", { style: "margin-top:4px" }, h("span", { class: "faint", text: "consistency root " }), h("span", { class: "mono", text: C.root })),
+      h("div", null, h("span", { class: "faint", text: "rulepack " }), h("span", { class: "mono", text: C.manifest.rulepack }))));
+
+  for (const spec of C.rules) {
+    const list = byRule.get(spec.id) || [];
+    const head = h("div", { class: "hd" },
+      h("span", { class: "c", text: spec.id }),
+      h("span", { class: "chip", text: spec.class }),
+      h("span", { class: "faint", text: `${list.length} finding${list.length === 1 ? "" : "s"}` }));
+    const box = h("div", { class: "faultcode" }, head,
+      h("div", { class: "fault" },
+        h("div", { class: "msg", text: spec.states }),
+        h("div", { class: "meta" }, h("span", { class: "faint", text: "class: " }), h("span", { class: "dim", text: CLASS_NOTE[spec.class] || spec.class })),
+        h("div", { class: "meta" }, h("span", { class: "faint", text: "absence: " }), h("span", { class: "dim", text: spec.decidable_absence }))));
+    for (const f of list) {
+      box.append(h("div", { class: "fault" },
+        h("div", { class: "msg", text: f.detail }),
+        h("div", { class: "meta" },
+          h("span", { class: "chip", text: f.class }), " ",
+          h("span", { class: "faint", text: "families: " }), h("span", { class: "dim", text: f.families.join(" + ") }), " · ",
+          h("span", { class: "mono", text: f.lid })),
+        h("div", { style: "margin-top:5px" },
+          h("span", { class: "faint", text: "observed premises" }),
+          f.premises.map((p) => h("div", { style: "margin-left:8px" },
+            h("span", { class: "dim", text: p.kind }), " ",
+            W.anyLid.has(p.ref) ? lidBtn(p.ref) : h("span", { class: "mono", text: p.ref }),
+            p.at ? [" ", h("span", { class: "faint", text: "at " }), W.anyLid.has(p.at) ? lidBtn(p.at) : h("span", { class: "mono", text: p.at })] : null,
+            p.observed ? h("div", { class: "faint", style: "margin-left:8px", text: JSON.stringify(p.observed) }) : null))),
+        h("div", { style: "margin-top:5px" },
+          h("span", { class: "faint", text: "deterministic explanation" }),
+          f.explain.map((line) => h("div", { style: "margin-left:8px", class: "dim", text: line }))),
+        h("div", { class: "meta", style: "margin-top:5px" },
+          h("span", { class: "chip", text: "basis: " + f.basis }),
+          h("span", { class: "chip", text: "trvm_derivation: " + f.trvm_derivation }),
+          h("span", { class: "chip", text: "authority: " + f.authority }),
+          h("span", { class: "faint", text: " snapshot " }), h("span", { class: "mono", text: f.snapshot }))));
+    }
+    wrap.append(box);
+  }
+
+  const red = h("div", { class: "faultcode" },
+    h("div", { class: "hd" }, h("span", { class: "c", text: "REDUCED — candidate rules NOT implemented" }), h("span", { class: "faint", text: `${C.rejected.length}` })));
+  for (const r of C.rejected) red.append(h("div", { class: "fault" },
+    h("div", { class: "msg", text: r.id }),
+    h("div", { class: "meta dim", text: r.why }),
+    h("div", { class: "meta" }, h("span", { class: "faint", text: "re-open when: " }), h("span", { class: "dim", text: r.reopen_when }))));
+  wrap.append(red);
+  return wrap;
+}
+
 /* ------------------------------------------------------------------ view switch */
 function renderView() {
   const view = clear($("view"));
   for (const b of document.querySelectorAll("#tabs button")) b.classList.toggle("on", b.dataset.view === S.view);
   if (S.view === "graph") { view.append(graphPane()); view.append(inspectorPane()); }
   else if (S.view === "faults") view.append(faultsPane());
+  else if (S.view === "consistency") view.append(consistencyPane());
   else view.append(acceptancePane());
 }
 

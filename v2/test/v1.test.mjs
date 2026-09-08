@@ -29,8 +29,8 @@ const V0_GOLDEN = {
   multi: "sem-b8d828278e9ba411bc375da4b03754e87210b78cb106d25422fd94e8526622ea",
 };
 
-test("(1) v0 did not move: the three golden worlds reproduce at a WRL commit that GAINED a profile row", async () => {
-  assert.equal(WRL_PIN.commit, "53e5e8995913995189f7017d2a94351ff69d5b31");
+test("(1) v0 did not move: the three golden worlds reproduce at a WRL commit that GAINED a profile row (twice: v1 at 53e5e89, v2 at 6a8304c)", async () => {
+  assert.equal(WRL_PIN.commit, "6a8304c9a598bb5ae97f920aeae457532cdd99a5");
   for (const [name, sem] of Object.entries(V0_GOLDEN)) {
     const sealed = await sealProjection(loadProjection(P(name)));   // no profile argument: the v0 default
     assert.equal(sealed.sem, sem, `${name}: the frozen v0 world`);
@@ -136,7 +136,7 @@ test("(5) a statement's REVISION identity is world-independent; its ALLOCATION i
   assert.equal(shared.filter((n) => A.get(n).rev === B.get(n).rev).length, 1574, "same statement, same revision, in both worlds");
   assert.equal(shared.filter((n) => A.get(n).rel === B.get(n).rel).length, 0, "and a different allocation in each");
   assert.equal(b.relations.length - shared.length, 433);
-  for (const r of b.relations) { assert.match(r.rel, /^rel-[0-9a-f]{64}$/); assert.match(r.rev, /^rev-[0-9a-f]{64}$/); assert.equal(r.minted_by, "wrl-kernel@53e5e89"); }
+  for (const r of b.relations) { assert.match(r.rel, /^rel-[0-9a-f]{64}$/); assert.match(r.rev, /^rev-[0-9a-f]{64}$/); assert.equal(r.minted_by, "wrl-kernel@6a8304c"); }
 });
 
 test("(6) the two multi worlds commit to the SAME source bytes, and the claim still moves", () => {

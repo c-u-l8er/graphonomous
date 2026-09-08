@@ -48,11 +48,22 @@ import { canonicalBytesG0, hashOfBytes, sha256Hex, sortSet, gitBlobOid, G0Error,
 import { verifiedClaimSemId, certificateOf, CERTIFICATE_PROTOCOL } from "../../../TRVM/governance/certificate.mjs";
 import { grammar, publicResult, ownSnapshot } from "../../../TRVM/governance/schema.mjs";
 import { putArtifact, resolveArtifact, directoryStore, canonicalWireBytes, isRoot, WIRE_LIMITS } from "../../../TRVM/governance/cas.mjs";
+import { deriveClosure } from "./closure.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = resolve(HERE, "..");
 
 export const PROTOCOL = "GRAPHONOMOUS-PROJECTION-v0";
+/* GRAPHONOMOUS-PROJECTION-v1 (GPT v6 §6, D-068): v0's reconstruction meaning with exactly ONE coordinate redefined —
+ * `schema_set_id` (all twelve schema files in the checkout, keyed on basename) becomes `schema_closure_id` +
+ * `projection_contract_id`, the verifier-derived REQUIRED closure of the projection's active adapter contracts
+ * (lib/closure.mjs). v0 is not touched: narrowing it in place would break the D-060 freeze. */
+export const PROTOCOL_V1 = "GRAPHONOMOUS-PROJECTION-v1";
+export const PROTOCOLS = Object.freeze({ v0: PROTOCOL, v1: PROTOCOL_V1 });
+export const CHECKER_ID_V1 = "graphonomous.g0.certificate.v1";
+/** `certificate/` for v0, `certificate-v1/` for v1 — the two receipts coexist for one root (D-068 law 10). */
+export const certificateDirFor = (protocol) => (protocol === PROTOCOL_V1 ? "certificate-v1" : "certificate");
+const known = (protocol) => { if (protocol !== PROTOCOL && protocol !== PROTOCOL_V1) throw new G0Error("PROTOCOL_UNKNOWN", `${protocol} is not a protocol this module implements`); return protocol; };
 export const CLAIM_FIELD = "projection_claim_sem_id";
 export const CHECKER_ID = "graphonomous.g0.certificate.v0";
 export const PROJECTOR_ID = "graphonomous.g0.project.v0";
@@ -74,6 +85,8 @@ export const RECORD_KINDS = Object.freeze(["node", "relation", "assertion", "sou
 export const GRAMMAR = Object.freeze({
   bundle: { required: ["protocol", "claim", "chain_ids", "references", "aggregate", "structure"], optional: ["type", "version", "annotations"] },
   claim: { required: ["projection_root", "snapshot_id", "snapshot_commitment", "spec", "ruleset", "schema_set_id", "adapter_contract_id", "scope", CLAIM_FIELD], optional: [] },
+  /* v1 replaces the one schema coordinate and adds the contract it was derived under; everything else is v0's. */
+  claim_v1: { required: ["projection_root", "snapshot_id", "snapshot_commitment", "spec", "ruleset", "schema_closure_id", "projection_contract_id", "adapter_contract_id", "scope", CLAIM_FIELD], optional: [] },
   scope: { required: Object.keys(IMPLEMENTED_SCOPE), optional: [] },
   chain_ids: { required: ["trvm_commit", "trvm_blobs", "projector", "checker"], optional: [] },
   trvm_blob: { required: ["file", "blob"], optional: [] },
@@ -85,6 +98,8 @@ export const GRAMMAR = Object.freeze({
   faults: { required: ["count", "digest", "by_code"], optional: [] },
   structure: { required: ["kinds", "cas_objects", "manifest_bytes", "structure_sem_id"], optional: [] },
 });
+/** The claim grammar the given protocol implements. */
+export const claimGrammar = (protocol) => (protocol === PROTOCOL_V1 ? GRAMMAR.claim_v1 : GRAMMAR.claim);
 export const REFUSAL_CODES = Object.freeze([
   "gproj-root-mismatch", "gproj-snapshot-commitment-mismatch", "gproj-source-unpinned",
   "gproj-artifact-unresolvable", "gproj-artifact-non-canonical", "gproj-artifact-invalid-utf8", "gproj-artifact-root-mismatch", "gproj-artifact-malformed",
@@ -93,11 +108,21 @@ export const REFUSAL_CODES = Object.freeze([
   "gproj-count-inconsistent", "gproj-scope-mismatch", "gproj-checker-threw",
   // deviation 4
   "gproj-ruleset-mismatch", "gproj-schema-set-mismatch", "gproj-adapter-contract-mismatch", "gproj-reference-contract-mismatch", "gproj-reference-mismatch", "gproj-structure-mismatch",
+  // GRAPHONOMOUS-PROJECTION-v1 (D-068). `-refused` is the derivation failing (a schema with no $id, two files claiming
+  // one $id, an adapter the contract never declared); `-mismatch` is a bundle disagreeing with a derivation that worked.
+  "gproj-schema-closure-refused", "gproj-schema-closure-mismatch", "gproj-projection-contract-mismatch",
 ]);
 
 /* ─────────────────────────────────────────── identities ─────────────────────────────────────────── */
 const H = (...parts) => sha256Hex(Buffer.concat(parts.map((p) => (Buffer.isBuffer(p) ? p : Buffer.from(p, "utf8")))));
-const tag = (t) => Buffer.from(PROTOCOL + "|" + (t ? t + "|" : ""), "utf8");
+/* THE HASH DOMAIN SEPARATOR FOR THE G0 PROJECTION IDENTITY FAMILY, and it does NOT move with the protocol version.
+ * `gsnap-` commits to a SOURCE SET, `gagg-` to the records on disk, `gstruct-` to their shape: none of those is a
+ * property of which receipt protocol later describes them, so a v1 certificate over an unchanged directory must name
+ * the SAME snapshot commitment, aggregate and structure as its v0 sibling. Only the CLAIM mixes in the live protocol,
+ * because the claim's field set is protocol-defined — which is what makes `gclaim-` and `vclaim-` differ while
+ * everything about the projection holds. Changing this constant would re-mint every frozen v0 identity. */
+const ID_DOMAIN = "GRAPHONOMOUS-PROJECTION-v0";
+const tag = (t) => Buffer.from(ID_DOMAIN + "|" + (t ? t + "|" : ""), "utf8");
 const HEX40 = /^[0-9a-f]{40}$/, HEX64 = /^[0-9a-f]{64}$/;
 
 /** One source's identity: what pins it, never where it lives (`repo_dir` is a locator). Files are a set. */
@@ -136,7 +161,7 @@ export function liveChainIds() {
   return { trvm_commit: TRVM_PIN.commit, trvm_blobs: sortSet(Object.entries(TRVM_PIN.blobs).map(([file, blob]) => ({ file, blob })), "trvm_blobs"),
     projector: { id: PROJECTOR_ID, code: codeId(PROJECTOR_MODULES) }, checker: { id: CHECKER_ID, code: codeId(CHECKER_IMPORTS) } };
 }
-export const claimSemId = (claim) => { const { [CLAIM_FIELD]: _omit, ...body } = claim; return "gclaim-" + H(tag(""), canonicalBytesG0({ protocol: PROTOCOL, ...body })); };
+export const claimSemId = (claim, protocol = PROTOCOL) => { const { [CLAIM_FIELD]: _omit, ...body } = claim; return "gclaim-" + H(tag(""), canonicalBytesG0({ protocol: known(protocol), ...body })); };
 export const aggregateId = (agg) => { const { aggregate_id: _omit, ...body } = agg; return "gagg-" + H(tag(""), canonicalBytesG0(body)); };
 export const structureSemId = (st) => { const { structure_sem_id: _omit, ...body } = st; return "gstruct-" + H(tag("structure"), canonicalBytesG0(body)); };
 /** The certificate preimage TRVM hashes — exposed so a test can re-derive `vclaim-` by hand (R13 §7.1 [2]). */
@@ -149,7 +174,8 @@ const lines = (buf) => buf.toString("utf8").split("\n").filter(Boolean);
 
 /** Re-derive every plane of the certificate from a projection directory. Reads only; returns `{refusals, derived}` where
  *  `derived` is complete whenever the directory could be read at all (so a checker can still say which field disagreed). */
-export function deriveFromDirectory(dir) {
+export function deriveFromDirectory(dir, { protocol = PROTOCOL } = {}) {
+  known(protocol);
   const refusals = []; const refuse = (code, detail) => refusals.push({ code, detail });
   const store = directoryStore(join(dir, "cas"));
   // the manifest and the root, through the CAS
@@ -195,6 +221,10 @@ export function deriveFromDirectory(dir) {
   const schemas = schemaSetId();
   const runs = fileLines["records/adapter_run.jsonl"].map((l) => JSON.parse(l));
   const adapters = adapterContractId(runs); for (const p of adapters.problems) refuse("gproj-adapter-contract-mismatch", p);
+  /* v1: the REQUIRED closure, derived from the projection's own runs through the trusted local contract. The bundle is
+     not a parameter here and cannot be — that is D-068 law 8 enforced by the function's signature. */
+  const closure = protocol === PROTOCOL_V1 ? deriveClosure(runs, { ruleset: typeof manifest.ruleset === "string" && !!manifest.ruleset }) : null;
+  if (closure) for (const p of closure.problems) refuse("gproj-schema-closure-refused", `${p.code}: ${p.detail}`);
   if (typeof manifest.ruleset !== "string" || !manifest.ruleset) refuse("gproj-ruleset-missing", "the manifest names no rule program; the claim requires one");
   // the chain
   let chain = null; try { assertTrvmPinned(); chain = liveChainIds(); } catch (e) { refuse("gproj-chain-id-mismatch", `the pinned TRVM files on disk are not the pinned blobs: ${e.message}`); }
@@ -210,11 +240,14 @@ export function deriveFromDirectory(dir) {
   const casObjects = existsSync(join(dir, "cas")) ? readdirSync(join(dir, "cas")).filter((f) => /^root-[0-9a-f]{64}\.json$/.test(f)).length : 0;
   const structure = { kinds, cas_objects: casObjects, manifest_bytes: manifestBytes.length }; structure.structure_sem_id = structureSemId(structure);
   // the claim
-  const claim = { projection_root: root, snapshot_id: manifest.snapshot ?? null, snapshot_commitment: snapshotCommitmentId, spec: manifest.spec ?? null, ruleset: manifest.ruleset ?? null, schema_set_id: schemas.id, adapter_contract_id: adapters.id, scope: { ...IMPLEMENTED_SCOPE } };
-  claim[CLAIM_FIELD] = claimSemId(claim);
-  const derived = { root, manifest, manifest_bytes: manifestBytes.length, entries_checked: checked, snapshot, snapshot_root: snapshotRoot, claim, chain_ids: chain, aggregate, structure, schema_files: schemas.files, adapter_pairs: adapters.pairs,
+  const common = { projection_root: root, snapshot_id: manifest.snapshot ?? null, snapshot_commitment: snapshotCommitmentId, spec: manifest.spec ?? null, ruleset: manifest.ruleset ?? null };
+  const claim = protocol === PROTOCOL_V1
+    ? { ...common, schema_closure_id: closure.closure_id, projection_contract_id: closure.contract_id, adapter_contract_id: adapters.id, scope: { ...IMPLEMENTED_SCOPE } }
+    : { ...common, schema_set_id: schemas.id, adapter_contract_id: adapters.id, scope: { ...IMPLEMENTED_SCOPE } };
+  claim[CLAIM_FIELD] = claimSemId(claim, protocol);
+  const derived = { protocol, root, manifest, manifest_bytes: manifestBytes.length, entries_checked: checked, snapshot, snapshot_root: snapshotRoot, claim, chain_ids: chain, aggregate, structure, schema_files: schemas.files, adapter_pairs: adapters.pairs, closure,
     references: { contract: { ...IMPLEMENTED_REFERENCE_CONTRACT }, operands: [{ role: "manifest", artifact_root: root }, { role: "snapshot", artifact_root: snapshotRoot }] } };
-  derived.verified_claim_sem_id = chain && snapshotCommitmentId ? verifiedClaimSemId({ protocol: PROTOCOL, claim_sem_id: claim[CLAIM_FIELD], aggregate_id: aggregate.aggregate_id, chain_ids: chain }) : null;
+  derived.verified_claim_sem_id = chain && snapshotCommitmentId ? verifiedClaimSemId({ protocol, claim_sem_id: claim[CLAIM_FIELD], aggregate_id: aggregate.aggregate_id, chain_ids: chain }) : null;
   return { refusals, derived };
 }
 
@@ -228,11 +261,13 @@ export function putSnapshotRecord(dir) {
 }
 /** Build `<dir>/certificate/{bundle.json, VCLAIM}` (canonical G0 bytes). Throws on any derivation refusal — a producer
  *  never writes a certificate over a projection that does not reconstruct. */
-export function buildCertificate(dir, { out = join(dir, "certificate") } = {}) {
+export function buildCertificate(dir, { out, protocol = PROTOCOL } = {}) {
+  known(protocol);
+  if (out === undefined) out = join(dir, certificateDirFor(protocol));
   putSnapshotRecord(dir);
-  const { refusals, derived: d } = deriveFromDirectory(dir);
+  const { refusals, derived: d } = deriveFromDirectory(dir, { protocol });
   if (refusals.length) throw new G0Error("CERTIFICATE_REFUSED", refusals.map((r) => `${r.code}: ${r.detail}`).slice(0, 5).join("; "), { refusals });
-  const bundle = { type: "ProjectionCertificate", version: BUNDLE_VERSION, protocol: PROTOCOL, claim: d.claim, chain_ids: d.chain_ids, references: d.references, aggregate: d.aggregate, structure: d.structure,
+  const bundle = { type: "ProjectionCertificate", version: BUNDLE_VERSION, protocol, claim: d.claim, chain_ids: d.chain_ids, references: d.references, aggregate: d.aggregate, structure: d.structure,
     annotations: { note: "NON-AUTHORITATIVE — nothing in this record is hashed, checked, or established", generator: "graphonomous/v2 lib/certificate.mjs " + BUNDLE_VERSION,
       statement: `under the pinned source set ${d.claim.snapshot_commitment.slice(0, 24)}… this projection reconstructs to ${d.root.slice(0, 24)}…; not a warrant, not a truth claim` } };
   const bytes = canonicalBytesG0(bundle);
@@ -269,16 +304,18 @@ function ingress(bundleOrBytes) {
  * `<dir>/certificate/VCLAIM` when present and `null` to skip the citation comparison. Writes nothing. Returns TRVM's public
  * result shape `{ok, verdict, evidence_verdict, refusals, measured}` plus `codes`.
  */
-export function checkCertificate(dir, bundleOrBytes, { cited } = {}) {
-  const measured = { checker_id: CHECKER_ID, protocol: PROTOCOL, directory: dir };
+export function checkCertificate(dir, bundleOrBytes, { cited, protocol = PROTOCOL } = {}) {
+  known(protocol);
+  const cdir = certificateDirFor(protocol);
+  const measured = { checker_id: protocol === PROTOCOL_V1 ? CHECKER_ID_V1 : CHECKER_ID, protocol, directory: dir };
   try {
-    if (bundleOrBytes === undefined) { const p = join(dir, "certificate", "bundle.json"); if (!existsSync(p)) return result([{ code: "gproj-ingress-refused", detail: `${p} does not exist` }], measured); bundleOrBytes = readFileSync(p); }
-    if (cited === undefined) cited = existsSync(join(dir, "certificate", "VCLAIM")) ? readFileSync(join(dir, "certificate", "VCLAIM"), "utf8").trim() : null;
+    if (bundleOrBytes === undefined) { const p = join(dir, cdir, "bundle.json"); if (!existsSync(p)) return result([{ code: "gproj-ingress-refused", detail: `${p} does not exist` }], measured); bundleOrBytes = readFileSync(p); }
+    if (cited === undefined) cited = existsSync(join(dir, cdir, "VCLAIM")) ? readFileSync(join(dir, cdir, "VCLAIM"), "utf8").trim() : null;
     if (typeof cited === "string") cited = { verified_claim_sem_id: cited };
     const ing = ingress(bundleOrBytes); if (ing.refusal) return result([{ code: "gproj-ingress-refused", detail: ing.refusal }], measured);
     const bundle = ing.bundle; measured.bundle_bytes = ing.bytes;
     const refusals = []; const refuse = (code, detail) => refusals.push({ code, detail });
-    if (bundle?.protocol !== PROTOCOL) { refuse("gproj-protocol-mismatch", `protocol ${JSON.stringify(bundle?.protocol)}; this checker implements ${PROTOCOL}`); return result(refusals, measured); }
+    if (bundle?.protocol !== protocol) { refuse("gproj-protocol-mismatch", `protocol ${JSON.stringify(bundle?.protocol)}; this checker was asked for ${protocol}`); return result(refusals, measured); }
     const vocab = (record, spec, where) => { for (const v of grammar(record, spec, where)) refuse("gproj-vocabulary-unknown", v.detail); };
     vocab(bundle, GRAMMAR.bundle, "bundle");
     if (bundle.annotations !== undefined) {
@@ -286,7 +323,7 @@ export function checkCertificate(dir, bundleOrBytes, { cited } = {}) {
       if (bundle.annotations === null || typeof bundle.annotations !== "object" || Array.isArray(bundle.annotations) || !Object.values(bundle.annotations).every(flat))
         refuse("gproj-vocabulary-unknown", "annotations is the NON-AUTHORITATIVE seat and holds prose only (strings, or lists of strings)");
     }
-    const claim = bundle.claim ?? {}; vocab(claim, GRAMMAR.claim, "claim"); vocab(claim.scope, GRAMMAR.scope, "claim.scope");
+    const claim = bundle.claim ?? {}; vocab(claim, claimGrammar(protocol), "claim"); vocab(claim.scope, GRAMMAR.scope, "claim.scope");
     const chain = bundle.chain_ids ?? {}; vocab(chain, GRAMMAR.chain_ids, "chain_ids");
     if (Array.isArray(chain.trvm_blobs)) chain.trvm_blobs.forEach((b, i) => vocab(b, GRAMMAR.trvm_blob, `chain_ids.trvm_blobs[${i}]`)); else refuse("gproj-vocabulary-unknown", "chain_ids.trvm_blobs is not a list");
     vocab(chain.projector, GRAMMAR.code, "chain_ids.projector"); vocab(chain.checker, GRAMMAR.code, "chain_ids.checker");
@@ -296,9 +333,11 @@ export function checkCertificate(dir, bundleOrBytes, { cited } = {}) {
     const st = bundle.structure ?? {}; vocab(st, GRAMMAR.structure, "structure");
 
     // everything the directory says, derived once, owned by this call
-    const { refusals: dirRefusals, derived: d } = deriveFromDirectory(dir); refusals.push(...dirRefusals);
+    const { refusals: dirRefusals, derived: d } = deriveFromDirectory(dir, { protocol }); refusals.push(...dirRefusals);
     Object.assign(measured, { projection_root: d.root, snapshot_id: d.claim.snapshot_id, snapshot_commitment: d.claim.snapshot_commitment, snapshot_root: d.snapshot_root, spec: d.claim.spec, ruleset: d.claim.ruleset,
-      schema_set_id: d.claim.schema_set_id, adapter_contract_id: d.claim.adapter_contract_id, projection_claim_sem_id: d.claim[CLAIM_FIELD], aggregate_id: d.aggregate.aggregate_id, chain_ids: d.chain_ids,
+      schema_set_id: d.claim.schema_set_id, schema_closure_id: d.claim.schema_closure_id, projection_contract_id: d.claim.projection_contract_id,
+      schema_closure: d.closure ? { members: d.closure.members.length, indexed: d.closure.indexed, contract_version: d.closure.contract_version, adapters: d.closure.adapters } : undefined,
+      adapter_contract_id: d.claim.adapter_contract_id, projection_claim_sem_id: d.claim[CLAIM_FIELD], aggregate_id: d.aggregate.aggregate_id, chain_ids: d.chain_ids,
       verified_claim_sem_id: d.verified_claim_sem_id, entries_checked: d.entries_checked, entries: d.manifest.entries?.length ?? 0, cas_objects: d.structure.cas_objects, sources: d.snapshot?.sources?.length ?? 0,
       files_pinned: d.snapshot?.sources?.reduce((n, s) => n + (s.files?.length ?? 0), 0) ?? 0, structure: d.structure });
 
@@ -309,10 +348,14 @@ export function checkCertificate(dir, bundleOrBytes, { cited } = {}) {
     if (claim.spec !== d.claim.spec) refuse("gproj-spec-mismatch", `claim.spec ${JSON.stringify(claim.spec)}, the manifest says ${JSON.stringify(d.claim.spec)}`);
     if (typeof claim.ruleset !== "string" || !claim.ruleset) refuse("gproj-ruleset-missing", "claim.ruleset is required");
     else if (d.claim.ruleset && claim.ruleset !== d.claim.ruleset) refuse("gproj-ruleset-mismatch", `claim.ruleset ${claim.ruleset.slice(0, 24)}…, the manifest says ${d.claim.ruleset.slice(0, 24)}…`);
-    if (claim.schema_set_id !== d.claim.schema_set_id) refuse("gproj-schema-set-mismatch", `claim.schema_set_id ${String(claim.schema_set_id).slice(0, 24)}…, the ${d.schema_files.length} schemas on disk are ${d.claim.schema_set_id.slice(0, 24)}…`);
+    if (protocol === PROTOCOL_V1) {
+      /* the bundle's own closure id is COMPARED against the derivation, never consumed as an input to it (law 8) */
+      if (claim.schema_closure_id !== d.claim.schema_closure_id) refuse("gproj-schema-closure-mismatch", `claim.schema_closure_id ${String(claim.schema_closure_id).slice(0, 24)}…, the ${d.closure.members.length} schemas this projection's adapters require (of ${d.closure.indexed} indexed) are ${String(d.claim.schema_closure_id).slice(0, 24)}…`);
+      if (claim.projection_contract_id !== d.claim.projection_contract_id) refuse("gproj-projection-contract-mismatch", `claim.projection_contract_id ${String(claim.projection_contract_id).slice(0, 24)}…, ${d.closure.contract_version} over [${d.closure.adapters.join(", ")}] derives ${String(d.claim.projection_contract_id).slice(0, 24)}…`);
+    } else if (claim.schema_set_id !== d.claim.schema_set_id) refuse("gproj-schema-set-mismatch", `claim.schema_set_id ${String(claim.schema_set_id).slice(0, 24)}…, the ${d.schema_files.length} schemas on disk are ${d.claim.schema_set_id.slice(0, 24)}…`);
     if (claim.adapter_contract_id !== d.claim.adapter_contract_id) refuse("gproj-adapter-contract-mismatch", `claim.adapter_contract_id ${String(claim.adapter_contract_id).slice(0, 24)}…, the adapters that ran are ${d.claim.adapter_contract_id.slice(0, 24)}… on disk`);
     for (const k of Object.keys(IMPLEMENTED_SCOPE)) if (claim.scope?.[k] !== IMPLEMENTED_SCOPE[k]) refuse("gproj-scope-mismatch", `scope.${k} is ${JSON.stringify(claim.scope?.[k])}, this checker implements ${JSON.stringify(IMPLEMENTED_SCOPE[k])}`);
-    const statedClaimId = safe(() => claimSemId(claim));
+    const statedClaimId = safe(() => claimSemId(claim, protocol));
     if (statedClaimId !== claim[CLAIM_FIELD]) refuse("gproj-claim-id-mismatch", `${CLAIM_FIELD} does not identify the claim record beside it`);
     // the chain: the live table, never the bundle's
     if (d.chain_ids) for (const k of GRAMMAR.chain_ids.required) if (stableText(chain[k]) !== stableText(d.chain_ids[k])) refuse("gproj-chain-id-mismatch", `chain_ids.${k} says ${JSON.stringify(chain[k]).slice(0, 80)}, this checker's live chain is ${JSON.stringify(d.chain_ids[k]).slice(0, 80)}`);
@@ -345,11 +388,14 @@ export function checkCertificate(dir, bundleOrBytes, { cited } = {}) {
 /** The leaf `check` a TRVM nest verifier may supply after TRVM-P0: locate the projection among the directories THIS
  *  verifier holds by the root the child claims (a lookup, never a warrant — everything is re-derived from that directory),
  *  then run the checker. No directory reconstructs to the cited root → `gproj-root-mismatch`. */
-export function checkGraphonomousChild(child, { dirs = [] } = {}) {
+export function checkGraphonomousChild(child, { dirs = [], protocol = PROTOCOL } = {}) {
   const want = child?.claim?.projection_root;
   const dir = dirs.find((d) => existsSync(join(d, "ROOT")) && readFileSync(join(d, "ROOT"), "utf8").trim() === want);
-  if (!dir) return result([{ code: "gproj-root-mismatch", detail: `no projection held by this verifier reconstructs to ${String(want).slice(0, 24)}… (${dirs.length} held)` }], { checker_id: CHECKER_ID, protocol: PROTOCOL });
-  return checkCertificate(dir, child, { cited: null });
+  if (!dir) return result([{ code: "gproj-root-mismatch", detail: `no projection held by this verifier reconstructs to ${String(want).slice(0, 24)}… (${dirs.length} held)` }], { checker_id: protocol === PROTOCOL_V1 ? CHECKER_ID_V1 : CHECKER_ID, protocol });
+  return checkCertificate(dir, child, { cited: null, protocol });
 }
-/** The exact `child_protocols` entry Graphonomous supplies: `{ "GRAPHONOMOUS-PROJECTION-v0": childProtocolEntry(dirs) }`. */
+/** The exact `child_protocols` entry Graphonomous supplies. Two protocols, two entries, two checker ids — a TRVM
+ *  verifier may register either or both, and R15 §7 measured that this needs NO TRVM change: `childProtocolSet`
+ *  accepts any non-built-in, whitespace-free protocol id, and refuses an override of its own three. */
 export const childProtocolEntry = (dirs) => Object.freeze({ claim_field: CLAIM_FIELD, check: (child) => checkGraphonomousChild(child, { dirs }), composed: false, checker_id: CHECKER_ID });
+export const childProtocolEntryV1 = (dirs) => Object.freeze({ claim_field: CLAIM_FIELD, check: (child) => checkGraphonomousChild(child, { dirs, protocol: PROTOCOL_V1 }), composed: false, checker_id: CHECKER_ID_V1 });

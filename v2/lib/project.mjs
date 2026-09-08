@@ -16,6 +16,7 @@ import { openRepo } from "../adapters/git.mjs";
 import { ingestCrosswalk } from "../adapters/crosswalk.mjs";
 import { ingestFactory } from "../adapters/factory.mjs";
 import { ingestFactoryMosaic } from "../adapters/factory_mosaic.mjs";
+import { ingestTrvmGovernance } from "../adapters/trvm.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = resolve(HERE, "..");
@@ -98,6 +99,10 @@ export function project(snapshotPath, opts = {}) {
     // graphonomous.semantic.v1 (D-064): the factory's argument/defeater/instrument layer. A SEPARATE row so that a v0
     // snapshot naming ["crosswalk", "factory"] reconstructs byte-identically and this layer is switchable per snapshot.
     factory_mosaic: { file: "adapters/factory_mosaic.mjs", run: () => ingestFactoryMosaic({ snapshot, repos, treeRegistries }) },
+    // G1-B (D-071/D-073): TRVM governance as the third authoritative source family, in its own `trvm-gov` namespace at
+    // its own pin — the crosswalk already reads TRVM as an EVIDENCE source at a different commit, and the two
+    // coordinates stay visibly distinct. Read-only; never authoritative over TRVM.
+    trvm: { file: "adapters/trvm.mjs", run: () => ingestTrvmGovernance({ snapshot, repos, treeRegistries }) },
   };
   const names = Array.isArray(snap.params?.adapters) ? snap.params.adapters.map(String) : ["crosswalk"];
   for (const n of names) if (!ADAPTERS[n]) throw new G0Error("SNAPSHOT_PARAMS", `snapshot.params.adapters names ${JSON.stringify(n)}; known: ${Object.keys(ADAPTERS).join(", ")}`);
