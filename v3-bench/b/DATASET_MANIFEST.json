@@ -1,0 +1,60 @@
+{
+ "dataset_sha256": "d5c5a9749b5cd24f2291ed15f2985485deebb37a757dc4b4c17ade4890a0d2ff",
+ "items": 592,
+ "totals": {
+  "A": {
+   "tune": 166,
+   "test": 345
+  },
+  "B": {
+   "tune": 31,
+   "test": 50
+  }
+ },
+ "counts": {
+  "A": {
+   "tune": {
+    "duplicate": 1,
+    "refines": 4,
+    "supersedes": 124,
+    "contradicts": 1,
+    "evidence_for": 8,
+    "evidence_against": 13,
+    "scope_disjoint": 15,
+    "unrelated": 0
+   },
+   "test": {
+    "duplicate": 1,
+    "refines": 12,
+    "supersedes": 275,
+    "contradicts": 0,
+    "evidence_for": 11,
+    "evidence_against": 22,
+    "scope_disjoint": 24,
+    "unrelated": 0
+   }
+  },
+  "B": {
+   "tune": {
+    "duplicate": 8,
+    "refines": 2,
+    "supersedes": 0,
+    "contradicts": 0,
+    "evidence_for": 4,
+    "evidence_against": 2,
+    "scope_disjoint": 8,
+    "unrelated": 7
+   },
+   "test": {
+    "duplicate": 12,
+    "refines": 14,
+    "supersedes": 0,
+    "contradicts": 0,
+    "evidence_for": 3,
+    "evidence_against": 9,
+    "scope_disjoint": 5,
+    "unrelated": 7
+   }
+  }
+ }
+}
