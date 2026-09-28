@@ -296,7 +296,19 @@ independent of this document and is not blocked by it.
     - **F1 fired (not shown):** BM25→Jev − grep = +0.029, 95 % CI [−0.054, +0.111].
     - **F2's first reading is negative:** Jev reordering its own BM25 candidates = −0.020, losing on 14 of
       23 questions.
-    - Total Jev cost $0.0136. (b) is not run.
+    - Total Jev cost $0.0136.
+  - **(b) RUN 2026-09-28 — `v3-bench/b/RESULTS.md`**, predeclared `0c193468`, amended before the run
+    `9527e639`.
+    - **Data:** 334 author-grounded transitions (A) and 81 blind-agreed hard negatives (B), under an
+      asymmetric cost matrix: false `supersedes` 10, missed 1.
+    - **Verdict: v2 does not gain a decider.** Governed Jev failed three of the five conditions on test A:
+      cost against always-abstain −0.192 with a CI of [−0.384, +0.036]; **6 false `supersedes`**; macro
+      cost 1.609 against 1.000.
+    - **The decisive finding:** Jev gave refinements the `supersedes` label at probability up to **0.86**,
+      above the 0.78 median of its correct supersessions. No threshold separates them.
+    - **The Claude text judge is the mirror image:** best on hard negatives and on evidence and scope, but
+      it under-asserts `supersedes` and was inconsistent across its four slices.
+    - Jev cost $0.0103 for 415 calls.
 - **V3-2** The journal and law J-1, in v2's test harness under its heap caps.
 - **V3-3** The `RULINGS` and `FILE MEMORY` adapters; `recall` and `explain` from the CLI.
 - **V3-4** The A1 daemon, read-only, and a new plugin version pointing at it. Only then may a `CLAUDE.md`
@@ -317,9 +329,13 @@ independent of this document and is not blocked by it.
     bags.
 - **F2** If no decider beats its deterministic baseline on our labels, drop the judge. Graphonomous v3 keeps
   the floor and recall.
-  **For recall (Q-RANK), the first reading is negative** (−0.020 against its own BM25 candidates). The
-  judgment questions that are not recall (Q-SAME, Q-CONTRA, Q-SUPERSEDE, Q-RETIRE) are untested; that is
-  V3-1 (b).
+  **For recall (Q-RANK), the first reading is negative** (−0.020 against its own BM25 candidates).
+  **For relation judgment, it fired 2026-09-28** (§7 V3-1 (b)).
+  - Governed Jev beat both fixed rules on cost, but it did not beat refusing to mutate. It asserted false
+    supersessions with high confidence.
+  - Under the predeclared rule, v2's relation proposals stay deterministic or manual.
+  - **Untested:** a decider that only *queues* relations for human review (94 % of governed Jev's answers
+    were right); Ollaya; any other prompt or model.
 - **F3** If law J-1 fails on any range, the journal design is wrong, and rebuild stays the only path.
 - **F4** If a `DECISION` cannot be replayed to the same answer on the same model digest (*reported*: fp16
   can flip near-ties), decisions are recorded as non-replayable and may not gate anything.
@@ -328,6 +344,13 @@ independent of this document and is not blocked by it.
 ## 9. Open rulings [TRAVIS]
 
 - **T1 — Name.** "Graphonomous v3", or a distinct name that cannot collide with `semantic.v3` or G3.
+  *Evidence since, 2026-09-28:* both V3-1 benches came back negative for the new machinery.
+  - (a): recall is served by BM25 over the folder.
+  - (b): a typed decider may not propose relations.
+  - What survives is v2 plus two source families (the memory folder and the ruling register) and an
+    external BM25 tool, with relation proposals left deterministic or manual.
+  - That is an argument that **there is no v3**, only v2 growing. **Not a ruling:** whether v3 exists is
+    Travis's call.
 - **T2 — Where the decider runs** (§4.7), and whether "MCP servers make no LLM calls" covers a local,
   recorded, sub-second decider.
 - **T3 — Installing Ollaya.** The installer is `curl -fsSL https://ollaya.dev/install.sh | sh` from a
