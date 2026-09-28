@@ -6,6 +6,36 @@ Nothing is called TESTED because code exists. Every count below is copied from a
 `python3 test/canon_twin.py --selftest`, `node tools/g05_build.mjs`, WRL `node test/conformance.mjs`, TRVM
 `make governance`).
 
+**2026-09-28 — D-078: there is no Graphonomous v3. v2 grows instead.**
+- **The ruling.** Both V3-1 benches were negative for the new machinery. Travis ruled that the v3 proposal is
+  closed as tested and not justified (`docs/spec/v3/README.md` is now a closed record, §C). The surviving
+  requirements are **`handoff/ROADMAP.md`**, all `PROPOSED`, nothing built:
+  - the ruling register and the memory folder as source families;
+  - authored relations only;
+  - abstention or review;
+  - BM25 outside the core.
+- **Nothing in this directory's code changed.**
+- **The three older unpushed v2 commits were inspected before any publication, 2026-09-28** (`32bad457`,
+  `ef86374c`, `61adec2d`; `origin/main` = `824b9688`, their direct parent):
+  - `32bad457` is 12,784 files, +37 MB of tree. 12,656 of those files are `projections/tri`. It holds
+    the committed-as-found state of D-072…D-077.
+  - A pattern scan of every added line found **no secret-shaped string**. The 33 hits on "secret"/"password"
+    are TRVM law names such as `proof.reveal-gates-secret-execution`.
+  - The `/home/travis/…` paths it adds are the same kind `origin/main` already carries.
+  - The only source it adds to what `multi` already published is TRVM governance: 66 files at `8816e59`, in
+    the PUBLIC `c-u-l8er/TRVM`, on its public branch `merge/governance-plane`.
+  - **Re-checked read-only**, under a 1.5 GB memory cap because the machine had 3.1 GB free:
+    - `g0 verify --dir projections/tri` → `root-ad27b735…`, 11,204 entries, **0 problems**.
+    - `g0 check-cert --dir projections/tri` → exit 0, **0 writes**.
+    - `world/identities.json` gives `graphonomous.semantic.v2`, 3,928 objects, 2,494 relations, which is what
+      `ef86374c` says.
+  - `61adec2d` is docs only: R17, and a STATUS edit.
+  - **Not re-run:** `npm run test:full-tree`. The 182 / 1 / 0 result is `32bad457`'s own record, from
+    2026-09-08.
+  - **Nothing was pushed.** Publication waits on Travis's word.
+  - **One older exposure is recorded in ROADMAP §3,** because it is the same question as the private new
+    sources. It was not introduced by these commits.
+
 **Stage (2026-09-08, read from the artifacts, not from this file's history): the `tri` projection is SEALED under
 `graphonomous.semantic.v2`** at WRL `6a8304c` (WRL-P1, `STACK_FIX_RECEIPTS/WRL-P1.md`, D-077) — `objects 3,928 ·
 relations 2,494` (the 2,469 of the v1 seal plus the 25 law→law `SUPERSEDES` propositions TRVM states at `8816e59`),
@@ -106,7 +136,8 @@ cannot change without moving a pinned code identity.
 
 | Item | State | Evidence / note |
 |---|---|---|
-| `DECISION_LOG.md` | IMPLEMENTED (document) | D-001…D-074 |
+| `DECISION_LOG.md` | IMPLEMENTED (document) | D-001…D-078 (was D-001…D-074 when this table was written) |
+| `handoff/ROADMAP.md` | PROPOSED (document) | D-078's survivors: register and memory-folder families, private placement, relation governance, review path, BM25 boundary |
 | `handoff/receipts/G05-R1-R2.md` | IMPLEMENTED | the clean-checkout closure, before/after |
 | `handoff/research/R15_TRVM_SOURCE_INVENTORY.md` | IMPLEMENTED (measurement) | every count re-verified by this session against the git object store |
 | `handoff/research/R16_SCHEMA_CLOSURE_PRIOR_ART.md` | IMPLEMENTED (research) | 5 mechanisms classified ADOPT/ADAPT/REJECT; 3 measurements of this tree decided the design |

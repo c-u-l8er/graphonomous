@@ -9,8 +9,20 @@ This repository holds three things. Know which one you are touching.
 | Path | What | State |
 |---|---|---|
 | `lib/`, `mix.exs`, `npm/`, `docs/spec/README.md` | **v1** — the Elixir/OTP memory engine + MCP server + npm package, v0.4.3 | **LEGACY.** Its plugin is disabled; do not run its memory loop |
-| `v2/` | **v2** — the certified semantic/evidence graph (G0/G1) | the active lane; read `v2/handoff/STATUS.md` first |
-| `docs/spec/v3/README.md` | **Graphonomous v3** — direction spec for a carried memory built on v2 | draft, `spec` rung, rulings T1–T8 open; do not build from it yet |
+| `v2/` | **v2** — the certified semantic/evidence graph (G0/G1) | the active lane; read `v2/handoff/STATUS.md` first, then `v2/handoff/ROADMAP.md` |
+| `docs/spec/v3/README.md` | **Graphonomous v3** — the proposal for a carried memory built on v2 | **CLOSED 2026-09-28 (D-078): there is no Graphonomous v3.** Tested by V3-1 (`v3-bench/`) and not justified; a record, not a direction. Its survivors are in `v2/handoff/ROADMAP.md` |
+
+**D-078 (Travis, 2026-09-28):** Graphonomous stays v2 — *a derived semantic graph over sources it does not
+own*. It gains the memory folder and the ruling register as sources, and only authored relations. When a
+relation is uncertain, it abstains or queues the pair for review. Recall is BM25 (`scripts/memory-search.py`
+in the root repository), outside Graphonomous. Do not build any of the following:
+- a Graphonomous memory store;
+- a recall daemon;
+- a journal;
+- model-mediated recall;
+- a model in the relation-emission path.
+
+Do not renumber v2 as v3 for gaining features.
 
 **The "Graphonomous-first memory loop" is OFF — ruled by Travis 2026-09-27.** This file's Primary
 Directive and its sections 1–12 used to tell every session to run retrieve → route → act → learn →

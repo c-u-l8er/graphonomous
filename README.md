@@ -13,8 +13,9 @@
 > other's writes.
 >
 > Current work: [`v2/`](v2/README.md), a certified semantic/evidence graph, which is what
-> [graphonomous.com](https://graphonomous.com) describes. The direction for a memory built on it is
-> [`docs/spec/v3/README.md`](docs/spec/v3/README.md) (draft, nothing ruled).
+> [graphonomous.com](https://graphonomous.com) describes. A separate "v3" memory built on it was proposed,
+> benchmarked and closed on 2026-09-28 as not justified: see
+> [`docs/spec/v3/README.md`](docs/spec/v3/README.md) §C. There is no v3. v2 is what continues.
 
 Continual learning engine for AI agents, implemented as an Elixir/OTP application with a durable SQLite-backed knowledge graph, confidence-updating learning loop, GoalGraph orchestration, κ-aware topology routing, and an MCP server exposing 5 loop-phase machines.
 

@@ -1,4 +1,63 @@
-# Graphonomous v3 — the carried memory
+# Graphonomous v3 — the carried memory (CLOSED investigation)
+
+**CLOSED 2026-09-28 by Travis's ruling, recorded as `v2/handoff/DECISION_LOG.md` D-078: there is no
+Graphonomous v3.** This proposal was tested and not justified. Graphonomous continues as **v2**. Do not
+build from anything below. The closure is §C, directly under this paragraph. Everything after §C is the
+draft as it stood when it closed (written 2026-09-27, `spec` rung), kept as the record of what was proposed
+and why it failed.
+
+## C. Closure — what was tested, what was ruled, where the survivors went
+
+**Two predeclared benches decided it.** Both were negative for the new machinery, not for Graphonomous.
+
+| | V3-1 (a) — recall | V3-1 (b) — relation judgment |
+|---|---|---|
+| predeclared (commit, before any run) | `0dd0f3ed` | `0c193468`; Amendment 1 `9527e639` |
+| frozen input (sha256, measured 2026-09-28) | corpus manifest `1e98b38c…`, 147 notes; queries `b930dcd8…`, 23 | dataset `eb888705…` (freeze commit `2936de0e`); cost matrix `b1455f54…` |
+| result | `4a6b8bcc`, `v3-bench/RESULTS.md`; `results.json` `ac989a6a…` | `6be1c799`, `v3-bench/b/RESULTS.md`; `results.json` `cca9077a…` |
+| finding | BM25 over the folder was best (nDCG@5 0.782). Jev reranking did not help (−0.020 against its own BM25, lost 14 of 23) | governed Jev: **6 false `supersedes`** where 0 was required, three at p 0.86 / 0.86 / 0.70, above the 0.78 median of its correct ones, so **no threshold separates them**. The Claude judge was better on hard negatives but inconsistent and cautious on supersession |
+
+Private inputs and outputs live in `~/.graphonomous/v3-bench/`. This repository is public.
+
+**The ruling (D-078), in short:**
+- Graphonomous keeps v2's definition: **a derived semantic graph over sources it does not own.**
+- v2 gains the memory folder and the ruling register as sources. It keeps its deterministic, governed
+  relation mechanics, uses authored relations where a source states them, and abstains or queues for review
+  otherwise.
+- BM25 stays outside the semantic core. The tool is `scripts/memory-search.py` in the root repository.
+- **Not added:**
+  - a Graphonomous-owned memory store;
+  - this spec's daemon (§4.8 A1), for recall;
+  - its journal (§4.2);
+  - model-mediated recall;
+  - automatic Jev relation proposals.
+- **A new major version needs a new invariant or execution model**, not accumulated features.
+- **One lane stays open, non-authoritative:** candidate → model suggestion → human review. It measures
+  review load under a new predeclaration, and never tunes on V3-1 (b)'s test split.
+
+**Where each open item went:**
+
+| Item | Disposition |
+|---|---|
+| T1 name | **ruled:** there is no Graphonomous v3 |
+| T2 where the decider runs | moot: no decider sits in the trusted path |
+| T3 install Ollaya | moot now; a decider re-enters only through a new predeclared experiment |
+| T4 catalogue gates | moot: there is no question catalogue |
+| T5 confidentiality | **carried into v2:** both new source families are private, and the repository is public (`v2/handoff/ROADMAP.md` §3) |
+| T6 profile family | moot: no memory profile family. New roles or kinds go through v2's `semantic.vN` profiles |
+| T7 embeddings | moot: recall is BM25 |
+| T8 the file memory's role | **ruled:** the filesystem remains the durable store, and v2 derives from it |
+| §4.5 floor F-2 (secret refusal) | **carried into v2:** the memory-folder adapter's intake (ROADMAP §2) |
+| §4.5 F-3/F-4 (rulings outrank notes) | **carried into v2** as a candidate consistency rule, a FINDING (ROADMAP §2) |
+| §6 L-3…L-6 (v1 retirement) | **still open, unaffected:** they retire v1, not v3 |
+| §7 V3-2…V3-6 | **not built, by ruling** |
+| §7 V3-7 (Fly app) | proceeds under R96, independent of this spec |
+
+The surviving requirements are in **`v2/handoff/ROADMAP.md`**, each under its owner and each `PROPOSED`.
+
+---
+
+*The draft as it stood at closure follows. It is history, not direction.*
 
 **Direction spec · draft · `spec` rung · written 2026-09-27 · nothing below is ruled. Do not build from
 this yet.** Every `[T#]` is an open ruling for Travis (§9). A number marked *measured* was taken on this
@@ -165,8 +224,9 @@ candidates, the decider's `choice` bound.
 ### 4.5 Floor — deterministic refusals the decider cannot weaken
 
 - **F-1** An `OBSERVATION` without an author locus and a session is refused.
-- **F-2** Secret-shaped text (API keys, passwords, tokens) is refused at intake. Travis's notebook
-  `~/Documents/README.txt` holds plaintext credentials, and no import may carry them.
+- **F-2** Secret-shaped text (API keys, passwords, tokens) is refused at intake. Local files on this
+  machine are known to hold plaintext credentials, and no import may carry them. *(A file path stood here
+  until 2026-09-28. It was removed because this repository is public.)*
 - **F-3** A `RULING` is superseded only by a later `RULING`, never by an observation.
 - **F-4** An observation that contradicts a current ruling is admitted flagged `CONTRADICTS`, never as
   current.
@@ -275,6 +335,8 @@ independent of this document and is not blocked by it.
 
 ## 7. Stages — after the Super MVP (R97), built WITH Super
 
+*Closed 2026-09-28: V3-1 ran; V3-2…V3-6 are not built, by ruling (§C).*
+
 - **V3-0** This spec, and the rulings T1–T8.
 - **V3-1 Offline bench, with no infrastructure.**
   - (a) *Recall:* real questions taken from session transcripts (the first retrievals sessions actually
@@ -342,6 +404,8 @@ independent of this document and is not blocked by it.
 - **F5** If Super's receipt shape changes during stage 0, V3-6 waits. Nothing earlier depends on it.
 
 ## 9. Open rulings [TRAVIS]
+
+*Closed 2026-09-28. The disposition of every T# is in §C at the top.*
 
 - **T1 — Name.** "Graphonomous v3", or a distinct name that cannot collide with `semantic.v3` or G3.
   *Evidence since, 2026-09-28:* both V3-1 benches came back negative for the new machinery.

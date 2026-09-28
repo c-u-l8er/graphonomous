@@ -20,6 +20,7 @@ beside the v0.4 Elixir memory engine in this same repository and does not modify
 | `handoff/SOURCE_INVENTORY.md` | every repository, registry and artifact used, with revision and authority class |
 | `handoff/RESEARCH_REPORT.md` | the G-PR0 research answers (online + repo-grounded) |
 | `handoff/DECISION_LOG.md` | every consequential decision, alternatives, evidence, reversibility |
+| `handoff/ROADMAP.md` | what v2 is proposed to grow into after D-078 (no Graphonomous v3): new source families, the review path, the BM25 boundary; `PROPOSED` only |
 | `handoff/G0_G1_SPEC.md` | the frozen G0/G1 contract (ontology, identity, provenance, WRL/TRVM, projection, query, UI, faults, acceptance) |
 | `handoff/STACK_GAP_REGISTER.md` | WRL / TRVM / WEK / ComputeDriven gaps, classified |
 | `handoff/STACK_FIX_RECEIPTS/` | one receipt per stack change made under the repair protocol |

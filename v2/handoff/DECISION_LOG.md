@@ -1686,3 +1686,87 @@ DEFERRED until post-G0-F evidence · G0-D AUTHORIZED NEXT · G0-F AUTHORIZED AFT
 - **Not opened by any of this:** source write authority · automatic repair · evidence-state promotion ·
   `graphonomous.evidence.v0` · the TRVM primitive basis · broad G2 reduction/experiment machinery. G2
   dependency/impact reasoning is the likely step **after** linkage and consistency stay stable over four families.
+
+## D-078 — There is no Graphonomous v3. The v3 proposal closes as tested and not justified; v2 grows instead (2026-09-28, Travis's ruling)
+
+**Source.** Travis's ruling, pasted into the session on 2026-09-28 after both V3-1 benches had run. This entry
+records that ruling. It is not an adjudication by this lane, and it is not a GPT round. Everything below marked
+*measured* was taken by the recording session the same day.
+
+- **Decision.**
+  - **There is no Graphonomous v3 at this time.** `docs/spec/v3/README.md` becomes a **closed investigation
+    record**. It is kept, not deleted.
+  - **Graphonomous stays v2 and keeps v2's definition:** *a derived semantic graph over sources it does not own*
+    (the authority boundary in `v2/README.md`).
+  - **A new major version needs a new invariant or a new execution model.** Accumulated capabilities are not one.
+    `v2` is not renumbered because it gains sources.
+  - Profile ids (`graphonomous.semantic.vN`) are profile versions, not product versions. R17's proposed
+    `graphonomous.semantic.v3` obligation is untouched by this ruling.
+- **What v2 gains** (each entry `PROPOSED`, with its gate, in `handoff/ROADMAP.md`):
+  - the **ruling register** as a source family;
+  - the **memory folder** as a source family;
+  - the existing deterministic, governed relation mechanics, **retained**;
+  - **explicit authored relations wherever a source states them**;
+  - **abstention or review** wherever a relation's truth is not established;
+  - **BM25 kept outside the semantic core**, as the cheap recall primitive.
+- **What is not added:**
+  - a Graphonomous-owned memory store;
+  - the proposed v3 daemon for recall;
+  - a separate journal justified by that proposal (v3 §4.2, law J-1);
+  - model-mediated recall;
+  - automatic Jev relation proposals.
+- **Alternatives considered.**
+  - (a) Keep the v3 spec open as an aspirational direction. Rejected: an open spec that both benches argued
+    against invites a later session to build from it.
+  - (b) Delete it. Rejected: the benches, their predeclarations and the reasons they failed are the result.
+  - (c) Renumber v2 as v3 once it gains the two sources. Rejected by the rule above.
+- **Evidence** (both benches predeclared before any run; code in `v3-bench/`, private inputs and outputs in
+  `~/.graphonomous/v3-bench/`, sha256 measured 2026-09-28):
+
+  | | V3-1 (a) recall | V3-1 (b) relation judgment |
+  |---|---|---|
+  | predeclared | `0dd0f3ed` | `0c193468`; Amendment 1 `9527e639`, before any run |
+  | frozen input | corpus manifest `1e98b38c…` (147 notes); queries `b930dcd8…` (23) | dataset `eb888705…` (committed freeze `2936de0e`); cost matrix `b1455f54…` |
+  | result | `4a6b8bcc` · `v3-bench/RESULTS.md` · `results.json` `ac989a6a…` | `6be1c799` · `v3-bench/b/RESULTS.md` · `results.json` `cca9077a…` |
+  | verdict | F1 fired, "not shown": BM25→Jev − grep = +0.029, CI [−0.054, +0.111]. BM25 alone 0.782 was the best system. Jev reordering its own BM25 candidates: −0.020, lost 14 of 23 | conditions 1, 2 and 5 fail. Governed Jev: **6 false `supersedes`** against a required 0 |
+
+- **The decisive datum is not the pooled cost (0.808).** It is where the six false `supersedes` sit.
+  - Three were refinements, labelled `supersedes` at p = 0.86, 0.86 and 0.70. The median p of Jev's *correct*
+    supersessions is 0.78.
+  - So the failures lie inside the confidence range of the right answers. **No threshold makes this decider
+    safe.** The deterministic acceptance layer cannot rescue it by moving τ.
+  - The Claude text judge is the mirror image. It was better on hard negatives, evidence and scope (test B 0.420
+    against abstain's 0.860). It was also expensive, inconsistent across its four slices (0 / 25 / 8 / 36
+    asserted `supersedes`), and under-asserted supersession. It is useful help during review. It is not semantic
+    authority either.
+- **The one research lane that stays open, and stays non-authoritative:**
+  `candidate relation → model suggestion → human review`.
+  - It is not part of the trusted semantic transition path, and it does not justify a v3.
+  - If it is tested, it measures **review-load reduction**, under a **new** predeclaration. It may not reopen
+    V3-1 (b), and it may not tune against V3-1 (b)'s frozen test split.
+  - Ollaya, or any other decider, is tested only under a new predeclared experiment.
+- **Measured the same day, for the roadmap** (`handoff/ROADMAP.md` carries the commands):
+  - **Both new source families are private.** `c-u-l8er/ProjectAmp2`, which holds `REVISION_REGISTER.md`, is
+    PRIVATE. The memory folder is in no repository. `c-u-l8er/graphonomous` is PUBLIC, and until now v2 has
+    committed its projections into the repository. **Their projections cannot follow that practice.**
+  - **Authored relations are sparse, as the ruling expects.**
+    - The register has 100 rows. About 13 state a relation to another row in an explicit verb form:
+      "superseded" 7, "supersedes" 2, and one each of "extends", "completes", "closes" and "amends".
+    - 45 rows mention another R-id somewhere in their prose.
+    - The memory folder holds 150 notes and 315 `[[link]]` occurrences over 130 distinct targets, 105 of which
+      resolve to a note.
+  - **One memory note carries a live credential** (a secret-shaped string, found by pattern; the value was not
+    printed). Secret refusal at intake is a present requirement, not a hypothetical one.
+- **Reversibility.** Cheap. The closed spec and both benches stay in the tree. Reopening needs a new predeclared
+  experiment that a decider (or a recall layer) passes, or a new invariant or execution model that v2 cannot hold.
+  Neither is on the table.
+- **Pushes.** Recording this ruling needs no push, and none was made.
+  - The root repository's unpushed ancestry is **not** pushed as a side effect.
+  - Before Graphonomous's own unpushed commits are published, the three older v2 commits were inspected
+    (`32bad457`, `ef86374c`, `61adec2d`; the finding is in STATUS.md's 2026-09-28 paragraph). Publication still
+    waits on Travis's word.
+- **Unresolved** (in `handoff/ROADMAP.md`, `[TRAVIS]`):
+  - where the private projections live;
+  - the order of the new source families relative to WRL, the fourth family that D-077 authorized next;
+  - whether a review verdict is written back into the owning source as authored text. This lane's reading of
+    D-071 (no write surface) and of "sources it does not own" says it must be.
