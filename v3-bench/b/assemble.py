@@ -6,6 +6,9 @@
   assemble.py b        keep only B pairs both graders labelled identically; report agreement
   assemble.py freeze   split each subset 40/60 tune/test by source (seed 20260928) and write dataset.jsonl
                        + dataset_manifest.json (sha256); refuses to overwrite an existing freeze
+  assemble.py clean    AMENDMENT_1 (before any run): keep an A item only if BOTH screeners said keep (state
+                       changes and unsure excluded); drop A items whose claims carry answer-giving words (STRICT);
+                       set the first freeze aside as *.v1.* and freeze again
 
 All data lives in ~/.graphonomous/v3-bench/b/ (private). Only counts and hashes are printed.
 """
@@ -21,6 +24,12 @@ LEAK = re.compile(r"retract|supersed|\bwrong\b|correct(ed|ion)|falsif|stale|no l
 SECRET = re.compile(r"sk-[A-Za-z0-9_-]{20,}|sk-or-v1-[a-f0-9]{20,}|ghp_[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16}|"
                     r"eyJ[A-Za-z0-9_-]{20,}\.|-----BEGIN [A-Z ]*PRIVATE KEY|password\s*[:=]\s*\S{6,}", re.I)
 SEED = 20260928
+# AMENDMENT_1 strict leakage audit. In subset A these words give the gold label away, so the item is dropped.
+# In subset B the same words are traps (they tempt a false `supersedes`), not leaks, so B keeps them; counted only.
+STRICT = re.compile(r"replac|\bfix(ed|es)?\b|broken|\bbug|\bactually\b|turned out|in fact|mistak|incorrect|"
+                    r"erroneous|obsolete|outdated|withdr[ae]w|revert|rolled back|\banymore\b|no more|errat|renam|"
+                    r"\binstead\b|misread|overstat|understat", re.I)
+REPORT_ONLY = re.compile(r"\bnot\b|\bnever\b|\bwas\b|\bnow\b|\bnew\b|revis|\bclosed\b", re.I)
 
 def rows(p):
     return [json.loads(l) for l in open(p) if l.strip()]
@@ -102,6 +111,48 @@ def cmd_b():
     print(f"B: graded by both {both} · agreed {len(agree)} ({len(agree) / both:.0%}) · agreed label = constructor's "
           f"intended {intended}/{len(agree)} · per label {per}")
 
+def cmd_clean():
+    if os.path.exists(f"{B}/dataset.v1.jsonl"):
+        sys.exit("already cleaned: dataset.v1.jsonl exists")
+    s1, s2 = (json.load(open(f"{B}/screen/{n}.json"))["decisions"] for n in ("s1", "s2"))
+    A = rows(f"{B}/A.jsonl")
+    if set(s1) != {i["id"] for i in A} or set(s2) != set(s1):
+        sys.exit("screeners do not cover subset A exactly")
+    kept, why, per_excluded = [], {}, {}
+    for it in A:
+        d = (s1[it["id"]]["decision"], s2[it["id"]]["decision"])
+        reason = None
+        if d != ("keep", "keep"):
+            reason = "state_change_or_unsure (" + "/".join(sorted(set(d))) + ")"
+        elif STRICT.search(it["a"] + " " + it["b"] + " " + it["scope"]):
+            reason = "strict_leakage"
+        if reason:
+            key = reason.split(" ")[0]
+            why[key] = why.get(key, 0) + 1
+            per_excluded.setdefault(it["label"], 0); per_excluded[it["label"]] += 1
+        else:
+            it["provenance"]["screen"] = [s1[it["id"]]["reason"], s2[it["id"]]["reason"]]
+            kept.append(it)
+    agree = sum(1 for i in A if s1[i["id"]]["decision"] == s2[i["id"]]["decision"])
+    by_x = {}
+    for it in A:
+        x = it["id"][:2]; by_x.setdefault(x, [0, 0]); by_x[x][0] += 1
+        by_x[x][1] += it in kept
+    Bset = rows(f"{B}/B.jsonl")
+    b_traps = sum(1 for i in Bset if STRICT.search(i["a"] + " " + i["b"] + " " + i["scope"]))
+    for n in ("dataset.jsonl", "dataset_manifest.json", "A.jsonl"):
+        os.rename(f"{B}/{n}", f"{B}/{n.replace('.json', '.v1.json')}")
+    with open(f"{B}/A.jsonl", "w") as f:
+        for it in kept:
+            f.write(json.dumps(it) + "\n")
+    report = {"screeners_agree": agree, "screened": len(A), "kept": len(kept), "excluded": why,
+              "excluded_per_label": per_excluded, "kept_per_extractor": {k: f"{v[1]}/{v[0]}" for k, v in sorted(by_x.items())},
+              "B_items_with_strict_words_kept_as_traps": b_traps,
+              "report_only_word_hits": {s: sum(1 for i in rows(f"{B}/A.jsonl") if s == "A" and REPORT_ONLY.search(i["a"] + " " + i["b"]))
+                                        for s in ("A",)}}
+    json.dump(report, open(f"{B}/clean_report.json", "w"), indent=1)
+    print(json.dumps(report))
+
 def cmd_freeze():
     if os.path.exists(f"{B}/dataset_manifest.json"):
         sys.exit("already frozen: dataset_manifest.json exists")
@@ -118,8 +169,12 @@ def cmd_freeze():
     counts = {s: {sp: {l: sum(1 for i in items if i["subset"] == s and i["split"] == sp and i["label"] == l)
                        for l in LABELS} for sp in ("tune", "test")} for s in ("A", "B")}
     totals = {s: {sp: sum(counts[s][sp].values()) for sp in ("tune", "test")} for s in ("A", "B")}
-    json.dump({"dataset_sha256": digest, "items": len(items), "totals": totals, "counts": counts},
+    prior = {}
+    if os.path.exists(f"{B}/dataset_manifest.v1.json"):
+        prior = {"supersedes_freeze": json.load(open(f"{B}/dataset_manifest.v1.json"))["dataset_sha256"],
+                 "amendment": "AMENDMENT_1.md"}
+    json.dump({"dataset_sha256": digest, "items": len(items), "totals": totals, "counts": counts, **prior},
               open(f"{B}/dataset_manifest.json", "w"), indent=1)
     print(f"frozen: dataset_sha256 {digest[:16]}… · totals {totals}")
 
-{"a": cmd_a, "btasks": cmd_btasks, "b": cmd_b, "freeze": cmd_freeze}[sys.argv[1]]()
+{"a": cmd_a, "btasks": cmd_btasks, "b": cmd_b, "clean": cmd_clean, "freeze": cmd_freeze}[sys.argv[1]]()

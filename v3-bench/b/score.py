@@ -76,7 +76,17 @@ def report(xs, f):
     for it, p in preds:
         conf[it["label"]][p] += 1
     catas = {l: sum(1 for it, p in answered if p == l and it["label"] != l) for l in CAT}
-    return {"n": len(xs), "mean_cost": mean_cost(xs, f), "coverage": len(answered) / len(xs) if xs else None,
+    # AMENDMENT_1: per-label (macro) cost, over labels with >= 5 items here, so a majority label cannot decide alone
+    per_label = {l: sum(cost(it, p) for it, p in preds if it["label"] == l) / n
+                 for l in LABELS for n in [sum(1 for it in xs if it["label"] == l)] if n}
+    macro_labels = [l for l in per_label if sum(1 for it in xs if it["label"] == l) >= 5]
+    reversals = sum(1 for it, p in answered if {it["label"], p} == {"evidence_for", "evidence_against"})
+    support_for_rejection = sum(1 for it, p in answered if it["label"] in ("supersedes", "contradicts") and p == "evidence_for")
+    return {"n": len(xs), "mean_cost": mean_cost(xs, f),
+            "macro_cost": (sum(per_label[l] for l in macro_labels) / len(macro_labels)) if macro_labels else None,
+            "macro_labels": macro_labels, "per_label_cost": per_label,
+            "evidence_direction_reversals": reversals, "support_asserted_for_rejected_claim": support_for_rejection,
+            "coverage": len(answered) / len(xs) if xs else None,
             "accuracy_answered": (sum(1 for it, p in answered if p == it["label"]) / len(answered)) if answered else None,
             "catastrophic": catas, "catastrophic_total": sum(catas.values()), "confusion": conf}
 
@@ -102,9 +112,11 @@ c1 = tA["paired"]["J-gov - ABS"]["ci95"][1] < 0
 c2 = tA["systems"]["J-gov"]["catastrophic"]["supersedes"] == 0
 c3 = (tB is None) or tB["systems"]["J-gov"]["mean_cost"] <= tB["systems"]["ABS"]["mean_cost"]
 c4 = len(REGION) > 0
+c5 = tA["systems"]["J-gov"]["macro_cost"] <= tA["systems"]["ABS"]["macro_cost"]  # AMENDMENT_1
 out["decision"] = {"1_cost_below_abstain_A_test": c1, "2_zero_false_supersedes_A_test": c2,
                    "3_not_worse_than_abstain_B_test": c3, "4_region_nonempty": c4,
-                   "v2_gains_a_decider": c1 and c2 and c3 and c4}
+                   "5_macro_cost_not_worse_than_abstain_A_test": c5,
+                   "v2_gains_a_decider": c1 and c2 and c3 and c4 and c5}
 json.dump(out, open(f"{B}/results.json", "w"), indent=1)
 
 f3 = lambda v: "—" if v is None else f"{v:.3f}"
@@ -112,11 +124,11 @@ print(f"matrix {matrix_sha[:12]} · dataset {man['dataset_sha256'][:12]} · J-go
       f"{sorted(REGION) or '∅'} tau {TAU} (tune cost {TUNE_COST:.3f})")
 for k, v in out["subsets"].items():
     print(f"\n{k}  (n={next(iter(v['systems'].values()))['n']})")
-    print(f"  {'system':10} cost   coverage acc|ans catastrophic(sup/con/dup)")
+    print(f"  {'system':10} cost   macro  coverage acc|ans false sup/con/dup  ev-reversals")
     for s, r in v["systems"].items():
         c = r["catastrophic"]
-        print(f"  {s:10} {f3(r['mean_cost'])}  {f3(r['coverage'])}    {f3(r['accuracy_answered'])}   "
-              f"{c['supersedes']}/{c['contradicts']}/{c['duplicate']}")
+        print(f"  {s:10} {f3(r['mean_cost'])}  {f3(r['macro_cost'])}  {f3(r['coverage'])}    {f3(r['accuracy_answered'])}   "
+              f"{c['supersedes']}/{c['contradicts']}/{c['duplicate']}            {r['evidence_direction_reversals']}")
     for s, p in v["paired"].items():
         print(f"  {s:18} {p['mean']:+.3f}  CI [{p['ci95'][0]:+.3f}, {p['ci95'][1]:+.3f}]")
 print("\ndecision:", json.dumps(out["decision"]))

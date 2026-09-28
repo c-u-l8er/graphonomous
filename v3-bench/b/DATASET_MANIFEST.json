@@ -1,10 +1,10 @@
 {
- "dataset_sha256": "d5c5a9749b5cd24f2291ed15f2985485deebb37a757dc4b4c17ade4890a0d2ff",
- "items": 592,
+ "dataset_sha256": "eb8887054bc4aaef22b1ac2beca853300cb5dbdb6f62f4e366475303b1db48df",
+ "items": 415,
  "totals": {
   "A": {
-   "tune": 166,
-   "test": 345
+   "tune": 110,
+   "test": 224
   },
   "B": {
    "tune": 31,
@@ -16,20 +16,20 @@
    "tune": {
     "duplicate": 1,
     "refines": 4,
-    "supersedes": 124,
+    "supersedes": 71,
     "contradicts": 1,
     "evidence_for": 8,
-    "evidence_against": 13,
-    "scope_disjoint": 15,
+    "evidence_against": 12,
+    "scope_disjoint": 13,
     "unrelated": 0
    },
    "test": {
     "duplicate": 1,
-    "refines": 12,
-    "supersedes": 275,
+    "refines": 9,
+    "supersedes": 158,
     "contradicts": 0,
     "evidence_for": 11,
-    "evidence_against": 22,
+    "evidence_against": 21,
     "scope_disjoint": 24,
     "unrelated": 0
    }
@@ -56,5 +56,7 @@
     "unrelated": 7
    }
   }
- }
+ },
+ "supersedes_freeze": "d5c5a9749b5cd24f2291ed15f2985485deebb37a757dc4b4c17ade4890a0d2ff",
+ "amendment": "AMENDMENT_1.md"
 }
