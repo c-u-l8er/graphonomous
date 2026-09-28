@@ -286,6 +286,17 @@ independent of this document and is not blocked by it.
   - Compare hosted Jev (fractions of a cent per run), the Ollaya models (after [T3]) and a deterministic
     baseline, and fit temperatures per question type. A question enters the catalogue only if its decider
     beats its baseline on held-out labels [T4].
+  - **(a) RUN 2026-09-28 — `v3-bench/RESULTS.md`**, predeclared in `v3-bench/PREDECLARATION.md`
+    (`0dd0f3ed`, committed before the run).
+    - The question set turned out to be the whole real population: sessions sent v1 only **24 retrieve
+      calls (23 distinct questions) in two months**. Over the same months, 310 sessions used the memory
+      folder instead: 325 file reads, plus 821 shell commands naming it.
+    - nDCG@5 over 147 notes, blind Claude labels: grep 0.734 · BM25 **0.782** · BM25→Jev 0.762 ·
+      Jev over all notes 0.739 · index 0.664.
+    - **F1 fired (not shown):** BM25→Jev − grep = +0.029, 95 % CI [−0.054, +0.111].
+    - **F2's first reading is negative:** Jev reordering its own BM25 candidates = −0.020, losing on 14 of
+      23 questions.
+    - Total Jev cost $0.0136. (b) is not run.
 - **V3-2** The journal and law J-1, in v2's test harness under its heap caps.
 - **V3-3** The `RULINGS` and `FILE MEMORY` adapters; `recall` and `explain` from the CLI.
 - **V3-4** The A1 daemon, read-only, and a new plugin version pointing at it. Only then may a `CLAUDE.md`
@@ -298,8 +309,17 @@ independent of this document and is not blocked by it.
 
 - **F1** If V3-1(a) recall does not beat index + `grep` on real questions, J1 is not worth building: keep the
   file memory and stop at v2.
+  **Fired 2026-09-28, in the "not shown" sense** (§7 V3-1 (a)).
+  - On this evidence, a daemon, journal and decider are not justified *for recall*.
+  - The proportionate step is a ranked search (BM25) over the memory folder. It beat grep by +0.049 with a
+    95 % CI of [+0.004, +0.092], just under the predeclared 0.05 margin.
+  - Re-test if the memory grows well past 147 notes, or if questions become sentences rather than keyword
+    bags.
 - **F2** If no decider beats its deterministic baseline on our labels, drop the judge. Graphonomous v3 keeps
   the floor and recall.
+  **For recall (Q-RANK), the first reading is negative** (−0.020 against its own BM25 candidates). The
+  judgment questions that are not recall (Q-SAME, Q-CONTRA, Q-SUPERSEDE, Q-RETIRE) are untested; that is
+  V3-1 (b).
 - **F3** If law J-1 fails on any range, the journal design is wrong, and rebuild stays the only path.
 - **F4** If a `DECISION` cannot be replayed to the same answer on the same model digest (*reported*: fp16
   can flip near-ties), decisions are recorded as non-replayable and may not gate anything.
@@ -320,6 +340,9 @@ independent of this document and is not blocked by it.
 - **T7 — Embeddings.** Which local model, or none (lexical plus structural recall only).
 - **T8 — The file memory's role.** A source Graphonomous v3 imports, or the primary store with Graphonomous
   v3 as a certified index over it.
+  *Evidence since, 2026-09-28:* about 11× as many sessions used the folder as used v1 (310 vs 28), and
+  plain search over it already puts a first-read note at rank 1 for 78–83 % of the real questions (grep 78 %,
+  BM25 83 %). Both favour "primary store". Not a ruling.
 
 ## 10. Research record — *reported*, fetched 2026-09-27 by a web research pass, not reproduced here
 
