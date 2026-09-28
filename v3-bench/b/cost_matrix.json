@@ -1,0 +1,42 @@
+{
+ "about": "V3-1 (b) semantic cost of predicting column when the truth is row. Pair = (A older, B newer); directed relations read 'B <relation> A'. EDITABLE BY TRAVIS UNTIL THE FIRST RUN; score.py records the sha256 of the matrix it used. 'given' cells come from the T4 draft relayed 2026-09-28; 'filled' cells are Claude's completion of the same rule and are the ones most worth checking.",
+ "invariant": "Graphonomous should prefer missing a relation over asserting a materially wrong relation.",
+ "labels": ["duplicate", "refines", "supersedes", "contradicts", "evidence_for", "evidence_against", "scope_disjoint", "unrelated"],
+ "predictions": ["duplicate", "refines", "supersedes", "contradicts", "evidence_for", "evidence_against", "scope_disjoint", "unrelated", "abstain"],
+ "catastrophic_false_positives": ["supersedes", "contradicts", "duplicate"],
+ "cost": {
+  "duplicate":        {"duplicate": 0, "refines": 3, "supersedes": 10, "contradicts": 7,  "evidence_for": 6, "evidence_against": 6, "scope_disjoint": 2, "unrelated": 2, "abstain": 1},
+  "refines":          {"duplicate": 5, "refines": 0, "supersedes": 10, "contradicts": 7,  "evidence_for": 3, "evidence_against": 6, "scope_disjoint": 2, "unrelated": 2, "abstain": 1},
+  "supersedes":       {"duplicate": 5, "refines": 5, "supersedes": 0,  "contradicts": 2,  "evidence_for": 6, "evidence_against": 3, "scope_disjoint": 2, "unrelated": 2, "abstain": 1},
+  "contradicts":      {"duplicate": 5, "refines": 5, "supersedes": 10, "contradicts": 0,  "evidence_for": 6, "evidence_against": 3, "scope_disjoint": 2, "unrelated": 2, "abstain": 1},
+  "evidence_for":     {"duplicate": 5, "refines": 3, "supersedes": 10, "contradicts": 7,  "evidence_for": 0, "evidence_against": 6, "scope_disjoint": 2, "unrelated": 2, "abstain": 1},
+  "evidence_against": {"duplicate": 5, "refines": 5, "supersedes": 10, "contradicts": 7,  "evidence_for": 6, "evidence_against": 0, "scope_disjoint": 2, "unrelated": 2, "abstain": 1},
+  "scope_disjoint":   {"duplicate": 5, "refines": 5, "supersedes": 10, "contradicts": 10, "evidence_for": 6, "evidence_against": 6, "scope_disjoint": 0, "unrelated": 1, "abstain": 1},
+  "unrelated":        {"duplicate": 5, "refines": 5, "supersedes": 10, "contradicts": 7,  "evidence_for": 6, "evidence_against": 6, "scope_disjoint": 1, "unrelated": 0, "abstain": 1}
+ },
+ "provenance": {
+  "given": [
+   "diagonal 0",
+   "abstain when a relation exists: 1 (every row's abstain)",
+   "unrelated / scope_disjoint predicted when a meaningful relation exists: 2",
+   "weak misclassification evidence_for <-> refines: 3",
+   "duplicate asserted over distinct claims: 5 (every non-duplicate row's duplicate column)",
+   "refines asserted where the newer claim materially changes or rejects the older (supersedes, contradicts, evidence_against rows): 5",
+   "false evidence_for / evidence_against: 6",
+   "false contradicts: 7",
+   "false supersedes: 10",
+   "scope_disjoint -> contradicts / supersedes: 10",
+   "unrelated -> supersedes: 10",
+   "true supersedes -> abstain 1, -> unrelated 2; true contradicts -> abstain 1"
+  ],
+  "filled": [
+   "duplicate -> refines: 3 (weak: both say the claims agree)",
+   "supersedes -> contradicts: 2 (under-asserts: flags an unresolved conflict instead of a replacement; triggers review, corrupts nothing)",
+   "supersedes -> evidence_against: 3 and contradicts -> evidence_against: 3 (weaker claim of the same polarity)",
+   "evidence_against -> contradicts: 7 (negative evidence is not contradiction: counted as a false contradicts)",
+   "refines asserted over unrelated / scope_disjoint pairs: 5 (a false relation, priced like a false duplicate)",
+   "unrelated <-> scope_disjoint: 1 (neither mutates meaning; a review-sized error)",
+   "abstain when the truth is unrelated or scope_disjoint: 1 (the review cost is the same whatever the truth)"
+  ]
+ }
+}
