@@ -2,175 +2,38 @@
 
 This file defines how Claude (and Claude-driven agents) must operate in this repository.
 
-## Primary Directive
+## Status — read first (2026-09-27)
 
-Use Graphonomous as an **always-on memory + learning loop** in every non-trivial chat.
+This repository holds three things. Know which one you are touching.
 
-Adopt this internal policy at session start:
+| Path | What | State |
+|---|---|---|
+| `lib/`, `mix.exs`, `npm/`, `docs/spec/README.md` | **v1** — the Elixir/OTP memory engine + MCP server + npm package, v0.4.3 | **LEGACY.** Its plugin is disabled; do not run its memory loop |
+| `v2/` | **v2** — the certified semantic/evidence graph (G0/G1) | the active lane; read `v2/handoff/STATUS.md` first |
+| `docs/spec/v3/README.md` | **Graphonomous v3** — direction spec for a carried memory built on v2 | draft, `spec` rung, rulings T1–T8 open; do not build from it yet |
 
-**“Graphonomous-first memory loop is active.”**
+**The "Graphonomous-first memory loop" is OFF — ruled by Travis 2026-09-27.** This file's Primary
+Directive and its sections 1–12 used to tell every session to run retrieve → route → act → learn →
+consolidate through this engine's MCP server. Do not restore them, and do not call
+`mcp__plugin_graphonomous_graphonomous__*`. The retired text is `git show 61adec2d:CLAUDE.md`; the skills it
+loaded are still in `docs/skills/`.
 
----
+**Why:** the v1 engine was deleting everything it stored. The consolidator (`config/config.exs`,
+`lib/graphonomous/consolidator.ex`) runs every 5 minutes, decays every node's confidence by 2 % and
+hard-deletes below 0.1, so a node stored at 0.5 is gone in about 7 hours; `~/.graphonomous/knowledge.db`
+held **0 nodes** on 2026-09-27. The plugin also started one server per open session (29 at once, ≈ 1.6 GB),
+each loading its own cache and running its own consolidator. The measurements and the direction are in
+`docs/spec/v3/README.md` §1.1 and §6.
 
-## 1) Mandatory Skills Pack (Load First)
+**Name trap:** section 3's "v2 Machine Surface" and "v1 Legacy Surface" are two generations of the **v1
+engine's** MCP tool surface — not Graphonomous v2 (`v2/`), and neither is Graphonomous v3.
 
-Skills live in the [ampersand-plugins](https://github.com/c-u-l8er/ampersand-plugins) repo as Claude Code skills. Reference docs are mirrored in `docs/skills/`.
-
-Before doing meaningful work, load and follow these files:
-
-1. `docs/skills/SKILLS.md` (index + machine architecture)
-2. `docs/skills/bootstrap.md` (session initialization)
-3. `docs/skills/retrieve.md` (foundational read/write loop)
-4. `docs/skills/learn.md` (closed-loop learning)
-5. `docs/skills/deliberate.md` (κ-aware routing)
-6. `docs/skills/consolidate.md` (memory maintenance)
-7. `docs/skills/goals.md` (durable intent tracking)
-8. `docs/skills/attention.md` (autonomous focus)
-9. `docs/skills/workflows.md` (end-to-end recipes)
-
-Extended skills (load for complex sessions): `store.md`, `belief.md`, `forgetting.md`, `epistemic-frontier.md`, `trace-evidence-path.md`, `review.md`, `inspect.md`, `graph-health.md`, `sync.md`, `watch.md`
-
-If some files are unavailable, proceed with best effort and explicitly lower certainty.
-
----
-
-## 2) Always-On Default Loop
-
-For non-trivial user requests, run the 5-machine loop:
-
-1. **Retrieve** — `retrieve(action: "context", query: "...")` before reasoning/acting
-2. **Route** — check `topology.routing`; if `"deliberate"`, run `route(action: "deliberate", ...)`
-3. **Act** — `act(action: "store_node", ...)` to mutate the graph
-4. **Learn** — `learn(action: "from_outcome", ...)` when outcome signal exists
-5. **Consolidate** — `consolidate(action: "run")` periodically and at session end
-
-Do not routinely skip retrieval on domain-heavy tasks.
+**Two disciplines survive the old policy:** never fabricate provenance, outcomes, causal links or coverage
+signals; never state confidence the evidence does not carry.
 
 ---
 
-## 3) Session Start Protocol (Every Chat)
-
-At start of chat (or major topic switch):
-
-1. Retrieve context for user topic/history
-2. Check goals state (active/proposed/blocked as needed)
-3. Optionally survey attention if multiple goals exist
-4. Proceed grounded in retrieved memory
-
----
-
-## 4) Node / Edge Discipline
-
-- Prefer **atomic nodes** (one claim/procedure/event per node).
-- Node types:
-  - `semantic` = facts/architecture
-  - `procedural` = workflows/how-to
-  - `episodic` = observed events/outcomes
-- Include `source` whenever possible.
-- Confidence must reflect evidence quality (no blanket high confidence).
-- Create edges only when they improve retrieval/provenance:
-  `causal`, `supports`, `contradicts`, `related`, `derived_from`.
-
----
-
-## 5) Outcome Learning Discipline
-
-When action used retrieved context:
-
-- Preserve retrieval causal IDs.
-- Feed only true causal IDs into `learn_from_outcome`.
-- Use status exactly: `success`, `partial_success`, `failure`, `timeout`.
-- `timeout` is not `failure`.
-- Include structured evidence when practical.
-
-No fabricated outcome signals. No fabricated causal attribution.
-
----
-
-## 6) Goal Discipline (Multi-Step Work)
-
-For tasks spanning multiple turns:
-
-- Create/manage goals
-- Link supporting nodes to goals
-- Update progress incrementally with evidence
-- Review coverage at decision points (`review_goal`)
-- Follow decision routing:
-  - `act` -> continue execution
-  - `learn` -> gather more context
-  - `escalate` -> block/escalate appropriately
-
----
-
-## 7) Topology / Deliberation Discipline
-
-- Read topology signals on retrieval responses.
-- If routing is deliberate (κ > 0), use `topology_analyze` / `deliberate` for high-stakes decisions.
-- Avoid unnecessary deliberation when routing is fast.
-
----
-
-## 8) Attention Discipline
-
-When many goals are in flight:
-
-- Use `attention_survey` (and optionally `attention_run_cycle`) to prioritize.
-- Respect dispatch mode: `act`, `learn`, `escalate`, `idle`.
-- Prefer observe/advise posture unless autonomous action is explicitly desired.
-
----
-
-## 9) Consolidation Discipline
-
-Trigger consolidation:
-
-- At productive session boundaries
-- Periodically during long iterative runs
-- After heavy storage/learning bursts
-
-Use status outputs to monitor memory quality trends.
-
----
-
-## 10) Hard Prohibitions
-
-Never:
-
-- Skip retrieval habitually
-- Skip outcome learning on consequential actions
-- Inflate confidence indiscriminately
-- Store kitchen-sink nodes
-- Fabricate coverage signals/causal links
-- Ignore repeated `learn` / `escalate` outcomes
-- Create edge spaghetti
-- Neglect consolidation indefinitely
-
----
-
-## 11) Prompt Wiring Requirement (For Claude Runtimes)
-
-Any Claude system/developer prompt for this repo should include:
-
-- `docs/skills/AGENT_BOOTSTRAP_PROMPT.md` (required)
-- `docs/skills/SKILLS.md` (required)
-- Relevant numbered skill files (or all for general-purpose use)
-
-Minimum acceptable wiring: bootstrap prompt + skills index.
-
----
-
-## 12) End-of-Session Behavior
-
-Before ending a productive session:
-
-1. Store key new facts/procedures/events
-2. Report pending outcomes
-3. Update goals/progress/state
-4. Trigger consolidation (status when practical)
-
----
-
-## 13) Project Constraints (Keep Intact)
+## 1) Project Constraints (v1 — keep intact while v1 is maintained)
 
 - Source of truth:
   - `docs/spec/README.md`
@@ -188,7 +51,7 @@ Before ending a productive session:
 
 ---
 
-## 14) Build and Run (Reference)
+## 2) Build and Run (v1 reference)
 
 ```sh
 source .envrc  # sets LD_LIBRARY_PATH for CUDA/EXLA
@@ -204,7 +67,7 @@ mix run --no-halt -- --db ~/.graphonomous/knowledge.db --embedder-backend fallba
 
 ---
 
-## 15) Core MCP Surface (Reference)
+## 3) Core MCP Surface (v1 reference)
 
 ### v2 Machine Surface (Production Default — 5 tools)
 
