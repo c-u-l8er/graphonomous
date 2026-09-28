@@ -37,6 +37,14 @@ beside the v0.4 Elixir memory engine in this same repository and does not modify
 - Never mutate authoritative source data during read-only ingestion. The registries this lane reads (`invariant-r10/`, `~/.invariant-factory/canonical.git`, `computedriven/`, `TRVM/`, `super/`, `opensentience.org/_invariants/`) are owned by other lanes that may be running concurrently in this same tree.
 - A stack defect found by this work is reproduced minimally, fixed in the owning layer only when the evidence supports it, tested there, receipted under `handoff/STACK_FIX_RECEIPTS/`, and then the interrupted Graphonomous acceptance case is re-run. No private "Graphonomous semantics" layer that duplicates WRL/TRVM.
 - No LLM output is evidence. Deterministic, content-addressed, replayable transforms only.
+- **The source boundary (D-079), for every source family:**
+  - **SB-1 — read authority is not publication authority.** Anything derived from a source whose publication
+    is not established lives in `~/.graphonomous/v2/`, never in this public repository.
+  - **SB-2 — authority belongs to the record**, never to the family or the ingestion order.
+  - **SB-3 — a model's or reviewer's relation is a candidate** until an authorized source records it.
+  - **SB-4 — `REFUSE_SECRET` at intake.** It happens before projection, candidates, benchmarks, model context
+    or receipts, never as a redaction afterwards.
+  - Details: `handoff/ROADMAP.md`.
 
 ## The code (G0-A/G0-B 2026-09-02 · G0-B.1, G0-E, G0-C spike, WRL-P0 + G0-C sealed, G0-D certificate 2026-09-03)
 

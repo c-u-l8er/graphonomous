@@ -24,6 +24,15 @@ in the root repository), outside Graphonomous. Do not build any of the following
 
 Do not renumber v2 as v3 for gaining features.
 
+**D-079 (Travis, 2026-09-28) — the source boundary. Read it before writing any adapter:**
+- **This repository is PUBLIC.** Anything derived from a private source goes in `~/.graphonomous/v2/`, never
+  here (SB-1). That covers projections, indexes, evidence, review candidates, UI payloads and quoting
+  receipts.
+- **Authority is per record**, never per family and never by ingestion order (SB-2).
+- **A model's or reviewer's relation is a candidate** until an authorized source records it (SB-3).
+- **Secret-shaped text is refused at intake** (SB-4).
+- **Source order:** WRL → ruling register → memory folder.
+
 **The "Graphonomous-first memory loop" is OFF — ruled by Travis 2026-09-27.** This file's Primary
 Directive and its sections 1–12 used to tell every session to run retrieve → route → act → learn →
 consolidate through this engine's MCP server. Do not restore them, and do not call

@@ -1770,3 +1770,91 @@ records that ruling. It is not an adjudication by this lane, and it is not a GPT
   - the order of the new source families relative to WRL, the fourth family that D-077 authorized next;
   - whether a review verdict is written back into the owning source as authored text. This lane's reading of
     D-071 (no write surface) and of "sources it does not own" says it must be.
+
+## D-079 — The source boundary: read authority is not publication authority; authority is per record; a proposal is not a fact; secrets are refused at intake. Source order, private placement, PUBLIC-PROJECTION-1 and the push (2026-09-28, Travis's rulings)
+
+**Source.** Travis's follow-up rulings, pasted into the session on 2026-09-28. They answer D-078's three `[TRAVIS]`
+items and add four more. **With this entry the v3 closure is settled.** The next Graphonomous work is v2
+implementation, not more adjudication around v3.
+
+**The four source-boundary rules.** They hold for every source family, the new and the existing:
+
+- **SB-1 — Read authority is not publication authority.**
+  - Public Graphonomous code may process a private source. What it derives is not public just because
+    Graphonomous is.
+  - Projections, indexes and evidence derived from a source whose publication authority is not established live
+    in **`~/.graphonomous/v2/`** (mode 0700).
+  - The public repository may contain only:
+    - implementation;
+    - schemas;
+    - aggregate or count metadata, when safe;
+    - content hashes and receipts, when safe;
+    - verification results.
+  - Being able to read a source grants Graphonomous no authority to publish that source or its projection.
+  - **No private companion repository and no replication machinery yet.** If replication across machines is
+    ever needed, a private content-addressed store or a private repository comes then, not before.
+- **SB-2 — Authority belongs to the record, never to the source family or the ingestion order.**
+  - Nothing equivalent to a global `ruling-register > memory-note` precedence may be implemented.
+  - Authority is derived from each item's own provenance and status. The register already shows why: its rows
+    are ruled by Travis, measured, concluded by outside review, or unresolved (D-078's measurement).
+  - This refines ROADMAP §2's candidate rule. "A note contradicts a *current ruling*" means a record whose own
+    status makes it a current ruling. It does not mean any row of the register.
+- **SB-3 — A proposal is not a source fact, and a source fact is not yet an accepted graph relation.**
+  - A reviewer's, Claude's or Jev's conclusion ("A supersedes B") is a candidate, or a review artifact.
+  - It becomes an accepted semantic relation only after it crosses an authorized source boundary: an authorized
+    source records it (a note, a register row), and Graphonomous then derives the relation from that record.
+  - Graphonomous may keep ephemeral, private candidate relations for review. An output acquires no authority
+    because Graphonomous observed it.
+- **SB-4 — `REFUSE_SECRET` at the source boundary.**
+  - An adapter may refuse material before it enters any of these:
+    - a projection;
+    - a relation candidate;
+    - a benchmark;
+    - model context;
+    - a public receipt that carries derived text.
+  - Refusal happens at intake. Redacting after projection is not enough.
+  - Two states are kept apart: **`secret-shaped text detected`**, which is enough to refuse or quarantine, and
+    **`confirmed secret`**, which Graphonomous never needs. It never tests whether a credential works.
+  - **Required before the memory folder is ingested.**
+
+**The other rulings:**
+
+- **Order:** WRL (D-077) → ruling register → memory folder. **Ingestion order implies no authority order** (SB-2).
+- **Private placement:** `~/.graphonomous/v2/`, under SB-1.
+- **Review verdicts:** SB-3. This confirms the reading D-078 left open.
+- **Root register:** a small R100 row that points here and to D-078. D-078 stays the canonical ruling.
+- **PUBLIC-PROJECTION-1**, a separate audit that is OPEN and blocks neither D-078 nor the push.
+  - *Does any currently published Graphonomous projection reveal source content or metadata that would not
+    independently have been authorized for publication?*
+  - This is not about whether a repository has a remote. A source can be private while facts derived from it
+    are intentionally public.
+  - The question is whether publication authority existed for what crossed the boundary. **Inspect first.
+    Remove nothing merely because its source was private.**
+  - Scope and method: ROADMAP §3.
+- **Push:**
+  - **Graphonomous is authorized as-is, history preserved**, including the three older v2 commits and the
+    D-078 work. The six V3-1 commits are not rewritten. Their hashes carry the chronology
+    *predeclaration → frozen data → run → result → ruling*, and that chronology is worth more than hiding a
+    now-stale local pathname.
+  - **The precondition:** the plaintext credential is moved out, rotated if it is still live, and replaced with
+    an external secret reference.
+  - **The root repository stays held.** Graphonomous work is no reason to move its unpushed ancestry, which
+    belongs mostly to the Super lane.
+
+**Done by the recording session, 2026-09-28:**
+- **The memory note that held an OpenRouter key no longer holds it.**
+  - The line now points at the key's 0600 file under `~/.config/`, which already held the identical key. The
+    two were compared in-process, and the value was never printed.
+  - The memory folder now has 0 secret-shaped strings.
+- **An exact-match scan found one other copy**, over `~/.graphonomous/` and the memory folder.
+  - It is in V3-1 (a)'s frozen corpus snapshot, `~/.graphonomous/v3-bench/corpus/` (0700). That bench copied
+    notes byte for byte with no intake refusal, which is the gap SB-4 now closes.
+  - **It is left in place.** Redacting it would change the per-file hash inside corpus manifest `1e98b38c…`,
+    which D-078 cites, and rotation makes the copy inert.
+  - **Jev never received note text.** `bench.py` sends one-line descriptions of at most 300 characters and
+    aborts on a secret pattern in any payload. The label tasks and the (b) dataset hold no copy.
+- **Not done, because they are Travis's to do:**
+  - rotating the key with its provider;
+  - moving the credentials out of the local notebook whose path `e5d197a9` names (this session never opened
+    it).
+- **The push waits for Travis's word that both are done.**

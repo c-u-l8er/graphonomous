@@ -6,6 +6,21 @@ Nothing is called TESTED because code exists. Every count below is copied from a
 `python3 test/canon_twin.py --selftest`, `node tools/g05_build.mjs`, WRL `node test/conformance.mjs`, TRVM
 `make governance`).
 
+**2026-09-28, later — D-079: the source boundary. The v3 closure is settled; next is v2 implementation.**
+- **SB-1…SB-4 now hold for every family:**
+  - read authority is not publication authority, so private derivations go in `~/.graphonomous/v2/`;
+  - authority is per record;
+  - a proposal is not a fact;
+  - `REFUSE_SECRET` at intake.
+- **Source order:** WRL → ruling register → memory folder.
+- **PUBLIC-PROJECTION-1** is OPEN (ROADMAP §3). It asks whether what `origin/main` already publishes, from
+  `computedriven`, `invariant-r10` and the factory ledger, had publication authority. It is inspect-only, and
+  it blocks nothing.
+- **Push:** authorized as-is, history preserved, once the plaintext credential is moved out and rotated.
+  - The memory note's copy was moved out the same day.
+  - Rotation and the notebook are Travis's to do, so the push waits for his word.
+  - The root repository stays held.
+
 **2026-09-28 — D-078: there is no Graphonomous v3. v2 grows instead.**
 - **The ruling.** Both V3-1 benches were negative for the new machinery. Travis ruled that the v3 proposal is
   closed as tested and not justified (`docs/spec/v3/README.md` is now a closed record, §C). The surviving
@@ -136,8 +151,8 @@ cannot change without moving a pinned code identity.
 
 | Item | State | Evidence / note |
 |---|---|---|
-| `DECISION_LOG.md` | IMPLEMENTED (document) | D-001…D-078 (was D-001…D-074 when this table was written) |
-| `handoff/ROADMAP.md` | PROPOSED (document) | D-078's survivors: register and memory-folder families, private placement, relation governance, review path, BM25 boundary |
+| `DECISION_LOG.md` | IMPLEMENTED (document) | D-001…D-079 (was D-001…D-074 when this table was written) |
+| `handoff/ROADMAP.md` | PROPOSED (document) | D-078's survivors under D-079's source boundary: WRL → register → memory folder, `~/.graphonomous/v2/`, SB-1…SB-4, the review path, the BM25 boundary, PUBLIC-PROJECTION-1 |
 | `handoff/receipts/G05-R1-R2.md` | IMPLEMENTED | the clean-checkout closure, before/after |
 | `handoff/research/R15_TRVM_SOURCE_INVENTORY.md` | IMPLEMENTED (measurement) | every count re-verified by this session against the git object store |
 | `handoff/research/R16_SCHEMA_CLOSURE_PRIOR_ART.md` | IMPLEMENTED (research) | 5 mechanisms classified ADOPT/ADAPT/REJECT; 3 measurements of this tree decided the design |
