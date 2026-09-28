@@ -1,5 +1,21 @@
 # Graphonomous
 
+> [!WARNING]
+> **Legacy since 2026-09-27.** This README describes **v1**, the Elixir/OTP memory engine (v0.4.3). It is
+> no longer developed, and its MCP plugin is disabled in the author's own setup. The reason is measured, not
+> hypothetical: with the default settings the consolidator runs every 5 minutes, lowers every node's
+> confidence by 2 % and deletes any node below 0.1, so **a node stored at confidence 0.5 is deleted after
+> about 7 hours of server uptime**. The author's own database held 0 nodes when this was found.
+>
+> If you run v1 anyway, turn that off: `--consolidator-decay-rate 0.0 --consolidator-prune-threshold 0.0`.
+> Also run **one** long-lived server (the HTTP transport) rather than one stdio server per client session:
+> each process loads the graph once at start and runs its own consolidator, so sessions do not see each
+> other's writes.
+>
+> Current work: [`v2/`](v2/README.md), a certified semantic/evidence graph, which is what
+> [graphonomous.com](https://graphonomous.com) describes. The direction for a memory built on it is
+> [`docs/spec/v3/README.md`](docs/spec/v3/README.md) (draft, nothing ruled).
+
 Continual learning engine for AI agents, implemented as an Elixir/OTP application with a durable SQLite-backed knowledge graph, confidence-updating learning loop, GoalGraph orchestration, κ-aware topology routing, and an MCP server exposing 5 loop-phase machines.
 
 **v0.4.0** — Dual-loop machine architecture: 29 actions grouped into 5 machines (retrieve, route, act, learn, consolidate). κ-aware topology routing, AGM-rational belief revision, intentional forgetting (soft/hard/cascade/GDPR), Wilson score epistemic frontier, Q-value outcome-weighted retrieval, multi-agent scoping via `agent_id`, nomic-embed-text-v2-moe 768D embedder, and graph algorithm suite (Dijkstra, toposort, Louvain, Hopcroft-Karp, incremental SCC, triangle counting). LongMemEval: 92.6% QA proxy, 98.7% session hit rate. 455+ tests, 0 failures.

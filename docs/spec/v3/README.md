@@ -246,16 +246,26 @@ independent of this document and is not blocked by it.
   plugin's skills and its `PostToolUse` hook, which appended to `/tmp/graphonomous-changed-files.jsonl`.
 - The 29 running per-session servers were stopped with SIGTERM, by PID. `free -m` available went from
   5.4 GB to 8.4 GB (other processes were not held still).
-- The database was not touched: `quick_check` ok; nodes 0, edges 620, goals 173, outcomes 124.
+- No row changed: `quick_check` ok; nodes 0, edges 620, goals 173, outcomes 124. The file itself did
+  change: as the servers shut down, SQLite checkpointed the write-ahead log into it (mtime 2026-09-27 20:21,
+  WAL now 0 bytes).
 - The retired policy was replaced, at Travis's ask: `graphonomous/CLAUDE.md` (Primary Directive and §1–12;
   the old text is `git show 61adec2d:CLAUDE.md`) and the root `CLAUDE.md` section "Graphonomous session
   policy". Both now say v1 is LEGACY, the loop is off, and point here.
 
+**Done 2026-09-28:**
+- **L-1 — archived at `~/.graphonomous/export-2026-09-28/`** (mode 0700): a `.backup` copy of
+  `knowledge.db` (integrity ok, every table's count equal to the source), `knowledge.db.fts`, `schema.sql`,
+  one JSONL per non-empty table (edges 620, entities 419, goals 173, outcomes 124, revisions 12,
+  schema_migrations 9, each row count checked), and `MANIFEST.json` with the sha256 of every file. A
+  secret-pattern scan of the JSONL found nothing. **It is outside the repository on purpose:**
+  `c-u-l8er/graphonomous` is public, these rows are private session memory, and [T5] is unruled.
+- **L-2 — the LEGACY banner is on `graphonomous/README.md`.** It gives the measured reason and the two
+  flags that stop the pruning (`--consolidator-decay-rate 0.0 --consolidator-prune-threshold 0.0`, both
+  accepted by `lib/graphonomous/cli.ex`). `graphonomous.com` needed nothing: its 2026-09-05 rebuild
+  already retracts the v1 engine, and the old install command appears only inside that retraction.
+
 **Not done — each needs [TRAVIS]:**
-- **L-1** Export the surviving v1 rows to a JSONL archive (for example `graphonomous/legacy/`) before
-  anything else changes.
-- **L-2** A LEGACY banner on `graphonomous/README.md` and on `graphonomous.com` (the site is generated and
-  gated; see its own `CLAUDE.md`). The two `CLAUDE.md` policies are already done (above).
 - **L-3** `npm deprecate graphonomous` — public, so it is Travis's to do.
 - **L-4** The Fly app `graphonomous-mcp` stays until fleetprompt.com and PRISM stop calling it (R96: torn
   down last).
