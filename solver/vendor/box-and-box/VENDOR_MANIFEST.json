@@ -1,0 +1,15 @@
+{
+  "source": "/home/travis/ProjectAmp2/AmpersandBoxDesign/box-and-box",
+  "synced_files": [
+    "numerics.mjs",
+    "score.mjs",
+    "value.mjs",
+    "bridge.mjs"
+  ],
+  "sha256": {
+    "numerics.mjs": "fe106eef03762da57de18b9056848839cafc886131cd18fdafcc1d3f10d67b56",
+    "score.mjs": "8bf19dd794c4320a5a95959329c1336bacced6b0abe3f0a1e848354942cb5bfb",
+    "value.mjs": "de3e2cdcc9d0704ef6668d27ffdf8b1cc3ff8230a00738e8bae793a382c599d8",
+    "bridge.mjs": "5fc04a507349885bbf5165ee4a62c89d2c5a5d2c787451b9e3e20193a1a47745"
+  }
+}

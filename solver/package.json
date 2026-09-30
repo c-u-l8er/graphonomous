@@ -1,0 +1,15 @@
+{
+  "name": "graphonomous-solver",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A solver for SEO / generative-engine / agent optimization: Graphonomous v2's claim graph and consistency findings, ranked by the box-and-box floor-then-gradient bridge. Zero runtime dependencies; runs identically in node and the browser.",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "test": "node --test --test-concurrency=1 test/*.test.mjs",
+    "sync:vendor": "node tools/sync_vendor.mjs",
+    "solve": "node bin/solve.mjs",
+    "app": "node tools/serve.mjs"
+  },
+  "license": "MIT"
+}

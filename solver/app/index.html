@@ -1,0 +1,48 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Graphonomous Solver — SEO · GEO · Agent</title>
+<link rel="stylesheet" href="/app/app.css">
+<body>
+<header>
+  <div class="brand">
+    <h1>Graphonomous <em>Solver</em></h1>
+    <p class="sub">A site's claim graph, its contradictions, and a remedy that had to survive a floor.</p>
+  </div>
+  <div class="ids">
+    <span id="rulepack">graphonomous.consistency.rules.web.v0</span>
+    <span id="runid">—</span>
+  </div>
+</header>
+
+<section class="input">
+  <div class="row">
+    <label>Bundled site <select id="fixture"><option value="">loading…</option></select></label>
+    <label>or fetch <input id="url" type="text" placeholder="https://example.com" size="26"></label>
+    <button id="run">Solve</button>
+    <span id="status"></span>
+  </div>
+</section>
+
+<section class="floor" id="floorbar">
+  <h2>The floor <small>— weaken it and watch the decisions change</small></h2>
+  <div class="row">
+    <label class="slider">β minimum <input id="betaMin" type="range" min="0" max="1" step="0.05" value="0.6">
+      <output id="betaOut">0.60</output>
+      <em>material sufficiency — how much of a remedy the site can already ground</em></label>
+    <label class="chk"><input type="checkbox" id="sigma" checked> σ must be empty <em>a remedy may not leave its own finding standing</em></label>
+    <label class="chk"><input type="checkbox" id="deny" checked> an edit needs a warrant <em>governance</em></label>
+  </div>
+</section>
+
+<section id="summary" class="summary hidden"></section>
+<section id="findings" class="findings"></section>
+
+<footer>
+  <p><strong>What is measured and what is not.</strong> Findings are derived from the page bytes.
+  β is <em>measured</em> from a finding's own premises where the evidence supports it and
+  <em>declared</em> otherwise — every option says which. <strong>Utility is declared everywhere,
+  without exception.</strong> So the veto half of this solver is defensible today and the gradient
+  half is an opinion wearing a number. That is stated here rather than discovered later.</p>
+</footer>
+<script type="module" src="/app/app.js"></script>
