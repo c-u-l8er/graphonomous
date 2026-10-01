@@ -6,6 +6,12 @@ Nothing is called TESTED because code exists. Every count below is copied from a
 `python3 test/canon_twin.py --selftest`, `node tools/g05_build.mjs`, WRL `node test/conformance.mjs`, TRVM
 `make governance`).
 
+**2026-10-01 — D-079's push precondition is met; graphonomous is pushed as-is, history preserved.**
+- **Travis's word, in chat:** "done". He deleted every OpenRouter key and made one new key, stored with `~/.config/alphapiler/store-openrouter-key.sh` (mode 0600; checked in memory: changed, and not equal to any leaked key). He also cleaned the old key's line out of `~/Documents/README.txt`; Claude never opened that file.
+- **Found on the way, counted and never printed:** two OLDER OpenRouter keys were already public on GitHub. One was in `fleetprompt.com`'s history (2026-01-08). The other was in this repository's tracked `.env.rescore`, from `27a59b9b` (2026-04-08). Revoking them made both inert. `78098273` stops tracking `.env.rescore` and adds `.env` to `.gitignore`. The file stays on disk, mode 600, for `run_rescore*.sh`.
+- **Pre-push scan of the 22 unpublished commits:** 38,433 added lines and no secret-shaped string (Anthropic, OpenAI, OpenRouter, GitHub, AWS, Slack, Google or Stripe keys, private-key blocks, bearer tokens).
+- PUBLIC-PROJECTION-1 stays OPEN and inspect-only, as D-079 says.
+
 **2026-09-28, later — D-079: the source boundary. The v3 closure is settled; next is v2 implementation.**
 - **SB-1…SB-4 now hold for every family:**
   - read authority is not publication authority, so private derivations go in `~/.graphonomous/v2/`;
