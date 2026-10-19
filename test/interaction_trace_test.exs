@@ -1,6 +1,6 @@
 defmodule Graphonomous.InteractionTraceTest do
   @moduledoc """
-  Covers the OS-011 episodic `store/replay` pipeline:
+  Covers the GRASP episodic `store/replay` pipeline:
 
     * `Graphonomous.Types.InteractionTrace.parse/1` validation
     * `Graphonomous.Store` CRUD for traces + edges
@@ -10,7 +10,7 @@ defmodule Graphonomous.InteractionTraceTest do
 
   Scope: the in-graph persistence and retrieval halves of the protocol.
   Actual execution of the replay (perceive/encode/act by a body
-  provider) is OS-011 §5 and lives outside Graphonomous.
+  provider) is GRASP §5 and lives outside Graphonomous.
   """
   use ExUnit.Case, async: false
 

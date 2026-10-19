@@ -243,7 +243,7 @@ defmodule Graphonomous.Store do
 
   def rebuild_cache, do: GenServer.call(__MODULE__, :rebuild_cache, @write_timeout_ms)
 
-  ## Interaction Traces (OS-011 &memory.episodic)
+  ## Interaction Traces (GRASP &memory.episodic)
 
   @doc """
   Persist a full `InteractionTrace` (trace + ordered edges).
@@ -841,7 +841,7 @@ defmodule Graphonomous.Store do
     {:reply, :ok, state}
   end
 
-  ## Interaction Trace handle_calls (OS-011 &memory.episodic)
+  ## Interaction Trace handle_calls (GRASP &memory.episodic)
 
   def handle_call({:insert_trace, trace}, _from, state) do
     case persist_trace(state.conn, trace) do
@@ -2177,7 +2177,7 @@ defmodule Graphonomous.Store do
     end
   end
 
-  ## Interaction Traces — private helpers (OS-011)
+  ## Interaction Traces — private helpers (GRASP)
 
   defp persist_trace(conn, %Graphonomous.Types.InteractionTrace{} = trace) do
     alias Graphonomous.Types.InteractionTrace, as: IT

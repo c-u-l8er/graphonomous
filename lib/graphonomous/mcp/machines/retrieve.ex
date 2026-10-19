@@ -12,7 +12,7 @@ defmodule Graphonomous.MCP.Machines.Retrieve do
   - `coverage`       — epistemic coverage assessment (act/learn/escalate)
   - `trace_evidence` — weighted Dijkstra evidence path between nodes
   - `frontier`       — Wilson interval uncertainty analysis
-  - `replay`         — OS-011 &memory.episodic.replay: fetch an InteractionTrace
+  - `replay`         — GRASP &memory.episodic.replay: fetch an InteractionTrace
                        by trace_id or by initial state_hash for body-provider replay
 
   Replaces: retrieve_context, retrieve_episodic, retrieve_procedural,
@@ -32,7 +32,7 @@ defmodule Graphonomous.MCP.Machines.Retrieve do
         "Retrieval action: context | episodic | procedural | coverage | trace_evidence | frontier | replay"
     )
 
-    # -- replay action (OS-011 &memory.episodic.replay) --
+    # -- replay action (GRASP &memory.episodic.replay) --
     field(:trace_id, :string, description: "Trace id for exact replay lookup (replay)")
 
     field(:state_hash, :string,

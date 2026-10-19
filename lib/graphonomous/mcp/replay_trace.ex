@@ -1,12 +1,12 @@
 defmodule Graphonomous.MCP.ReplayTrace do
   @moduledoc """
-  MCP tool for retrieving an OS-011 `InteractionTrace` from episodic
+  MCP tool for retrieving a GRASP `InteractionTrace` from episodic
   memory in a form ready for replay by a `&body.*` provider.
 
   This is Graphonomous's half of `&memory.episodic.replay`: it emits the
   trace + replay manifest. Actual execution of the replay (perceive,
   encode_state, act, check state_hash) is the body provider's
-  responsibility per OS-011 §5.4.
+  responsibility per GRASP §5.4.
 
   Lookup modes:
 
@@ -133,7 +133,7 @@ defmodule Graphonomous.MCP.ReplayTrace do
         note:
           if(destructive?,
             do:
-              "Destructive edges require fresh authorization at replay time (OS-011 §4.4). Prior authorization is audit evidence, not replay permission.",
+              "Destructive edges require fresh authorization at replay time (GRASP §4.4). Prior authorization is audit evidence, not replay permission.",
             else: nil
           ),
         edges:

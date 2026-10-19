@@ -1,6 +1,6 @@
 defmodule Graphonomous.Types.InteractionTrace do
   @moduledoc """
-  OS-011 Embodiment Protocol `InteractionTrace` — canonical record of a
+  GRASP `InteractionTrace` — canonical record of a
   perception-action cycle produced by any `&body.*` subtype (e.g.
   `&body.browser`, `&body.os`).
 
@@ -45,7 +45,7 @@ defmodule Graphonomous.Types.InteractionTrace do
             metadata: %{}
 
   defmodule Edge do
-    @moduledoc "One step in an InteractionTrace — see OS-011 §4.2."
+    @moduledoc "One step in an InteractionTrace — see GRASP §4.2."
 
     @type t :: %__MODULE__{
             edge_id: non_neg_integer(),
@@ -204,7 +204,7 @@ defmodule Graphonomous.Types.InteractionTrace do
 
   @doc """
   True iff any edge carries a destructive `&body.os` action. Replay of
-  such edges requires fresh authorization per OS-011 §4.4.
+  such edges requires fresh authorization per GRASP §4.4.
   """
   @spec destructive?(t()) :: boolean()
   def destructive?(%InteractionTrace{edges: edges}) do

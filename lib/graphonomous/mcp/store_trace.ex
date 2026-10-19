@@ -1,6 +1,6 @@
 defmodule Graphonomous.MCP.StoreTrace do
   @moduledoc """
-  MCP tool for storing an OS-011 `InteractionTrace` in episodic memory.
+  MCP tool for storing a GRASP `InteractionTrace` in episodic memory.
 
   This is the `&memory.episodic.store(trace)` operation: persists a full
   perception-action-outcome sequence so the same trace can later be
@@ -21,7 +21,7 @@ defmodule Graphonomous.MCP.StoreTrace do
   schema do
     field(:interaction_trace, :string,
       required: true,
-      description: "InteractionTrace as a JSON string (or object). See OS-011 §4."
+      description: "InteractionTrace as a JSON string (or object). See GRASP §4."
     )
   end
 
